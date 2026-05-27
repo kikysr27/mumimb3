@@ -302,6 +302,39 @@
   [data-theme="dark"] [style*="background:#edefed"] { background: #1a2a22 !important; }
   [data-theme="dark"] [style*="background:#e8f5ef"] { background: #14331f !important; }
 
+  /* ── Dark mode: Struktur Organisasi nodes ───────────────── */
+  [data-theme="dark"] .so-node {
+    background: #1a2e22 !important;
+    border-color: #2d5a40 !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,.4) !important;
+  }
+  [data-theme="dark"] .so-node:hover {
+    border-color: #4ade80 !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,.5) !important;
+  }
+  [data-theme="dark"] .so-lv-pembimbing    { background: #1e1535 !important; border-color: #6d3fc0 !important; }
+  [data-theme="dark"] .so-lv-ketua         { background: #0d2626 !important; border-color: #1a7a72 !important; }
+  [data-theme="dark"] .so-lv-wakil         { background: #0d1e35 !important; border-color: #1e5fa6 !important; }
+  [data-theme="dark"] .so-lv-divisi        { background: #112a1a !important; border-color: #2d7a40 !important; }
+  [data-theme="dark"] .so-lv-anggota-divisi { background: #0e2018 !important; border-color: #3a6648 !important; border-style: dashed !important; }
+
+  [data-theme="dark"] .so-name             { color: #c8f0da !important; }
+  [data-theme="dark"] .so-role-badge       { background: rgba(45,158,107,.2) !important; color: #6fdcab !important; }
+  [data-theme="dark"] .so-lv-pembimbing    .so-role-badge { background: rgba(124,58,237,.2) !important; color: #c4b5fd !important; }
+  [data-theme="dark"] .so-lv-ketua         .so-role-badge { background: rgba(0,137,123,.2) !important; color: #5eead4 !important; }
+  [data-theme="dark"] .so-lv-wakil         .so-role-badge { background: rgba(30,136,229,.2) !important; color: #93c5fd !important; }
+  [data-theme="dark"] .so-lv-anggota-divisi .so-role-badge { background: rgba(74,222,128,.1) !important; color: #86efac !important; }
+
+  /* Judul bagan (STRUKTUR ORGANISASI, sub, periode) */
+  [data-theme="dark"] #so_chartTitle       { color: #6fdcab !important; }
+  [data-theme="dark"] #so_chartSub         { color: #4ade80 !important; }
+  [data-theme="dark"] #so_chartPeriod      { color: #8aa99a !important; }
+
+  /* Garis branch connector */
+  [data-theme="dark"] .so-conn-v::before   { background: rgba(255,255,255,0.3) !important; }
+  [data-theme="dark"] .so-divisi-sub-conn  { background: rgba(255,255,255,0.3) !important; }
+  [data-theme="dark"] .so-divisi-label-chip { background: #1d3a28 !important; color: #6fdcab !important; }
+
   /* Tombol ganti tema — tertanam di topbar, tidak mengambang */
   .theme-toggle {
     width: auto; padding: 7px 11px; font-size: 15px; font-weight: 700;
@@ -537,7 +570,7 @@
   .counting { transition:all .05s; }
 
   /* ═══════ BOTTOM NAV ═══════ */
-  .nav-btn {
+  /*.nav-btn {
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     background:transparent;border:none;color:#7a9585;padding:4px 10px;
     cursor:pointer;border-radius:10px;min-width:52px;transition:all .2s;
@@ -547,16 +580,8 @@
   .nav-btn.active div:first-child { filter:drop-shadow(0 0 6px rgba(26,102,68,.5)); }
   [data-theme="dark"] .nav-btn { color:#5f7d6e; }
   [data-theme="dark"] .nav-btn.active { color:#6fdcab; }
-  [data-theme="dark"] #bottomNav {
-    background:rgba(15,28,20,.97);border-top-color:#2b4538;
-  }
-  /* Push content above bottom nav on mobile */
-  @media (max-width:680px) {
-    #appView { padding-bottom:72px; }
-    #sec-strukorg { padding-bottom: 100px; }
-  }
-  /* Desktop juga perlu ruang untuk nav */
-  #sec-strukorg { padding-bottom: 100px; }
+  /* [data-theme="dark"] #bottomNav removed */
+  /* bottom nav dihapus — padding minimal */
 
   /* ═══════ CONFIRM MODAL KEREN ═══════ */
   #confirmModalNew .modal-box { animation:popIn .28s cubic-bezier(.34,1.56,.64,1) both; }
@@ -601,12 +626,9 @@
 
 /* Scroll hint for mobile */
 #so_chartScroll {
-  scrollbar-width: thin;
-  scrollbar-color: #b2d8c4 transparent;
+  overflow: visible;
 }
-#so_chartScroll::-webkit-scrollbar { height: 4px; }
-#so_chartScroll::-webkit-scrollbar-track { background: transparent; }
-#so_chartScroll::-webkit-scrollbar-thumb { background: #b2d8c4; border-radius: 4px; }
+/* Hapus scrollbar khusus chartScroll — pakai scroll utama */
 
 /* Tier rows — nowrap so nodes never wrap to next line on mobile (scroll instead) */
 .so-tier { display:flex; justify-content:center; gap:14px; flex-wrap:nowrap; }
@@ -1526,6 +1548,7 @@
           <button class="small" onclick="soToggleDrawMode()" id="so_drawModeBtn" style="background:#f0f7f3;color:#1a6644;border:1px solid #b2d8c4;">🔗 Hubungkan</button>
           <button class="small" onclick="soToggleDeleteMode()" id="so_deleteModeBtn" style="background:#fff8f0;color:#d97706;border:1px solid #fcd34d;">🗑️ Hapus Garis</button>
           <button class="small" onclick="so_exportPDF()" style="background:#1a6640;color:#fff;border:none;">📥 Export PDF</button>
+          <button class="small" onclick="so_showImgExportDialog()" style="background:#1d4ed8;color:#fff;border:none;" title="Download bagan sebagai gambar PNG/JPG resolusi tinggi">🖼️ Export PNG/JPG</button>
         </div>
         <!-- Hint draw mode -->
         <div id="so_drawHint" style="display:none;margin-top:10px;padding:10px 12px;background:#fff8e1;border-radius:8px;border-left:3px solid #f59e0b;font-size:12px;color:#92400e;">
@@ -1597,6 +1620,88 @@
         </div>
       </div>
 
+      <!-- MODAL: Export PNG/JPG -->
+      <div id="so_imgExportModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:18px;padding:24px 22px;width:min(94vw,400px);box-shadow:0 20px 60px rgba(0,0,0,.35);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h2 style="margin:0;font-size:16px;">🖼️ Export Bagan sebagai Gambar</h2>
+            <button onclick="so_closeImgExportDialog()" style="width:auto;padding:5px 11px;background:#f0f0f0;color:#333;font-size:18px;border-radius:8px;border:none;line-height:1;">✕</button>
+          </div>
+
+          <!-- Format -->
+          <label style="font-size:13px;font-weight:600;color:#1a6644;display:block;margin-bottom:6px;">Format</label>
+          <div style="display:flex;gap:8px;margin-bottom:16px;">
+            <label id="so_fmt_png_lbl" style="flex:1;border:2px solid #1d4ed8;background:#eff6ff;border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all .2s;">
+              <input type="radio" name="so_imgFmt" value="png" checked style="display:none;">
+              <div style="font-size:20px;">🖼️</div>
+              <div style="font-weight:700;font-size:13px;color:#1d4ed8;">PNG</div>
+              <div style="font-size:11px;color:#6b7280;">Latar transparan<br>Teks & garis tajam</div>
+            </label>
+            <label id="so_fmt_jpg_lbl" style="flex:1;border:2px solid #d1d5db;background:#f9fafb;border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all .2s;">
+              <input type="radio" name="so_imgFmt" value="jpg" style="display:none;">
+              <div style="font-size:20px;">📷</div>
+              <div style="font-weight:700;font-size:13px;color:#374151;">JPG</div>
+              <div style="font-size:11px;color:#6b7280;">Latar putih<br>Ukuran file lebih kecil</div>
+            </label>
+          </div>
+
+          <!-- Kualitas / DPI -->
+          <label style="font-size:13px;font-weight:600;color:#1a6644;display:block;margin-bottom:6px;">Kualitas / Resolusi</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;" id="so_qualBtns">
+            <button onclick="so_setQual(this,2,'📄 Layar (72 dpi)')" data-scale="2"
+              style="flex:1;min-width:80px;width:auto;padding:9px 6px;font-size:12px;border-radius:9px;border:2px solid #d1d5db;background:#f9fafb;color:#374151;font-weight:600;transition:all .2s;">
+              📄<br><span style="font-size:11px;">Standar</span><br><span style="font-size:10px;color:#9ca3af;">72 dpi</span>
+            </button>
+            <button onclick="so_setQual(this,3,'🖨️ Cetak biasa (150 dpi)')" data-scale="3"
+              style="flex:1;min-width:80px;width:auto;padding:9px 6px;font-size:12px;border-radius:9px;border:2px solid #1d4ed8;background:#eff6ff;color:#1d4ed8;font-weight:700;transition:all .2s;">
+              🖨️<br><span style="font-size:11px;">Cetak</span><br><span style="font-size:10px;">150 dpi ⭐</span>
+            </button>
+            <button onclick="so_setQual(this,5,'🏆 Kualitas Tinggi (250 dpi)')" data-scale="5"
+              style="flex:1;min-width:80px;width:auto;padding:9px 6px;font-size:12px;border-radius:9px;border:2px solid #d1d5db;background:#f9fafb;color:#374151;font-weight:600;transition:all .2s;">
+              🏆<br><span style="font-size:11px;">Tinggi</span><br><span style="font-size:10px;color:#9ca3af;">250 dpi</span>
+            </button>
+            <button onclick="so_setQual(this,8,'💎 Ultra HD (400 dpi)')" data-scale="8"
+              style="flex:1;min-width:80px;width:auto;padding:9px 6px;font-size:12px;border-radius:9px;border:2px solid #d1d5db;background:#f9fafb;color:#374151;font-weight:600;transition:all .2s;">
+              💎<br><span style="font-size:11px;">Ultra HD</span><br><span style="font-size:10px;color:#9ca3af;">400 dpi</span>
+            </button>
+          </div>
+
+          <!-- JPG quality slider (tampil hanya saat JPG dipilih) -->
+          <div id="so_jpgQualRow" style="display:none;margin-bottom:14px;">
+            <label style="font-size:13px;font-weight:600;color:#1a6644;display:block;margin-bottom:6px;">
+              Kompresi JPG: <span id="so_jpgQualVal">92</span>%
+            </label>
+            <input type="range" id="so_jpgQualSlider" min="70" max="100" value="92" step="1"
+              style="width:100%;accent-color:#1d4ed8;"
+              oninput="document.getElementById('so_jpgQualVal').textContent=this.value">
+          </div>
+
+          <!-- Latar belakang PNG -->
+          <div id="so_pngBgRow" style="margin-bottom:16px;">
+            <label style="font-size:13px;font-weight:600;color:#1a6644;display:block;margin-bottom:6px;">Latar belakang PNG</label>
+            <div style="display:flex;gap:8px;">
+              <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;">
+                <input type="radio" name="so_pngBg" value="white" checked> Putih
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;">
+                <input type="radio" name="so_pngBg" value="transparent"> Transparan
+              </label>
+            </div>
+          </div>
+
+          <!-- Info estimasi -->
+          <div style="background:#f0f7f3;border-radius:9px;padding:10px 12px;font-size:12px;color:#4b7261;margin-bottom:16px;">
+            💡 <b>Tips cetak:</b> Pilih <b>Kualitas Tinggi</b> atau <b>Ultra HD</b> agar teks tidak pecah saat dicetak. PNG lebih tajam untuk bagan garis; JPG cocok untuk berbagi via WhatsApp.
+          </div>
+
+          <!-- Tombol aksi -->
+          <button id="so_imgExportBtn" onclick="so_doExportImage()"
+            style="width:100%;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border:none;padding:13px;border-radius:11px;font-size:15px;font-weight:700;letter-spacing:.3px;">
+            ⬇️ Download Gambar
+          </button>
+        </div>
+      </div>
+
       <!-- PANEL EDIT (collapsible) -->
       <div id="so_panel" style="display:none;">
         <div class="card">
@@ -1664,7 +1769,7 @@
       </div>
 
       <!-- BAGAN ORGANISASI -->
-      <div id="so_chartCard" style="padding:16px 0 120px;overflow:visible;"><div id="so_chartScroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:12px;">
+      <div id="so_chartCard" style="overflow:visible;"><div id="so_chartScroll" style="overflow:visible;padding-bottom:12px;">
         <div id="so_emptyState" style="text-align:center;padding:40px 16px;color:#c8e6d5;">
           <div style="font-size:40px;margin-bottom:12px;">🏛️</div>
           <div style="font-weight:700;font-size:15px;margin-bottom:6px;">Struktur Organisasi Kosong</div>
@@ -7177,9 +7282,7 @@ askConfirm = function(message, title) {
 // ⑧ BOTTOM NAV — show/hide & active state
 // ═══════════════════════════════════════════════════════════════
 function updateBottomNav(section) {
-  const nav = document.getElementById('bottomNav');
-  if (!nav) return;
-  nav.style.display = 'flex';
+  return; // bottom nav dihapus
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   const map = { '':['navHome'], saldo:['navSaldo'], kasmasuk:['navKas'], pengeluaran:['navKas'],
                 absensi:['navAbsen'], rekap:['navAbsen'], laporan:['navLaporan'] };
@@ -8793,6 +8896,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     $id('so_divNama').value='';
     so_renderAll(); soSave();
     showToast('✅ Divisi '+nama+' ditambahkan');
+    soScrollToBottom();
   };
   window.so_deleteDivisi = function(id){
     if(!confirm('Hapus divisi ini? Anggotanya tidak akan ikut terhapus, tapi tidak terhubung ke divisi manapun.')) return;
@@ -8816,6 +8920,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     so.curPhoto=null; $id('so_photoPreview').innerHTML='📷 Upload foto'; $id('so_photoInput').value='';
     so_renderAll(); soSave();
     showToast('✅ '+nama+' ditambahkan');
+    soScrollToBottom();
   };
   window.so_deleteMember = function(id){
     if(!confirm('Hapus orang ini dari struktur organisasi?')) return;
@@ -9558,8 +9663,16 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     if(_soScrollVx || _soScrollVy){
       (function loop(){
         window.scrollBy(_soScrollVx, _soScrollVy);
-        // Extend halaman kalau scroll sudah mentok bawah
-        soExtendPageIfNeeded();
+        // Extend padding bawah sec-strukorg kalau scroll sudah mentok bawah dokumen
+        var sec = document.getElementById('sec-strukorg');
+        if(sec){
+          var scrollBottom = window.scrollY + window.innerHeight;
+          var docHeight    = document.documentElement.scrollHeight;
+          if(docHeight - scrollBottom < 80){
+            var cur = parseInt(sec.style.paddingBottom) || 80;
+            sec.style.paddingBottom = (cur + 100) + 'px';
+          }
+        }
         if(_soScrollVx || _soScrollVy) _soScrollRAF = requestAnimationFrame(loop);
       })();
     }
@@ -9568,18 +9681,24 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     _soScrollVx = 0; _soScrollVy = 0;
     if(_soScrollRAF){ cancelAnimationFrame(_soScrollRAF); _soScrollRAF = null; }
   }
-  // Extend #sec-strukorg padding agar halaman bisa discroll lebih jauh
-  function soExtendPageIfNeeded(){
-    var sec = document.getElementById('sec-strukorg');
-    if(!sec) return;
-    var scrollBottom = window.scrollY + window.innerHeight;
-    var docHeight = document.documentElement.scrollHeight;
-    // Kalau sudah dekat bawah dokumen, tambah padding
-    if(docHeight - scrollBottom < 150){
-      var cur = parseInt(sec.style.paddingBottom)||120;
-      sec.style.paddingBottom = (cur + 80) + 'px';
-    }
+  // Auto-scroll halaman ke bawah setelah bagan di-render ulang
+  // Dipanggil saat anggota baru ditambah agar langsung kelihatan
+  function soScrollToBottom(){
+    // Tunggu render selesai dulu (branch lines butuh ~300ms)
+    setTimeout(function(){
+      var chart = document.getElementById('so_chart');
+      if(!chart) return;
+      // Ukur posisi absolut bawah chart dari atas dokumen
+      var chartBottom = chart.getBoundingClientRect().bottom + window.scrollY;
+      // Tinggi navbar bawah — deteksi dinamis
+      var navH = 20;
+      var targetY = chartBottom - window.innerHeight + navH;
+      if(targetY > window.scrollY){
+        window.scrollTo({ top: targetY, behavior: 'smooth' });
+      }
+    }, 450);
   }
+  window.soScrollToBottom = soScrollToBottom;
 
   var _nodeDragCleanups = [];
   function soActivateNodeDrag(){
@@ -9809,14 +9928,10 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     setTimeout(soApplyToolbarState, 50);
     // Apply auto lines button state
     setTimeout(soApplyAutoLinesBtn, 50);
-    // Show mobile scroll hint if chart wider than container
-    setTimeout(function(){
-      var scroll = document.getElementById('so_chartScroll');
-      var hint   = document.getElementById('so_mobileScrollHint');
-      if(scroll && hint){
-        hint.style.display = (scroll.scrollWidth > scroll.clientWidth + 10) ? 'block' : 'none';
-      }
-    }, 300);
+    // Sembunyikan scroll hint (tidak ada scroll inner lagi)
+    var hint = document.getElementById('so_mobileScrollHint');
+    if(hint) hint.style.display = 'none';
+
   }
   window.so_renderAll=so_renderAll;
 
@@ -9851,23 +9966,442 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     });
   }
 
+  // ── export PNG / JPG (kualitas tinggi untuk cetak) ────────────────────────
+  var _soImgScale = 3; // default: cetak biasa 150 dpi
+
+  window.so_showImgExportDialog = function(){
+    if(!so.members.length){ showToast('Struktur masih kosong','error'); return; }
+    var modal = document.getElementById('so_imgExportModal');
+    modal.style.display = 'flex';
+    // Pastikan tombol "Cetak" terpilih secara default
+    so_setQual(document.querySelector('#so_qualBtns button[data-scale="3"]'), 3, '');
+    // Update tampilan format
+    document.querySelectorAll('input[name="so_imgFmt"]').forEach(function(r){
+      r.addEventListener('change', so_onFmtChange);
+    });
+    so_onFmtChange();
+  };
+
+  window.so_closeImgExportDialog = function(){
+    document.getElementById('so_imgExportModal').style.display = 'none';
+  };
+
+  // Highlight tombol kualitas yang dipilih
+  window.so_setQual = function(btn, scale, label){
+    _soImgScale = scale;
+    document.querySelectorAll('#so_qualBtns button').forEach(function(b){
+      b.style.border = '2px solid #d1d5db';
+      b.style.background = '#f9fafb';
+      b.style.color = '#374151';
+      b.style.fontWeight = '600';
+    });
+    if(btn){
+      btn.style.border = '2px solid #1d4ed8';
+      btn.style.background = '#eff6ff';
+      btn.style.color = '#1d4ed8';
+      btn.style.fontWeight = '700';
+    }
+  };
+
+  function so_onFmtChange(){
+    var fmt = document.querySelector('input[name="so_imgFmt"]:checked');
+    var isPng = !fmt || fmt.value === 'png';
+    document.getElementById('so_jpgQualRow').style.display = isPng ? 'none' : 'block';
+    document.getElementById('so_pngBgRow').style.display  = isPng ? 'block' : 'none';
+    // Highlight format card
+    var pngLbl = document.getElementById('so_fmt_png_lbl');
+    var jpgLbl = document.getElementById('so_fmt_jpg_lbl');
+    if(pngLbl && jpgLbl){
+      pngLbl.style.border    = isPng ? '2px solid #1d4ed8' : '2px solid #d1d5db';
+      pngLbl.style.background = isPng ? '#eff6ff' : '#f9fafb';
+      jpgLbl.style.border    = isPng ? '2px solid #d1d5db' : '2px solid #1d4ed8';
+      jpgLbl.style.background = isPng ? '#f9fafb' : '#eff6ff';
+    }
+  }
+  // Pasang listener sekali
+  document.addEventListener('change', function(e){
+    if(e.target && e.target.name === 'so_imgFmt') so_onFmtChange();
+  });
+
+  window.so_doExportImage = function(){
+    var fmtEl  = document.querySelector('input[name="so_imgFmt"]:checked');
+    var fmt    = fmtEl ? fmtEl.value : 'png';
+    var scale  = _soImgScale || 3;
+    var jpgQ   = parseInt(document.getElementById('so_jpgQualSlider').value || 92) / 100;
+    var bgEl   = document.querySelector('input[name="so_pngBg"]:checked');
+    var useBgWhite = (fmt === 'jpg') ? true : !(bgEl && bgEl.value === 'transparent');
+    var orgName = (document.getElementById('so_orgName') && document.getElementById('so_orgName').value) || 'struktur-organisasi';
+    var filename = orgName.replace(/\s+/g,'-').toLowerCase() + '-' + scale + 'x.' + fmt;
+
+    var btn = document.getElementById('so_imgExportBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Memproses... (bisa beberapa detik)';
+
+    function loadScript(src, cb){
+      if(window.html2canvas){ cb(); return; }
+      var s = document.createElement('script');
+      s.src = src; s.onload = cb;
+      document.head.appendChild(s);
+    }
+
+    loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js', function(){
+      setTimeout(function(){ doRender(); }, 300);
+    });
+
+    function doRender(){
+      var chart  = document.getElementById('so_chart');
+
+      // ── 1. Ukur dimensi PENUH — termasuk node yang posisinya negatif (kiri/atas) ──
+      // FIX: Pakai getBoundingClientRect relatif terhadap chart, bukan offsetParent chain.
+      // Ini menangkap node yang overflow ke kiri/atas (koordinat negatif).
+      var chartRect = chart.getBoundingClientRect();
+      var minX = 0, minY = 0, maxR = 0, maxB = 0;
+      chart.querySelectorAll('.so-node').forEach(function(n){
+        var r = n.getBoundingClientRect();
+        var l = r.left - chartRect.left;
+        var t = r.top  - chartRect.top;
+        var ri = r.right  - chartRect.left;
+        var bo = r.bottom - chartRect.top;
+        if(l  < minX) minX = l;
+        if(t  < minY) minY = t;
+        if(ri > maxR) maxR = ri;
+        if(bo > maxB) maxB = bo;
+      });
+      // Tambah padding 60px di semua sisi
+      var padX = 60, padY = 60;
+      minX = Math.floor(minX) - padX;
+      minY = Math.floor(minY) - padY;
+      maxR = Math.ceil(maxR)  + padX;
+      maxB = Math.ceil(maxB)  + padY;
+      var fullW = Math.max(chart.scrollWidth, maxR - minX);
+      var fullH = Math.max(chart.scrollHeight, maxB - minY);
+      // Offset untuk menggeser chart agar node yang negatif ikut ter-capture
+      var shiftX = (minX < 0) ? -minX : 0;
+      var shiftY = (minY < 0) ? -minY : 0;
+
+      // ── 2. Snapshot SVG garis dengan warna yang cocok untuk background putih ──
+      //    Garis manual pakai rgba(255,255,255,0.85) = putih → invisible di bg putih.
+      //    Kita ganti sementara ke warna hijau gelap sebelum serialize.
+      var EXPORT_LINE  = '#1a6644';   // hijau gelap — terlihat jelas di bg putih
+      var EXPORT_ARROW = '#1a6644';
+
+      var svgEls = chart.querySelectorAll('svg');
+      var svgSnapshots = [];
+
+      svgEls.forEach(function(svg){
+        try {
+          var svgRect   = svg.getBoundingClientRect();
+          // FIX: Gunakan BoundingClientRect untuk ukuran akurat, bukan getAttribute
+          var sw = svgRect.width  || parseInt(svg.getAttribute('width'))  || svg.offsetWidth  || fullW;
+          var sh = svgRect.height || parseInt(svg.getAttribute('height')) || svg.offsetHeight || fullH;
+          // Posisi relatif terhadap chart + shift agar sejajar dengan clone yang di-translate
+          var offsetX = (svgRect.left - chartRect.left) + shiftX;
+          var offsetY = (svgRect.top  - chartRect.top)  + shiftY;
+
+          // Deep-clone
+          var clone = svg.cloneNode(true);
+          clone.setAttribute('width',  sw);
+          clone.setAttribute('height', sh);
+          clone.setAttribute('xmlns',  'http://www.w3.org/2000/svg');
+
+          // Ganti semua warna putih/transparan pada stroke & fill ke warna cetak
+          clone.querySelectorAll('[stroke]').forEach(function(el){
+            var s = el.getAttribute('stroke');
+            if(!s || s === 'none') return;
+            // Putih / rgba putih / transparan → ganti ke hijau gelap
+            if(/^(white|#fff|#ffffff)$/i.test(s) || /rgba\(255,\s*255,\s*255/i.test(s)){
+              el.setAttribute('stroke', EXPORT_LINE);
+            }
+            // Warna sangat terang (hijau muda #b2d8c4 dll) → pertahankan tapi perkuat
+            if(/^#[bcedf]/i.test(s)){
+              el.setAttribute('stroke', '#2d9e6b');
+              el.setAttribute('stroke-width', String(Math.max(parseFloat(el.getAttribute('stroke-width')||'2'), 2.5)));
+            }
+          });
+          clone.querySelectorAll('[fill]').forEach(function(el){
+            var f = el.getAttribute('fill');
+            if(!f || f === 'none') return;
+            if(/^(white|#fff|#ffffff)$/i.test(f) || /rgba\(255,\s*255,\s*255/i.test(f)){
+              el.setAttribute('fill', EXPORT_ARROW);
+            }
+          });
+          // Ganti inline style stroke juga
+          clone.querySelectorAll('[style]').forEach(function(el){
+            var st = el.getAttribute('style') || '';
+            st = st.replace(/stroke\s*:\s*(white|#fff|#ffffff|rgba\(255[^)]+\))/gi, 'stroke:' + EXPORT_LINE);
+            st = st.replace(/fill\s*:\s*(white|#fff|#ffffff|rgba\(255[^)]+\))/gi,   'fill:'   + EXPORT_ARROW);
+            el.setAttribute('style', st);
+          });
+          // Marker/defs arrowhead fill
+          clone.querySelectorAll('marker path, marker polygon').forEach(function(el){
+            var f = el.getAttribute('fill') || '';
+            if(/^(white|#fff|#ffffff)$/i.test(f) || /rgba\(255,\s*255,\s*255/i.test(f) || !f){
+              el.setAttribute('fill', EXPORT_ARROW);
+            }
+          });
+
+          var serial = new XMLSerializer().serializeToString(clone);
+          var b64    = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(serial);
+          svgSnapshots.push({ url: b64, x: offsetX, y: offsetY, w: sw, h: sh });
+        } catch(e){ /* skip */ }
+      });
+
+      // ── 2. Capture SVG path data SEBELUM manipulasi DOM apapun ──────────────
+      // ROOT CAUSE: scroll viewport menyebabkan getBoundingClientRect berubah →
+      // garis di-render ulang dengan koordinat salah.
+      // SOLUSI: capture innerHTML SVG sekarang, taruh wrapper di KANAN layar (bukan scroll).
+      var EXPORT_LINE  = '#1a6644';
+      var EXPORT_ARROW = '#1a6644';
+      var prevScrollY  = window.scrollY;
+
+      // Snapshot semua SVG saat ini (sebelum DOM berubah)
+      var svgSnapData = [];
+      chart.querySelectorAll('svg').forEach(function(svg){
+        svgSnapData.push({ id: svg.id, html: svg.innerHTML,
+          w: svg.getAttribute('width') || String(svg.offsetWidth),
+          h: svg.getAttribute('height') || String(svg.offsetHeight),
+          vb: svg.getAttribute('viewBox') || '',
+          st: svg.getAttribute('style') || '' });
+      });
+
+      // ── 3. Wrapper di kanan layar — TANPA scroll viewport ───────────────────
+      var wrapper = document.createElement('div');
+      var offLeft  = window.innerWidth + 50;
+      wrapper.style.cssText = [
+        'position:fixed', 'top:0', 'left:' + offLeft + 'px',
+        'width:'  + fullW + 'px', 'height:' + fullH + 'px',
+        'overflow:visible', 'pointer-events:none', 'z-index:-1',
+        'background:' + (useBgWhite ? '#ffffff' : 'transparent')
+      ].join(';');
+
+      var chartClone = chart.cloneNode(true);
+      chartClone.style.cssText += ';width:' + fullW + 'px;height:' + fullH + 'px;overflow:visible;position:relative;top:0;left:0;';
+      if(shiftX > 0 || shiftY > 0)
+        chartClone.style.transform = 'translate(' + shiftX + 'px,' + shiftY + 'px)';
+
+      // Restore SVG dari snapshot + recolor putih → hijau
+      var cloneSvgList = chartClone.querySelectorAll('svg');
+      svgSnapData.forEach(function(snap, i){
+        var svg = (snap.id && chartClone.querySelector('#' + snap.id)) || cloneSvgList[i];
+        if(!svg) return;
+        svg.innerHTML = snap.html;
+        if(snap.w)  svg.setAttribute('width',   snap.w);
+        if(snap.h)  svg.setAttribute('height',  snap.h);
+        if(snap.vb) svg.setAttribute('viewBox', snap.vb);
+        svg.style.overflow = 'visible'; svg.setAttribute('overflow','visible');
+        svg.querySelectorAll('[stroke]').forEach(function(el){
+          var s = el.getAttribute('stroke')||'';
+          if(/^(white|#fff(fff)?|rgba\(255,\s*255,\s*255)/i.test(s)) el.setAttribute('stroke',EXPORT_LINE);
+          if(/^#[bcedf]/i.test(s)){ el.setAttribute('stroke','#2d9e6b'); el.setAttribute('stroke-width',String(Math.max(parseFloat(el.getAttribute('stroke-width')||'2'),2.5))); }
+        });
+        svg.querySelectorAll('[fill]').forEach(function(el){
+          var f = el.getAttribute('fill')||'';
+          if(/^(white|#fff(fff)?|rgba\(255,\s*255,\s*255)/i.test(f)) el.setAttribute('fill',EXPORT_ARROW);
+        });
+        svg.querySelectorAll('[style]').forEach(function(el){
+          var st = el.getAttribute('style')||'';
+          st = st.replace(/stroke\s*:\s*(white|#fff(fff)?|rgba\(255[^)]+\))/gi,'stroke:'+EXPORT_LINE);
+          st = st.replace(/fill\s*:\s*(white|#fff(fff)?|rgba\(255[^)]+\))/gi,'fill:'+EXPORT_ARROW);
+          el.setAttribute('style',st);
+        });
+        svg.querySelectorAll('marker path,marker polygon').forEach(function(el){
+          var f = el.getAttribute('fill')||'';
+          if(!f||/^(white|#fff(fff)?|rgba\(255,\s*255,\s*255)/i.test(f)) el.setAttribute('fill',EXPORT_ARROW);
+        });
+      });
+
+      wrapper.appendChild(chartClone);
+      document.body.appendChild(wrapper);
+      // TIDAK ada window.scrollTo — viewport tidak bergerak
+
+      var wrapperLeftPx = offLeft;
+      setTimeout(function(){
+        window.html2canvas(wrapper, {
+          scale          : scale,
+          useCORS        : true,
+          allowTaint     : true,
+          backgroundColor: useBgWhite ? '#ffffff' : null,
+          logging        : false,
+          imageTimeout   : 20000,
+          width          : fullW,
+          height         : fullH,
+          windowWidth    : fullW + offLeft + 200,
+          windowHeight   : Math.max(fullH, window.innerHeight) + 200,
+          x              : wrapperLeftPx,
+          y              : 0,
+          scrollX        : 0,
+          scrollY        : -prevScrollY
+        }).then(function(c){
+          document.body.removeChild(wrapper);
+          return c;
+        }).then(function(baseCanvas){
+          var finalCanvas = document.createElement('canvas');
+          finalCanvas.width  = baseCanvas.width;
+          finalCanvas.height = baseCanvas.height;
+          var ctx = finalCanvas.getContext('2d');
+          if(useBgWhite){ ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,finalCanvas.width,finalCanvas.height); }
+          ctx.drawImage(baseCanvas, 0, 0);
+          finalize(finalCanvas);
+
+        }).catch(function(e){
+          restore();
+          btn.disabled = false;
+          btn.textContent = '⬇️ Download Gambar';
+          showToast('❌ Gagal render: ' + e.message, 'error');
+        });
+
+      }, 250);
+
+      function finalize(canvas){
+        restore();
+        var mimeType = (fmt === 'jpg') ? 'image/jpeg' : 'image/png';
+        var quality  = (fmt === 'jpg') ? jpgQ : undefined;
+        var dataUrl  = canvas.toDataURL(mimeType, quality);
+        var a = document.createElement('a');
+        a.href = dataUrl; a.download = filename;
+        document.body.appendChild(a); a.click();
+        setTimeout(function(){ document.body.removeChild(a); }, 300);
+        btn.disabled = false;
+        btn.textContent = '✅ Berhasil! Download lagi?';
+        setTimeout(function(){ btn.textContent = '⬇️ Download Gambar'; }, 3500);
+        showToast('✅ ' + fmt.toUpperCase() + ' ' + scale + 'x — ' + Math.round(canvas.width) + '×' + Math.round(canvas.height) + 'px berhasil!');
+      }
+
+      function restore(){
+        window.scrollTo(0, prevScrollY);
+        // Hapus wrapper kalau masih ada (error path)
+        var w = document.querySelector('div[style*="top:' + wrapperTopPx + 'px"]');
+        if(!w) w = document.querySelector('div[style*="z-index:-9999"]');
+        if(w && w.parentNode) w.parentNode.removeChild(w);
+      }
+    }
+  };
+  // ─────────────────────────────────────────────────────────────────────────────
+
   // ── export PDF ───────────────────────────────────────────
   window.so_exportPDF=function(){
     if(!so.members.length){ showToast('Struktur masih kosong','error'); return; }
     showToast('⏳ Menyiapkan PDF...');
     function doExport(){
-      var card=$id('so_chart');
-      html2canvas(card,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',logging:false}).then(function(canvas){
-        var w=canvas.width,h=canvas.height,ratio=h/w;
-        var doc=new window.jspdf.jsPDF({orientation:ratio>1?'p':'l',unit:'mm',format:'a4'});
-        var pw=doc.internal.pageSize.getWidth(),ph=doc.internal.pageSize.getHeight();
-        var iw=pw-10,ih=iw*ratio; if(ih>ph-10){ih=ph-10;iw=ih/ratio;}
-        doc.addImage(canvas.toDataURL('image/png'),'PNG',(pw-iw)/2,(ph-ih)/2,iw,ih);
-        doc.save((($id('so_orgName').value||'struktur-organisasi').replace(/\s+/g,'-').toLowerCase())+'.pdf');
-        showToast('✅ PDF berhasil didownload!');
-      }).catch(function(e){ showToast('❌ Gagal: '+e.message,'error'); });
+      var chart  = $id('so_chart');
+      // FIX: Pakai getBoundingClientRect untuk menangkap node dengan koordinat negatif
+      var chartRectPDF = chart.getBoundingClientRect();
+      var minX2=0, minY2=0, maxR2=0, maxB2=0;
+      chart.querySelectorAll('.so-node').forEach(function(n){
+        var r=n.getBoundingClientRect();
+        var l=r.left-chartRectPDF.left, t=r.top-chartRectPDF.top;
+        var ri=r.right-chartRectPDF.left, bo=r.bottom-chartRectPDF.top;
+        if(l<minX2)minX2=l; if(t<minY2)minY2=t;
+        if(ri>maxR2)maxR2=ri; if(bo>maxB2)maxB2=bo;
+      });
+      var padPDF=60;
+      minX2=Math.floor(minX2)-padPDF; minY2=Math.floor(minY2)-padPDF;
+      maxR2=Math.ceil(maxR2)+padPDF;  maxB2=Math.ceil(maxB2)+padPDF;
+      var fullW  = Math.max(chart.scrollWidth, maxR2 - minX2);
+      var fullH  = Math.max(chart.scrollHeight, maxB2 - minY2);
+      var shiftX2 = (minX2 < 0) ? -minX2 : 0;
+      var shiftY2 = (minY2 < 0) ? -minY2 : 0;
+
+      // PDF: wrapper di kanan layar — TANPA scroll viewport
+      var pScrollY = window.scrollY;
+
+      // Snapshot SVG sebelum DOM berubah
+      var pSvgSnapData = [];
+      chart.querySelectorAll('svg').forEach(function(svg){
+        pSvgSnapData.push({ id: svg.id, html: svg.innerHTML,
+          w: svg.getAttribute('width') || String(svg.offsetWidth),
+          h: svg.getAttribute('height') || String(svg.offsetHeight),
+          vb: svg.getAttribute('viewBox') || '' });
+      });
+
+      var wrapperPDF = document.createElement('div');
+      var pOffLeft = window.innerWidth + 50;
+      var PEXP_LINE = '#1a6644';
+      wrapperPDF.style.cssText = 'position:fixed;top:0;left:'+pOffLeft+'px;width:'+fullW+'px;height:'+fullH+'px;overflow:visible;pointer-events:none;z-index:-1;background:#ffffff';
+
+      var chartClonePDF = chart.cloneNode(true);
+      chartClonePDF.style.cssText += ';width:'+fullW+'px;height:'+fullH+'px;overflow:visible;position:relative;top:0;left:0;';
+      if(shiftX2 > 0 || shiftY2 > 0)
+        chartClonePDF.style.transform = 'translate('+shiftX2+'px,'+shiftY2+'px)';
+
+      var pCloneSvgs = chartClonePDF.querySelectorAll('svg');
+      pSvgSnapData.forEach(function(snap, i){
+        var svg = (snap.id && chartClonePDF.querySelector('#'+snap.id)) || pCloneSvgs[i];
+        if(!svg) return;
+        svg.innerHTML = snap.html;
+        if(snap.w)  svg.setAttribute('width',  snap.w);
+        if(snap.h)  svg.setAttribute('height', snap.h);
+        if(snap.vb) svg.setAttribute('viewBox',snap.vb);
+        svg.style.overflow='visible'; svg.setAttribute('overflow','visible');
+        svg.querySelectorAll('[stroke]').forEach(function(el){
+          var s=el.getAttribute('stroke')||'';
+          if(/^(white|#fff(fff)?|rgba\(255,\s*255,\s*255)/i.test(s)) el.setAttribute('stroke',PEXP_LINE);
+          if(/^#[bcedf]/i.test(s)){ el.setAttribute('stroke','#2d9e6b'); el.setAttribute('stroke-width',String(Math.max(parseFloat(el.getAttribute('stroke-width')||'2'),2.5))); }
+        });
+        svg.querySelectorAll('[fill]').forEach(function(el){
+          var f=el.getAttribute('fill')||'';
+          if(/^(white|#fff(fff)?|rgba\(255,\s*255,\s*255)/i.test(f)) el.setAttribute('fill',PEXP_LINE);
+        });
+        svg.querySelectorAll('[style]').forEach(function(el){
+          var st=el.getAttribute('style')||'';
+          st=st.replace(/stroke\s*:\s*(white|#fff(fff)?|rgba\(255[^)]+\))/gi,'stroke:'+PEXP_LINE);
+          st=st.replace(/fill\s*:\s*(white|#fff(fff)?|rgba\(255[^)]+\))/gi,'fill:'+PEXP_LINE);
+          el.setAttribute('style',st);
+        });
+        svg.querySelectorAll('marker path,marker polygon').forEach(function(el){
+          var f=el.getAttribute('fill')||'';
+          if(!f||/^(white|#fff(fff)?|rgba\(255,\s*255,\s*255)/i.test(f)) el.setAttribute('fill',PEXP_LINE);
+        });
+      });
+
+      wrapperPDF.appendChild(chartClonePDF);
+      document.body.appendChild(wrapperPDF);
+      // TIDAK ada window.scrollTo
+
+      setTimeout(function(){
+        html2canvas(wrapperPDF,{scale:3,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',logging:false,
+          width:fullW,height:fullH,
+          windowWidth:fullW+pOffLeft+200, windowHeight:Math.max(fullH,window.innerHeight)+200,
+          x:pOffLeft,y:0,scrollX:0,scrollY:-pScrollY
+        }).then(function(c){
+          document.body.removeChild(wrapperPDF);
+          return c;
+        }).then(function(baseCanvas){
+          var fc=document.createElement('canvas');
+          fc.width=baseCanvas.width; fc.height=baseCanvas.height;
+          var ctx=fc.getContext('2d');
+          ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,fc.width,fc.height);
+          ctx.drawImage(baseCanvas,0,0);
+          window.scrollTo(0,pScrollY);
+          var w=fc.width,h=fc.height,ratio=h/w;
+          var doc=new window.jspdf.jsPDF({orientation:ratio>1?'p':'l',unit:'mm',format:'a4'});
+          var pw=doc.internal.pageSize.getWidth(),ph=doc.internal.pageSize.getHeight();
+          var margin=5, printW=pw-margin*2, printH=ph-margin*2;
+          var mmPerPx=printW/fc.width, totalMmH=fc.height*mmPerPx;
+          if(totalMmH<=printH){
+            doc.addImage(fc.toDataURL('image/png'),'PNG',margin,margin,printW,totalMmH);
+          } else {
+            var pageHpx=Math.floor(printH/mmPerPx), pageCount=Math.ceil(fc.height/pageHpx);
+            var tmp=document.createElement('canvas'); tmp.width=fc.width;
+            var tctx=tmp.getContext('2d');
+            for(var pg=0;pg<pageCount;pg++){
+              if(pg>0) doc.addPage();
+              var srcY=pg*pageHpx, sliceH=Math.min(pageHpx,fc.height-srcY);
+              tmp.height=sliceH; tctx.clearRect(0,0,fc.width,sliceH);
+              tctx.fillStyle='#ffffff'; tctx.fillRect(0,0,fc.width,sliceH);
+              tctx.drawImage(fc,0,srcY,fc.width,sliceH,0,0,fc.width,sliceH);
+              doc.addImage(tmp.toDataURL('image/png'),'PNG',margin,margin,printW,sliceH*mmPerPx);
+            }
+          }
+          doc.save((($id('so_orgName').value||'struktur-organisasi').replace(/\s+/g,'-').toLowerCase())+'.pdf');
+          showToast('✅ PDF berhasil didownload!');
+        }).catch(function(e){
+          window.scrollTo(0,pScrollY);
+          showToast('❌ Gagal: '+e.message,'error');
+        });
+      },250);
     }
-    function loadScript(src,cb){ if(document.querySelector('script[src="'+src+'"]')){cb();return;} var s=document.createElement('script');s.src=src;s.onload=cb;document.head.appendChild(s); }
+    function loadScript(src,cb){ if(window.html2canvas){cb();return;} var s=document.createElement('script');s.src=src;s.onload=cb;document.head.appendChild(s); }
     loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',function(){
       loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',function(){ setTimeout(doExport,300); });
     });
@@ -10609,7 +11143,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   <div id="toastContainer" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;"></div>
 
   <!-- ═══ UNDO TOAST (tengah bawah layar, besar & jelas) ═══ -->
-  <div id="undoContainer" style="position:fixed;bottom:88px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;width:min(96vw,420px);"></div>
+  <div id="undoContainer" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;width:min(96vw,420px);"></div>
 
   <!-- ═══ SEARCH GLOBAL MODAL ═══ -->
   <div id="searchModal" class="modal-overlay" style="display:none;align-items:flex-start;padding-top:60px;" onclick="if(event.target===this)closeSearch()">
@@ -10636,29 +11170,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   </div>
 
 
-  <!-- ═══ BOTTOM NAVIGATION (mobile) ═══ -->
-  <nav id="bottomNav" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:80;
-    background:rgba(255,255,255,0.97);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-    border-top:1px solid #e0ece5;padding:6px 0 env(safe-area-inset-bottom,6px);
-    box-shadow:0 -4px 20px rgba(0,0,0,0.12);">
-    <div style="display:flex;justify-content:space-around;align-items:center;max-width:480px;margin:0 auto;">
-      <button onclick="goHomeNav()" class="nav-btn" id="navHome">
-        <div style="font-size:22px;">🏠</div><div style="font-size:9px;font-weight:700;margin-top:2px;">Menu</div>
-      </button>
-      <button onclick="openSection('saldo')" class="nav-btn" id="navSaldo">
-        <div style="font-size:22px;">📊</div><div style="font-size:9px;font-weight:700;margin-top:2px;">Saldo</div>
-      </button>
-      <button onclick="openSection('kasmasuk')" class="nav-btn" id="navKas">
-        <div style="font-size:22px;">💵</div><div style="font-size:9px;font-weight:700;margin-top:2px;">Kas</div>
-      </button>
-      <button onclick="openSection('absensi')" class="nav-btn" id="navAbsen">
-        <div style="font-size:22px;">📋</div><div style="font-size:9px;font-weight:700;margin-top:2px;">Absensi</div>
-      </button>
-      <button onclick="openSection('laporan')" class="nav-btn" id="navLaporan">
-        <div style="font-size:22px;">📑</div><div style="font-size:9px;font-weight:700;margin-top:2px;">Laporan</div>
-      </button>
-    </div>
-  </nav>
+
   <!-- ═══ TOUCH SUPPORT: efek hover menu di HP ═══ -->
   <script>
   (function() {
