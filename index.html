@@ -50,66 +50,58 @@
     background: white; padding: 12px 16px; border-radius: 14px; margin-bottom: 14px;
   }
 
-  /* === SIGNAL DOT (BCA-style) === */
-  .signal-dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    display: inline-block; margin-left: 7px; vertical-align: middle;
-    flex-shrink: 0;
-    box-shadow: 0 0 0 0 rgba(34,197,94,0.5);
-    transition: background .5s ease, box-shadow .5s ease;
-    position: relative; top: -1px;
+  /* ── Indikator Koneksi (MyBCA-style) ── */
+  .conn-wrapper {
+    display: flex; align-items: center; gap: 8px;
   }
-  .signal-dot.good {
+  .conn-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(255,255,255,.9);
+    transition: background .4s ease, box-shadow .4s ease;
+    position: relative;
+  }
+  /* Pulse animasi saat koneksi bagus */
+  .conn-dot.good {
     background: #22c55e;
+    box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 0 0 4px rgba(34,197,94,.25);
     animation: pulse-green 2s infinite;
   }
-  .signal-dot.weak {
+  .conn-dot.weak {
     background: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 0 0 4px rgba(59,130,246,.2);
     animation: pulse-blue 2.5s infinite;
   }
-  .signal-dot.bad {
+  .conn-dot.bad {
     background: #ef4444;
-    animation: pulse-red 1.5s infinite;
+    box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 0 0 4px rgba(239,68,68,.2);
+    animation: none;
   }
-  .signal-dot.checking {
+  .conn-dot.checking {
     background: #d1d5db;
-    animation: spin-dot 1s linear infinite;
+    animation: none;
   }
   @keyframes pulse-green {
-    0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.55); }
-    70%  { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
-    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+    0%,100% { box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 0 0 4px rgba(34,197,94,.25); }
+    50%      { box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 0 0 7px rgba(34,197,94,.0); }
   }
   @keyframes pulse-blue {
-    0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0.55); }
-    70%  { box-shadow: 0 0 0 6px rgba(59,130,246,0); }
-    100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+    0%,100% { box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 0 0 4px rgba(59,130,246,.2); }
+    50%      { box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 0 0 7px rgba(59,130,246,.0); }
   }
-  @keyframes pulse-red {
-    0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0.65); }
-    70%  { box-shadow: 0 0 0 7px rgba(239,68,68,0); }
-    100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
-  }
-  @keyframes spin-dot {
-    0%   { opacity: 1; }
-    50%  { opacity: 0.3; }
-    100% { opacity: 1; }
-  }
-
-  .signal-tooltip {
-    position: absolute; left: 50%; transform: translateX(-50%);
-    top: 18px; background: rgba(15,30,20,0.88); color: #fff;
-    font-size: 11px; padding: 4px 9px; border-radius: 7px;
-    white-space: nowrap; pointer-events: none;
-    opacity: 0; transition: opacity .2s;
+  .conn-tooltip {
+    position: absolute; top: 18px; left: 0;
+    background: rgba(15,46,31,.92); color: #fff;
+    font-size: 11px; white-space: nowrap;
+    padding: 4px 9px; border-radius: 7px;
+    pointer-events: none; opacity: 0;
+    transform: translateY(4px);
+    transition: opacity .2s, transform .2s;
     z-index: 999;
   }
-  .signal-dot-wrap {
-    position: relative; display: inline-flex; align-items: center;
-    cursor: default;
+  .conn-dot:hover .conn-tooltip {
+    opacity: 1; transform: translateY(0);
   }
-  .signal-dot-wrap:hover .signal-tooltip { opacity: 1; }
-  /* === END SIGNAL DOT === */
 
   /* MENU GRID */
   .menu-grid {
@@ -273,6 +265,10 @@
   [data-theme="dark"] .topbar,
   [data-theme="dark"] .menu-card,
   [data-theme="dark"] .modal-box { background: #15241c; box-shadow: 0 8px 26px rgba(0,0,0,.55); }
+  [data-theme="dark"] .conn-dot { box-shadow: 0 0 0 2px #15241c; }
+  [data-theme="dark"] .conn-dot.good  { box-shadow: 0 0 0 2px #15241c, 0 0 0 4px rgba(34,197,94,.3); }
+  [data-theme="dark"] .conn-dot.weak  { box-shadow: 0 0 0 2px #15241c, 0 0 0 4px rgba(59,130,246,.3); }
+  [data-theme="dark"] .conn-dot.bad   { box-shadow: 0 0 0 2px #15241c, 0 0 0 4px rgba(239,68,68,.3); }
   [data-theme="dark"] h1,
   [data-theme="dark"] h2,
   [data-theme="dark"] .brand,
@@ -597,46 +593,23 @@
   }
 
 /* ── STRUKTUR ORGANISASI ────────────────── */
-.so-chart-wrap {
-  font-family: inherit;
-  display: block;
-  padding: 0 16px 16px;
-}
+.so-chart-wrap { font-family: inherit; display:block; padding:0 16px 16px; }
 .so-title-block { text-align:center; margin-bottom:28px; }
 .so-main-title { font-size:22px; font-weight:800; letter-spacing:1px; color:#0a3d22; text-transform:uppercase; }
 .so-sub-title { font-size:12px; font-weight:700; color:#1a6640; letter-spacing:2px; text-transform:uppercase; margin-top:3px; }
 .so-period { font-size:11px; color:#7a9585; margin-top:2px; }
 
-/* Scroll container — harus overflow-x:auto dan punya lebar tetap */
+/* Scroll hint for mobile */
 #so_chartScroll {
   scrollbar-width: thin;
   scrollbar-color: #b2d8c4 transparent;
-  overflow-x: auto;
-  overflow-y: visible;
-  -webkit-overflow-scrolling: touch;
-  width: 100%;
 }
 #so_chartScroll::-webkit-scrollbar { height: 4px; }
 #so_chartScroll::-webkit-scrollbar-track { background: transparent; }
 #so_chartScroll::-webkit-scrollbar-thumb { background: #b2d8c4; border-radius: 4px; }
 
-/* so_chart: BLOK penuh, tidak inline — agar tier di dalamnya flex normal */
-#so_chart {
-  display: block;
-  min-width: max-content;
-  min-height: 300px;
-}
-
-/* Tier rows: flex tapi BUKAN inline-flex — selalu 1 baris horizontal, scroll parent yang menangani */
-.so-tier {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 14px;
-  flex-wrap: nowrap;
-  width: max-content;
-  margin: 0 auto;
-}
+/* Tier rows — nowrap so nodes never wrap to next line on mobile (scroll instead) */
+.so-tier { display:flex; justify-content:center; gap:14px; flex-wrap:nowrap; }
 .so-conn-v { height:28px; display:flex; justify-content:center; position:relative; }
 .so-conn-v::before { content:''; position:absolute; top:0; bottom:0; left:50%; width:2px; background:#b2d8c4; }
 
@@ -678,14 +651,9 @@
 
 /* Divisi group — kepala + sub-anggota di bawahnya */
 .so-divisi-tier {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 0;
-  flex-wrap: nowrap;
-  width: max-content;
-  margin: 0 auto;
-  overflow: visible;
+  display: flex; justify-content: center;
+  gap: 0; flex-wrap: nowrap; align-items: flex-start;
+  min-width: max-content; overflow: visible;
 }
 .so-divisi-group { display:flex; flex-direction:column; align-items:center; gap:0; flex-shrink:0; padding: 0 10px; }
 .so-divisi-label-chip { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:#1a6640; background:#d4edd9; border-radius:20px; padding:2px 8px; margin-bottom:4px; white-space:nowrap; }
@@ -843,15 +811,13 @@
   <div id="appView">
 
     <div class="topbar">
-      <div style="display:flex;align-items:center;gap:0;">
+      <div class="conn-wrapper">
+        <!-- Indikator koneksi bulat (MyBCA-style) -->
+        <div class="conn-dot checking" id="connDot" title="">
+          <div class="conn-tooltip" id="connTooltip">Memeriksa koneksi…</div>
+        </div>
         <div>
-          <div style="display:flex;align-items:center;gap:4px;">
-            <div class="brand">🕌 Mumi MB3</div>
-            <span class="signal-dot-wrap">
-              <span class="signal-dot checking" id="signalDot"></span>
-              <span class="signal-tooltip" id="signalTooltip">Memeriksa koneksi…</span>
-            </span>
-          </div>
+          <div class="brand">🕌 Mumi MB3</div>
           <div class="muted" id="currentUser" style="font-size:11px;"></div>
         </div>
       </div>
@@ -1150,109 +1116,53 @@
     <!-- ═══ ABSENSI ═══ -->
     <div id="sec-absensi" class="section" style="display:none;">
       <button class="back" onclick="goBack()">← Menu</button>
+      <div class="card">
+        <h2>📋 Absensi Kehadiran</h2>
+        <div class="row">
+          <div><label>Tanggal</label><input type="date" id="absTanggal" onchange="loadAbsensi()"></div>
+          <div><label>Sesi</label><select id="absSesi" onchange="loadAbsensi()"></select></div>
+        </div>
 
-      <!-- ═══ ABSENSI: TAMPILAN UTAMA (Project-style) ═══ -->
-      <div id="absMainView">
-        <!-- Header bar mirip Acara/Project -->
-        <div class="card" style="padding:14px 16px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-            <h2 style="margin:0;">📋 Absensi Pengajian</h2>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-              <button class="prj-view-btn active" id="absBtnKanban" onclick="absSetView('kanban')" title="Board">⊞ Board</button>
-              <button class="prj-view-btn" id="absBtnList" onclick="absSetView('list')" title="List">☰ List</button>
-              <button onclick="absOpenExportModal()" style="width:auto;padding:8px 14px;background:linear-gradient(135deg,#dc2626,#ef4444);" title="Export PDF">📄 Export PDF</button>
-              <button onclick="absOpenCatatForm()" style="width:auto;padding:8px 16px;">+ Catat Absensi</button>
+        <!-- SEARCH BOX -->
+        <label>🔍 Cari & Pilih Siswa</label>
+        <input type="text" id="absSearch" placeholder="Ketik nama siswa lalu pilih status..." oninput="absOnSearch()" autocomplete="off">
+        <!-- Dropdown hasil pencarian -->
+        <div id="absDropdown" style="display:none;background:#f0f7f3;border-radius:8px;margin-top:-6px;margin-bottom:10px;max-height:220px;overflow-y:auto;border:2px solid #2d9e6b;"></div>
+
+        <!-- RINGKASAN YANG SUDAH DIPILIH (badges) -->
+        <div id="absBadgeArea" style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;min-height:0;"></div>
+
+        <!-- REVIEW AREA — muncul sebelum simpan -->
+        <div id="absReviewArea" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+            <div style="font-weight:700;font-size:13px;color:#1a6644;">📝 Daftar Absensi (<span id="absReviewCount">0</span> siswa dipilih)</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="small secondary" onclick="absTandaiSemua('hadir')">✅ Semua Hadir</button>
+              <button class="small secondary" onclick="absTandaiSemua('tidak_hadir')">❌ Semua Tdk Hadir</button>
             </div>
           </div>
-          <!-- Filter sesi -->
-          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-            <span style="font-size:12px;color:#7a9585;font-weight:600;">Sesi:</span>
-            <div id="absSesiFilter" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
-          </div>
+          <div id="absReviewList"></div>
         </div>
 
-        <!-- Stat summary cards -->
-        <div id="absStatCards" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;"></div>
-
-        <!-- Board / List view -->
-        <div id="absBoard"><p class="muted" style="text-align:center;padding:24px 0;">⏳ Memuat data sesi...</p></div>
+        <button onclick="simpanAbsensi()" style="margin-top:10px;">Simpan Absensi</button>
+        <div id="absMsg"></div>
+        <p class="muted" style="font-size:11px;margin-top:8px;">
+          ℹ️ Ketik nama → pilih status. Hanya siswa yang dipilih yang dicatat. Siswa lain otomatis <b>Tidak Hadir</b>.<br>
+          Setelah semua dipilih, review daftar di atas sebelum simpan.
+        </p>
       </div>
-
-      <!-- ═══ ABSENSI: FORM CATAT (slide-in) ═══ -->
-      <div id="absCatatView" style="display:none;">
-        <button class="back" onclick="absBackToMain()">← Kembali</button>
-        <div class="card">
-          <h2>📝 Catat Absensi</h2>
-          <div class="row">
-            <div><label>Tanggal</label><input type="date" id="absTanggal" onchange="loadAbsensi()"></div>
-            <div><label>Sesi</label><select id="absSesi" onchange="loadAbsensi()"></select></div>
-          </div>
-          <label>🔍 Cari & Pilih Santri</label>
-          <input type="text" id="absSearch" placeholder="Ketik nama santri lalu pilih status..." oninput="absOnSearch()" autocomplete="off">
-          <div id="absDropdown" style="display:none;background:#f0f7f3;border-radius:8px;margin-top:-6px;margin-bottom:10px;max-height:220px;overflow-y:auto;border:2px solid #2d9e6b;"></div>
-          <div id="absBadgeArea" style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;min-height:0;"></div>
-          <div id="absReviewArea" style="display:none;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
-              <div style="font-weight:700;font-size:13px;color:#1a6644;">📝 Daftar Absensi (<span id="absReviewCount">0</span> santri dipilih)</div>
-              <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <button class="small secondary" onclick="absTandaiSemua('hadir')">✅ Semua Hadir</button>
-                <button class="small secondary" onclick="absTandaiSemua('tidak_hadir')">❌ Semua Tdk Hadir</button>
-              </div>
-            </div>
-            <div id="absReviewList"></div>
-          </div>
-          <button onclick="simpanAbsensi()" style="margin-top:10px;">💾 Simpan Absensi</button>
-          <div id="absMsg"></div>
-          <p class="muted" style="font-size:11px;margin-top:8px;">
-            ℹ️ Ketik nama → pilih status. Santri yang tidak dipilih otomatis dicatat <b>Tidak Hadir</b>.
-          </p>
+      <div class="card">
+        <h2>Kelola Sesi</h2>
+        <p class="muted" style="margin-bottom:10px;">Tambah sesi kalau 1 hari ada lebih dari 1x ngaji.</p>
+        <label>Nama Sesi</label>
+        <input type="text" id="sesiNama" placeholder="Cth: Ngaji Sore">
+        <div class="row">
+          <div><label>Jam Mulai (opsional)</label><input type="time" id="sesiMulai"></div>
+          <div><label>Jam Selesai (opsional)</label><input type="time" id="sesiSelesai"></div>
         </div>
-        <!-- Kelola Sesi (tetap ada tapi tersembunyi di bawah) -->
-        <div class="card">
-          <h2>⚙️ Kelola Sesi</h2>
-          <p class="muted" style="margin-bottom:10px;">Tambah sesi kalau 1 hari ada lebih dari 1x ngaji.</p>
-          <label>Nama Sesi</label>
-          <input type="text" id="sesiNama" placeholder="Cth: Ngaji Sore">
-          <div class="row">
-            <div><label>Jam Mulai (opsional)</label><input type="time" id="sesiMulai"></div>
-            <div><label>Jam Selesai (opsional)</label><input type="time" id="sesiSelesai"></div>
-          </div>
-          <button onclick="addSesi()">Tambah Sesi</button>
-          <div id="sesiMsg"></div>
-          <div id="sesiList" style="margin-top:10px;"></div>
-        </div>
-      </div>
-
-      <!-- ═══ MODAL EXPORT PDF ═══ -->
-      <div id="absExportModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;align-items:center;justify-content:center;">
-        <div style="background:#fff;border-radius:18px;padding:24px;width:92%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-          <h2 style="margin-bottom:16px;">📄 Export Laporan Absensi</h2>
-          <div style="display:flex;gap:8px;margin-bottom:16px;">
-            <button id="absExTabBulan" onclick="absExSetTab('bulan')" style="flex:1;padding:10px;font-size:13px;">📅 Bulanan</button>
-            <button id="absExTabTahun" onclick="absExSetTab('tahun')" style="flex:1;padding:10px;font-size:13px;background:#f0f7f3;color:#1a6644;">📆 Tahunan</button>
-          </div>
-          <div id="absExPanelBulan">
-            <label>Pilih Bulan</label>
-            <input type="month" id="absExBulan" style="margin-bottom:12px;">
-            <label>Pilih Sesi</label>
-            <select id="absExSesiBulan" style="margin-bottom:16px;">
-              <option value="all">Semua Sesi</option>
-            </select>
-          </div>
-          <div id="absExPanelTahun" style="display:none;">
-            <label>Pilih Tahun</label>
-            <input type="number" id="absExTahun" min="2020" max="2099" placeholder="2026" style="margin-bottom:12px;">
-            <label>Pilih Sesi</label>
-            <select id="absExSesiTahun" style="margin-bottom:16px;">
-              <option value="all">Semua Sesi</option>
-            </select>
-          </div>
-          <div style="display:flex;gap:8px;">
-            <button onclick="absDoExportPDF()" style="flex:1;">📥 Download PDF</button>
-            <button onclick="$('absExportModal').style.display='none'" class="secondary" style="flex:1;width:auto;">Batal</button>
-          </div>
-          <div id="absExMsg" style="margin-top:10px;font-size:13px;"></div>
-        </div>
+        <button onclick="addSesi()">Tambah Sesi</button>
+        <div id="sesiMsg"></div>
+        <div id="sesiList" style="margin-top:10px;"></div>
       </div>
     </div>
 
@@ -1754,14 +1664,14 @@
       </div>
 
       <!-- BAGAN ORGANISASI -->
-      <div id="so_chartCard" style="padding:16px 0 120px;overflow:visible;"><div id="so_chartScroll" style="overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;padding-bottom:12px;width:100%;display:block;">
+      <div id="so_chartCard" style="padding:16px 0 120px;overflow:visible;"><div id="so_chartScroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:12px;">
         <div id="so_emptyState" style="text-align:center;padding:40px 16px;color:#c8e6d5;">
           <div style="font-size:40px;margin-bottom:12px;">🏛️</div>
           <div style="font-weight:700;font-size:15px;margin-bottom:6px;">Struktur Organisasi Kosong</div>
           <div style="font-size:13px;">Klik tombol <b>⚙️ Edit</b> untuk mulai menambah anggota.</div>
         </div>
         <div id="so_mobileScrollHint" style="display:none;text-align:center;padding:4px 0 8px;font-size:11px;color:#b2d8c4;">← Geser kanan-kiri untuk melihat seluruh bagan →</div>
-        <div id="so_chart" style="display:block;min-width:max-content;min-height:300px;"></div>
+        <div id="so_chart" style="min-width:max-content;min-height:300px;"></div>
       </div><!-- end so_chartScroll -->
       </div>
 
@@ -2007,6 +1917,58 @@ const SUPABASE_KEY = 'sb_publishable_PqbtdOOyAdKlDqEhtTAMEA_229Ak1F8';
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// ── Indikator Koneksi (MyBCA-style) ──────────────────────────────────────────
+(function initConnMonitor() {
+  const dot = document.getElementById('connDot');
+  const tip = document.getElementById('connTooltip');
+  if (!dot || !tip) return;
+
+  let lastRtt = null;
+
+  function setConn(state, label) {
+    dot.className = 'conn-dot ' + state;
+    tip.textContent = label;
+  }
+
+  async function checkConn() {
+    if (!navigator.onLine) {
+      setConn('bad', '❌ Tidak ada koneksi internet');
+      return;
+    }
+    const t0 = performance.now();
+    try {
+      // Ping Supabase health endpoint (ringan, no-cors)
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 4000);
+      await fetch(SUPABASE_URL + '/rest/v1/', {
+        method: 'HEAD', mode: 'no-cors', signal: ctrl.signal,
+        cache: 'no-store'
+      });
+      clearTimeout(tid);
+      const rtt = Math.round(performance.now() - t0);
+      lastRtt = rtt;
+      if (rtt < 600) {
+        setConn('good', '🟢 Koneksi bagus (' + rtt + ' ms)');
+      } else if (rtt < 2000) {
+        setConn('weak', '🔵 Koneksi lemah (' + rtt + ' ms)');
+      } else {
+        setConn('bad', '🔴 Koneksi buruk (' + rtt + ' ms)');
+      }
+    } catch(e) {
+      setConn('bad', '🔴 Tidak terhubung ke server');
+    }
+  }
+
+  // Cek pertama kali setelah 1 detik, lalu setiap 30 detik
+  setTimeout(checkConn, 1000);
+  setInterval(checkConn, 30000);
+
+  // Reaksi cepat saat offline/online
+  window.addEventListener('offline', () => setConn('bad', '❌ Koneksi internet terputus'));
+  window.addEventListener('online',  () => { setConn('checking', 'Memeriksa koneksi…'); setTimeout(checkConn, 500); });
+})();
+// ─────────────────────────────────────────────────────────────────────────────
+
 const IDR = n => 'Rp ' + Math.round(+n || 0).toLocaleString('id-ID');
 // Parsing uang: selalu bulatkan ke integer (hindari bug floating point 49999.99)
 const parseUang = v => Math.round(parseFloat(v) || 0);
@@ -2211,12 +2173,7 @@ function openSection(name) {
   history.pushState({ section: name }, '');
   const loaders = {
     saldo: loadDashboard, kasmasuk: () => { loadKasMasuk(); loadKasBulanSection(); }, pengeluaran: loadPengeluaran,
-    qurban: loadQurban, anggota: loadAnggota, absensi: () => {
-      // Reset absensi ke board view (bukan form catat)
-      if ($('absMainView')) $('absMainView').style.display = 'block';
-      if ($('absCatatView')) $('absCatatView').style.display = 'none';
-      loadAbsensiBoard();
-    }, musyawarah: loadMusyawarah, acara: () => {
+    qurban: loadQurban, anggota: loadAnggota, absensi: loadAbsensi, musyawarah: loadMusyawarah, acara: () => {
       // Reset acara view ke list/kanban
       if ($('acListView')) $('acListView').style.display = 'block';
       if ($('acFormView')) $('acFormView').style.display = 'none';
@@ -3286,436 +3243,7 @@ async function simpanAbsensi() {
   if (error) { setMsg('absMsg', 'Gagal: ' + error.message, true); return; }
   const hadir = rows.filter(r => r.status === 'hadir').length;
   setMsg('absMsg', `✅ Absensi tersimpan — ${hadir} hadir dari ${rows.length} siswa`);
-  setTimeout(() => absBackToMain(), 1500);
 }
-
-// ═══════════════════════════════════════════════════
-// ABSENSI — PROJECT/BOARD VIEW + PDF EXPORT
-// ═══════════════════════════════════════════════════
-
-let _absView = 'kanban'; // 'kanban' | 'list'
-let _absFilterSesi = 'all'; // sesi id atau 'all'
-
-// Buka tampilan utama board
-async function loadAbsensiBoard() {
-  if (!sesiCache.length) await loadSesi();
-  // Render filter sesi pills
-  const filterEl = $('absSesiFilter');
-  if (filterEl) {
-    const all = `<button class="prj-filter-btn abs-sf ${_absFilterSesi==='all'?'active':''}"
-      onclick="absSetSesiFilter('all')" style="width:auto;padding:5px 13px;font-size:12px;">Semua</button>`;
-    const pills = sesiCache.map(s => {
-      const jam = s.jam_mulai ? ` (${s.jam_mulai.slice(0,5)})` : '';
-      return `<button class="prj-filter-btn abs-sf ${_absFilterSesi==s.id?'active':''}"
-        onclick="absSetSesiFilter(${s.id})" style="width:auto;padding:5px 13px;font-size:12px;">
-        ${escapeHtml(s.nama)}${jam}</button>`;
-    }).join('');
-    filterEl.innerHTML = all + pills;
-  }
-  await _absRenderBoard();
-}
-
-function absSetSesiFilter(val) {
-  _absFilterSesi = val;
-  document.querySelectorAll('.abs-sf').forEach(b => b.classList.remove('active'));
-  loadAbsensiBoard();
-}
-
-function absSetView(v) {
-  _absView = v;
-  $('absBtnKanban').classList.toggle('active', v === 'kanban');
-  $('absBtnList').classList.toggle('active', v === 'list');
-  _absRenderBoard();
-}
-
-async function _absRenderBoard() {
-  const boardEl = $('absBoard');
-  if (!boardEl) return;
-  boardEl.innerHTML = '<p class="muted" style="text-align:center;padding:24px 0;">⏳ Memuat data kehadiran...</p>';
-
-  // Query semua kehadiran (filter sesi jika dipilih)
-  let q = db.from('kehadiran').select('tanggal, sesi_id, anggota_id, status, sesi(nama, jam_mulai), anggota(nama)').order('tanggal', { ascending: false }).limit(5000);
-  if (_absFilterSesi !== 'all') q = q.eq('sesi_id', _absFilterSesi);
-  const { data: rows, error } = await q;
-  if (error) { boardEl.innerHTML = `<p class="err">Gagal memuat: ${escapeHtml(error.message)}</p>`; return; }
-  if (!rows || !rows.length) {
-    boardEl.innerHTML = '<div class="card" style="text-align:center;padding:32px;"><div style="font-size:48px;margin-bottom:12px;">📋</div><p class="muted">Belum ada data absensi.<br>Tekan <b>+ Catat Absensi</b> untuk mulai.</p></div>';
-    _absRenderStatCards([], []);
-    return;
-  }
-
-  // Kumpulkan pertemuan (tanggal unik per sesi)
-  const pertemuanMap = {}; // key: `${sesiId}_${tgl}`
-  rows.forEach(r => {
-    const key = `${r.sesi_id}_${r.tanggal}`;
-    if (!pertemuanMap[key]) {
-      pertemuanMap[key] = {
-        sesiId: r.sesi_id,
-        sesiNama: r.sesi?.nama || `Sesi ${r.sesi_id}`,
-        sesiJam: r.sesi?.jam_mulai ? r.sesi.jam_mulai.slice(0,5) : null,
-        tanggal: r.tanggal,
-        hadir: 0, izin: 0, sakit: 0, tidak: 0, total: 0,
-      };
-    }
-    const p = pertemuanMap[key];
-    p.total++;
-    if (r.status === 'hadir') p.hadir++;
-    else if (r.status === 'izin') p.izin++;
-    else if (r.status === 'sakit') p.sakit++;
-    else p.tidak++;
-  });
-
-  const pertemuan = Object.values(pertemuanMap).sort((a,b) => b.tanggal.localeCompare(a.tanggal));
-  _absRenderStatCards(pertemuan, rows);
-
-  if (_absView === 'kanban') {
-    _absRenderKanban(pertemuan);
-  } else {
-    _absRenderList(pertemuan);
-  }
-}
-
-function _absRenderStatCards(pertemuan, rows) {
-  const el = $('absStatCards');
-  if (!el) return;
-  const totalPertemuan = pertemuan.length;
-  const totalHadir = rows.filter(r => r.status === 'hadir').length;
-  const totalSiswa = new Set(rows.map(r => r.anggota_id)).size;
-  const pct = rows.length ? Math.round(totalHadir / rows.length * 100) : 0;
-  el.innerHTML = [
-    { label: 'Total Pertemuan', val: totalPertemuan, icon: '📅', color: '#1a6644' },
-    { label: 'Total Hadir', val: totalHadir, icon: '✅', color: '#16a34a' },
-    { label: 'Santri Terdaftar', val: totalSiswa, icon: '👥', color: '#2563eb' },
-    { label: 'Rata-rata Hadir', val: pct + '%', icon: '📊', color: '#d97706' },
-  ].map(s => `<div class="card" style="padding:14px 10px;text-align:center;margin:0;">
-    <div style="font-size:22px;">${s.icon}</div>
-    <div style="font-size:22px;font-weight:800;color:${s.color};line-height:1.2;">${s.val}</div>
-    <div style="font-size:11px;color:#7a9585;margin-top:2px;">${s.label}</div>
-  </div>`).join('');
-}
-
-function _absRenderKanban(pertemuan) {
-  const boardEl = $('absBoard');
-  if (!pertemuan.length) { boardEl.innerHTML = ''; return; }
-
-  // Kelompokkan per bulan
-  const byBulan = {};
-  pertemuan.forEach(p => {
-    const bulan = p.tanggal.slice(0,7);
-    if (!byBulan[bulan]) byBulan[bulan] = [];
-    byBulan[bulan].push(p);
-  });
-
-  const bulanNama = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-
-  boardEl.innerHTML = Object.entries(byBulan).sort((a,b) => b[0].localeCompare(a[0])).map(([bulan, ptms]) => {
-    const [yr, mo] = bulan.split('-');
-    const label = `${bulanNama[parseInt(mo)-1]} ${yr}`;
-    const totalBln = ptms.length;
-    const hadirBln = ptms.reduce((s,p) => s + p.hadir, 0);
-    const totalRowBln = ptms.reduce((s,p) => s + p.total, 0);
-    const pctBln = totalRowBln ? Math.round(hadirBln/totalRowBln*100) : 0;
-
-    const cards = ptms.map(p => {
-      const pct = p.total ? Math.round(p.hadir/p.total*100) : 0;
-      const barColor = pct >= 75 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#ef4444';
-      const [y,m,d] = p.tanggal.split('-');
-      const tglLabel = `${d} ${bulanNama[parseInt(m)-1]} ${y}`;
-      return `<div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.08);margin-bottom:10px;border-left:4px solid ${barColor};cursor:pointer;"
-          onclick="absOpenSesiDetail(${p.sesiId},'${p.tanggal}')">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-          <div>
-            <div style="font-weight:700;font-size:13px;color:#1a6644;">📅 ${tglLabel}</div>
-            <div style="font-size:11px;color:#7a9585;margin-top:2px;">🕌 ${escapeHtml(p.sesiNama)}${p.sesiJam?' · '+p.sesiJam:''}</div>
-          </div>
-          <span style="background:${barColor}22;color:${barColor};font-weight:800;font-size:13px;padding:3px 10px;border-radius:99px;">${pct}%</span>
-        </div>
-        <div style="background:#e5e7eb;border-radius:99px;height:6px;margin-bottom:8px;overflow:hidden;">
-          <div style="background:${barColor};height:100%;width:${pct}%;border-radius:99px;transition:width .4s;"></div>
-        </div>
-        <div style="display:flex;gap:10px;font-size:12px;">
-          <span style="color:#16a34a;font-weight:700;">✅ ${p.hadir}</span>
-          <span style="color:#d97706;">🟡 ${p.izin}</span>
-          <span style="color:#7c3aed;">🟣 ${p.sakit}</span>
-          <span style="color:#dc2626;">❌ ${p.tidak}</span>
-        </div>
-      </div>`;
-    }).join('');
-
-    return `<div style="margin-bottom:16px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:0 2px;">
-        <div style="font-weight:800;font-size:14px;color:#1a6644;">📆 ${label}</div>
-        <div style="font-size:12px;color:#7a9585;">${totalBln}x pertemuan · Hadir rata-rata ${pctBln}%</div>
-      </div>
-      ${cards}
-    </div>`;
-  }).join('');
-}
-
-function _absRenderList(pertemuan) {
-  const boardEl = $('absBoard');
-  if (!pertemuan.length) { boardEl.innerHTML = ''; return; }
-  const bulanNama = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-  boardEl.innerHTML = `<div class="card" style="padding:0;overflow:hidden;">
-    <table style="width:100%;border-collapse:collapse;font-size:13px;">
-      <thead><tr style="background:#f0f7f3;">
-        <th style="padding:10px 14px;text-align:left;color:#1a6644;font-weight:700;">Tanggal</th>
-        <th style="padding:10px 8px;text-align:left;color:#1a6644;font-weight:700;">Sesi</th>
-        <th style="padding:10px 8px;text-align:center;color:#16a34a;">✅</th>
-        <th style="padding:10px 8px;text-align:center;color:#d97706;">🟡</th>
-        <th style="padding:10px 8px;text-align:center;color:#7c3aed;">🟣</th>
-        <th style="padding:10px 8px;text-align:center;color:#dc2626;">❌</th>
-        <th style="padding:10px 8px;text-align:center;color:#1a6644;">%</th>
-      </tr></thead>
-      <tbody>${pertemuan.map((p, i) => {
-        const pct = p.total ? Math.round(p.hadir/p.total*100) : 0;
-        const clr = pct >= 75 ? '#16a34a' : pct >= 50 ? '#d97706' : '#dc2626';
-        const [yr,mo,d] = p.tanggal.split('-');
-        return `<tr style="border-top:1px solid #e8f5ed;cursor:pointer;${i%2===0?'':'background:#fafffe;'}"
-          onclick="absOpenSesiDetail(${p.sesiId},'${p.tanggal}')">
-          <td style="padding:9px 14px;font-weight:600;">${d} ${bulanNama[parseInt(mo)-1]} ${yr}</td>
-          <td style="padding:9px 8px;color:#7a9585;">${escapeHtml(p.sesiNama)}</td>
-          <td style="padding:9px 8px;text-align:center;color:#16a34a;font-weight:700;">${p.hadir}</td>
-          <td style="padding:9px 8px;text-align:center;color:#d97706;">${p.izin}</td>
-          <td style="padding:9px 8px;text-align:center;color:#7c3aed;">${p.sakit}</td>
-          <td style="padding:9px 8px;text-align:center;color:#dc2626;">${p.tidak}</td>
-          <td style="padding:9px 8px;text-align:center;font-weight:700;color:${clr};">${pct}%</td>
-        </tr>`;
-      }).join('')}</tbody>
-    </table>
-  </div>`;
-}
-
-// Buka detail pertemuan (langsung ke bukaSesiDetail yang sudah ada)
-function absOpenSesiDetail(sesiId, tanggal) {
-  bukaSesiDetail(sesiId);
-}
-
-// Tampilkan form catat absensi
-function absOpenCatatForm() {
-  $('absMainView').style.display = 'none';
-  $('absCatatView').style.display = 'block';
-  // Isi tanggal hari ini jika kosong
-  if (!$('absTanggal').value) {
-    $('absTanggal').value = new Date().toISOString().slice(0,10);
-  }
-  loadAbsensi();
-}
-
-function absBackToMain() {
-  $('absCatatView').style.display = 'none';
-  $('absMainView').style.display = 'block';
-  loadAbsensiBoard(); // Refresh board setelah catat
-}
-
-// ─── EXPORT PDF ABSENSI ───────────────────────────
-let _absExTab = 'bulan';
-
-function absOpenExportModal() {
-  // Populate sesi dropdown di modal
-  const opts = '<option value="all">Semua Sesi</option>' +
-    sesiCache.map(s => `<option value="${s.id}">${escapeHtml(s.nama)}</option>`).join('');
-  $('absExSesiBulan').innerHTML = opts;
-  $('absExSesiTahun').innerHTML = opts;
-  // Default bulan = bulan ini
-  const now = new Date();
-  if (!$('absExBulan').value) $('absExBulan').value = now.toISOString().slice(0,7);
-  if (!$('absExTahun').value) $('absExTahun').value = now.getFullYear();
-  $('absExMsg').textContent = '';
-  $('absExportModal').style.display = 'flex';
-}
-
-function absExSetTab(tab) {
-  _absExTab = tab;
-  $('absExPanelBulan').style.display = tab === 'bulan' ? 'block' : 'none';
-  $('absExPanelTahun').style.display = tab === 'tahun' ? 'block' : 'none';
-  $('absExTabBulan').style.background = tab === 'bulan' ? 'linear-gradient(135deg,#1a6644,#2d9e6b)' : '#f0f7f3';
-  $('absExTabBulan').style.color      = tab === 'bulan' ? '#fff' : '#1a6644';
-  $('absExTabTahun').style.background = tab === 'tahun' ? 'linear-gradient(135deg,#1a6644,#2d9e6b)' : '#f0f7f3';
-  $('absExTabTahun').style.color      = tab === 'tahun' ? '#fff' : '#1a6644';
-}
-
-async function absDoExportPDF() {
-  const msgEl = $('absExMsg');
-  msgEl.innerHTML = '<span style="color:#1a6644;">⏳ Menyiapkan PDF...</span>';
-
-  try {
-    // Tunggu jsPDF siap
-    let tryCount = 0;
-    while (typeof jspdf === 'undefined' && typeof window.jspdf === 'undefined' && tryCount < 30) {
-      await new Promise(r => setTimeout(r, 300));
-      tryCount++;
-    }
-    const { jsPDF } = (window.jspdf || jspdf);
-
-    const isBulan = _absExTab === 'bulan';
-    const bulanNamaPanjang = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-
-    // Tentukan rentang tanggal
-    let tglMulai, tglSelesai, periodeLabel;
-    if (isBulan) {
-      const bulanVal = $('absExBulan').value; // YYYY-MM
-      if (!bulanVal) { msgEl.innerHTML = '<span style="color:#dc2626;">Pilih bulan dulu!</span>'; return; }
-      const [yr, mo] = bulanVal.split('-').map(Number);
-      tglMulai  = `${yr}-${String(mo).padStart(2,'0')}-01`;
-      const lastDay = new Date(yr, mo, 0).getDate();
-      tglSelesai = `${yr}-${String(mo).padStart(2,'0')}-${lastDay}`;
-      periodeLabel = `${bulanNamaPanjang[mo-1]} ${yr}`;
-    } else {
-      const tahun = parseInt($('absExTahun').value);
-      if (!tahun) { msgEl.innerHTML = '<span style="color:#dc2626;">Isi tahun dulu!</span>'; return; }
-      tglMulai  = `${tahun}-01-01`;
-      tglSelesai = `${tahun}-12-31`;
-      periodeLabel = `Tahun ${tahun}`;
-    }
-
-    // Sesi filter
-    const sesiIdEx = isBulan ? $('absExSesiBulan').value : $('absExSesiTahun').value;
-
-    // Query data
-    let q = db.from('kehadiran')
-      .select('tanggal, sesi_id, anggota_id, status, sesi(nama, jam_mulai), anggota(nama)')
-      .gte('tanggal', tglMulai).lte('tanggal', tglSelesai)
-      .order('tanggal');
-    if (sesiIdEx !== 'all') q = q.eq('sesi_id', parseInt(sesiIdEx));
-    const { data: rows, error } = await q;
-    if (error) { msgEl.innerHTML = `<span style="color:#dc2626;">Gagal: ${escapeHtml(error.message)}</span>`; return; }
-    if (!rows || !rows.length) { msgEl.innerHTML = '<span style="color:#d97706;">Tidak ada data pada periode ini.</span>'; return; }
-
-    // Buat pertemuan map
-    const pertemuanMap = {};
-    rows.forEach(r => {
-      const key = `${r.sesi_id}_${r.tanggal}`;
-      if (!pertemuanMap[key]) {
-        pertemuanMap[key] = {
-          sesiId: r.sesi_id,
-          sesiNama: r.sesi?.nama || `Sesi ${r.sesi_id}`,
-          sesiJam: r.sesi?.jam_mulai ? r.sesi.jam_mulai.slice(0,5) : null,
-          tanggal: r.tanggal,
-          hadir: 0, izin: 0, sakit: 0, tidak: 0, total: 0,
-          anggota: [],
-        };
-      }
-      const p = pertemuanMap[key];
-      p.total++;
-      if (r.status === 'hadir') p.hadir++;
-      else if (r.status === 'izin') p.izin++;
-      else if (r.status === 'sakit') p.sakit++;
-      else p.tidak++;
-      p.anggota.push({ nama: r.anggota?.nama || '(?)', status: r.status });
-    });
-    const pertemuan = Object.values(pertemuanMap).sort((a,b) => a.tanggal.localeCompare(b.tanggal));
-
-    // Rekap per santri
-    const santriStat = {};
-    rows.forEach(r => {
-      const id = r.anggota_id;
-      if (!santriStat[id]) santriStat[id] = { nama: r.anggota?.nama || '(?)', hadir:0, izin:0, sakit:0, tidak:0, total:0 };
-      santriStat[id].total++;
-      if (r.status === 'hadir') santriStat[id].hadir++;
-      else if (r.status === 'izin') santriStat[id].izin++;
-      else if (r.status === 'sakit') santriStat[id].sakit++;
-      else santriStat[id].tidak++;
-    });
-    const santriArr = Object.values(santriStat).sort((a,b) => b.hadir - a.hadir);
-
-    // Hitung stat global
-    const totalHadir = rows.filter(r => r.status === 'hadir').length;
-    const pctGlobal = rows.length ? Math.round(totalHadir/rows.length*100) : 0;
-
-    // Buat PDF
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const W = 210, pageH = 297;
-    let y = 0;
-
-    // ── Cover / Header ──
-    doc.setFillColor(26, 102, 68);
-    doc.rect(0, 0, W, 38, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18); doc.setFont(undefined, 'bold');
-    doc.text('🕌 Laporan Absensi Pengajian', 105, 14, { align: 'center' });
-    doc.setFontSize(12); doc.setFont(undefined, 'normal');
-    doc.text('Mumi MB3 — ' + periodeLabel, 105, 22, { align: 'center' });
-    const sesiLabel = sesiIdEx === 'all' ? 'Semua Sesi' : (sesiCache.find(s=>s.id==sesiIdEx)?.nama || 'Sesi terpilih');
-    doc.text(sesiLabel + '  ·  Dicetak: ' + new Date().toLocaleString('id-ID'), 105, 30, { align: 'center' });
-    doc.setTextColor(0,0,0);
-    y = 46;
-
-    // ── Ringkasan ──
-    doc.setFont(undefined, 'bold'); doc.setFontSize(11);
-    doc.text('Ringkasan Periode', 14, y); y += 6;
-    doc.setFont(undefined, 'normal'); doc.setFontSize(10);
-    const statRows = [
-      [`Total Pertemuan`, `${pertemuan.length}x pertemuan`],
-      [`Total Santri`, `${santriArr.length} santri`],
-      [`Total Hadir`, `${totalHadir} kehadiran`],
-      [`Rata-rata Kehadiran`, `${pctGlobal}%`],
-    ];
-    statRows.forEach(([k, v]) => {
-      doc.setFont(undefined, 'bold'); doc.text(k + ':', 14, y);
-      doc.setFont(undefined, 'normal'); doc.text(v, 80, y);
-      y += 6;
-    });
-    y += 4;
-
-    // ── Tabel Rekap Per Pertemuan ──
-    doc.setFont(undefined, 'bold'); doc.setFontSize(11);
-    doc.text('Detail Per Pertemuan', 14, y); y += 4;
-    doc.autoTable({
-      startY: y,
-      head: [['Tanggal', 'Sesi', '✅ Hadir', '🟡 Izin', '🟣 Sakit', '❌ Tdk Hadir', 'Persen']],
-      body: pertemuan.map(p => {
-        const pct = p.total ? Math.round(p.hadir/p.total*100) : 0;
-        const [yr,mo,d] = p.tanggal.split('-');
-        const bln = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][parseInt(mo)-1];
-        return [`${d} ${bln} ${yr}`, p.sesiNama + (p.sesiJam?' ('+p.sesiJam+')':''), p.hadir, p.izin, p.sakit, p.tidak, pct+'%'];
-      }),
-      styles: { fontSize: 9, cellPadding: 3 },
-      headStyles: { fillColor: [26, 102, 68], textColor: 255, fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [240, 247, 243] },
-      margin: { left: 14, right: 14 },
-      didDrawPage: (data) => { y = data.cursor.y; },
-    });
-    y = doc.lastAutoTable.finalY + 10;
-
-    // ── Tabel Rekap Per Santri ──
-    if (y > pageH - 60) { doc.addPage(); y = 20; }
-    doc.setFont(undefined, 'bold'); doc.setFontSize(11);
-    doc.text('Rekap Kehadiran Per Santri', 14, y); y += 4;
-    doc.autoTable({
-      startY: y,
-      head: [['No', 'Nama Santri', '✅ Hadir', '🟡 Izin', '🟣 Sakit', '❌ Tdk Hadir', 'Total', '%']],
-      body: santriArr.map((s, i) => {
-        const pct = s.total ? Math.round(s.hadir/s.total*100) : 0;
-        return [i+1, s.nama, s.hadir, s.izin||0, s.sakit||0, s.tidak||0, s.total, pct+'%'];
-      }),
-      styles: { fontSize: 9, cellPadding: 3 },
-      headStyles: { fillColor: [26, 102, 68], textColor: 255, fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [240, 247, 243] },
-      columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 55 } },
-      margin: { left: 14, right: 14 },
-    });
-
-    // ── Footer semua halaman ──
-    const totalPages = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= totalPages; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8); doc.setTextColor(150,150,150);
-      doc.text(`Laporan Absensi Mumi MB3 — ${periodeLabel}  ·  Hal ${i}/${totalPages}`, 105, pageH - 8, { align: 'center' });
-    }
-
-    doc.save(`Absensi_MumiMB3_${periodeLabel.replace(/\s/g,'_')}.pdf`);
-    msgEl.innerHTML = '<span style="color:#16a34a;">✅ PDF berhasil diunduh!</span>';
-    setTimeout(() => { $('absExportModal').style.display = 'none'; }, 1500);
-  } catch(e) {
-    msgEl.innerHTML = `<span style="color:#dc2626;">❌ Error: ${e.message}</span>`;
-    console.error(e);
-  }
-}
-
-// Override loadAbsensi yang dipanggil saat masuk seksi absensi
-const _origLoadAbsensiSection = window.loadAbsensi;
-// loadAbsensi tetap untuk form catat, loadAbsensiBoard untuk tampilan utama
 
 // ─────────────── REKAP ───────────────
 function toggleRekapMode() {
@@ -7708,7 +7236,7 @@ showMenu = function() {
         const loaders2 = {
           saldo: loadDashboard, kasmasuk: () => { loadKasMasuk(); loadKasBulanSection(); },
           pengeluaran: loadPengeluaran, qurban: loadQurban, anggota: loadAnggota,
-          absensi: loadAbsensiBoard, acara: loadAcara, riwayat: loadRiwayat,
+          absensi: loadAbsensi, acara: loadAcara, riwayat: loadRiwayat,
         };
         if (loaders2[name]) loaders2[name]();
       }
@@ -9102,14 +8630,6 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
         soRedrawBranches();
       }, 200);
     });
-
-    // 4. Android: orientationchange kadang tidak trigger resize
-    window.addEventListener('orientationchange', function(){
-      setTimeout(function(){
-        soRenderManualLines();
-        soRedrawBranches();
-      }, 400);
-    });
   }
 
   function soLoad(){
@@ -9576,32 +9096,27 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     var svgH=isSub?36:44;
     svg.style.height=svgH+'px';
     svg.setAttribute('height',svgH);
+    svg.setAttribute('width',wrap.offsetWidth);
 
-    // ── Hitung posisi relatif terhadap 'wrap' menggunakan offsetLeft traversal ──
-    // Lebih stabil dari getBoundingClientRect karena tidak dipengaruhi scroll position
-    function getOffsetLeftTo(el, ancestor) {
-      var x = 0;
-      while (el && el !== ancestor) { x += el.offsetLeft; el = el.offsetParent; }
-      return x;
-    }
-
-    var wrapW = wrap.scrollWidth || wrap.offsetWidth || 600;
-    svg.setAttribute('width', wrapW);
-
-    var centers = children.map(function(ch) {
-      return getOffsetLeftTo(ch, wrap) + ch.offsetWidth / 2;
+    // Hitung center-x tiap child relatif terhadap wrap — pakai offsetLeft, bukan BoundingRect
+    var centers=children.map(function(ch){
+      var x=0, cur=ch;
+      while(cur && cur!==wrap){ x+=cur.offsetLeft; cur=cur.offsetParent; }
+      return x + ch.offsetWidth/2;
     });
 
-    // Posisi topX: dari node wakil relatif ke wrap
-    var topX = wrapW / 2;
-    if (!isSub) {
-      var chartEl = document.getElementById('so_chart');
-      if (chartEl) {
-        var wakilNodes = chartEl.querySelectorAll('.so-node.so-lv-wakil');
-        if (wakilNodes.length > 0) {
-          var sumX = 0;
-          wakilNodes.forEach(function(n) {
-            sumX += getOffsetLeftTo(n, wrap) + n.offsetWidth / 2;
+    // Untuk garis utama (wakil→divisi), cari posisi node wakil relatif terhadap wrap
+    var topX = wrap.offsetWidth/2;
+    if(!isSub){
+      var chartWrap=document.getElementById('so_chart');
+      if(chartWrap){
+        var wakilNodes=chartWrap.querySelectorAll('.so-node.so-lv-wakil');
+        if(wakilNodes.length>0){
+          var sumX=0;
+          wakilNodes.forEach(function(n){
+            var x=0, cur=n;
+            while(cur && cur!==wrap){ x+=cur.offsetLeft; cur=cur.offsetParent; }
+            sumX += x + n.offsetWidth/2;
           });
           topX = sumX / wakilNodes.length;
         }
@@ -9783,10 +9298,10 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     var chart = document.getElementById('so_chart');
     var el = chart ? chart.querySelector('[data-node-id="'+nodeId+'"]') : null;
     if(!el) return null;
-    // Gunakan offsetLeft/offsetTop traversal relatif ke chart — tidak terpengaruh scroll viewport
-    var x = 0, y = 0, cur = el;
-    while (cur && cur !== chart) { x += cur.offsetLeft; y += cur.offsetTop; cur = cur.offsetParent; }
-    var w = el.offsetWidth, h = el.offsetHeight;
+    var cr = chart.getBoundingClientRect();
+    var er = el.getBoundingClientRect();
+    var x = er.left - cr.left, y = er.top - cr.top;
+    var w = er.width, h = er.height;
     return { cx:x+w/2, cy:y+h/2, top:y, bot:y+h, left:x, right:x+w };
   }
 
@@ -10312,9 +9827,8 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   function soScheduleLineRender(){
     _soLineRenderTimer.forEach(function(t){ clearTimeout(t); });
     _soLineRenderTimer = [];
-    // Tambah delay lebih panjang untuk Android/mobile yang butuh lebih lama layout DOM
-    // 50ms = segera, 300ms = setelah animasi CSS, 700ms = fallback untuk Android lambat
-    [50, 300, 700].forEach(function(delay){
+    // Cukup 2 titik: segera + setelah animasi CSS selesai
+    [50, 300].forEach(function(delay){
       _soLineRenderTimer.push(setTimeout(function(){
         soRenderManualLines();
         soRedrawBranches();
@@ -11180,57 +10694,5 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     setTimeout(function() { clearInterval(_touchInterval); }, 8000);
   })();
   </script>
-
-  <!-- ===== SIGNAL DOT — Indikator Koneksi ===== -->
-  <script>
-  (function() {
-    const dot = document.getElementById('signalDot');
-    const tip = document.getElementById('signalTooltip');
-    if (!dot || !tip) return;
-
-    let lastRtt = null;
-
-    function setSignal(state, label) {
-      dot.className = 'signal-dot ' + state;
-      tip.textContent = label;
-    }
-
-    async function checkSignal() {
-      if (!navigator.onLine) {
-        setSignal('bad', '❌ Offline — tidak ada koneksi');
-        return;
-      }
-      setSignal('checking', 'Memeriksa koneksi…');
-      try {
-        const t0 = performance.now();
-        // Ping pakai favicon kecil + nocache agar tidak kena cache
-        await fetch('https://www.gstatic.com/generate_204', {
-          mode: 'no-cors', cache: 'no-store',
-          signal: AbortSignal.timeout(5000)
-        });
-        const rtt = Math.round(performance.now() - t0);
-        lastRtt = rtt;
-        if (rtt < 400) {
-          setSignal('good', '🟢 Koneksi bagus (' + rtt + ' ms)');
-        } else if (rtt < 1200) {
-          setSignal('weak', '🔵 Sinyal lemah (' + rtt + ' ms)');
-        } else {
-          setSignal('bad', '🔴 Sinyal buruk (' + rtt + ' ms)');
-        }
-      } catch (e) {
-        setSignal('bad', '🔴 Gagal terhubung');
-      }
-    }
-
-    // Cek saat load, lalu tiap 20 detik
-    checkSignal();
-    setInterval(checkSignal, 20000);
-
-    // React ke perubahan online/offline browser
-    window.addEventListener('online',  () => checkSignal());
-    window.addEventListener('offline', () => setSignal('bad', '❌ Offline'));
-  })();
-  </script>
-  <!-- ===== END SIGNAL DOT ===== -->
 
 </html>
