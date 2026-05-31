@@ -27,6 +27,139 @@
   h2 { font-size: 16px; color: #1a6644; margin-bottom: 12px; }
   .muted { color: #7a9585; font-size: 13px; }
 
+  /* ── Description rich format (Notion-like) ─────────────────
+     Markdown subset: # judul, ## sub-judul, ### sub-sub, **bold**, [label](url)
+     Dipakai di deskripsi acara, project, musyawarah, dan task. */
+
+  /* Link clickable */
+  .desc-link {
+    color: #1d4ed8; text-decoration: underline; cursor: pointer;
+    word-break: break-word; font-weight: 500;
+  }
+  .desc-link:hover { color: #1e40af; }
+  [data-theme="dark"] .desc-link { color: #60a5fa; }
+  [data-theme="dark"] .desc-link:hover { color: #93c5fd; }
+
+  /* Heading dalam deskripsi — pakai em supaya auto-scale di card/preview kecil */
+  .desc-h1 {
+    font-weight: 800; font-size: 1.35em; line-height: 1.3;
+    color: #0a3d22; margin: 6px 0 3px; letter-spacing: .2px;
+  }
+  .desc-h2 {
+    font-weight: 700; font-size: 1.17em; line-height: 1.3;
+    color: #1a6644; margin: 5px 0 2px;
+  }
+  .desc-h3 {
+    font-weight: 600; font-size: 1.06em; line-height: 1.3;
+    color: #2d9e6b; margin: 4px 0 2px;
+  }
+  [data-theme="dark"] .desc-h1 { color: #6fdcab; }
+  [data-theme="dark"] .desc-h2 { color: #4ade80; }
+  [data-theme="dark"] .desc-h3 { color: #34d399; }
+
+  /* Bold inline */
+  .desc-bold { font-weight: 800; }
+
+  /* Toolbar di atas textarea deskripsi */
+  .desc-toolbar {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    margin: 0 0 6px 0; padding: 4px;
+    background: #f0f7f3; border: 1px solid #d4e8dc; border-radius: 8px;
+  }
+  .desc-toolbar-btn {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: white !important; color: #1a6644 !important;
+    border: 1px solid #d4e8dc !important;
+    padding: 5px 9px !important; border-radius: 5px !important;
+    font-size: 11px !important; font-weight: 600 !important;
+    cursor: pointer; width: auto !important; margin: 0 !important;
+    line-height: 1;
+  }
+  .desc-toolbar-btn:hover {
+    background: #d4edd9 !important; border-color: #1a6644 !important;
+  }
+  .desc-toolbar-hint {
+    flex: 1; text-align: right; font-size: 10px; color: #7a9585;
+    align-self: center; padding: 0 6px;
+  }
+  [data-theme="dark"] .desc-toolbar {
+    background: rgba(45,158,107,0.08); border-color: rgba(45,158,107,0.3);
+  }
+  [data-theme="dark"] .desc-toolbar-btn {
+    background: rgba(255,255,255,0.04) !important; color: #6fdcab !important;
+    border-color: rgba(45,158,107,0.4) !important;
+  }
+  [data-theme="dark"] .desc-toolbar-btn:hover {
+    background: rgba(45,158,107,0.2) !important;
+  }
+  [data-theme="dark"] .desc-toolbar-hint { color: #8aa99a; }
+
+  /* Live preview box di bawah textarea deskripsi */
+  .desc-preview-wrap {
+    margin: -4px 0 12px;
+    border: 1px dashed #c8e0d4;
+    border-radius: 10px;
+    background: #fafdfb;
+    overflow: hidden;
+  }
+  .desc-preview-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 12px; background: #f0f7f3;
+    border-bottom: 1px dashed #c8e0d4;
+    font-size: 10px; font-weight: 800; letter-spacing: 1px;
+    color: #1a6644; text-transform: uppercase;
+  }
+  .desc-preview-header .preview-status { font-weight: 600; font-size: 9px; color: #7a9585; text-transform: none; letter-spacing: 0; }
+  .desc-preview-box {
+    padding: 14px 16px;
+    min-height: 40px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #2c3e35;
+    word-wrap: break-word;
+  }
+  .desc-preview-box:empty {
+    padding: 16px;
+    color: #9fb5a7;
+    font-style: italic;
+    text-align: center;
+    font-size: 12px;
+  }
+  .desc-preview-box:empty::before {
+    content: '👁  Preview tampilan akan muncul di sini — ketik di kotak atas, hasil format langsung tampil';
+  }
+  .desc-preview-box .desc-h1:first-child,
+  .desc-preview-box .desc-h2:first-child,
+  .desc-preview-box .desc-h3:first-child { margin-top: 0; }
+  /* Dark mode untuk preview */
+  [data-theme="dark"] .desc-preview-wrap {
+    background: rgba(20,40,30,0.6);
+    border-color: rgba(45,158,107,0.35);
+  }
+  [data-theme="dark"] .desc-preview-header {
+    background: rgba(45,158,107,0.12);
+    border-bottom-color: rgba(45,158,107,0.35);
+    color: #6fdcab;
+  }
+  [data-theme="dark"] .desc-preview-header .preview-status { color: #8aa99a; }
+  [data-theme="dark"] .desc-preview-box { color: #d4e8dc; }
+  [data-theme="dark"] .desc-preview-box:empty { color: #6b8478; }
+
+  /* Tombol lama "Sisipkan Link" (backward compat — masih dipakai di beberapa tempat) */
+  .insert-link-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #f0f7f3 !important; color: #1a6644 !important;
+    border: 1px solid #d4e8dc !important; padding: 5px 10px !important;
+    border-radius: 6px !important; font-size: 11px !important;
+    font-weight: 600 !important; cursor: pointer; width: auto !important;
+    margin: 0 0 6px 0 !important;
+  }
+  .insert-link-btn:hover { background: #e0f0e6 !important; }
+  [data-theme="dark"] .insert-link-btn {
+    background: rgba(45,158,107,0.18) !important; color: #6fdcab !important;
+    border-color: rgba(45,158,107,0.4) !important;
+  }
+
   #loginView { max-width: 380px; margin: 60px auto; }
   input, select, textarea {
     width: 100%; padding: 11px 14px; border: 2px solid #d4e8dc;
@@ -1302,8 +1435,28 @@
             <div><label>Penanggung Jawab</label><input type="text" id="acPIC" placeholder="Cth: Pak Budi"></div>
             <div><label>Anggaran (Rp)</label><input type="number" id="acAnggaran" placeholder="0" min="0"></div>
           </div>
-          <label>Deskripsi</label>
-          <textarea id="acDeskripsi" rows="3" placeholder="Detail acara / yang perlu dikerjakan..."></textarea>
+          <label>🏢 Divisi yang Terlibat <span class="muted" style="font-size:11px;font-weight:400;">(opsional, pilih satu/banyak)</span></label>
+          <div id="acDivisiCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:10px;background:#f0f7f3;border-radius:10px;min-height:44px;">
+            <span class="muted" style="font-size:12px;">Memuat divisi dari Struktur Org...</span>
+          </div>
+
+          <label>Deskripsi <span class="muted" style="font-size:11px;font-weight:400;">(format Notion: judul, sub, bold, link)</span></label>
+          <div class="desc-toolbar">
+            <button type="button" class="desc-toolbar-btn" onclick="insertHeading('acDeskripsi',1)" title="Judul Besar">H1</button>
+            <button type="button" class="desc-toolbar-btn" onclick="insertHeading('acDeskripsi',2)" title="Sub Judul">H2</button>
+            <button type="button" class="desc-toolbar-btn" onclick="insertHeading('acDeskripsi',3)" title="Sub-Sub Judul">H3</button>
+            <button type="button" class="desc-toolbar-btn" onclick="insertBold('acDeskripsi')" title="Tebal"><b>B</b></button>
+            <button type="button" class="desc-toolbar-btn" onclick="insertLinkToDesc('acDeskripsi')" title="Sisipkan Link">🔗 Link</button>
+            <span class="desc-toolbar-hint">Paste URL → auto tanya nama</span>
+          </div>
+          <textarea id="acDeskripsi" rows="4" placeholder="# Judul Besar&#10;## Sub Judul&#10;Tulis detail di sini. Tekan paste URL untuk link otomatis."></textarea>
+          <div class="desc-preview-wrap">
+            <div class="desc-preview-header">
+              <span>👁 Preview Tampilan</span>
+              <span class="preview-status" id="acDeskripsi_preview_status">0 karakter</span>
+            </div>
+            <div class="desc-preview-box" id="acDeskripsi_preview"></div>
+          </div>
           <button onclick="addAcara()">💾 Simpan Acara</button>
           <div id="acMsg"></div>
         </div>
@@ -1480,8 +1633,23 @@
           <label>Nama Project</label>
           <input type="text" id="prjNama" placeholder="Cth: Pembuatan Website MUMI MB3">
 
-          <label>Deskripsi</label>
-          <textarea id="prjDeskripsi" placeholder="Jelaskan tujuan, latar belakang, atau detail project..." style="min-height:80px;resize:vertical;"></textarea>
+          <label>Deskripsi <span class="muted" style="font-size:11px;font-weight:400;">(format Notion: judul, sub, bold, link)</span></label>
+          <div class="desc-toolbar">
+            <button type="button" class="desc-toolbar-btn" onclick="insertHeading('prjDeskripsi',1)" title="Judul Besar">H1</button>
+            <button type="button" class="desc-toolbar-btn" onclick="insertHeading('prjDeskripsi',2)" title="Sub Judul">H2</button>
+            <button type="button" class="desc-toolbar-btn" onclick="insertHeading('prjDeskripsi',3)" title="Sub-Sub Judul">H3</button>
+            <button type="button" class="desc-toolbar-btn" onclick="insertBold('prjDeskripsi')" title="Tebal"><b>B</b></button>
+            <button type="button" class="desc-toolbar-btn" onclick="insertLinkToDesc('prjDeskripsi')" title="Sisipkan Link">🔗 Link</button>
+            <span class="desc-toolbar-hint">Paste URL → auto tanya nama</span>
+          </div>
+          <textarea id="prjDeskripsi" placeholder="# Tujuan Project&#10;## Latar Belakang&#10;Jelaskan project di sini. Paste URL otomatis jadi link." style="min-height:100px;resize:vertical;"></textarea>
+          <div class="desc-preview-wrap">
+            <div class="desc-preview-header">
+              <span>👁 Preview Tampilan</span>
+              <span class="preview-status" id="prjDeskripsi_preview_status">0 karakter</span>
+            </div>
+            <div class="desc-preview-box" id="prjDeskripsi_preview"></div>
+          </div>
 
           <div class="row">
             <div>
@@ -1862,8 +2030,28 @@
       </div>
       <label>Biaya per Peserta (Rp) — opsional, untuk hitung status Lunas</label>
       <input type="number" id="amBiaya" min="0" placeholder="0">
-      <label>Deskripsi Lengkap / Detail Acara</label>
-      <textarea id="amDeskripsi" rows="8" placeholder="Tulis detail lengkap acara di sini — tema, susunan acara, siapa saja yang terlibat, perlengkapan, dll."></textarea>
+      <label>🏢 Divisi yang Terlibat <span class="muted" style="font-size:11px;font-weight:400;">(pilih satu/banyak)</span></label>
+      <div id="amDivisiCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:10px;background:#f0f7f3;border-radius:10px;min-height:44px;">
+        <span class="muted" style="font-size:12px;">Memuat divisi dari Struktur Org...</span>
+      </div>
+
+      <label>Deskripsi Lengkap / Detail Acara <span class="muted" style="font-size:11px;font-weight:400;">(format Notion: judul, sub, bold, link)</span></label>
+      <div class="desc-toolbar">
+        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('amDeskripsi',1)" title="Judul Besar">H1</button>
+        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('amDeskripsi',2)" title="Sub Judul">H2</button>
+        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('amDeskripsi',3)" title="Sub-Sub Judul">H3</button>
+        <button type="button" class="desc-toolbar-btn" onclick="insertBold('amDeskripsi')" title="Tebal"><b>B</b></button>
+        <button type="button" class="desc-toolbar-btn" onclick="insertLinkToDesc('amDeskripsi')" title="Sisipkan Link">🔗 Link</button>
+        <span class="desc-toolbar-hint">Paste URL → auto tanya nama</span>
+      </div>
+      <textarea id="amDeskripsi" rows="8" placeholder="# Tema Acara&#10;## Susunan Acara&#10;1. Pembukaan&#10;2. Sambutan&#10;## Perlengkapan&#10;Tulis di sini..."></textarea>
+      <div class="desc-preview-wrap">
+        <div class="desc-preview-header">
+          <span>👁 Preview Tampilan</span>
+          <span class="preview-status" id="amDeskripsi_preview_status">0 karakter</span>
+        </div>
+        <div class="desc-preview-box" id="amDeskripsi_preview"></div>
+      </div>
       <div style="display:flex;gap:8px;margin-top:2px;">
         <button onclick="saveAcaraDetail()" style="flex:1;">💾 Simpan Perubahan</button>
         <button class="danger" onclick="deleteAcaraFromModal()" style="width:auto;padding:11px 16px;" title="Hapus acara ini">🗑️ Hapus</button>
@@ -2086,6 +2274,327 @@ const setMsg = (id, text, isErr) => {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 }
+
+// ─────────────────────────────────────────────────────────────
+//  DESCRIPTION RICH FORMAT (Notion-like) — heading, bold, link
+// ─────────────────────────────────────────────────────────────
+// Dipakai di field deskripsi: acara, project, musyawarah, task.
+// Sintaks Markdown subset:
+//   # Judul Besar              → h1 (.desc-h1)
+//   ## Sub Judul               → h2 (.desc-h2)
+//   ### Sub-Sub Judul          → h3 (.desc-h3)
+//   **teks tebal**             → bold (.desc-bold)
+//   [Label](https://url)       → link biru custom-named
+//   https://url                → link biru otomatis
+function descToHTML(text){
+  if(text === null || text === undefined || text === '') return '';
+  // Split per baris — heading bekerja per baris penuh
+  var lines = String(text).split('\n');
+  var out = [];
+  for(var i = 0; i < lines.length; i++){
+    var line = lines[i];
+    // 1. Escape HTML entities (keamanan XSS) — TAPI jangan escape kurung kotak/biasa
+    //    karena dipakai markdown link. Escape `<` `>` `&` `"` `'` saja.
+    var esc = line
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    // 2. Cek heading di awal baris
+    var content, wrapStart = '', wrapEnd = '';
+    var h3m = esc.match(/^###\s+(.+)$/);
+    var h2m = esc.match(/^##\s+(.+)$/);
+    var h1m = esc.match(/^#\s+(.+)$/);
+    if(h3m){      content = h3m[1]; wrapStart = '<div class="desc-h3">'; wrapEnd = '</div>'; }
+    else if(h2m){ content = h2m[1]; wrapStart = '<div class="desc-h2">'; wrapEnd = '</div>'; }
+    else if(h1m){ content = h1m[1]; wrapStart = '<div class="desc-h1">'; wrapEnd = '</div>'; }
+    else { content = esc; }
+    // 3. Inline format: bold, link
+    content = _descInline(content);
+    // 4. Bungkus baris
+    if(wrapStart){
+      out.push(wrapStart + content + wrapEnd);
+    } else {
+      out.push(content);
+    }
+  }
+  // 5. Gabung — heading di-render sebagai block, baris biasa pakai <br> kalau bukan di akhir
+  var html = '';
+  for(var j = 0; j < out.length; j++){
+    html += out[j];
+    var isHeading = /^<div class="desc-h/.test(out[j]);
+    var nextIsHeading = j + 1 < out.length && /^<div class="desc-h/.test(out[j+1]);
+    var isLast = j === out.length - 1;
+    // Tambah <br> setelah baris biasa (bukan heading) kalau bukan baris terakhir
+    if(!isHeading && !isLast && !nextIsHeading) html += '<br>';
+  }
+  return html;
+}
+
+// Helper internal: inline format (bold, link) — text sudah ter-escape
+function _descInline(text){
+  // Bold: **teks** → <span class="desc-bold">teks</span>
+  text = text.replace(/\*\*([^*\n]+)\*\*/g, '<span class="desc-bold">$1</span>');
+  // Markdown link: [label](url) — url harus http/https
+  text = text.replace(/\[([^\[\]]+)\]\(((?:https?:\/\/|www\.)[^\s)]+)\)/g, function(_, label, url){
+    var safeUrl = /^https?:\/\//i.test(url) ? url : 'https://' + url;
+    return '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation()">' + label + '</a>';
+  });
+  // URL telanjang
+  text = text.replace(/(^|[\s(])((?:https?:\/\/)[^\s<)]+)/g, function(m, prefix, url){
+    return prefix + '<a href="' + url + '" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation()">' + url + '</a>';
+  });
+  return text;
+}
+
+// ── HELPER TOOLBAR — sisipkan markdown ke textarea ──
+
+// Sisipkan heading di awal baris (level 1/2/3)
+window.insertHeading = function(textareaId, level){
+  var ta = document.getElementById(textareaId);
+  if(!ta) return;
+  var hashes = (level === 1 ? '# ' : level === 2 ? '## ' : '### ');
+  var start = ta.selectionStart || 0;
+  var value = ta.value;
+  // Cari awal & akhir baris current
+  var lineStart = value.lastIndexOf('\n', start - 1) + 1;
+  var lineEnd = value.indexOf('\n', start);
+  if(lineEnd === -1) lineEnd = value.length;
+  var line = value.substring(lineStart, lineEnd);
+  // Hapus prefix heading lama kalau ada
+  var cleanLine = line.replace(/^#{1,3}\s+/, '');
+  // Kalau baris kosong, kasih placeholder
+  if(!cleanLine.trim()){
+    cleanLine = (level === 1 ? 'Judul Besar' : level === 2 ? 'Sub Judul' : 'Sub-Sub Judul');
+  }
+  var newLine = hashes + cleanLine;
+  ta.value = value.substring(0, lineStart) + newLine + value.substring(lineEnd);
+  var newPos = lineStart + newLine.length;
+  try { ta.setSelectionRange(lineStart + hashes.length, newPos); } catch(e){}
+  ta.focus();
+  try { ta.dispatchEvent(new Event('input', { bubbles: true })); } catch(e){}
+};
+
+// Sisipkan bold: kalau ada teks terpilih → wrap **; kalau tidak → insert placeholder
+window.insertBold = function(textareaId){
+  var ta = document.getElementById(textareaId);
+  if(!ta) return;
+  var start = ta.selectionStart || 0;
+  var end = ta.selectionEnd || 0;
+  var value = ta.value;
+  var selected = value.substring(start, end);
+  if(selected){
+    ta.value = value.substring(0, start) + '**' + selected + '**' + value.substring(end);
+    var newPos = end + 4;
+    try { ta.setSelectionRange(newPos, newPos); } catch(e){}
+  } else {
+    var ph = 'teks tebal';
+    var insertion = '**' + ph + '**';
+    ta.value = value.substring(0, start) + insertion + value.substring(end);
+    try { ta.setSelectionRange(start + 2, start + 2 + ph.length); } catch(e){}
+  }
+  ta.focus();
+  try { ta.dispatchEvent(new Event('input', { bubbles: true })); } catch(e){}
+};
+
+// Prompt user → sisipkan [label](url) ke textarea
+window.insertLinkToDesc = function(textareaId){
+  var ta = document.getElementById(textareaId);
+  if(!ta){ return; }
+  var label = prompt('Nama tampilan link\n(teks biru yang muncul di deskripsi):', '');
+  if(label === null) return;
+  label = label.trim();
+  if(!label){ alert('Nama link kosong.'); return; }
+  var url = prompt('URL link\n(cth: https://google.com):', 'https://');
+  if(url === null) return;
+  url = url.trim();
+  if(!url || url === 'https://'){ alert('URL kosong.'); return; }
+  if(!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  var insertion = '[' + label + '](' + url + ')';
+  var start = ta.selectionStart || 0;
+  var end   = ta.selectionEnd   || 0;
+  var before = ta.value.substring(0, start);
+  var after  = ta.value.substring(end);
+  if(before && !/\s$/.test(before)) before += ' ';
+  ta.value = before + insertion + after;
+  var newPos = before.length + insertion.length;
+  ta.focus();
+  try { ta.setSelectionRange(newPos, newPos); } catch(e){}
+  try { ta.dispatchEvent(new Event('input', { bubbles: true })); } catch(e){}
+};
+
+// ── LIVE PREVIEW (auto-render saat user ngetik) ──
+// Setiap textarea deskripsi punya preview box di bawahnya dengan id "{taId}_preview".
+// Saat user ngetik / klik tombol toolbar, preview otomatis update via descToHTML.
+// Pakai event delegation supaya 1 listener handle semua textarea (lebih ringan).
+(function setupGlobalDescPreview(){
+  if(window._descPreviewSetup) return;
+  window._descPreviewSetup = true;
+  var DESC_IDS = ['acDeskripsi','prjDeskripsi','amDeskripsi','mswHasil','taskModalDesc'];
+  function updatePreview(ta){
+    var preview = document.getElementById(ta.id + '_preview');
+    if(!preview) return;
+    var rendered = descToHTML(ta.value);
+    preview.innerHTML = rendered;
+    // Update status counter
+    var statusEl = document.getElementById(ta.id + '_preview_status');
+    if(statusEl){
+      var len = (ta.value || '').length;
+      statusEl.textContent = len + ' karakter';
+    }
+  }
+  document.addEventListener('input', function(e){
+    var ta = e.target;
+    if(!ta || ta.tagName !== 'TEXTAREA') return;
+    if(DESC_IDS.indexOf(ta.id) === -1) return;
+    updatePreview(ta);
+  });
+  // Helper global yang bisa dipanggil setelah set value programmatic
+  window.refreshDescPreview = function(textareaId){
+    var ta = document.getElementById(textareaId);
+    if(ta) updatePreview(ta);
+  };
+})();
+
+// ─────────────────────────────────────────────────────────────
+//  DIVISI TERLIBAT — reusable untuk Acara, Musyawarah, Project
+// ─────────────────────────────────────────────────────────────
+// Pola sama dengan Project: checkbox divisi dari Struktur Org,
+// disimpan sebagai array nama divisi di field `divisis` (JSONB).
+function _getAllDivisiList(){
+  var list = [];
+  try {
+    if(window.so && window.so.divisis && Array.isArray(window.so.divisis) && window.so.divisis.length){
+      list = window.so.divisis.map(function(d){ return typeof d==='string' ? d : (d.nama || d.id || ''); });
+    } else {
+      var raw = localStorage.getItem('so_data');
+      if(raw){
+        var soData = JSON.parse(raw);
+        if(soData && soData.divisis && Array.isArray(soData.divisis)){
+          list = soData.divisis.map(function(d){ return typeof d==='string' ? d : (d.nama || d.id || ''); });
+        }
+      }
+    }
+  } catch(e){}
+  return list.filter(function(d){ return d && d.trim(); });
+}
+
+// Render checkbox divisi ke dalam container
+window.renderDivisiCheckboxes = function(containerId, selectedArr){
+  selectedArr = selectedArr || [];
+  var el = document.getElementById(containerId);
+  if(!el) return;
+  var list = _getAllDivisiList();
+  if(!list.length){
+    el.innerHTML = '<span class="muted" style="font-size:12px;">Belum ada divisi di Struktur Org. Buat divisi dulu di menu Struktur Organisasi.</span>';
+    return;
+  }
+  el.innerHTML = list.map(function(d){
+    var chk = selectedArr.indexOf(d) >= 0;
+    var cls = chk ? 'prj-divisi-checkbox-wrap checked' : 'prj-divisi-checkbox-wrap';
+    var safeVal = String(d).replace(/"/g,'&quot;');
+    var safeLabel = String(d).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return '<label class="'+cls+'">'
+      + '<input type="checkbox" value="'+safeVal+'" '+(chk?'checked':'')
+      + ' onchange="this.parentElement.classList.toggle(\'checked\',this.checked)" style="display:none;">'
+      + ' 🏢 ' + safeLabel + '</label>';
+  }).join('');
+};
+
+// Ambil array nama divisi yang dicentang
+window.collectSelectedDivisi = function(containerId){
+  var out = [];
+  var el = document.getElementById(containerId);
+  if(!el) return out;
+  el.querySelectorAll('input[type=checkbox]:checked').forEach(function(cb){ out.push(cb.value); });
+  return out;
+};
+
+// Render chips divisi untuk tampilan list/card
+window.divisiTagsHTML = function(divisis, small){
+  if(!divisis || !divisis.length) return '';
+  var sz = small ? 'font-size:10px;padding:2px 7px;' : '';
+  return divisis.map(function(d){
+    var safe = String(d).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return '<span class="prj-divisi-tag" style="'+sz+'">🏢 '+safe+'</span>';
+  }).join(' ');
+};
+
+// Notice sekali untuk SQL ALTER TABLE kalau kolom belum ada
+var _divisisSqlShown = {};
+window.showDivisisSqlNotice = function(tableName){
+  if(_divisisSqlShown[tableName]) return;
+  _divisisSqlShown[tableName] = true;
+  alert(
+    '⚠️ Fitur "Divisi yang Terlibat" butuh kolom baru di tabel "' + tableName + '".\n\n' +
+    'Jalankan SQL ini di Supabase → SQL Editor (sekali aja):\n\n' +
+    'ALTER TABLE ' + tableName + ' ADD COLUMN IF NOT EXISTS divisis JSONB;\n\n' +
+    'Setelah itu reload halaman & coba simpan lagi.\n' +
+    '(Data tetap tersimpan tanpa divisi untuk sekarang.)'
+  );
+};
+
+// Helper: kirim payload — kalau error karena divisis column missing,
+// retry tanpa divisis dan kasih notice ke user. Mengembalikan {data,error}.
+window.saveSupabaseWithDivisiFallback = async function(qb, payload, tableName){
+  var attempt = await qb(payload);
+  if(attempt && attempt.error){
+    var msg = String(attempt.error.message||'');
+    if(msg.indexOf('divisis') !== -1 && msg.toLowerCase().indexOf('column') !== -1){
+      // Retry tanpa divisis
+      var rest = Object.assign({}, payload);
+      delete rest.divisis;
+      showDivisisSqlNotice(tableName);
+      return await qb(rest);
+    }
+  }
+  return attempt;
+};
+
+// ── PASTE URL DETECTOR (mirip Notion) ──
+// Saat user paste URL di textarea deskripsi, otomatis tanya:
+// "Mau pakai nama tampilan custom?" → kalau ya, sisipkan [name](url),
+// kalau tidak, sisipkan URL apa adanya.
+(function setupGlobalDescPaste(){
+  if(window._descPasteSetup) return;
+  window._descPasteSetup = true;
+  var DESC_IDS = ['acDeskripsi','prjDeskripsi','amDeskripsi','mswHasil','taskModalDesc'];
+  document.addEventListener('paste', function(e){
+    var ta = e.target;
+    if(!ta || ta.tagName !== 'TEXTAREA') return;
+    if(DESC_IDS.indexOf(ta.id) === -1) return;
+    var cd = e.clipboardData || window.clipboardData;
+    if(!cd) return;
+    var pasted = '';
+    try { pasted = cd.getData('text') || ''; } catch(err){ return; }
+    if(!pasted) return;
+    var trimmed = pasted.trim();
+    // Cek apakah pure URL (tidak ada whitespace di tengah, http/https awalan)
+    if(!/^https?:\/\/\S+$/.test(trimmed)) return;
+    // INTERCEPT default paste
+    e.preventDefault();
+    setTimeout(function(){
+      var customName = prompt(
+        '🔗 URL terdeteksi:\n' + trimmed +
+        '\n\nMau pakai nama tampilan custom?\n(Kosongkan / Cancel untuk pakai URL apa adanya)',
+        ''
+      );
+      var insertion;
+      if(customName === null || customName.trim() === ''){
+        insertion = trimmed;
+      } else {
+        insertion = '[' + customName.trim() + '](' + trimmed + ')';
+      }
+      var start = ta.selectionStart || 0;
+      var end = ta.selectionEnd || 0;
+      var before = ta.value.substring(0, start);
+      var after = ta.value.substring(end);
+      ta.value = before + insertion + after;
+      var newPos = before.length + insertion.length;
+      try { ta.setSelectionRange(newPos, newPos); } catch(err){}
+      ta.focus();
+      try { ta.dispatchEvent(new Event('input', { bubbles: true })); } catch(err){}
+    }, 10);
+  });
+})();
 
 // ── Foto bukti: kompres di browser (kecilin ukuran) lalu upload ke Supabase Storage ──
 function compressImage(file, maxW = 1200, quality = 0.72) {
@@ -4041,6 +4550,8 @@ function acSetFilter(status) {
 function acOpenForm() {
   $('acListView').style.display = 'none';
   $('acFormView').style.display = 'block';
+  // Render checkbox divisi (kosong utk acara baru)
+  if(window.renderDivisiCheckboxes) renderDivisiCheckboxes('acDivisiCheckboxes', []);
 }
 
 function acBackToList() {
@@ -4082,11 +4593,13 @@ function acRenderList() {
           const short = (a.deskripsi || '').slice(0, 70) + ((a.deskripsi||'').length > 70 ? '..' : '');
           const pic = a.penanggung_jawab ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:#f0f7f3;color:#1a6644;border:1px solid #d4e8dc;">👤 ${escapeHtml(a.penanggung_jawab)}</span>` : '';
           const angg = a.anggaran > 0 ? `<span style="font-size:10px;color:#7a9585;">💰 ${IDR(a.anggaran)}</span>` : '';
+          const divTagsKb = (window.divisiTagsHTML && a.divisis && a.divisis.length) ? divisiTagsHTML(a.divisis, true) : '';
           return `<div class="prj-kcard prj-${a.status}" onclick="openAcaraDetail(${a.id})">
             <div class="prj-kcard-name">${escapeHtml(a.nama)}</div>
             ${a.tanggal ? `<div style="font-size:10px;color:#7a9585;margin-bottom:5px;">📅 ${a.tanggal}</div>` : ''}
             ${pic ? `<div class="prj-kcard-tags">${pic}</div>` : ''}
-            ${short ? `<div style="font-size:11px;color:#5f7d6e;margin:4px 0;line-height:1.4;">${escapeHtml(short)}</div>` : ''}
+            ${divTagsKb ? `<div class="prj-kcard-tags" style="margin:4px 0;">${divTagsKb}</div>` : ''}
+            ${short ? `<div style="font-size:11px;color:#5f7d6e;margin:4px 0;line-height:1.4;">${descToHTML(short)}</div>` : ''}
             <div class="prj-kcard-foot">${angg}<span style="font-size:10px;color:#2d9e6b;font-weight:700;">Lihat Detail →</span></div>
             <div style="display:flex;gap:4px;margin-top:7px;border-top:1px solid #e0ece5;padding-top:7px;" onclick="event.stopPropagation()">
               <button onclick="event.stopPropagation();updateAcaraStatus(${a.id},document.getElementById('acKbSt${a.id}')?document.getElementById('acKbSt${a.id}').value:'not_started')" style="display:none"></button>
@@ -4130,7 +4643,8 @@ function acRenderList() {
         </div>
         <div style="text-align:right;flex-shrink:0;">${a.tanggal ? `<span class="prj-due-badge prj-due-ok">📅 ${a.tanggal}</span>` : ''}</div>
       </div>
-      ${short ? `<div style="font-size:12px;color:#5f7d6e;margin-bottom:8px;line-height:1.5;">${escapeHtml(short)}</div>` : ''}
+      ${short ? `<div style="font-size:12px;color:#5f7d6e;margin-bottom:8px;line-height:1.5;">${descToHTML(short)}</div>` : ''}
+      ${(window.divisiTagsHTML && a.divisis && a.divisis.length) ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${divisiTagsHTML(a.divisis)}</div>` : ''}
       ${pic ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${pic}</div>` : ''}
       ${a.anggaran > 0 ? `<div style="font-size:11px;color:#7a9585;margin-bottom:6px;">💰 Anggaran: ${IDR(a.anggaran)}</div>` : ''}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
@@ -4155,18 +4669,29 @@ async function addAcara() {
   try {
     const nama = $('acNama').value.trim();
     if (!nama) { setMsg('acMsg', 'Nama acara wajib diisi', true); return; }
-    const { error } = await db.from('acara').insert({
+    const selectedDivisi = window.collectSelectedDivisi
+      ? collectSelectedDivisi('acDivisiCheckboxes') : [];
+    const payload = {
       nama,
       deskripsi: $('acDeskripsi').value.trim() || null,
       tanggal: $('acTanggal').value || null,
       status: $('acStatus').value,
       penanggung_jawab: $('acPIC').value.trim() || null,
       anggaran: parseUang($('acAnggaran').value),
+      divisis: selectedDivisi,
       dicatat_oleh: currentProf.id,
-    });
+    };
+    // Fallback otomatis kalau kolom divisis belum ada
+    const { error } = await saveSupabaseWithDivisiFallback(
+      (p) => db.from('acara').insert(p),
+      payload,
+      'acara'
+    );
     if (error) { setMsg('acMsg', 'Gagal: ' + error.message, true); return; }
     setMsg('acMsg', '✅ Acara tersimpan');
     $('acNama').value = ''; $('acDeskripsi').value = ''; $('acPIC').value = ''; $('acAnggaran').value = '';
+    if(window.refreshDescPreview) refreshDescPreview('acDeskripsi');
+    if(window.renderDivisiCheckboxes) renderDivisiCheckboxes('acDivisiCheckboxes', []);
     await loadAcara();
     setTimeout(acBackToList, 600);
   } finally { _unlockBtn('addAcara', btn); }
@@ -4191,6 +4716,9 @@ async function openAcaraDetail(id) {
   $('amAnggaran').value  = a.anggaran || 0;
   $('amBiaya').value     = a.biaya_per_siswa || 0;
   $('amDeskripsi').value = a.deskripsi || '';
+  if(window.refreshDescPreview) refreshDescPreview('amDeskripsi');
+  // Render divisi checkboxes dengan data tersimpan
+  if(window.renderDivisiCheckboxes) renderDivisiCheckboxes('amDivisiCheckboxes', a.divisis || []);
   $('amMsg').textContent = '';
   $('acaraModal').style.display = 'flex';
   window.scrollTo(0, 0);
@@ -4206,7 +4734,9 @@ async function saveAcaraDetail() {
   if (!currentAcaraId) return;
   const nama = $('amNama').value.trim();
   if (!nama) { setMsg('amMsg', 'Nama acara wajib diisi', true); return; }
-  const { error } = await db.from('acara').update({
+  const selectedDivisi = window.collectSelectedDivisi
+    ? collectSelectedDivisi('amDivisiCheckboxes') : [];
+  const payload = {
     nama,
     tanggal:          $('amTanggal').value || null,
     status:           $('amStatus').value,
@@ -4214,8 +4744,14 @@ async function saveAcaraDetail() {
     anggaran:         parseUang($('amAnggaran').value),
     biaya_per_siswa:  parseUang($('amBiaya').value),
     deskripsi:        $('amDeskripsi').value.trim() || null,
+    divisis:          selectedDivisi,
     updated_at:       new Date().toISOString(),
-  }).eq('id', currentAcaraId);
+  };
+  const { error } = await saveSupabaseWithDivisiFallback(
+    (p) => db.from('acara').update(p).eq('id', currentAcaraId),
+    payload,
+    'acara'
+  );
   if (error) { setMsg('amMsg', 'Gagal: ' + error.message, true); return; }
   setMsg('amMsg', '✅ Perubahan tersimpan');
   await loadAcara();
@@ -5875,52 +6411,83 @@ function rwBatalPilih() {
 }
 
 async function _rwHapusIds(ids) {
-  // Hapus satu per satu — lebih reliable dari .in() untuk semua versi Supabase
-  // PENTING: Gunakan .select() setelah .delete() agar bisa deteksi RLS silent-block.
-  // Supabase tidak mengembalikan error jika RLS memblokir DELETE — hanya mengembalikan
-  // array kosong. Tanpa .select(), kode mengira berhasil padahal 0 baris terhapus.
+  // [PERBAIKAN LEMOT] Hapus BATCH pakai .in() — bukan satu per satu.
+  // Sebelumnya 134 data = 134 request berurutan (lambat). Sekarang per-chunk
+  // 100 id → cuma 1-2 request total, jauh lebih cepat.
+  // PENTING: .select('id') tetap dipakai agar bisa deteksi RLS silent-block.
+  // Supabase tidak mengembalikan error jika RLS memblokir DELETE — hanya
+  // mengembalikan array kosong. Bandingkan jumlah terhapus vs jumlah diminta.
   let gagal = 0, errMsg = '', rlsBlocked = 0;
-  for (const id of ids) {
-    const { data, error } = await db.from('audit_log').delete().eq('id', id).select();
+  const CHUNK = 100;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const chunk = ids.slice(i, i + CHUNK);
+    const { data, error } = await db.from('audit_log').delete().in('id', chunk).select('id');
     if (error) {
-      gagal++; errMsg = error.message;
-    } else if (!data || data.length === 0) {
-      // DELETE berjalan tanpa error tapi 0 baris terhapus → RLS memblokir
-      gagal++; rlsBlocked++;
-      errMsg = 'RLS_BLOCKED';
+      gagal += chunk.length; errMsg = error.message;
+    } else {
+      const n = (data || []).length;
+      if (n < chunk.length) {
+        // Ada baris yang tidak terhapus walau tanpa error → RLS memblokir
+        const blocked = chunk.length - n;
+        gagal += blocked; rlsBlocked += blocked; errMsg = 'RLS_BLOCKED';
+      }
     }
   }
   return { gagal, errMsg, rlsBlocked };
 }
 
+// Helper: re-insert audit_log dari snapshot (untuk Urungkan)
+// Field `id` dibuang biar Supabase generate baru (audit_log harus immutable historis)
+async function _rwReinsert(savedRows) {
+  if (!savedRows || !savedRows.length) return;
+  const rows = savedRows.map(r => {
+    const { id, ...rest } = r;
+    return rest;
+  });
+  try {
+    const { error } = await db.from('audit_log').insert(rows);
+    if (error) {
+      showToast('⚠️ Urungkan sebagian gagal: ' + error.message, 'warn', 5000);
+    }
+  } catch (e) {
+    showToast('⚠️ Urungkan gagal: ' + e.message, 'warn', 5000);
+  }
+}
+
 async function rwHapusDipilih() {
   const ids = rwData.filter((_, i) => { const c = $('rwchk_' + i); return c && c.checked; }).map(e => e.id);
   if (!ids.length) { showToast('Pilih setidaknya 1 data dulu.', 'warn'); return; }
-  var snapshotIds = ids.slice();
-  var label = snapshotIds.length + ' data riwayat';
-  var savedRwData = rwData.slice();
+  const snapshotIds = ids.slice();
+  const savedRows = rwData.filter(e => snapshotIds.includes(e.id));
+  const label = snapshotIds.length + ' data riwayat';
+
+  // 1) DELETE ke DB SEKARANG — tidak ditunda
+  const { gagal, errMsg, rlsBlocked } = await _rwHapusIds(snapshotIds);
+  if (rlsBlocked > 0) {
+    showToast('❌ Hapus GAGAL — RLS Supabase memblokir DELETE pada audit_log. Cek policy DELETE di Supabase.', 'error', 7000);
+    await loadRiwayat();
+    return;
+  }
+  if (gagal === snapshotIds.length) {
+    showToast('❌ Gagal hapus: ' + errMsg, 'error', 5000);
+    await loadRiwayat();
+    return;
+  }
+  if (gagal > 0) {
+    showToast('⚠️ ' + (snapshotIds.length - gagal) + ' berhasil, ' + gagal + ' gagal.', 'warn');
+  }
+
+  // 2) Update UI optimistik
   rwData = rwData.filter(e => !snapshotIds.includes(e.id));
   _renderRiwayat();
+
+  // 3) Tampilkan toast Urungkan — kalau ditekan, INSERT balik
   showUndoToast(label,
     async function() {
-      rwData = savedRwData;
-      _renderRiwayat();
+      await _rwReinsert(savedRows);
+      await loadRiwayat();
     },
-    async function() {
-      const { gagal, errMsg, rlsBlocked } = await _rwHapusIds(snapshotIds);
-      if (rlsBlocked > 0) {
-        showToast('❌ Hapus GAGAL — RLS Supabase memblokir DELETE. Cek policy audit_log.', 'error', 6000);
-        rwData = savedRwData; _renderRiwayat();
-      } else if (gagal === snapshotIds.length) {
-        showToast('❌ Gagal hapus: ' + errMsg, 'error', 5000);
-        rwData = savedRwData; _renderRiwayat();
-      } else if (gagal > 0) {
-        showToast('⚠️ ' + (snapshotIds.length - gagal) + ' berhasil, ' + gagal + ' gagal dihapus.', 'warn');
-        loadRiwayat();
-      } else {
-        showToast('✅ ' + snapshotIds.length + ' data riwayat berhasil dihapus.', 'success');
-      }
-    },
+    null,  // tidak ada onConfirm — delete sudah jalan di awal
     '🕵️'
   );
 }
@@ -5928,31 +6495,34 @@ async function rwHapusDipilih() {
 async function rwHapusFilter() {
   const labelPeriode = { minggu:'1 Minggu Terakhir', bulan:'1 Bulan Terakhir', tahun:'1 Tahun Terakhir', semua:'Semua Data' }[rwFilter];
   if (!rwData.length) { showToast('Tidak ada data untuk dihapus.', 'warn'); return; }
-  var snapshotIds = rwData.map(e => e.id);
-  var savedRwData = rwData.slice();
-  var label = snapshotIds.length + ' riwayat (' + labelPeriode + ')';
+  const snapshotIds = rwData.map(e => e.id);
+  const savedRows = rwData.slice();
+  const label = snapshotIds.length + ' riwayat (' + labelPeriode + ')';
+
+  const { gagal, errMsg, rlsBlocked } = await _rwHapusIds(snapshotIds);
+  if (rlsBlocked > 0) {
+    showToast('❌ Hapus GAGAL — RLS Supabase memblokir DELETE pada audit_log. Cek policy DELETE di Supabase.', 'error', 7000);
+    await loadRiwayat();
+    return;
+  }
+  if (gagal === snapshotIds.length) {
+    showToast('❌ Gagal hapus: ' + errMsg, 'error', 5000);
+    await loadRiwayat();
+    return;
+  }
+  if (gagal > 0) {
+    showToast('⚠️ ' + (snapshotIds.length - gagal) + ' berhasil, ' + gagal + ' gagal.', 'warn');
+  }
+
   rwData = [];
   _renderRiwayat();
+
   showUndoToast(label,
     async function() {
-      rwData = savedRwData;
-      _renderRiwayat();
+      await _rwReinsert(savedRows);
+      await loadRiwayat();
     },
-    async function() {
-      const { gagal, errMsg, rlsBlocked } = await _rwHapusIds(snapshotIds);
-      if (rlsBlocked > 0) {
-        showToast('❌ Hapus GAGAL — RLS Supabase memblokir DELETE. Cek policy audit_log.', 'error', 6000);
-        rwData = savedRwData; _renderRiwayat();
-      } else if (gagal === snapshotIds.length) {
-        showToast('❌ Gagal hapus: ' + errMsg, 'error', 5000);
-        rwData = savedRwData; _renderRiwayat();
-      } else if (gagal > 0) {
-        showToast('⚠️ ' + (snapshotIds.length - gagal) + ' berhasil, ' + gagal + ' gagal dihapus.', 'warn');
-        loadRiwayat();
-      } else {
-        showToast('✅ Semua riwayat periode ' + labelPeriode + ' berhasil dihapus.', 'success');
-      }
-    },
+    null,
     '🗑️'
   );
 }
@@ -8165,7 +8735,8 @@ function renderMswList() {
             ${totKeluar > 0 ? `<span style="font-size:11px;background:#fff0f0;color:#dc2626;padding:2px 8px;border-radius:99px;">💸 ${IDR(totKeluar)}</span>` : ''}
             <span class="st-badge ${arsip?'st-cancelled':'st-done'}" style="font-size:10px;">${arsip?'📦 Arsip':'✅ Aktif'}</span>
           </div>
-          ${m.hasil ? `<div style="font-size:12px;color:#374151;margin-top:6px;line-height:1.5;">${escapeHtml(m.hasil.slice(0,100))}${m.hasil.length>100?'…':''}</div>` : ''}
+          ${(window.divisiTagsHTML && m.divisis && m.divisis.length) ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">${divisiTagsHTML(m.divisis, true)}</div>` : ''}
+          ${m.hasil ? `<div style="font-size:12px;color:#374151;margin-top:6px;line-height:1.5;">${descToHTML(m.hasil.slice(0,100))}${m.hasil.length>100?'…':''}</div>` : ''}
         </div>
       </div>
       <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
@@ -8351,8 +8922,27 @@ function renderMswForm(msw, peserta=[], keuangan=[]) {
       </div>
       <label>Tempat / Lokasi (opsional)</label>
       <input type="text" id="mswTempat" value="${escapeHtml(msw?.tempat||'')}" placeholder="Cth: Masjid Al-Ikhlas, Ruang Rapat">
-      <label>Hasil / Notulensi Musyawarah</label>
-      <textarea id="mswHasil" rows="5" placeholder="Tulis poin-poin hasil musyawarah, keputusan, tindak lanjut, dll...">${escapeHtml(msw?.hasil||'')}</textarea>
+      <label>🏢 Divisi yang Terlibat <span class="muted" style="font-size:11px;font-weight:400;">(opsional, pilih satu/banyak)</span></label>
+      <div id="mswDivisiCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:10px;background:#f0f7f3;border-radius:10px;min-height:44px;">
+        <span class="muted" style="font-size:12px;">Memuat divisi dari Struktur Org...</span>
+      </div>
+      <label>Hasil / Notulensi Musyawarah <span class="muted" style="font-size:11px;font-weight:400;">(format Notion: judul, sub, bold, link)</span></label>
+      <div class="desc-toolbar">
+        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('mswHasil',1)" title="Judul Besar">H1</button>
+        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('mswHasil',2)" title="Sub Judul">H2</button>
+        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('mswHasil',3)" title="Sub-Sub Judul">H3</button>
+        <button type="button" class="desc-toolbar-btn" onclick="insertBold('mswHasil')" title="Tebal"><b>B</b></button>
+        <button type="button" class="desc-toolbar-btn" onclick="insertLinkToDesc('mswHasil')" title="Sisipkan Link">🔗 Link</button>
+        <span class="desc-toolbar-hint">Paste URL → auto tanya nama</span>
+      </div>
+      <textarea id="mswHasil" rows="6" placeholder="# Keputusan Utama&#10;## Tindak Lanjut&#10;## Catatan Penting&#10;Tulis di sini...">${escapeHtml(msw?.hasil||'')}</textarea>
+      <div class="desc-preview-wrap">
+        <div class="desc-preview-header">
+          <span>👁 Preview Tampilan</span>
+          <span class="preview-status" id="mswHasil_preview_status">0 karakter</span>
+        </div>
+        <div class="desc-preview-box" id="mswHasil_preview">${descToHTML(msw?.hasil||'')}</div>
+      </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button onclick="simpanMsw()" style="flex:1;">💾 ${isEdit ? 'Simpan Perubahan' : 'Buat Musyawarah'}</button>
         ${isEdit ? `<button class="secondary" onclick="arsipMsw(${msw.id},'${msw.status==='arsip'?'aktif':'arsip'}')" style="flex:1;">${msw.status==='arsip'?'↩ Aktifkan':'📦 Arsipkan'}</button>` : ''}
@@ -8430,6 +9020,8 @@ function renderMswForm(msw, peserta=[], keuangan=[]) {
     const today = new Date();
     if ($('mswTanggal') && !$('mswTanggal').value) $('mswTanggal').valueAsDate = today;
   }
+  // Render checkbox divisi (dipanggil setelah innerHTML di-set)
+  if(window.renderDivisiCheckboxes) renderDivisiCheckboxes('mswDivisiCheckboxes', msw?.divisis || []);
 }
 
 // ─── Simpan musyawarah (create / update) ───
@@ -8440,19 +9032,26 @@ async function simpanMsw() {
   if (!judul) { setMsg('mswInfoMsg', 'Judul wajib diisi', true); return; }
   if (!tanggal) { setMsg('mswInfoMsg', 'Tanggal wajib diisi', true); return; }
 
+  const selectedDivisi = window.collectSelectedDivisi
+    ? collectSelectedDivisi('mswDivisiCheckboxes') : [];
   const payload = {
     judul,
     tanggal,
     jam: $('mswJam')?.value || null,
     tempat: $('mswTempat')?.value?.trim() || null,
     hasil: $('mswHasil')?.value?.trim() || null,
+    divisis: selectedDivisi,
     updated_at: new Date().toISOString(),
     dibuat_oleh: currentProf?.id || null,
   };
 
   if (currentMswId) {
     // UPDATE
-    const { error } = await db.from('musyawarah').update(payload).eq('id', currentMswId);
+    const { error } = await saveSupabaseWithDivisiFallback(
+      (p) => db.from('musyawarah').update(p).eq('id', currentMswId),
+      payload,
+      'musyawarah'
+    );
     if (error) { setMsg('mswInfoMsg', 'Gagal: ' + error.message, true); return; }
     setMsg('mswInfoMsg', '✅ Perubahan tersimpan');
     _auditLog && _auditLog('musyawarah', 'UPDATE', {id: currentMswId}, payload);
@@ -8461,7 +9060,11 @@ async function simpanMsw() {
   } else {
     // INSERT
     payload.status = 'aktif';
-    const { data: baru, error } = await db.from('musyawarah').insert(payload).select().single();
+    const { data: baru, error } = await saveSupabaseWithDivisiFallback(
+      (p) => db.from('musyawarah').insert(p).select().single(),
+      payload,
+      'musyawarah'
+    );
     if (error) { setMsg('mswInfoMsg', 'Gagal: ' + error.message, true); return; }
     currentMswId = baru.id;
     _auditLog && _auditLog('musyawarah', 'INSERT', null, payload);
@@ -10051,106 +10654,49 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     function doRender(){
       var chart  = document.getElementById('so_chart');
 
-      // ── 1. Ukur dimensi PENUH — termasuk node yang posisinya negatif (kiri/atas) ──
-      // FIX: Pakai getBoundingClientRect relatif terhadap chart, bukan offsetParent chain.
-      // Ini menangkap node yang overflow ke kiri/atas (koordinat negatif).
+      // ── 1. Ukur dimensi PENUH — SEMUA descendant (bukan cuma .so-node).
+      // FIX: Sebelumnya cuma scan .so-node → label-chip divisi, connector
+      // vertikal, garis SVG yang menjulur, dan box-shadow buffer TER-POTONG
+      // di hasil convert (terutama node samping & paling bawah).
+      // SEKARANG: scan querySelectorAll('*') supaya semua ke-cover.
       var chartRect = chart.getBoundingClientRect();
-      var minX = 0, minY = 0, maxR = 0, maxB = 0;
-      chart.querySelectorAll('.so-node').forEach(function(n){
-        var r = n.getBoundingClientRect();
-        var l = r.left - chartRect.left;
-        var t = r.top  - chartRect.top;
+      var minX = 0, minY = 0;
+      var maxR = chart.scrollWidth  || chartRect.width;
+      var maxB = chart.scrollHeight || chartRect.height;
+      var _all = chart.querySelectorAll('*');
+      for(var _i = 0; _i < _all.length; _i++){
+        var r = _all[_i].getBoundingClientRect();
+        // Skip elemen yang hidden / kosong
+        if(r.width === 0 && r.height === 0) continue;
+        var l  = r.left   - chartRect.left;
+        var t  = r.top    - chartRect.top;
         var ri = r.right  - chartRect.left;
         var bo = r.bottom - chartRect.top;
         if(l  < minX) minX = l;
         if(t  < minY) minY = t;
         if(ri > maxR) maxR = ri;
         if(bo > maxB) maxB = bo;
-      });
-      // Tambah padding 60px di semua sisi
-      var padX = 60, padY = 60;
-      minX = Math.floor(minX) - padX;
-      minY = Math.floor(minY) - padY;
-      maxR = Math.ceil(maxR)  + padX;
-      maxB = Math.ceil(maxB)  + padY;
-      var fullW = Math.max(chart.scrollWidth, maxR - minX);
-      var fullH = Math.max(chart.scrollHeight, maxB - minY);
-      // Offset untuk menggeser chart agar node yang negatif ikut ter-capture
-      var shiftX = (minX < 0) ? -minX : 0;
-      var shiftY = (minY < 0) ? -minY : 0;
+      }
+      // Padding 80px di setiap sisi — buffer untuk shadow & SVG tail
+      var padX = 80, padY = 80;
+      minX = Math.floor(minX);
+      minY = Math.floor(minY);
+      maxR = Math.ceil(maxR);
+      maxB = Math.ceil(maxB);
+      // Total dimensi = ukuran konten + padding di 2 sisi
+      var fullW = (maxR - minX) + 2 * padX;
+      var fullH = (maxB - minY) + 2 * padY;
+      // Translate: tempatkan minX/minY (titik kiri-atas konten) di koordinat (padX, padY) wrapper
+      // Kalau minX negatif (konten menjulur ke kiri), translate makin besar ke kanan.
+      var translateX = padX - minX;
+      var translateY = padY - minY;
 
-      // ── 2. Snapshot SVG garis dengan warna yang cocok untuk background putih ──
-      //    Garis manual pakai rgba(255,255,255,0.85) = putih → invisible di bg putih.
-      //    Kita ganti sementara ke warna hijau gelap sebelum serialize.
-      var EXPORT_LINE  = '#1a6644';   // hijau gelap — terlihat jelas di bg putih
-      var EXPORT_ARROW = '#1a6644';
-
-      var svgEls = chart.querySelectorAll('svg');
-      var svgSnapshots = [];
-
-      svgEls.forEach(function(svg){
-        try {
-          var svgRect   = svg.getBoundingClientRect();
-          // FIX: Gunakan BoundingClientRect untuk ukuran akurat, bukan getAttribute
-          var sw = svgRect.width  || parseInt(svg.getAttribute('width'))  || svg.offsetWidth  || fullW;
-          var sh = svgRect.height || parseInt(svg.getAttribute('height')) || svg.offsetHeight || fullH;
-          // Posisi relatif terhadap chart + shift agar sejajar dengan clone yang di-translate
-          var offsetX = (svgRect.left - chartRect.left) + shiftX;
-          var offsetY = (svgRect.top  - chartRect.top)  + shiftY;
-
-          // Deep-clone
-          var clone = svg.cloneNode(true);
-          clone.setAttribute('width',  sw);
-          clone.setAttribute('height', sh);
-          clone.setAttribute('xmlns',  'http://www.w3.org/2000/svg');
-
-          // Ganti semua warna putih/transparan pada stroke & fill ke warna cetak
-          clone.querySelectorAll('[stroke]').forEach(function(el){
-            var s = el.getAttribute('stroke');
-            if(!s || s === 'none') return;
-            // Putih / rgba putih / transparan → ganti ke hijau gelap
-            if(/^(white|#fff|#ffffff)$/i.test(s) || /rgba\(255,\s*255,\s*255/i.test(s)){
-              el.setAttribute('stroke', EXPORT_LINE);
-            }
-            // Warna sangat terang (hijau muda #b2d8c4 dll) → pertahankan tapi perkuat
-            if(/^#[bcedf]/i.test(s)){
-              el.setAttribute('stroke', '#2d9e6b');
-              el.setAttribute('stroke-width', String(Math.max(parseFloat(el.getAttribute('stroke-width')||'2'), 2.5)));
-            }
-          });
-          clone.querySelectorAll('[fill]').forEach(function(el){
-            var f = el.getAttribute('fill');
-            if(!f || f === 'none') return;
-            if(/^(white|#fff|#ffffff)$/i.test(f) || /rgba\(255,\s*255,\s*255/i.test(f)){
-              el.setAttribute('fill', EXPORT_ARROW);
-            }
-          });
-          // Ganti inline style stroke juga
-          clone.querySelectorAll('[style]').forEach(function(el){
-            var st = el.getAttribute('style') || '';
-            st = st.replace(/stroke\s*:\s*(white|#fff|#ffffff|rgba\(255[^)]+\))/gi, 'stroke:' + EXPORT_LINE);
-            st = st.replace(/fill\s*:\s*(white|#fff|#ffffff|rgba\(255[^)]+\))/gi,   'fill:'   + EXPORT_ARROW);
-            el.setAttribute('style', st);
-          });
-          // Marker/defs arrowhead fill
-          clone.querySelectorAll('marker path, marker polygon').forEach(function(el){
-            var f = el.getAttribute('fill') || '';
-            if(/^(white|#fff|#ffffff)$/i.test(f) || /rgba\(255,\s*255,\s*255/i.test(f) || !f){
-              el.setAttribute('fill', EXPORT_ARROW);
-            }
-          });
-
-          var serial = new XMLSerializer().serializeToString(clone);
-          var b64    = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(serial);
-          svgSnapshots.push({ url: b64, x: offsetX, y: offsetY, w: sw, h: sh });
-        } catch(e){ /* skip */ }
-      });
-
-      // ── 2. Capture SVG path data SEBELUM manipulasi DOM apapun ──────────────
-      // ROOT CAUSE: scroll viewport menyebabkan getBoundingClientRect berubah →
-      // garis di-render ulang dengan koordinat salah.
-      // SOLUSI: capture innerHTML SVG sekarang, taruh wrapper di KANAN layar (bukan scroll).
-      var EXPORT_LINE  = '#1a6644';
+      // ── 2. Capture SVG path data SEBELUM DOM dimodifikasi ──────────────────
+      // [FIX PERFORMANCE] Dulu ada blok 60+ baris yang serialize semua SVG ke
+      // base64 (svgSnapshots[]) tapi HASILNYA NEVER DIPAKAI. Itu bikin export
+      // "proses mulu" — buang 1-3 detik utk hasil yang dibuang.
+      // SEKARANG: cukup snapshot innerHTML buat dipakai svgSnapData di bawah.
+      var EXPORT_LINE  = '#1a6644';   // hijau gelap — terlihat di bg putih
       var EXPORT_ARROW = '#1a6644';
       var prevScrollY  = window.scrollY;
 
@@ -10164,7 +10710,13 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
           st: svg.getAttribute('style') || '' });
       });
 
-      // ── 3. Wrapper di kanan layar — TANPA scroll viewport ───────────────────
+      // ── 3. Wrapper di kanan layar — TANPA scroll viewport.
+      // [FIX BLANK WHITE] Wrapper HARUS punya width/height eksplisit.
+      // Pakai inline-block + position:fixed di luar viewport bikin
+      // shrink-to-fit collapse jadi 0×0 → hasil blank putih.
+      // [FIX FLEX RE-CENTER] Tapi clone JANGAN dipaksa width — supaya
+      // tier rows (display:flex; justify-content:center) tidak re-center
+      // di kontainer yang lebih lebar. Clone ambil ukuran natural-nya.
       var wrapper = document.createElement('div');
       var offLeft  = window.innerWidth + 50;
       wrapper.style.cssText = [
@@ -10175,9 +10727,14 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       ].join(';');
 
       var chartClone = chart.cloneNode(true);
-      chartClone.style.cssText += ';width:' + fullW + 'px;height:' + fullH + 'px;overflow:visible;position:relative;top:0;left:0;';
-      if(shiftX > 0 || shiftY > 0)
-        chartClone.style.transform = 'translate(' + shiftX + 'px,' + shiftY + 'px)';
+      // [FIX BLANK PUTIH] Pakai position:absolute + top/left, BUKAN transform.
+      // html2canvas suka miss-render konten yang di-translate via CSS transform
+      // → output blank. Position absolute dengan top/left lebih reliable.
+      // Wrapper position:fixed otomatis jadi containing block utk absolute.
+      chartClone.style.cssText += ';overflow:visible !important;'
+        + 'position:absolute;margin:0;'
+        + 'left:' + translateX + 'px;'
+        + 'top:'  + translateY + 'px;';
 
       // Restore SVG dari snapshot + recolor putih → hijau
       var cloneSvgList = chartClone.querySelectorAll('svg');
@@ -10210,11 +10767,49 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
         });
       });
 
+      // [FIX DARK MODE] Saat user pakai dark mode, node + teks pakai warna
+      // dark-theme yang bisa blend dengan bg putih → hasil seolah blank.
+      // Sementara switch <html data-theme> ke 'light' selama capture, restore setelah.
+      var htmlEl = document.documentElement;
+      var origTheme = htmlEl.getAttribute('data-theme');
+      var themeOverridden = false;
+      if(origTheme === 'dark'){
+        htmlEl.setAttribute('data-theme', 'light');
+        themeOverridden = true;
+      }
+
       wrapper.appendChild(chartClone);
       document.body.appendChild(wrapper);
       // TIDAK ada window.scrollTo — viewport tidak bergerak
 
-      var wrapperLeftPx = offLeft;
+      // [FIX "proses mulu"] Cleanup AMAN — pakai reference langsung,
+      // BUKAN selector. Dulu pakai 'wrapperTopPx' yang undefined →
+      // selector 'div[style*="top:undefinedpx"]' tidak match apa-apa,
+      // wrapper bisa leak di DOM kalau path error.
+      var cleaned = false;
+      function cleanup(){
+        if(cleaned) return;
+        cleaned = true;
+        try { if(wrapper.parentNode) wrapper.parentNode.removeChild(wrapper); } catch(e){}
+        if(themeOverridden){
+          htmlEl.setAttribute('data-theme', origTheme);
+          themeOverridden = false;
+        }
+      }
+      function resetButton(){
+        btn.disabled = false;
+        btn.textContent = '⬇️ Download Gambar';
+      }
+
+      // [FIX "proses mulu"] Hard timeout 60 detik. Kalau html2canvas hang
+      // (foto rusak / CORS lambat / CSS aneh), tombol tetap kembali normal
+      // dan user tidak menunggu selamanya.
+      var hardTimeout = setTimeout(function(){
+        cleanup();
+        resetButton();
+        showToast('⏱️ Timeout (>60s). Coba scale lebih kecil atau cek foto besar.','error');
+      }, 60000);
+
       setTimeout(function(){
         window.html2canvas(wrapper, {
           scale          : scale,
@@ -10227,53 +10822,38 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
           height         : fullH,
           windowWidth    : fullW + offLeft + 200,
           windowHeight   : Math.max(fullH, window.innerHeight) + 200,
-          x              : wrapperLeftPx,
+          x              : offLeft,
           y              : 0,
           scrollX        : 0,
           scrollY        : -prevScrollY
-        }).then(function(c){
-          document.body.removeChild(wrapper);
-          return c;
         }).then(function(baseCanvas){
+          clearTimeout(hardTimeout);
+          cleanup();
           var finalCanvas = document.createElement('canvas');
           finalCanvas.width  = baseCanvas.width;
           finalCanvas.height = baseCanvas.height;
           var ctx = finalCanvas.getContext('2d');
           if(useBgWhite){ ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,finalCanvas.width,finalCanvas.height); }
           ctx.drawImage(baseCanvas, 0, 0);
-          finalize(finalCanvas);
 
-        }).catch(function(e){
-          restore();
+          var mimeType = (fmt === 'jpg') ? 'image/jpeg' : 'image/png';
+          var quality  = (fmt === 'jpg') ? jpgQ : undefined;
+          var dataUrl  = finalCanvas.toDataURL(mimeType, quality);
+          var a = document.createElement('a');
+          a.href = dataUrl; a.download = filename;
+          document.body.appendChild(a); a.click();
+          setTimeout(function(){ try { document.body.removeChild(a); } catch(e){} }, 300);
+          btn.textContent = '✅ Berhasil! Download lagi?';
+          setTimeout(function(){ btn.textContent = '⬇️ Download Gambar'; }, 3500);
           btn.disabled = false;
-          btn.textContent = '⬇️ Download Gambar';
-          showToast('❌ Gagal render: ' + e.message, 'error');
+          showToast('✅ ' + fmt.toUpperCase() + ' ' + scale + 'x — ' + Math.round(finalCanvas.width) + '×' + Math.round(finalCanvas.height) + 'px berhasil!');
+        }).catch(function(e){
+          clearTimeout(hardTimeout);
+          cleanup();
+          resetButton();
+          showToast('❌ Gagal render: ' + (e && e.message ? e.message : 'unknown'), 'error');
         });
-
       }, 250);
-
-      function finalize(canvas){
-        restore();
-        var mimeType = (fmt === 'jpg') ? 'image/jpeg' : 'image/png';
-        var quality  = (fmt === 'jpg') ? jpgQ : undefined;
-        var dataUrl  = canvas.toDataURL(mimeType, quality);
-        var a = document.createElement('a');
-        a.href = dataUrl; a.download = filename;
-        document.body.appendChild(a); a.click();
-        setTimeout(function(){ document.body.removeChild(a); }, 300);
-        btn.disabled = false;
-        btn.textContent = '✅ Berhasil! Download lagi?';
-        setTimeout(function(){ btn.textContent = '⬇️ Download Gambar'; }, 3500);
-        showToast('✅ ' + fmt.toUpperCase() + ' ' + scale + 'x — ' + Math.round(canvas.width) + '×' + Math.round(canvas.height) + 'px berhasil!');
-      }
-
-      function restore(){
-        window.scrollTo(0, prevScrollY);
-        // Hapus wrapper kalau masih ada (error path)
-        var w = document.querySelector('div[style*="top:' + wrapperTopPx + 'px"]');
-        if(!w) w = document.querySelector('div[style*="z-index:-9999"]');
-        if(w && w.parentNode) w.parentNode.removeChild(w);
-      }
     }
   };
   // ─────────────────────────────────────────────────────────────────────────────
@@ -10284,23 +10864,30 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     showToast('⏳ Menyiapkan PDF...');
     function doExport(){
       var chart  = $id('so_chart');
-      // FIX: Pakai getBoundingClientRect untuk menangkap node dengan koordinat negatif
+      if(!chart){ showToast('Chart tidak ditemukan','error'); return; }
+
+      // [FIX BOTTOM/SIDE CLIPPING] Ukur SEMUA descendant (bukan cuma .so-node)
+      // supaya label-chip divisi, connector vertikal, garis SVG, dan
+      // box-shadow buffer ikut ter-cover di PDF.
       var chartRectPDF = chart.getBoundingClientRect();
-      var minX2=0, minY2=0, maxR2=0, maxB2=0;
-      chart.querySelectorAll('.so-node').forEach(function(n){
-        var r=n.getBoundingClientRect();
+      var minX2=0, minY2=0;
+      var maxR2 = chart.scrollWidth  || chartRectPDF.width;
+      var maxB2 = chart.scrollHeight || chartRectPDF.height;
+      var _allP = chart.querySelectorAll('*');
+      for(var _ip=0; _ip<_allP.length; _ip++){
+        var r=_allP[_ip].getBoundingClientRect();
+        if(r.width===0 && r.height===0) continue;
         var l=r.left-chartRectPDF.left, t=r.top-chartRectPDF.top;
         var ri=r.right-chartRectPDF.left, bo=r.bottom-chartRectPDF.top;
         if(l<minX2)minX2=l; if(t<minY2)minY2=t;
         if(ri>maxR2)maxR2=ri; if(bo>maxB2)maxB2=bo;
-      });
-      var padPDF=60;
-      minX2=Math.floor(minX2)-padPDF; minY2=Math.floor(minY2)-padPDF;
-      maxR2=Math.ceil(maxR2)+padPDF;  maxB2=Math.ceil(maxB2)+padPDF;
-      var fullW  = Math.max(chart.scrollWidth, maxR2 - minX2);
-      var fullH  = Math.max(chart.scrollHeight, maxB2 - minY2);
-      var shiftX2 = (minX2 < 0) ? -minX2 : 0;
-      var shiftY2 = (minY2 < 0) ? -minY2 : 0;
+      }
+      var padPDF=80;
+      minX2=Math.floor(minX2); minY2=Math.floor(minY2);
+      maxR2=Math.ceil(maxR2);  maxB2=Math.ceil(maxB2);
+      // Translate konten: minX2/minY2 → (padPDF, padPDF) di wrapper
+      var translateXp = padPDF - minX2;
+      var translateYp = padPDF - minY2;
 
       // PDF: wrapper di kanan layar — TANPA scroll viewport
       var pScrollY = window.scrollY;
@@ -10314,15 +10901,23 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
           vb: svg.getAttribute('viewBox') || '' });
       });
 
+      // [FIX BLANK + FLEX RE-CENTER] Wrapper TETAP eksplisit width/height
+      // (kalau tanpa width → fixed+inline-block collapse jadi 0 di luar viewport).
+      // Tapi clone TIDAK dipaksa width supaya tier flex tidak re-center.
+      var fullWp = (maxR2 - minX2) + padPDF*2;
+      var fullHp = (maxB2 - minY2) + padPDF*2;
       var wrapperPDF = document.createElement('div');
       var pOffLeft = window.innerWidth + 50;
       var PEXP_LINE = '#1a6644';
-      wrapperPDF.style.cssText = 'position:fixed;top:0;left:'+pOffLeft+'px;width:'+fullW+'px;height:'+fullH+'px;overflow:visible;pointer-events:none;z-index:-1;background:#ffffff';
+      wrapperPDF.style.cssText = 'position:fixed;top:0;left:'+pOffLeft+'px;'
+        + 'width:'+fullWp+'px;height:'+fullHp+'px;'
+        + 'overflow:visible;pointer-events:none;z-index:-1;background:#ffffff';
 
       var chartClonePDF = chart.cloneNode(true);
-      chartClonePDF.style.cssText += ';width:'+fullW+'px;height:'+fullH+'px;overflow:visible;position:relative;top:0;left:0;';
-      if(shiftX2 > 0 || shiftY2 > 0)
-        chartClonePDF.style.transform = 'translate('+shiftX2+'px,'+shiftY2+'px)';
+      // [FIX BLANK PUTIH] Pakai position:absolute + top/left, BUKAN transform.
+      chartClonePDF.style.cssText += ';overflow:visible !important;'
+        + 'position:absolute;margin:0;'
+        + 'left:'+translateXp+'px;top:'+translateYp+'px;';
 
       var pCloneSvgs = chartClonePDF.querySelectorAll('svg');
       pSvgSnapData.forEach(function(snap, i){
@@ -10354,19 +10949,44 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
         });
       });
 
+      // [FIX DARK MODE] Switch ke light theme sementara saat capture
+      var htmlElP = document.documentElement;
+      var origThemeP = htmlElP.getAttribute('data-theme');
+      var themeOverriddenP = false;
+      if(origThemeP === 'dark'){
+        htmlElP.setAttribute('data-theme', 'light');
+        themeOverriddenP = true;
+      }
+
       wrapperPDF.appendChild(chartClonePDF);
       document.body.appendChild(wrapperPDF);
       // TIDAK ada window.scrollTo
 
+      // [FIX "proses mulu"] Cleanup AMAN + timeout 60 detik
+      var cleanedP = false;
+      function cleanupP(){
+        if(cleanedP) return;
+        cleanedP = true;
+        try { if(wrapperPDF.parentNode) wrapperPDF.parentNode.removeChild(wrapperPDF); } catch(e){}
+        if(themeOverriddenP){
+          htmlElP.setAttribute('data-theme', origThemeP);
+          themeOverriddenP = false;
+        }
+      }
+      var hardTimeoutP = setTimeout(function(){
+        cleanupP();
+        window.scrollTo(0, pScrollY);
+        showToast('⏱️ Timeout PDF (>60s). Coba hapus foto besar atau scale lebih kecil.','error');
+      }, 60000);
+
       setTimeout(function(){
         html2canvas(wrapperPDF,{scale:3,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',logging:false,
-          width:fullW,height:fullH,
-          windowWidth:fullW+pOffLeft+200, windowHeight:Math.max(fullH,window.innerHeight)+200,
+          width:fullWp,height:fullHp,
+          windowWidth:fullWp+pOffLeft+200, windowHeight:Math.max(fullHp,window.innerHeight)+200,
           x:pOffLeft,y:0,scrollX:0,scrollY:-pScrollY
-        }).then(function(c){
-          document.body.removeChild(wrapperPDF);
-          return c;
         }).then(function(baseCanvas){
+          clearTimeout(hardTimeoutP);
+          cleanupP();
           var fc=document.createElement('canvas');
           fc.width=baseCanvas.width; fc.height=baseCanvas.height;
           var ctx=fc.getContext('2d');
@@ -10396,8 +11016,10 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
           doc.save((($id('so_orgName').value||'struktur-organisasi').replace(/\s+/g,'-').toLowerCase())+'.pdf');
           showToast('✅ PDF berhasil didownload!');
         }).catch(function(e){
+          clearTimeout(hardTimeoutP);
+          cleanupP();
           window.scrollTo(0,pScrollY);
-          showToast('❌ Gagal: '+e.message,'error');
+          showToast('❌ Gagal: '+(e && e.message ? e.message : 'unknown'),'error');
         });
       },250);
     }
@@ -10729,7 +11351,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     if(tasks.length){
       taskHtml='<div style="margin-top:4px;">'+tasks.map(function(t,i){
         var metaHtml='';
-        if(t.desc) metaHtml+='<span class="prj-task-desc-preview">📝 '+t.desc.slice(0,60)+(t.desc.length>60?'…':'')+'</span>';
+        if(t.desc) metaHtml+='<span class="prj-task-desc-preview">📝 '+descToHTML(t.desc.slice(0,60))+(t.desc.length>60?'…':'')+'</span>';
         if(t.link) metaHtml+='<span class="prj-task-link-chip">🔗 Link</span>';
         if(t.photos&&t.photos.length) metaHtml+='<img src="'+t.photos[0]+'" class="prj-task-photo-thumb" alt="foto">';
         if(t.assignee) metaHtml+='<span style="font-size:10px;color:#7a9585;">👤 '+t.assignee+'</span>';
@@ -10840,6 +11462,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     $id('taskModalName').value     = t.text     || '';
     $id('taskModalDone').checked   = !!t.done;
     $id('taskModalDesc').value     = t.desc     || '';
+    if(window.refreshDescPreview) refreshDescPreview('taskModalDesc');
     $id('taskModalLink').value     = t.link     || '';
     $id('taskModalDeadline').value = t.deadline || '';
     $id('taskModalAssignee').value = t.assignee || '';
@@ -10970,6 +11593,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     $id('prjEditId').value          = id || '';
     $id('prjNama').value            = p.nama || '';
     $id('prjDeskripsi').value       = p.deskripsi || '';
+    if(window.refreshDescPreview) refreshDescPreview('prjDeskripsi');
     $id('prjTanggalMulai').value    = p.tanggal_mulai || '';
     $id('prjTanggalSelesai').value  = p.tanggal_selesai || '';
     $id('prjStatus').value          = p.status || 'not_started';
@@ -11112,8 +11736,23 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
         <span style="font-size:13px;font-weight:600;">Tandai Selesai</span>
       </label>
       <!-- Deskripsi / Catatan Progress -->
-      <label>📝 Deskripsi / Catatan Progress</label>
-      <textarea id="taskModalDesc" placeholder="Tulis deskripsi, catatan pekerjaan, atau update progress di sini..." style="min-height:100px;resize:vertical;"></textarea>
+      <label>📝 Deskripsi / Catatan Progress <span class="muted" style="font-size:11px;font-weight:400;">(format Notion: judul, sub, bold, link)</span></label>
+      <div class="desc-toolbar">
+        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('taskModalDesc',1)" title="Judul Besar">H1</button>
+        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('taskModalDesc',2)" title="Sub Judul">H2</button>
+        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('taskModalDesc',3)" title="Sub-Sub Judul">H3</button>
+        <button type="button" class="desc-toolbar-btn" onclick="insertBold('taskModalDesc')" title="Tebal"><b>B</b></button>
+        <button type="button" class="desc-toolbar-btn" onclick="insertLinkToDesc('taskModalDesc')" title="Sisipkan Link">🔗 Link</button>
+        <span class="desc-toolbar-hint">Paste URL → auto tanya nama</span>
+      </div>
+      <textarea id="taskModalDesc" placeholder="# Apa yang dikerjakan&#10;## Progress&#10;## Catatan&#10;Tulis di sini..." style="min-height:120px;resize:vertical;"></textarea>
+      <div class="desc-preview-wrap">
+        <div class="desc-preview-header">
+          <span>👁 Preview Tampilan</span>
+          <span class="preview-status" id="taskModalDesc_preview_status">0 karakter</span>
+        </div>
+        <div class="desc-preview-box" id="taskModalDesc_preview"></div>
+      </div>
       <!-- Link -->
       <label>🔗 Link Referensi / Dokumen</label>
       <input type="url" id="taskModalLink" placeholder="https://drive.google.com/... atau link lainnya">
