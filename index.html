@@ -1285,25 +1285,31 @@
         <div id="absDropdown" style="display:none;background:#f0f7f3;border-radius:8px;margin-top:-6px;margin-bottom:10px;max-height:220px;overflow-y:auto;border:2px solid #2d9e6b;"></div>
 
         <!-- RINGKASAN YANG SUDAH DIPILIH (badges) -->
-        <div id="absBadgeArea" style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;min-height:0;"></div>
+        <div id="absBadgeArea" style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;min-height:0;"></div>
 
-        <!-- REVIEW AREA — muncul sebelum simpan -->
+        <!-- RINGKASAN COMPACT + TOMBOL EDIT -->
         <div id="absReviewArea" style="display:none;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
-            <div style="font-weight:700;font-size:13px;color:#1a6644;">📝 Daftar Absensi (<span id="absReviewCount">0</span> siswa dipilih)</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <!-- Header ringkasan: hanya tampil jumlah + tombol edit, tidak expand -->
+          <div id="absReviewHeader" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f0f7f3;border-radius:10px;margin-bottom:6px;cursor:pointer;" onclick="absToggleDetail()">
+            <div style="font-weight:700;font-size:13px;color:#1a6644;">📋 <span id="absReviewCount">0</span> siswa dipilih</div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <span id="absToggleLabel" style="font-size:11px;color:#7a9585;font-weight:600;">▼ Lihat &amp; Edit</span>
+            </div>
+          </div>
+          <!-- Detail list — defaultnya tersembunyi, bisa di-toggle -->
+          <div id="absDetailPanel" style="display:none;">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
               <button class="small secondary" onclick="absTandaiSemua('hadir')">✅ Semua Hadir</button>
               <button class="small secondary" onclick="absTandaiSemua('tidak_hadir')">❌ Semua Tdk Hadir</button>
             </div>
+            <div id="absReviewList"></div>
           </div>
-          <div id="absReviewList"></div>
         </div>
 
         <button onclick="simpanAbsensi()" style="margin-top:10px;">Simpan Absensi</button>
         <div id="absMsg"></div>
         <p class="muted" style="font-size:11px;margin-top:8px;">
-          ℹ️ Ketik nama → pilih status. Hanya siswa yang dipilih yang dicatat. Siswa lain otomatis <b>Tidak Hadir</b>.<br>
-          Setelah semua dipilih, review daftar di atas sebelum simpan.
+          ℹ️ Ketik nama → pilih status. Klik <b>▼ Lihat &amp; Edit</b> untuk ubah status siswa yang sudah dipilih.
         </p>
       </div>
       <div class="card">
@@ -2112,6 +2118,14 @@
       <textarea id="edAlamat" rows="2"></textarea>
       <label>Catatan</label>
       <input type="text" id="edCatatan">
+      <!-- Toggle tampil di absensi -->
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;padding:10px 12px;background:#f0f7f3;border-radius:10px;border:1.5px solid #d4e8dc;">
+        <input type="checkbox" id="edTampilAbsensi" style="width:18px;height:18px;accent-color:#1a6644;margin:0;flex-shrink:0;">
+        <span>
+          <span style="font-size:13px;font-weight:700;color:#1a6644;display:block;">📋 Tampil di Absensi</span>
+          <span style="font-size:11px;color:#7a9585;font-weight:400;text-transform:none;letter-spacing:0;">Nonaktifkan jika anggota ini tidak perlu diabsen (contoh: bertugas di balik layar / luar kota)</span>
+        </span>
+      </label>
       <button onclick="saveAnggotaEdit()">💾 Simpan Perubahan</button>
       <div id="edMsg"></div>
     </div>
@@ -3028,9 +3042,12 @@ async function loadAnggota() {
   const el = $('listAnggota');
   el.innerHTML = list.length ? list.map(a => {
     const kat = a.kategori_anggota ? ' · ' + escapeHtml(a.kategori_anggota.nama) : '';
+    const absenBadge = (a.tampil_absensi === false)
+      ? `<span style="font-size:10px;padding:2px 7px;border-radius:99px;background:#fef3c7;color:#d97706;font-weight:700;margin-left:4px;">👁 Absensi Off</span>`
+      : '';
     return `<div class="list-item">
       <div class="left">
-        <div class="name">${escapeHtml(a.nama)}</div>
+        <div class="name">${escapeHtml(a.nama)}${absenBadge}</div>
         <div class="meta">${a.kontak || '—'} · ${a.status}${kat}${a.alamat ? ' · ' + escapeHtml(a.alamat) : ''}</div>
       </div>
       <div style="display:flex;gap:4px;">
@@ -3342,6 +3359,8 @@ function openAnggotaEdit(id) {
   $('edKategori').value = a.kategori_id || '';
   $('edAlamat').value  = a.alamat || '';
   $('edCatatan').value = a.catatan || '';
+  // tampil_absensi: default true jika belum ada di DB
+  $('edTampilAbsensi').checked = (a.tampil_absensi !== false);
   $('edMsg').textContent = '';
   $('anggotaModal').style.display = 'flex';
   window.scrollTo(0, 0);
@@ -3358,11 +3377,12 @@ async function saveAnggotaEdit() {
   if (!nama) { setMsg('edMsg', 'Nama wajib diisi', true); return; }
   const { error } = await db.from('anggota').update({
     nama,
-    kontak:      $('edKontak').value.trim() || null,
-    status:      $('edStatus').value,
-    kategori_id: $('edKategori').value ? parseInt($('edKategori').value) : null,
-    alamat:      $('edAlamat').value.trim() || null,
-    catatan:     $('edCatatan').value.trim() || null,
+    kontak:           $('edKontak').value.trim() || null,
+    status:           $('edStatus').value,
+    kategori_id:      $('edKategori').value ? parseInt($('edKategori').value) : null,
+    alamat:           $('edAlamat').value.trim() || null,
+    catatan:          $('edCatatan').value.trim() || null,
+    tampil_absensi:   $('edTampilAbsensi').checked,
   }).eq('id', currentAnggotaId);
   if (error) { setMsg('edMsg', 'Gagal: ' + error.message, true); return; }
   setMsg('edMsg', '✅ Perubahan tersimpan');
@@ -3526,7 +3546,17 @@ async function bukaSesiDetail(sesiId) {
     const rowId = `ptm_${tgl.replace(/-/g,'_')}`;
     return `<div style="background:#f0f7f3;border-radius:10px;padding:12px;margin-bottom:10px;" id="${rowId}">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
-        <div style="font-weight:700;font-size:13px;color:#1a6644;">📅 ${tgl}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <span style="font-weight:700;font-size:13px;color:#1a6644;">📅</span>
+          <input type="date" id="tgl_${rowId}" value="${tgl}"
+            style="padding:4px 8px;border:2px solid #d4e8dc;border-radius:8px;font-size:13px;font-weight:700;color:#1a6644;background:#fff;margin:0;width:auto;">
+          <button onclick="ubahTanggalPertemuan(${sesiId},'${tgl}','${rowId}')"
+            title="Ubah tanggal pertemuan ini"
+            style="background:#1a6644;color:#fff;border:none;padding:4px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;width:auto;">
+            ✏️ Ubah Tgl
+          </button>
+          <span id="msgtgl_${rowId}" style="font-size:11px;"></span>
+        </div>
         <div style="display:flex;gap:8px;font-size:12px;flex-wrap:wrap;">
           <span style="color:#16a34a;font-weight:700;">✅ ${h} Hadir</span>
           <span style="color:#d97706;">🟡 ${i} Izin</span>
@@ -3642,6 +3672,50 @@ async function simpanCatatanPertemuan(sesiId, tanggal, rowId) {
   }
 }
 
+// ─── Ubah tanggal pertemuan (update kehadiran + catatan_sesi) ───
+async function ubahTanggalPertemuan(sesiId, tanggalLama, rowId) {
+  const tanggalBaru = ($('tgl_' + rowId)?.value || '').trim();
+  const msgEl = $('msgtgl_' + rowId);
+  if (!tanggalBaru) {
+    if (msgEl) msgEl.innerHTML = '<span style="color:#dc2626;">Tanggal tidak boleh kosong</span>';
+    return;
+  }
+  if (tanggalBaru === tanggalLama) {
+    if (msgEl) msgEl.innerHTML = '<span style="color:#d97706;">Tanggal sama, tidak ada perubahan</span>';
+    setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 2000);
+    return;
+  }
+  if (!confirm(`Ubah tanggal pertemuan dari ${tanggalLama} → ${tanggalBaru}?\n\nSemua data absensi & catatan pada tanggal lama akan dipindah ke tanggal baru.`)) return;
+
+  if (msgEl) msgEl.innerHTML = '<span style="color:#d97706;">⏳ Memproses...</span>';
+
+  // 1. Update semua kehadiran di tanggal lama → tanggal baru (untuk sesi ini)
+  const { error: errKeh } = await db.from('kehadiran')
+    .update({ tanggal: tanggalBaru })
+    .eq('sesi_id', sesiId)
+    .eq('tanggal', tanggalLama);
+
+  if (errKeh) {
+    if (msgEl) msgEl.innerHTML = `<span style="color:#dc2626;">❌ Gagal update kehadiran: ${escapeHtml(errKeh.message)}</span>`;
+    return;
+  }
+
+  // 2. Update catatan_sesi (jika ada)
+  await db.from('catatan_sesi')
+    .update({ tanggal: tanggalBaru })
+    .eq('sesi_id', sesiId)
+    .eq('tanggal', tanggalLama);
+  // diabaikan errornya kalau tabel belum ada
+
+  if (msgEl) msgEl.innerHTML = '<span style="color:#16a34a;">✅ Tanggal berhasil diubah! Memuat ulang...</span>';
+
+  // Reload detail modal
+  setTimeout(() => {
+    const s = sesiCache.find(x => x.id === sesiId);
+    if (s) openSesiDetail(s);
+  }, 900);
+}
+
 async function simpanEditSesi() {
   const id = _currentSesiId;
   if (!id) return;
@@ -3683,20 +3757,20 @@ async function loadAbsensi() {
   if (!sesiCache.length) await loadSesi();
   const tgl = $('absTanggal').value, sesiId = $('absSesi').value;
   if (!tgl || !sesiId) { _absRenderReview(); return; }
-  const { data: ang } = await db.from('anggota').select('id, nama').eq('status', 'aktif').order('nama');
-  anggotaCache = ang || [];
+  const { data: ang } = await db.from('anggota').select('id, nama, tampil_absensi').eq('status', 'aktif').order('nama');
+  // Hanya anggota aktif yang boleh muncul di absensi (tampil_absensi != false)
+  anggotaCache = (ang || []).filter(a => a.tampil_absensi !== false);
   // Load existing absensi untuk hari & sesi ini
   const { data: keh } = await db.from('kehadiran').select('anggota_id, status')
     .eq('tanggal', tgl).eq('sesi_id', sesiId);
   absenState = {};
-  (keh || []).forEach(k => { absenState[k.anggota_id] = k.status; });
-  // Jika sudah ada data tersimpan: otomatis masukkan SEMUA siswa aktif ke absenState
-  // supaya status mereka langsung terlihat berwarna tanpa harus cari manual
-  if ((keh || []).length > 0) {
-    anggotaCache.forEach(a => {
-      if (!absenState[a.id]) absenState[a.id] = 'tidak_hadir';
-    });
-  }
+  // Hanya masukkan kehadiran anggota yang AKTIF (ada di anggotaCache)
+  const aktifIds = new Set((ang || []).map(a => a.id));
+  (keh || []).forEach(k => {
+    if (aktifIds.has(k.anggota_id)) absenState[k.anggota_id] = k.status;
+  });
+  // Hanya restore siswa yang memang punya data tersimpan — tidak otomatis isi semua siswa
+  // agar daftar review tidak langsung panjang (user bisa edit via tombol ✏️ Edit Kehadiran)
   // Reset search
   if ($('absSearch')) $('absSearch').value = '';
   if ($('absDropdown')) $('absDropdown').style.display = 'none';
@@ -3771,15 +3845,19 @@ function _absRenderReview() {
       const nB = (anggotaCache.find(x => x.id == idB)?.nama || '');
       return nA.localeCompare(nB);
     });
-  if (!dipilih.length) {
+  // Hanya hitung yang benar-benar aktif untuk cek kosong
+  const dipilihAktif = dipilih.filter(([id]) => anggotaCache.some(x => x.id == id));
+  if (!dipilihAktif.length) {
     badgeArea.innerHTML = '<span class="muted" style="font-size:12px;">Belum ada siswa yang dipilih. Cari nama di atas.</span>';
     if (reviewArea) reviewArea.style.display = 'none';
     return;
   }
 
-  // Badge ringkasan per status
+  // Badge ringkasan per status — hanya hitung anggota aktif
   const count = {hadir:0, izin:0, sakit:0, tidak_hadir:0};
-  dipilih.forEach(([,v]) => { if (count[v] !== undefined) count[v]++; });
+  dipilih.forEach(([id, v]) => {
+    if (count[v] !== undefined && anggotaCache.some(x => x.id == id)) count[v]++;
+  });
   const badgeStyle = (bg, color) => `padding:4px 10px;border-radius:99px;font-size:12px;font-weight:700;background:${bg};color:${color};`;
   badgeArea.innerHTML = [
     count.hadir      ? `<span style="${badgeStyle('#dcfce7','#16a34a')}">✅ Hadir: ${count.hadir}</span>` : '',
@@ -3788,39 +3866,62 @@ function _absRenderReview() {
     count.tidak_hadir? `<span style="${badgeStyle('#fee2e2','#dc2626')}">❌ Tdk Hadir: ${count.tidak_hadir}</span>` : '',
   ].join('');
 
-  // Review list detail — tampil semua siswa yang sudah dipilih
+  // Review area: tampilkan header ringkasan (detail panel biarkan sesuai state user)
   if (reviewArea) reviewArea.style.display = 'block';
   if (reviewCount) reviewCount.textContent = dipilih.length;
+  // Sinkronkan label toggle
+  const lbl = $('absToggleLabel');
+  const panel = $('absDetailPanel');
+  if (lbl && panel) lbl.textContent = panel.style.display !== 'none' ? '▲ Sembunyikan' : '▼ Lihat & Edit';
 
   const stColors  = {hadir:'#16a34a', izin:'#d97706', sakit:'#7c3aed', tidak_hadir:'#dc2626'};
   const stBgMap   = {hadir:'#dcfce7', izin:'#fef3c7', sakit:'#ede9fe', tidak_hadir:'#fee2e2'};
   const stLabels  = {hadir:'✅ Hadir', izin:'🟡 Izin', sakit:'🟣 Sakit', tidak_hadir:'❌ Tdk Hadir'};
   const stNextMap = {hadir:'izin', izin:'sakit', sakit:'tidak_hadir', tidak_hadir:'hadir'};
 
-  // Render setiap baris: hanya tampilkan 1 tombol berwarna (status aktif)
-  // Klik tombol → putar ke status berikutnya. Klik ✕ → hapus dari daftar.
-  if (reviewList) reviewList.innerHTML = dipilih.map(([id, st]) => {
+  // Render setiap baris: 4 tombol pilihan langsung — tidak perlu putar
+  const stOpts = [
+    {v:'hadir',      label:'✅ Hadir',    color:'#16a34a', bg:'#dcfce7'},
+    {v:'izin',       label:'🟡 Izin',     color:'#d97706', bg:'#fef3c7'},
+    {v:'sakit',      label:'🟣 Sakit',    color:'#7c3aed', bg:'#ede9fe'},
+    {v:'tidak_hadir',label:'❌ Tdk Hadir',color:'#dc2626', bg:'#fee2e2'},
+  ];
+  if (reviewList) reviewList.innerHTML = dipilih
+    .filter(([id]) => anggotaCache.some(x => x.id == id)) // skip anggota tidak aktif / tidak ditemukan
+    .map(([id, st]) => {
     const a = anggotaCache.find(x => x.id == id);
-    const nama = a ? a.nama : '(?)';
+    const nama = a ? a.nama : null;
+    if (!nama) return '';
     const color = stColors[st] || '#6b7280';
-    const bg    = stBgMap[st]  || '#f0f0f0';
-    const label = stLabels[st] || st;
-    const next  = stNextMap[st] || 'hadir';
-    const clsKey = st === 'tidak_hadir' ? 'tidak' : st;
-    return `<div class="absen-row" style="margin-bottom:5px;border-left:4px solid ${color};padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
-      <div class="nm" style="flex:1;min-width:0;">${escapeHtml(nama)}</div>
-      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
-        <button class="ab on-${clsKey}"
-          onclick="absGantiStatus(${id})"
-          title="Klik untuk ganti status"
-          style="flex:unset;padding:6px 14px;font-size:12px;min-width:110px;text-align:center;cursor:pointer;">
-          ${label}
-        </button>
+    const btnHtml = stOpts.map(o => {
+      const active = st === o.v;
+      return `<button onclick="absSetStatus(${id},'${o.v}')"
+        style="flex:1;width:auto;padding:6px 2px;font-size:11px;font-weight:700;border-radius:7px;cursor:pointer;
+               border:2px solid ${active?o.color:'#d4e8dc'};
+               background:${active?o.color:'white'};
+               color:${active?'#fff':o.color};
+               transition:all .12s;"
+        title="${o.label}">${o.label}</button>`;
+    }).join('');
+    return `<div class="absen-row" style="margin-bottom:6px;border-left:4px solid ${color};padding:8px 12px;gap:6px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div class="nm">${escapeHtml(nama)}</div>
         <button onclick="delete absenState[${id}];_absRenderReview()"
-          style="width:28px;height:28px;padding:0;font-size:13px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;" title="Hapus dari daftar">✕</button>
+          style="width:26px;height:26px;padding:0;font-size:12px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;cursor:pointer;flex-shrink:0;" title="Hapus dari daftar">✕</button>
       </div>
+      <div style="display:flex;gap:4px;">${btnHtml}</div>
     </div>`;
   }).join('');
+}
+
+// Toggle panel detail absensi
+function absToggleDetail() {
+  const panel = $('absDetailPanel');
+  const lbl   = $('absToggleLabel');
+  if (!panel) return;
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  if (lbl) lbl.textContent = open ? '▼ Lihat & Edit' : '▲ Sembunyikan';
 }
 
 // Tutup dropdown saat klik di luar
@@ -3832,14 +3933,13 @@ document.addEventListener('click', e => {
 
 function setAbsen(id, status) { absenState[id] = status; _absRenderReview(); }
 
-// Putar status saat tombol diklik: hadir → izin → sakit → tidak_hadir → hadir
-function absGantiStatus(id) {
-  const urut = ['hadir','izin','sakit','tidak_hadir'];
-  const skrg = absenState[id] || 'hadir';
-  const idx  = urut.indexOf(skrg);
-  absenState[id] = urut[(idx + 1) % urut.length];
+// Set status langsung tanpa putar
+function absSetStatus(id, status) {
+  absenState[id] = status;
   _absRenderReview();
 }
+// backward compat
+function absGantiStatus(id) { absSetStatus(id, 'hadir'); }
 
 function renderAbsensi() { _absRenderReview(); } // backward compat
 
@@ -3848,15 +3948,20 @@ async function simpanAbsensi() {
   if (!tgl || !sesiId) { setMsg('absMsg', 'Pilih tanggal & sesi dulu', true); return; }
   if (!anggotaCache.length) { setMsg('absMsg', 'Belum ada anggota aktif', true); return; }
   const nowIso = new Date().toISOString();
-  // Siswa yang dipilih dapat statusnya masing-masing; siswa lain = tidak_hadir
-  const rows = anggotaCache.map(a => ({
-    tanggal: tgl, sesi_id: sesiId, anggota_id: a.id,
-    status: absenState[a.id] || 'tidak_hadir', dicatat_oleh: currentProf.id, updated_at: nowIso,
+  // Hanya simpan siswa yang sudah dipilih (ada di absenState)
+  const dipilihIds = Object.keys(absenState).filter(id => absenState[id]);
+  if (!dipilihIds.length) { setMsg('absMsg', 'Belum ada siswa yang dipilih', true); return; }
+  const rows = dipilihIds.map(id => ({
+    tanggal: tgl, sesi_id: sesiId, anggota_id: parseInt(id),
+    status: absenState[id], dicatat_oleh: currentProf.id, updated_at: nowIso,
   }));
   const { error } = await db.from('kehadiran').upsert(rows, { onConflict: 'tanggal,sesi_id,anggota_id' });
   if (error) { setMsg('absMsg', 'Gagal: ' + error.message, true); return; }
   const hadir = rows.filter(r => r.status === 'hadir').length;
-  setMsg('absMsg', `✅ Absensi tersimpan — ${hadir} hadir dari ${rows.length} siswa`);
+  const izin  = rows.filter(r => r.status === 'izin').length;
+  const sakit = rows.filter(r => r.status === 'sakit').length;
+  const tidak = rows.filter(r => r.status === 'tidak_hadir').length;
+  setMsg('absMsg', `✅ Absensi tersimpan — ${hadir} hadir, ${izin} izin, ${sakit} sakit, ${tidak} tidak hadir`);
 }
 
 // ─────────────── REKAP ───────────────
@@ -3882,6 +3987,9 @@ async function loadRekap() {
     label = BULAN[mm-1] + ' ' + yy;
   }
   $('rekapResult').innerHTML = '<p class="muted">Memuat...</p>';
+  // Ambil daftar anggota yang wajib ditampilkan (tampil_absensi != false)
+  const { data: angAktif } = await db.from('anggota').select('id, tampil_absensi').eq('status', 'aktif');
+  const tampilSet = new Set((angAktif || []).filter(a => a.tampil_absensi !== false).map(a => String(a.id)));
   const { data, error } = await db.from('kehadiran')
     .select('anggota_id, status, tanggal, sesi_id, anggota(nama)')
     .gte('tanggal', first).lte('tanggal', last).limit(100000);
@@ -3889,6 +3997,8 @@ async function loadRekap() {
   if (!data || !data.length) { $('rekapResult').innerHTML = '<p class="muted">Belum ada data absensi pada periode ini.</p>'; return; }
   const agg = {}, sesiSet = new Set();
   data.forEach(k => {
+    // Skip anggota yang tidak dicentang tampil_absensi
+    if (!tampilSet.has(String(k.anggota_id))) return;
     sesiSet.add(k.tanggal + '#' + k.sesi_id);
     if (!agg[k.anggota_id]) agg[k.anggota_id] = { nama: k.anggota?.nama || '(?)', hadir:0, izin:0, sakit:0, tidak_hadir:0 };
     agg[k.anggota_id][k.status] = (agg[k.anggota_id][k.status]||0) + 1;
@@ -4083,10 +4193,10 @@ async function loadPeriodeDetail(id) {
   const { data: keluarD } = await db.from('qurban_keluar').select('*').eq('periode_id', id).order('tanggal', { ascending: false });
   // Fetch anggota beserta kategori (untuk target per kategori)
   const { data: angD } = await db.from('anggota')
-    .select('id, nama, kategori_id, kategori_anggota(id, nama)')
+    .select('id, nama, kategori_id, kategori_anggota(id, nama), tampil_absensi')
     .order('nama');
   const bayar = bayarD || [], keluar = keluarD || [], ang = angD || [];
-  qurbanAngList = ang.map(a => ({ id: a.id, nama: a.nama }));
+  qurbanAngList = ang.filter(a => a.tampil_absensi !== false).map(a => ({ id: a.id, nama: a.nama }));
 
   const totMasuk  = bayar.reduce((s,b) => s + Number(b.jumlah||0), 0);
   const totKeluar = keluar.reduce((s,k) => s + Number(k.jumlah||0), 0);
@@ -4126,8 +4236,11 @@ async function loadPeriodeDetail(id) {
       if (paid >= tgt) status = 'lunas';
       else if (paid > 0) status = 'sebagian';
     } else if (paid > 0) status = 'bayar';
+    // Anggota tidak dicentang: hanya tampil jika ada pembayaran
+    const tampil = a.tampil_absensi !== false;
+    if (!tampil && paid === 0) return null;
     return { id: a.id, nama: a.nama, katId, katNama, paid, count, tgt, sisa: sisa2, status };
-  });
+  }).filter(Boolean);
 
   // Siswa yang bayar tapi tidak ada di daftar anggota aktif
   Object.values(agg).forEach(r => {
@@ -4251,7 +4364,7 @@ async function loadPeriodeDetail(id) {
       <h2>💰 Catat Pemasukan (Bayar Siswa)</h2>
       <label>Nama Siswa</label>
       <input type="text" id="qdBayarSearch" autocomplete="off" placeholder="🔍 Cari nama siswa..." oninput="filterSiswa('qdBayarSearch','qdBayarAng',qurbanAngList)">
-      <select id="qdBayarAng">${ang.length ? ang.map(a => {
+      <select id="qdBayarAng">${ang.filter(a => a.tampil_absensi !== false).length ? ang.filter(a => a.tampil_absensi !== false).map(a => {
         const katNama = a.kategori_anggota ? ' ('+a.kategori_anggota.nama+')' : '';
         const tgt = a.kategori_id && tpk[String(a.kategori_id)] ? ' — target '+IDR(tpk[String(a.kategori_id)]) : '';
         return `<option value="${a.id}">${escapeHtml(a.nama+katNama+tgt)}</option>`;
@@ -4763,9 +4876,11 @@ async function renderAcaraBayar(acaraId) {
   if (!a) return;
   const { data: bayarD } = await db.from('acara_bayar').select('*')
     .eq('acara_id', acaraId).order('tanggal', { ascending: false });
-  const { data: angD } = await db.from('anggota').select('id, nama').order('nama');
-  const bayar = bayarD || [], ang = angD || [];
-  acaraAngList = ang;
+  const { data: angD } = await db.from('anggota').select('id, nama, tampil_absensi').order('nama');
+  const bayar = bayarD || [], ang = (angD || []);
+  // Dropdown hanya anggota yang dicentang tampil_absensi
+  const angTampil = ang.filter(a => a.tampil_absensi !== false);
+  acaraAngList = angTampil.map(a => ({ id: a.id, nama: a.nama }));
   const total  = bayar.reduce((s,b) => s + Number(b.jumlah||0), 0);
   const target = Number(a.anggaran || 0);
   const biaya  = Number(a.biaya_per_siswa || 0);
@@ -4782,7 +4897,7 @@ async function renderAcaraBayar(acaraId) {
   $('amBayarArea').innerHTML = `
     <label>Pilih Siswa</label>
     <input type="text" id="amBayarSearch" autocomplete="off" placeholder="🔍 Cari nama siswa..." oninput="filterSiswa('amBayarSearch','amBayarAng',acaraAngList)">
-    <select id="amBayarAng">${ang.length ? ang.map(x => `<option value="${x.id}">${escapeHtml(x.nama)}</option>`).join('') : '<option value="">— Belum ada anggota —</option>'}</select>
+    <select id="amBayarAng">${angTampil.length ? angTampil.map(x => `<option value="${x.id}">${escapeHtml(x.nama)}</option>`).join('') : '<option value="">— Belum ada anggota —</option>'}</select>
     <div class="row">
       <div><label>Tanggal</label><input type="date" id="amBayarTgl"></div>
       <div><label>Jumlah (Rp)</label><input type="number" id="amBayarJml" min="1" placeholder="50000"></div>
@@ -5306,7 +5421,7 @@ async function loadIuran() {
     label = BULAN[mm-1] + ' ' + yy;
   }
   $('iuranResult').innerHTML = '<p class="muted">Memuat...</p>';
-  const { data: ang } = await db.from('anggota').select('id, nama, kategori_anggota(nama, iuran_kas)')
+  const { data: ang } = await db.from('anggota').select('id, nama, kategori_anggota(nama, iuran_kas), tampil_absensi')
     .eq('status', 'aktif').order('nama');
   const { data: tx } = await db.from('transaksi').select('anggota_id, jumlah')
     .eq('tipe', 'masuk').in('kategori', ['iuran', 'kas_bulanan']).not('anggota_id', 'is', null)
@@ -5322,8 +5437,11 @@ async function loadIuran() {
     let status = 'belum';
     if (target > 0 && bayar >= target) status = 'lunas';
     else if (bayar > 0) status = 'sebagian';
-    return { id: a.id, nama: a.nama, kategori: kat ? kat.nama : '(tanpa kategori)', iuran, target, bayar, status };
-  });
+    // Anggota tidak dicentang tampil_absensi: hanya muncul jika ada kontribusi (bayar > 0)
+    const tampil = a.tampil_absensi !== false;
+    if (!tampil && bayar === 0) return null;
+    return { id: a.id, nama: a.nama, kategori: kat ? kat.nama : '(tanpa kategori)', iuran, target, bayar, status, tampil };
+  }).filter(Boolean);
   iuranMeta = { label, mode };
   renderIuran();
 }
@@ -11188,7 +11306,9 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     } catch(e){}
     // Fallback ke anggotaFull global (dari menu Anggota)
     if(!list.length && window.anggotaFull && Array.isArray(window.anggotaFull)){
-      list = window.anggotaFull.map(function(a){ return {id:a.id, name:a.nama||a.name||'', role:'Anggota', divisi:''}; });
+      list = window.anggotaFull
+        .filter(function(a){ return a.tampil_absensi !== false; })
+        .map(function(a){ return {id:a.id, name:a.nama||a.name||'', role:'Anggota', divisi:''}; });
     }
     return list.filter(function(m){ return m.name; });
   }
