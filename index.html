@@ -1036,24 +1036,24 @@
       <div class="card">
         <h2>Ringkasan Keuangan</h2>
         <div class="saldo-grid">
-          <div class="saldo-card masuk"><div class="label">Saldo Kas</div><div class="value" id="sumKas">Rp 0</div></div>
+          <div class="saldo-card masuk"><div class="label">Saldo Kas (+ Sisa Acara)</div><div class="value" id="sumKas">Rp 0</div></div>
           <div class="saldo-card" style="background:#f3eefe;color:#7c3aed;"><div class="label">Dana Qurban</div><div class="value" id="sumQurban">Rp 0</div></div>
-          <div class="saldo-card" style="background:#fef3e8;color:#d97706;"><div class="label">Dana Acara</div><div class="value" id="sumAcara">Rp 0</div></div>
+          <div class="saldo-card" style="background:#fef3e8;color:#d97706;"><div class="label">Sisa Acara ↳ Kas</div><div class="value" id="sumAcara">Rp 0</div></div>
         </div>
         <div class="saldo-card saldo" style="margin-top:8px;">
           <div class="label">TOTAL SELURUH SALDO</div>
           <div class="value" id="sumTotal" style="font-size:21px;">Rp 0</div>
         </div>
         <div class="muted" style="font-size:11px;margin-top:8px;">
-          Gabungan kas + dana qurban + dana acara. Detail tiap bagian ada di menunya masing-masing.
+          Saldo Kas sudah termasuk sisa semua acara. Total = Kas + Qurban.
         </div>
         <div class="muted" style="font-size:10px;margin-top:4px;font-style:italic;">
-          ⬇ Chart di bawah: Kas &amp; Acara · Dana Qurban tampil di kartu tersendiri
+          ⬇ Sisa Acara sudah masuk ke Saldo Kas · Dana Qurban terpisah
         </div>
         <div style="max-width:220px;margin:14px auto 0;">
           <canvas id="donutSaldo" height="220"></canvas>
         </div>
-        <p class="muted" style="font-size:10px;text-align:center;margin-top:6px;">Distribusi Kas &amp; Dana Acara</p>
+        <p class="muted" style="font-size:10px;text-align:center;margin-top:6px;">Distribusi Saldo Kas &amp; Dana Qurban</p>
       </div>
 
       <!-- Card Dana Qurban berdiri sendiri -->
@@ -5594,26 +5594,68 @@ async function buatLaporan() {
   const firstThis = `${bln}-01`;
   const lastThis  = `${bln}-${String(new Date(y, m, 0).getDate()).padStart(2,'0')}`;
 
-  const { data: all, error } = await db.from('transaksi').select('tanggal, tipe, kategori, jumlah');
-  if (error) { $('laporanArea').innerHTML = '<div class="card"><p class="err">Gagal: ' + error.message + '</p></div>'; return; }
-  const tx = all || [];
+  // ── Ambil semua sumber data secara paralel (Kas + Qurban + Acara) ──
+  const [
+    { data: allTx, error: errTx },
+    { data: allQB },
+    { data: allQK },
+    { data: allAB },
+  ] = await Promise.all([
+    db.from('transaksi').select('tanggal, tipe, kategori, jumlah'),
+    db.from('qurban_bayar').select('tanggal, jumlah'),
+    db.from('qurban_keluar').select('tanggal, jumlah'),
+    db.from('acara_bayar').select('tanggal, jumlah, tipe'),
+  ]);
 
-  // Saldo awal = akumulasi semua transaksi SEBELUM bulan ini
-  let saldoAwal = 0;
-  tx.forEach(t => { if (t.tanggal < firstThis) saldoAwal += (t.tipe === 'masuk' ? 1 : -1) * Number(t.jumlah || 0); });
+  if (errTx) { $('laporanArea').innerHTML = '<div class="card"><p class="err">Gagal: ' + errTx.message + '</p></div>'; return; }
 
-  // Bulan ini
-  const inMonth = tx.filter(t => t.tanggal >= firstThis && t.tanggal <= lastThis);
-  let totMasuk = 0, totKeluar = 0;
-  const catMasuk = {}, catKeluar = {};
-  inMonth.forEach(t => {
+  const tx = allTx || [];
+  const qb = allQB || [];
+  const qk = allQK || [];
+  const ab = allAB || [];
+
+  // ── KAS ──
+  let kasAwal = 0;
+  tx.forEach(t => { if (t.tanggal < firstThis) kasAwal += (t.tipe === 'masuk' ? 1 : -1) * Number(t.jumlah || 0); });
+  const txBulan = tx.filter(t => t.tanggal >= firstThis && t.tanggal <= lastThis);
+  let kasMasuk = 0, kasKeluar = 0;
+  const catKasMasuk = {}, catKasKeluar = {};
+  txBulan.forEach(t => {
     const j = Number(t.jumlah || 0);
-    if (t.tipe === 'masuk') { totMasuk += j; catMasuk[t.kategori] = (catMasuk[t.kategori]||0) + j; }
-    else { totKeluar += j; catKeluar[t.kategori] = (catKeluar[t.kategori]||0) + j; }
+    const label = 'Kas — ' + (t.kategori || 'Lainnya');
+    if (t.tipe === 'masuk') { kasMasuk += j; catKasMasuk[label] = (catKasMasuk[label]||0) + j; }
+    else { kasKeluar += j; catKasKeluar[label] = (catKasKeluar[label]||0) + j; }
   });
-  const saldoAkhir = saldoAwal + totMasuk - totKeluar;
 
-  // 6 bulan terakhir untuk grafik
+  // ── QURBAN ──
+  const qbBulan = qb.filter(r => r.tanggal >= firstThis && r.tanggal <= lastThis);
+  const qkBulan = qk.filter(r => r.tanggal >= firstThis && r.tanggal <= lastThis);
+  const qurbanMasuk  = qbBulan.reduce((s,r) => s + Number(r.jumlah||0), 0);
+  const qurbanKeluar = qkBulan.reduce((s,r) => s + Number(r.jumlah||0), 0);
+  const qurbanAwal = qb.filter(r => r.tanggal < firstThis).reduce((s,r) => s + Number(r.jumlah||0), 0)
+                   - qk.filter(r => r.tanggal < firstThis).reduce((s,r) => s + Number(r.jumlah||0), 0);
+  const catQMasuk  = qurbanMasuk  ? { 'Qurban — Pemasukan':  qurbanMasuk  } : {};
+  const catQKeluar = qurbanKeluar ? { 'Qurban — Pengeluaran': qurbanKeluar } : {};
+
+  // ── ACARA ──
+  const abBulan = ab.filter(r => r.tanggal >= firstThis && r.tanggal <= lastThis);
+  const acaraMasuk  = abBulan.filter(r=>r.tipe==='masuk' ).reduce((s,r) => s + Number(r.jumlah||0), 0);
+  const acaraKeluar = abBulan.filter(r=>r.tipe==='keluar').reduce((s,r) => s + Number(r.jumlah||0), 0);
+  const acaraAwal = ab.filter(r => r.tanggal < firstThis && r.tipe==='masuk' ).reduce((s,r) => s + Number(r.jumlah||0), 0)
+                  - ab.filter(r => r.tanggal < firstThis && r.tipe==='keluar').reduce((s,r) => s + Number(r.jumlah||0), 0);
+  const catAMasuk  = acaraMasuk  ? { 'Acara — Pemasukan':  acaraMasuk  } : {};
+  const catAKeluar = acaraKeluar ? { 'Acara — Pengeluaran': acaraKeluar } : {};
+
+  // ── Gabungkan ──
+  const catMasuk  = { ...catKasMasuk,  ...catQMasuk,  ...catAMasuk  };
+  const catKeluar = { ...catKasKeluar, ...catQKeluar, ...catAKeluar };
+  const saldoAwal  = kasAwal + qurbanAwal + acaraAwal;
+  const totMasuk   = kasMasuk + qurbanMasuk + acaraMasuk;
+  const totKeluar  = kasKeluar + qurbanKeluar + acaraKeluar;
+  const saldoAkhir = saldoAwal + totMasuk - totKeluar;
+  const jumlahTx   = txBulan.length + qbBulan.length + qkBulan.length + abBulan.length;
+
+  // ── 6 bulan terakhir untuk grafik (semua sumber) ──
   const barData = [];
   for (let i = 5; i >= 0; i--) {
     const d = new Date(y, m - 1 - i, 1);
@@ -5624,11 +5666,23 @@ async function buatLaporan() {
         if (t.tipe === 'masuk') mas += Number(t.jumlah || 0); else kel += Number(t.jumlah || 0);
       }
     });
+    qb.forEach(r => { if ((r.tanggal||'').slice(0,7) === key) mas += Number(r.jumlah||0); });
+    qk.forEach(r => { if ((r.tanggal||'').slice(0,7) === key) kel += Number(r.jumlah||0); });
+    ab.forEach(r => {
+      if ((r.tanggal||'').slice(0,7) === key) {
+        if (r.tipe === 'masuk') mas += Number(r.jumlah||0); else kel += Number(r.jumlah||0);
+      }
+    });
     barData.push({ label: BULAN_SG[d.getMonth()] + " '" + String(d.getFullYear()).slice(2), masuk: mas, keluar: kel });
   }
 
-  renderLaporan({ bulanNama: BULAN[m-1], y, saldoAwal, totMasuk, totKeluar, saldoAkhir,
-                  catMasuk, catKeluar, barData, jumlahTx: inMonth.length });
+  renderLaporan({
+    bulanNama: BULAN[m-1], y, saldoAwal, totMasuk, totKeluar, saldoAkhir,
+    catMasuk, catKeluar, barData, jumlahTx,
+    kasAwal, kasMasuk, kasKeluar, catKasMasuk, catKasKeluar,
+    qurbanAwal, qurbanMasuk, qurbanKeluar,
+    acaraAwal, acaraMasuk, acaraKeluar,
+  });
 }
 
 function renderLaporan(d) {
@@ -5642,37 +5696,108 @@ function renderLaporan(d) {
       <td style="color:${color};font-weight:700;">${IDR(v)}</td>
       <td>${tot ? Math.round(v/tot*100) : 0}%</td></tr>`).join('');
   };
+
+  // Baris rincian per sumber dana
+  const sumberRows = () => {
+    const rows = [];
+    if ((d.kasAwal||0) || (d.kasMasuk||0) || (d.kasKeluar||0)) {
+      rows.push(`<tr style="background:#f0faf4;">
+        <td class="nm" style="color:#1a6644;font-weight:700;">&#128176; Kas</td>
+        <td style="text-align:right;">${IDR(d.kasAwal||0)}</td>
+        <td style="text-align:right;color:#16a34a;">+${IDR(d.kasMasuk||0)}</td>
+        <td style="text-align:right;color:#dc2626;">-${IDR(d.kasKeluar||0)}</td>
+        <td style="text-align:right;font-weight:700;">${IDR((d.kasAwal||0)+(d.kasMasuk||0)-(d.kasKeluar||0))}</td>
+      </tr>`);
+    }
+    if ((d.qurbanAwal||0) || (d.qurbanMasuk||0) || (d.qurbanKeluar||0)) {
+      rows.push(`<tr style="background:#faf7ff;">
+        <td class="nm" style="color:#7c3aed;font-weight:700;">&#128004; Qurban</td>
+        <td style="text-align:right;">${IDR(d.qurbanAwal||0)}</td>
+        <td style="text-align:right;color:#16a34a;">+${IDR(d.qurbanMasuk||0)}</td>
+        <td style="text-align:right;color:#dc2626;">-${IDR(d.qurbanKeluar||0)}</td>
+        <td style="text-align:right;font-weight:700;">${IDR((d.qurbanAwal||0)+(d.qurbanMasuk||0)-(d.qurbanKeluar||0))}</td>
+      </tr>`);
+    }
+    if ((d.acaraAwal||0) || (d.acaraMasuk||0) || (d.acaraKeluar||0)) {
+      rows.push(`<tr style="background:#fffbf0;">
+        <td class="nm" style="color:#d97706;font-weight:700;">&#127881; Acara</td>
+        <td style="text-align:right;">${IDR(d.acaraAwal||0)}</td>
+        <td style="text-align:right;color:#16a34a;">+${IDR(d.acaraMasuk||0)}</td>
+        <td style="text-align:right;color:#dc2626;">-${IDR(d.acaraKeluar||0)}</td>
+        <td style="text-align:right;font-weight:700;">${IDR((d.acaraAwal||0)+(d.acaraMasuk||0)-(d.acaraKeluar||0))}</td>
+      </tr>`);
+    }
+    if (!rows.length) rows.push('<tr><td colspan="5" class="muted" style="text-align:center;">Belum ada data</td></tr>');
+    return rows.join('');
+  };
+
   $('laporanArea').innerHTML = `
     <div class="card printable" id="laporanPrint">
       <div style="text-align:center;border-bottom:2px solid #1a6644;padding-bottom:10px;margin-bottom:14px;">
         <div style="font-size:17px;font-weight:800;color:#1a6644;">LAPORAN KEUANGAN MUMI MB3</div>
         <div class="muted">Periode: ${d.bulanNama} ${d.y}</div>
       </div>
-      <table class="rekap" style="margin-bottom:16px;">
+
+      <!-- ── KAS ── -->
+      <div style="border-left:4px solid #16a34a;padding-left:10px;margin-bottom:6px;">
+        <h2 style="font-size:14px;color:#16a34a;margin:0;">💰 Laporan Kas</h2>
+      </div>
+      <table class="rekap" style="margin-bottom:6px;">
         <tbody>
-          <tr><td class="nm">Saldo Awal Bulan</td><td style="text-align:right;font-weight:700;">${IDR(d.saldoAwal)}</td></tr>
-          <tr><td class="nm">Total Pemasukan</td><td style="text-align:right;font-weight:700;color:#16a34a;">+ ${IDR(d.totMasuk)}</td></tr>
-          <tr><td class="nm">Total Pengeluaran</td><td style="text-align:right;font-weight:700;color:#dc2626;">- ${IDR(d.totKeluar)}</td></tr>
-          <tr><td class="nm" style="font-size:14px;">SALDO AKHIR</td><td style="text-align:right;font-weight:800;font-size:14px;color:#1a6644;">${IDR(d.saldoAkhir)}</td></tr>
+          <tr><td class="nm">Saldo Awal Bulan (Kas Murni)</td><td style="text-align:right;font-weight:700;">${IDR(d.kasAwal||0)}</td></tr>
+          <tr><td class="nm" style="color:#16a34a;">Pemasukan Kas</td><td style="text-align:right;font-weight:700;color:#16a34a;">+ ${IDR(d.kasMasuk||0)}</td></tr>
+          <tr><td class="nm" style="color:#dc2626;">Pengeluaran Kas</td><td style="text-align:right;font-weight:700;color:#dc2626;">- ${IDR(d.kasKeluar||0)}</td></tr>
+          <tr style="background:#f0faf4;"><td class="nm" style="color:#16a34a;">Kas Murni Akhir Bulan</td><td style="text-align:right;font-weight:700;color:#16a34a;">${IDR((d.kasAwal||0)+(d.kasMasuk||0)-(d.kasKeluar||0))}</td></tr>
+          <tr style="background:#fef3e8;"><td class="nm" style="color:#d97706;">+ Sisa Dana Acara (masuk kas)</td><td style="text-align:right;font-weight:700;color:#d97706;">+ ${IDR((d.acaraAwal||0)+(d.acaraMasuk||0)-(d.acaraKeluar||0))}</td></tr>
+          <tr style="background:#e8f5ef;border-top:2px solid #1a6644;"><td class="nm" style="font-weight:800;font-size:14px;">TOTAL SALDO KAS</td><td style="text-align:right;font-weight:900;font-size:14px;color:#1a6644;">${IDR((d.kasAwal||0)+(d.kasMasuk||0)-(d.kasKeluar||0)+(d.acaraAwal||0)+(d.acaraMasuk||0)-(d.acaraKeluar||0))}</td></tr>
         </tbody>
       </table>
-
-      <h2 style="font-size:13px;">Rincian Pemasukan per Kategori</h2>
+      ${Object.keys(d.catKasMasuk||{}).length ? `
+      <h2 style="font-size:11px;margin:6px 0 4px;color:#16a34a;">Rincian Pemasukan Kas</h2>
+      <table class="rekap" style="margin-bottom:6px;">
+        <thead><tr><th style="text-align:left">Kategori</th><th>Jumlah</th><th>%</th></tr></thead>
+        <tbody>${catRows(d.catKasMasuk,'#16a34a')}</tbody>
+      </table>` : ''}
+      ${Object.keys(d.catKasKeluar||{}).length ? `
+      <h2 style="font-size:11px;margin:6px 0 4px;color:#dc2626;">Rincian Pengeluaran Kas</h2>
       <table class="rekap" style="margin-bottom:16px;">
         <thead><tr><th style="text-align:left">Kategori</th><th>Jumlah</th><th>%</th></tr></thead>
-        <tbody>${catRows(d.catMasuk, '#16a34a')}</tbody>
-      </table>
+        <tbody>${catRows(d.catKasKeluar,'#dc2626')}</tbody>
+      </table>` : '<div style="margin-bottom:16px;"></div>'}
 
-      <h2 style="font-size:13px;">Rincian Pengeluaran per Kategori</h2>
+      <!-- ── QURBAN ── -->
+      ${(d.qurbanMasuk||0)||(d.qurbanKeluar||0)||(d.qurbanAwal||0) ? `
+      <div style="border-left:4px solid #7c3aed;padding-left:10px;margin-bottom:6px;">
+        <h2 style="font-size:14px;color:#7c3aed;margin:0;">🐐 Laporan Dana Qurban</h2>
+      </div>
       <table class="rekap" style="margin-bottom:16px;">
-        <thead><tr><th style="text-align:left">Kategori</th><th>Jumlah</th><th>%</th></tr></thead>
-        <tbody>${catRows(d.catKeluar, '#dc2626')}</tbody>
-      </table>
+        <tbody>
+          <tr><td class="nm">Saldo Awal Bulan</td><td style="text-align:right;font-weight:700;">${IDR(d.qurbanAwal||0)}</td></tr>
+          <tr><td class="nm" style="color:#16a34a;">Pemasukan Qurban</td><td style="text-align:right;font-weight:700;color:#16a34a;">+ ${IDR(d.qurbanMasuk||0)}</td></tr>
+          <tr><td class="nm" style="color:#dc2626;">Pengeluaran Qurban</td><td style="text-align:right;font-weight:700;color:#dc2626;">- ${IDR(d.qurbanKeluar||0)}</td></tr>
+          <tr style="background:#f3eefe;"><td class="nm" style="font-weight:800;">SISA DANA QURBAN</td><td style="text-align:right;font-weight:800;color:#7c3aed;">${IDR((d.qurbanAwal||0)+(d.qurbanMasuk||0)-(d.qurbanKeluar||0))}</td></tr>
+        </tbody>
+      </table>` : ''}
 
-      <h2 style="font-size:13px;">Grafik Pemasukan vs Pengeluaran (6 Bulan)</h2>
+      <!-- ── ACARA ── -->
+      ${(d.acaraMasuk||0)||(d.acaraKeluar||0)||(d.acaraAwal||0) ? `
+      <div style="border-left:4px solid #d97706;padding-left:10px;margin-bottom:6px;">
+        <h2 style="font-size:14px;color:#d97706;margin:0;">🎪 Laporan Dana Acara</h2>
+      </div>
+      <table class="rekap" style="margin-bottom:16px;">
+        <tbody>
+          <tr><td class="nm">Saldo Awal Bulan</td><td style="text-align:right;font-weight:700;">${IDR(d.acaraAwal||0)}</td></tr>
+          <tr><td class="nm" style="color:#16a34a;">Pemasukan Acara</td><td style="text-align:right;font-weight:700;color:#16a34a;">+ ${IDR(d.acaraMasuk||0)}</td></tr>
+          <tr><td class="nm" style="color:#dc2626;">Pengeluaran Acara</td><td style="text-align:right;font-weight:700;color:#dc2626;">- ${IDR(d.acaraKeluar||0)}</td></tr>
+          <tr style="background:#fef3e8;"><td class="nm" style="font-weight:800;">SISA DANA ACARA</td><td style="text-align:right;font-weight:800;color:#d97706;">${IDR((d.acaraAwal||0)+(d.acaraMasuk||0)-(d.acaraKeluar||0))}</td></tr>
+        </tbody>
+      </table>` : ''}
+
+      <!-- ── GRAFIK ── -->
+      <h2 style="font-size:13px;margin-top:4px;">Grafik Kas — 6 Bulan Terakhir</h2>
       <canvas id="chartBar" height="170"></canvas>
 
-      <h2 style="font-size:13px;margin-top:16px;">Komposisi Pengeluaran Bulan Ini</h2>
+      <h2 style="font-size:13px;margin-top:16px;">Komposisi Pengeluaran Kas Bulan Ini</h2>
       <canvas id="chartPie" height="180"></canvas>
 
       <div class="muted" style="margin-top:18px;font-size:11px;text-align:center;border-top:1px solid #e0ece5;padding-top:8px;">
@@ -6080,15 +6205,39 @@ function cetakLaporan() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   _pdfHeader(doc, 'LAPORAN KEUANGAN — MUMI MB3', 'Periode: ' + d.bulanNama + ' ' + d.y);
+  // Ringkasan gabungan
   doc.autoTable({
     startY: 28, theme: 'grid', styles: { fontSize: 9 },
     body: [
-      ['Saldo Awal Bulan', IDR(d.saldoAwal)],
-      ['Total Pemasukan', IDR(d.totMasuk)],
-      ['Total Pengeluaran', IDR(d.totKeluar)],
-      ['SALDO AKHIR', IDR(d.saldoAkhir)],
+      ['Saldo Awal Bulan (Gabungan)', IDR(d.saldoAwal)],
+      ['Total Pemasukan (Kas+Qurban+Acara)', IDR(d.totMasuk)],
+      ['Total Pengeluaran (Kas+Qurban+Acara)', IDR(d.totKeluar)],
+      ['SALDO AKHIR GABUNGAN', IDR(d.saldoAkhir)],
     ],
+    bodyStyles: { fontStyle: 'normal' },
+    didParseCell: function(data) {
+      if (data.row.index === 3) data.cell.styles.fontStyle = 'bold';
+    }
   });
+  // Rincian per sumber
+  const sumberBody = [];
+  if ((d.kasAwal||0)||(d.kasMasuk||0)||(d.kasKeluar||0))
+    sumberBody.push(['Kas', IDR(d.kasAwal||0), '+'+IDR(d.kasMasuk||0), '-'+IDR(d.kasKeluar||0), IDR((d.kasAwal||0)+(d.kasMasuk||0)-(d.kasKeluar||0))]);
+  if ((d.qurbanAwal||0)||(d.qurbanMasuk||0)||(d.qurbanKeluar||0))
+    sumberBody.push(['Qurban', IDR(d.qurbanAwal||0), '+'+IDR(d.qurbanMasuk||0), '-'+IDR(d.qurbanKeluar||0), IDR((d.qurbanAwal||0)+(d.qurbanMasuk||0)-(d.qurbanKeluar||0))]);
+  if ((d.acaraAwal||0)||(d.acaraMasuk||0)||(d.acaraKeluar||0))
+    sumberBody.push(['Acara', IDR(d.acaraAwal||0), '+'+IDR(d.acaraMasuk||0), '-'+IDR(d.acaraKeluar||0), IDR((d.acaraAwal||0)+(d.acaraMasuk||0)-(d.acaraKeluar||0))]);
+  if (sumberBody.length) {
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY + 6,
+      head: [['Sumber', 'Saldo Awal', 'Pemasukan', 'Pengeluaran', 'Saldo Akhir']],
+      body: sumberBody,
+      foot: [['TOTAL', IDR(d.saldoAwal), '+'+IDR(d.totMasuk), '-'+IDR(d.totKeluar), IDR(d.saldoAkhir)]],
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [26,102,68] },
+      footStyles: { fillColor: [232,245,239], textColor: [15,46,31], fontStyle: 'bold' },
+    });
+  }
   const catBody = obj => {
     const e = Object.entries(obj).sort((a,b) => b[1]-a[1]);
     return e.length ? e.map(([k,v]) => [k, IDR(v)]) : [['Tidak ada', '']];
@@ -6172,17 +6321,25 @@ function exportLaporanCSV() {
     ['LAPORAN KEUANGAN MUMI MB3'],
     ['Periode', d.bulanNama + ' ' + d.y],
     [],
-    ['RINGKASAN'],
-    ['Saldo Awal', d.saldoAwal],
+    ['RINGKASAN GABUNGAN (Kas + Qurban + Acara)'],
+    ['Saldo Awal Bulan', d.saldoAwal],
     ['Total Pemasukan', d.totMasuk],
     ['Total Pengeluaran', d.totKeluar],
     ['Saldo Akhir', d.saldoAkhir],
     [],
-    ['RINCIAN PEMASUKAN'],
-    ['Kategori', 'Jumlah'],
+    ['RINCIAN PER SUMBER DANA'],
+    ['Sumber', 'Saldo Awal', 'Pemasukan', 'Pengeluaran', 'Saldo Akhir'],
   ];
+  if ((d.kasAwal||0)||(d.kasMasuk||0)||(d.kasKeluar||0))
+    rows.push(['Kas', d.kasAwal||0, d.kasMasuk||0, d.kasKeluar||0, (d.kasAwal||0)+(d.kasMasuk||0)-(d.kasKeluar||0)]);
+  if ((d.qurbanAwal||0)||(d.qurbanMasuk||0)||(d.qurbanKeluar||0))
+    rows.push(['Qurban', d.qurbanAwal||0, d.qurbanMasuk||0, d.qurbanKeluar||0, (d.qurbanAwal||0)+(d.qurbanMasuk||0)-(d.qurbanKeluar||0)]);
+  if ((d.acaraAwal||0)||(d.acaraMasuk||0)||(d.acaraKeluar||0))
+    rows.push(['Acara', d.acaraAwal||0, d.acaraMasuk||0, d.acaraKeluar||0, (d.acaraAwal||0)+(d.acaraMasuk||0)-(d.acaraKeluar||0)]);
+  rows.push([]);
+  rows.push(['RINCIAN PEMASUKAN PER KATEGORI'], ['Kategori', 'Jumlah']);
   Object.entries(d.catMasuk).sort((a,b) => b[1]-a[1]).forEach(([k,v]) => rows.push([k, v]));
-  rows.push([], ['RINCIAN PENGELUARAN'], ['Kategori', 'Jumlah']);
+  rows.push([], ['RINCIAN PENGELUARAN PER KATEGORI'], ['Kategori', 'Jumlah']);
   Object.entries(d.catKeluar).sort((a,b) => b[1]-a[1]).forEach(([k,v]) => rows.push([k, v]));
   downloadCSV('laporan-keuangan-' + d.bulanNama + '-' + d.y + '.csv', rows);
 }
@@ -6326,28 +6483,18 @@ function renderLaporanTahunan(d) {
       <div class="muted">Tahun ${d.thn}</div>
     </div>
 
-    <!-- ── RINGKASAN TOTAL ── -->
-    <h2 style="font-size:13px;margin-bottom:8px;">📊 Ringkasan Total (Kas + Qurban + Acara)</h2>
-    <table class="rekap" style="margin-bottom:18px;">
-      <thead><tr><th style="text-align:left">Keterangan</th><th>Pemasukan</th><th>Pengeluaran</th></tr></thead>
-      <tbody>
-        <tr><td class="nm">💰 Kas</td><td style="color:#16a34a;font-weight:700;">${IDRs(d.kasMasukTot)}</td><td style="color:#dc2626;font-weight:700;">${IDRs(d.kasKeluarTot)}</td></tr>
-        <tr><td class="nm">🐐 Qurban</td><td style="color:#16a34a;font-weight:700;">${IDRs(d.qurbanMasuk)}</td><td style="color:#dc2626;font-weight:700;">${IDRs(d.qurbanKeluar)}</td></tr>
-        <tr><td class="nm">📅 Acara</td><td style="color:#16a34a;font-weight:700;">${IDRs(d.acaraMasuk)}</td><td style="color:#dc2626;font-weight:700;">${IDRs(d.acaraKeluar)}</td></tr>
-        <tr style="background:#f0f7f3;"><td class="nm" style="font-size:14px;font-weight:800;">TOTAL GABUNGAN</td>
-          <td style="color:#16a34a;font-weight:800;font-size:13px;">${IDRs(d.totalMasuk)}</td>
-          <td style="color:#dc2626;font-weight:800;font-size:13px;">${IDRs(d.totalKeluar)}</td></tr>
-      </tbody>
-    </table>
-
     <!-- ── KAS ── -->
-    <h2 style="font-size:13px;margin-bottom:6px;">💰 Laporan Kas</h2>
+    <div style="border-left:4px solid #16a34a;padding-left:10px;margin-bottom:6px;">
+      <h2 style="font-size:14px;color:#16a34a;margin:0;">💰 Laporan Kas</h2>
+    </div>
     <table class="rekap" style="margin-bottom:8px;">
       <tbody>
-        <tr><td class="nm">Saldo Awal Tahun</td><td style="text-align:right;font-weight:700;">${IDRs(d.kasAwal)}</td></tr>
-        <tr><td class="nm">Total Pemasukan Kas</td><td style="text-align:right;font-weight:700;color:#16a34a;">+ ${IDRs(d.kasMasukTot)}</td></tr>
-        <tr><td class="nm">Total Pengeluaran Kas</td><td style="text-align:right;font-weight:700;color:#dc2626;">- ${IDRs(d.kasKeluarTot)}</td></tr>
-        <tr><td class="nm" style="font-size:14px;">SALDO AKHIR KAS</td><td style="text-align:right;font-weight:800;font-size:14px;color:#1a6644;">${IDRs(d.kasAkhir)}</td></tr>
+        <tr><td class="nm">Saldo Awal Tahun (Kas Murni)</td><td style="text-align:right;font-weight:700;">${IDRs(d.kasAwal)}</td></tr>
+        <tr><td class="nm" style="color:#16a34a;">Total Pemasukan Kas</td><td style="text-align:right;font-weight:700;color:#16a34a;">+ ${IDRs(d.kasMasukTot)}</td></tr>
+        <tr><td class="nm" style="color:#dc2626;">Total Pengeluaran Kas</td><td style="text-align:right;font-weight:700;color:#dc2626;">- ${IDRs(d.kasKeluarTot)}</td></tr>
+        <tr style="background:#f0faf4;"><td class="nm" style="color:#16a34a;">Kas Murni Akhir Tahun</td><td style="text-align:right;font-weight:700;color:#16a34a;">${IDRs(d.kasAkhir)}</td></tr>
+        <tr style="background:#fef3e8;"><td class="nm" style="color:#d97706;">+ Sisa Dana Acara (masuk kas)</td><td style="text-align:right;font-weight:700;color:#d97706;">+ ${IDRs(d.acaraMasuk - d.acaraKeluar)}</td></tr>
+        <tr style="background:#e8f5ef;border-top:2px solid #1a6644;"><td class="nm" style="font-weight:800;font-size:14px;">TOTAL SALDO KAS</td><td style="text-align:right;font-weight:900;font-size:14px;color:#1a6644;">${IDRs(d.kasAkhir + (d.acaraMasuk - d.acaraKeluar))}</td></tr>
       </tbody>
     </table>
 
@@ -6376,7 +6523,9 @@ function renderLaporanTahunan(d) {
     </table>
 
     <!-- ── QURBAN ── -->
-    <h2 style="font-size:13px;margin-bottom:6px;">🐐 Laporan Qurban</h2>
+    <div style="border-left:4px solid #7c3aed;padding-left:10px;margin-bottom:6px;">
+      <h2 style="font-size:14px;color:#7c3aed;margin:0;">🐐 Laporan Dana Qurban</h2>
+    </div>
     <table class="rekap" style="margin-bottom:8px;">
       <tbody>
         <tr><td class="nm">Total Pemasukan Qurban</td><td style="text-align:right;font-weight:700;color:#16a34a;">+ ${IDRs(d.qurbanMasuk)}</td></tr>
@@ -6397,7 +6546,9 @@ function renderLaporanTahunan(d) {
     </table>
 
     <!-- ── ACARA ── -->
-    <h2 style="font-size:13px;margin-bottom:6px;">📅 Laporan Acara</h2>
+    <div style="border-left:4px solid #d97706;padding-left:10px;margin-bottom:6px;">
+      <h2 style="font-size:14px;color:#d97706;margin:0;">🎪 Laporan Dana Acara</h2>
+    </div>
     <table class="rekap" style="margin-bottom:8px;">
       <tbody>
         <tr><td class="nm">Total Pemasukan Acara</td><td style="text-align:right;font-weight:700;color:#16a34a;">+ ${IDRs(d.acaraMasuk)}</td></tr>
@@ -8091,11 +8242,10 @@ loadDashboard = async function() {
     el.innerHTML = '<div class="skeleton" style="height:20px;width:60px;border-radius:6px;display:inline-block;"></div>';
   });
 
-  // Saldo kas
-  let saldoKas = 0;
+  // Saldo kas murni (dari tabel saldo_kas)
+  let saldoKasMurni = 0;
   const { data: saldo } = await db.from('saldo_kas').select('*').single();
-  if (saldo) saldoKas = Number(saldo.saldo || 0);
-  animateCount(document.getElementById('sumKas'), saldoKas);
+  if (saldo) saldoKasMurni = Number(saldo.saldo || 0);
 
   // Dana qurban
   const { data: qb } = await db.from('qurban_bayar').select('jumlah');
@@ -8104,17 +8254,40 @@ loadDashboard = async function() {
                    -(qk||[]).reduce((s,x)=>s+Number(x.jumlah||0),0);
   animateCount(document.getElementById('sumQurban'), danaQurban);
 
-  // Dana acara = total masuk - total keluar
+  // Sisa acara = total masuk - total keluar (semua acara)
   const { data: ab } = await db.from('acara_bayar').select('jumlah, tipe');
-  const danaAcara = (ab||[]).filter(x=>x.tipe==='masuk').reduce((s,x)=>s+Number(x.jumlah||0),0)
+  const sisaAcara = (ab||[]).filter(x=>x.tipe==='masuk').reduce((s,x)=>s+Number(x.jumlah||0),0)
                   - (ab||[]).filter(x=>x.tipe==='keluar').reduce((s,x)=>s+Number(x.jumlah||0),0);
-  animateCount(document.getElementById('sumAcara'), danaAcara);
 
-  const total = saldoKas + danaQurban + danaAcara;
+  // Saldo Kas = kas murni + sisa semua acara
+  const saldoKas = saldoKasMurni + sisaAcara;
+  animateCount(document.getElementById('sumKas'), saldoKas);
+
+  // Update label kartu Saldo Kas
+  const labelKas = document.querySelector('#sec-saldo .saldo-card.masuk .label');
+  if (labelKas) labelKas.textContent = 'Saldo Kas (+ Sisa Acara)';
+
+  // Kartu "Dana Acara" tampilkan sisa acara (sub-info, sudah masuk sumKas jadi tidak double-count)
+  const elAcara = document.getElementById('sumAcara');
+  if (elAcara) {
+    animateCount(elAcara, sisaAcara);
+    const cardAcara = elAcara.closest('.saldo-card');
+    if (cardAcara) {
+      const lbl = cardAcara.querySelector('.label');
+      if (lbl) lbl.textContent = 'Sisa Acara ↳ Kas';
+    }
+  }
+
+  // Total = kas (sudah include sisa acara) + qurban SAJA (acara tidak double-count)
+  const total = saldoKas + danaQurban;
   animateCount(document.getElementById('sumTotal'), total);
 
-  // Render donut chart
-  setTimeout(() => renderDonutSaldo(saldoKas, danaQurban, danaAcara), 200);
+  // Update keterangan total
+  const keterTotal = document.querySelector('#sec-saldo .card > .muted');
+  if (keterTotal) keterTotal.textContent = 'Gabungan kas (termasuk sisa acara) + dana qurban.';
+
+  // Donut: kas (sudah include sisa acara) vs qurban
+  setTimeout(() => renderDonutSaldo(saldoKas, danaQurban, 0), 200);
 
   // Render progress kas bulanan
   renderProgressKas();
@@ -8152,10 +8325,10 @@ function renderDonutSaldo(kas, qurban, acara) {
   _donutChart = new Chart(canvas, {
     type: 'doughnut',
     data: {
-      labels: ['Kas', 'Dana Acara'],
+      labels: ['Saldo Kas (+ Sisa Acara)', 'Dana Qurban'],
       datasets: [{
         data: [kas, acara],
-        backgroundColor: ['#16a34a','#d97706'],
+        backgroundColor: ['#16a34a','#7c3aed'],
         borderWidth: 3,
         borderColor: getComputedStyle(document.documentElement).getPropertyValue('--bg') || '#fff',
       }],
@@ -12273,6 +12446,343 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   </div>
 
 
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PATCH: SALDO SISA PER ACARA + LAPORAN KEUANGAN DETAIL ACARA
+     ─────────────────────────────────────────────────────────────
+     • Menu Saldo   → card baru "Sisa Dana per Acara" di bawah progressKas
+     • Laporan Bln  → buatLaporan di-patch agar ambil nama acara,
+                      renderLaporan di-patch agar tampilkan tabel sisa per acara
+     • Laporan Thn  → buatLaporanTahunan & renderLaporanTahunan di-patch sama
+     ═══════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  'use strict';
+
+  /* ──────────────────────────────────────────────────────────────
+     HELPER: hitung sisa per acara dari data acara + acara_bayar
+     Return: [{ id, nama, tanggal, status, masuk, keluar, sisa }]
+     ────────────────────────────────────────────────────────────── */
+  async function fetchSisaPerAcara() {
+    const [{ data: acList }, { data: abAll }] = await Promise.all([
+      db.from('acara').select('id, nama, tanggal, status').order('tanggal', { ascending: false }),
+      db.from('acara_bayar').select('acara_id, jumlah, tipe'),
+    ]);
+    const acaras = acList || [];
+    const ab     = abAll  || [];
+
+    // Agregasi masuk & keluar per acara_id
+    const agg = {};
+    ab.forEach(r => {
+      const id = r.acara_id;
+      if (!agg[id]) agg[id] = { masuk: 0, keluar: 0 };
+      if (!r.tipe || r.tipe === 'masuk') agg[id].masuk  += Number(r.jumlah||0);
+      else                               agg[id].keluar += Number(r.jumlah||0);
+    });
+
+    return acaras.map(a => {
+      const { masuk = 0, keluar = 0 } = agg[a.id] || {};
+      return { id: a.id, nama: a.nama, tanggal: a.tanggal, status: a.status, masuk, keluar, sisa: masuk - keluar };
+    });
+  }
+
+  /* ──────────────────────────────────────────────────────────────
+     MENU SALDO — card "Sisa Dana per Acara"
+     ────────────────────────────────────────────────────────────── */
+  async function renderSaldoSisaAcara() {
+    // Inject card placeholder setelah progressKasCard kalau belum ada
+    const progressCard = document.getElementById('progressKasCard');
+    if (!progressCard) return;
+
+    let card = document.getElementById('sisaAcaraSaldoCard');
+    if (!card) {
+      card = document.createElement('div');
+      card.id = 'sisaAcaraSaldoCard';
+      card.className = 'card';
+      card.innerHTML = '<p class="muted" style="font-size:12px;">⏳ Memuat sisa acara...</p>';
+      progressCard.parentNode.insertBefore(card, progressCard.nextSibling);
+    }
+
+    const rows = await fetchSisaPerAcara();
+    const total = rows.reduce((s, r) => s + r.sisa, 0);
+    const ada   = rows.filter(r => r.masuk > 0 || r.keluar > 0);
+
+    const stLabel = s => {
+      const map = { not_started:'Belum Mulai', in_progress:'Berlangsung', on_progress:'Berlangsung', done:'Selesai', cancelled:'Dibatalkan' };
+      return map[s] || s || '—';
+    };
+    const stColor = s => {
+      if (s === 'done')       return '#16a34a';
+      if (s === 'cancelled')  return '#dc2626';
+      if (s === 'in_progress' || s === 'on_progress') return '#d97706';
+      return '#6b7280';
+    };
+
+    if (!ada.length) {
+      card.innerHTML = `
+        <h2>🎪 Sisa Dana per Acara</h2>
+        <p class="muted" style="font-size:12px;">Belum ada transaksi acara yang tercatat.</p>`;
+      return;
+    }
+
+    const rowsHtml = ada.map(r => `
+      <tr>
+        <td class="nm" style="font-size:12px;">${escapeHtml(r.nama)}</td>
+        <td style="font-size:11px;color:${stColor(r.status)};">${stLabel(r.status)}</td>
+        <td style="font-size:12px;text-align:right;color:#16a34a;">${IDR(r.masuk)}</td>
+        <td style="font-size:12px;text-align:right;color:#dc2626;">${IDR(r.keluar)}</td>
+        <td style="font-size:12px;text-align:right;font-weight:800;color:${r.sisa>=0?'#1a6644':'#dc2626'};">${IDR(r.sisa)}</td>
+      </tr>`).join('');
+
+    card.innerHTML = `
+      <h2>🎪 Sisa Dana per Acara</h2>
+      <p class="muted" style="font-size:11px;margin-bottom:10px;">
+        Sisa tiap acara (masuk − keluar). Totalnya tercermin di <b>Dana Acara</b> pada ringkasan di atas.
+      </p>
+      <div style="overflow-x:auto;">
+        <table class="rekap">
+          <thead><tr>
+            <th style="text-align:left;font-size:11px;">Nama Acara</th>
+            <th style="font-size:11px;">Status</th>
+            <th style="font-size:11px;text-align:right;">Masuk</th>
+            <th style="font-size:11px;text-align:right;">Keluar</th>
+            <th style="font-size:11px;text-align:right;">Sisa</th>
+          </tr></thead>
+          <tbody>${rowsHtml}</tbody>
+          <tfoot><tr style="background:#e8f5ef;">
+            <td class="nm" style="font-weight:800;font-size:12px;" colspan="2">TOTAL SISA SEMUA ACARA</td>
+            <td style="text-align:right;font-weight:800;color:#16a34a;">${IDR(ada.reduce((s,r)=>s+r.masuk,0))}</td>
+            <td style="text-align:right;font-weight:800;color:#dc2626;">${IDR(ada.reduce((s,r)=>s+r.keluar,0))}</td>
+            <td style="text-align:right;font-weight:900;font-size:13px;color:${total>=0?'#1a6644':'#dc2626'};">${IDR(total)}</td>
+          </tr></tfoot>
+        </table>
+      </div>
+      <div style="margin-top:10px;padding:10px 14px;background:linear-gradient(135deg,#fef3e8,#fffbf0);border-radius:10px;border-left:3px solid #d97706;">
+        <div style="font-size:10px;font-weight:700;color:#d97706;text-transform:uppercase;margin-bottom:2px;">ℹ️ Catatan</div>
+        <div style="font-size:11px;color:#92400e;">
+          Sisa setiap acara otomatis terhitung sebagai bagian dari kas organisasi.
+          Untuk melihat rincian transaksi, buka menu <b>Acara</b> → pilih acara.
+        </div>
+      </div>`;
+  }
+
+  // Hook openSection saldo
+  var _origOpenSaldo = window.openSection;
+  window.openSection = function(name) {
+    _origOpenSaldo(name);
+    if (name === 'saldo') {
+      renderSaldoSisaAcara();
+    }
+  };
+
+  // Juga patch loadDashboard agar card langsung muncul saat dibuka
+  var _origLD = loadDashboard;
+  loadDashboard = async function() {
+    await _origLD.apply(this, arguments);
+    // Card sisa acara
+    renderSaldoSisaAcara();
+  };
+
+  /* ──────────────────────────────────────────────────────────────
+     LAPORAN BULANAN — patch buatLaporan & renderLaporan
+     ────────────────────────────────────────────────────────────── */
+  var _origBuatLaporan = buatLaporan;
+  buatLaporan = async function() {
+    // Jalankan fungsi asli dulu (akan render laporan)
+    await _origBuatLaporan.apply(this, arguments);
+
+    // Setelah render, ambil data sisa per acara lalu sisipkan
+    const bln = document.getElementById('lapBulan') && document.getElementById('lapBulan').value;
+    if (!bln) return;
+
+    const [y, m] = bln.split('-').map(Number);
+    const firstThis = `${bln}-01`;
+    const lastThis  = `${bln}-${String(new Date(y, m, 0).getDate()).padStart(2,'0')}`;
+
+    // Query acara + acara_bayar untuk bulan ini
+    const [{ data: acList }, { data: abAll }] = await Promise.all([
+      db.from('acara').select('id, nama, tanggal, status'),
+      db.from('acara_bayar').select('acara_id, jumlah, tipe, tanggal'),
+    ]);
+
+    const acaras = acList || [];
+    const ab     = abAll  || [];
+
+    // Hanya transaksi bulan ini
+    const abBulan = ab.filter(r => r.tanggal >= firstThis && r.tanggal <= lastThis);
+
+    // Per acara — sisa kumulatif (semua waktu) & aktivitas bulan ini
+    const aggAll  = {}, aggBulan = {};
+    ab.forEach(r => {
+      if (!aggAll[r.acara_id]) aggAll[r.acara_id] = { masuk: 0, keluar: 0 };
+      if (!r.tipe || r.tipe === 'masuk') aggAll[r.acara_id].masuk  += Number(r.jumlah||0);
+      else                               aggAll[r.acara_id].keluar += Number(r.jumlah||0);
+    });
+    abBulan.forEach(r => {
+      if (!aggBulan[r.acara_id]) aggBulan[r.acara_id] = { masuk: 0, keluar: 0 };
+      if (!r.tipe || r.tipe === 'masuk') aggBulan[r.acara_id].masuk  += Number(r.jumlah||0);
+      else                               aggBulan[r.acara_id].keluar += Number(r.jumlah||0);
+    });
+
+    // Acara yang punya transaksi di bulan ini
+    const acaraAktif = acaras
+      .filter(a => aggBulan[a.id])
+      .map(a => {
+        const { masuk: mAll = 0, keluar: kAll = 0 } = aggAll[a.id]  || {};
+        const { masuk: mBln = 0, keluar: kBln = 0 } = aggBulan[a.id] || {};
+        return { nama: a.nama, status: a.status, mBln, kBln, sisaBulan: mBln - kBln, sisaKumulatif: mAll - kAll };
+      });
+
+    if (!acaraAktif.length) return;
+
+    // Sisipkan tabel ke dalam laporanPrint, setelah section Acara yang sudah ada
+    const laporanPrint = document.getElementById('laporanPrint');
+    if (!laporanPrint) return;
+
+    // Cegah duplikasi
+    const old = document.getElementById('sisaAcaraLapBulan');
+    if (old) old.remove();
+
+    const BULAN_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    const namaBulan = BULAN_ID[m-1] + ' ' + y;
+
+    const rowsHtml = acaraAktif.map(r => `
+      <tr>
+        <td class="nm" style="font-size:12px;">${escapeHtml(r.nama)}</td>
+        <td style="font-size:12px;text-align:right;color:#16a34a;">${IDR(r.mBln)}</td>
+        <td style="font-size:12px;text-align:right;color:#dc2626;">${IDR(r.kBln)}</td>
+        <td style="font-size:12px;text-align:right;font-weight:800;color:${r.sisaBulan>=0?'#d97706':'#dc2626'};">${IDR(r.sisaBulan)}</td>
+        <td style="font-size:12px;text-align:right;font-weight:800;color:${r.sisaKumulatif>=0?'#1a6644':'#dc2626'};">${IDR(r.sisaKumulatif)}</td>
+      </tr>`).join('');
+
+    const inject = document.createElement('div');
+    inject.id = 'sisaAcaraLapBulan';
+    inject.innerHTML = `
+      <h2 style="font-size:13px;margin:16px 0 6px;">🎪 Rincian Sisa per Acara — ${namaBulan}</h2>
+      <p class="muted" style="font-size:11px;margin-bottom:8px;">
+        Acara yang memiliki transaksi pada bulan ini. <i>Sisa Kumulatif</i> = total masuk − keluar sejak acara dibuat (bukan hanya bulan ini).
+      </p>
+      <div style="overflow-x:auto;">
+        <table class="rekap" style="margin-bottom:8px;">
+          <thead><tr>
+            <th style="text-align:left;font-size:11px;">Nama Acara</th>
+            <th style="font-size:11px;text-align:right;">Masuk Bln Ini</th>
+            <th style="font-size:11px;text-align:right;">Keluar Bln Ini</th>
+            <th style="font-size:11px;text-align:right;">Sisa Bln Ini</th>
+            <th style="font-size:11px;text-align:right;">Sisa Kumulatif</th>
+          </tr></thead>
+          <tbody>${rowsHtml}</tbody>
+          <tfoot><tr style="background:#fef3e8;">
+            <td class="nm" style="font-weight:800;">TOTAL</td>
+            <td style="text-align:right;font-weight:800;color:#16a34a;">${IDR(acaraAktif.reduce((s,r)=>s+r.mBln,0))}</td>
+            <td style="text-align:right;font-weight:800;color:#dc2626;">${IDR(acaraAktif.reduce((s,r)=>s+r.kBln,0))}</td>
+            <td style="text-align:right;font-weight:800;color:#d97706;">${IDR(acaraAktif.reduce((s,r)=>s+r.sisaBulan,0))}</td>
+            <td style="text-align:right;font-weight:800;color:#1a6644;">${IDR(acaraAktif.reduce((s,r)=>s+r.sisaKumulatif,0))}</td>
+          </tr></tfoot>
+        </table>
+      </div>`;
+
+    // Sisipkan sebelum footer laporan (div muted paling bawah)
+    const footer = laporanPrint.querySelector('.muted[style*="border-top"]');
+    if (footer) laporanPrint.insertBefore(inject, footer);
+    else laporanPrint.appendChild(inject);
+  };
+
+  /* ──────────────────────────────────────────────────────────────
+     LAPORAN TAHUNAN — patch buatLaporanTahunan & renderLaporanTahunan
+     ────────────────────────────────────────────────────────────── */
+  var _origBuatLapThn = buatLaporanTahunan;
+  buatLaporanTahunan = async function() {
+    await _origBuatLapThn.apply(this, arguments);
+
+    const thn = parseInt(document.getElementById('lapTahun') && document.getElementById('lapTahun').value);
+    if (!thn) return;
+
+    const firstYear = `${thn}-01-01`;
+    const lastYear  = `${thn}-12-31`;
+
+    const [{ data: acList }, { data: abAll }] = await Promise.all([
+      db.from('acara').select('id, nama, tanggal, status'),
+      db.from('acara_bayar').select('acara_id, jumlah, tipe, tanggal'),
+    ]);
+
+    const acaras   = acList || [];
+    const ab       = abAll  || [];
+    const abTahun  = ab.filter(r => r.tanggal >= firstYear && r.tanggal <= lastYear);
+
+    const aggAll  = {}, aggThn = {};
+    ab.forEach(r => {
+      if (!aggAll[r.acara_id]) aggAll[r.acara_id] = { masuk: 0, keluar: 0 };
+      if (!r.tipe || r.tipe === 'masuk') aggAll[r.acara_id].masuk  += Number(r.jumlah||0);
+      else                               aggAll[r.acara_id].keluar += Number(r.jumlah||0);
+    });
+    abTahun.forEach(r => {
+      if (!aggThn[r.acara_id]) aggThn[r.acara_id] = { masuk: 0, keluar: 0 };
+      if (!r.tipe || r.tipe === 'masuk') aggThn[r.acara_id].masuk  += Number(r.jumlah||0);
+      else                               aggThn[r.acara_id].keluar += Number(r.jumlah||0);
+    });
+
+    const acaraList = acaras
+      .filter(a => aggThn[a.id])
+      .map(a => {
+        const { masuk: mAll = 0, keluar: kAll = 0 } = aggAll[a.id]  || {};
+        const { masuk: mThn = 0, keluar: kThn = 0 } = aggThn[a.id]  || {};
+        return { nama: a.nama, status: a.status, mThn, kThn, sisaThn: mThn - kThn, sisaKumulatif: mAll - kAll };
+      });
+
+    if (!acaraList.length) return;
+
+    const laporanPrint = document.getElementById('laporanPrint');
+    if (!laporanPrint) return;
+
+    const old = document.getElementById('sisaAcaraLapThn');
+    if (old) old.remove();
+
+    const rowsHtml = acaraList.map(r => `
+      <tr>
+        <td class="nm" style="font-size:12px;">${escapeHtml(r.nama)}</td>
+        <td style="font-size:12px;text-align:right;color:#16a34a;">${IDR(r.mThn)}</td>
+        <td style="font-size:12px;text-align:right;color:#dc2626;">${IDR(r.kThn)}</td>
+        <td style="font-size:12px;text-align:right;font-weight:800;color:${r.sisaThn>=0?'#d97706':'#dc2626'};">${IDR(r.sisaThn)}</td>
+        <td style="font-size:12px;text-align:right;font-weight:800;color:${r.sisaKumulatif>=0?'#1a6644':'#dc2626'};">${IDR(r.sisaKumulatif)}</td>
+      </tr>`).join('');
+
+    const inject = document.createElement('div');
+    inject.id = 'sisaAcaraLapThn';
+    inject.innerHTML = `
+      <h2 style="font-size:13px;margin:16px 0 6px;">🎪 Rincian Sisa per Acara — Tahun ${thn}</h2>
+      <p class="muted" style="font-size:11px;margin-bottom:8px;">
+        Acara yang memiliki transaksi pada tahun ${thn}. <i>Sisa Kumulatif</i> = total masuk − keluar sejak acara dibuat.
+      </p>
+      <div style="overflow-x:auto;">
+        <table class="rekap" style="margin-bottom:8px;">
+          <thead><tr>
+            <th style="text-align:left;font-size:11px;">Nama Acara</th>
+            <th style="font-size:11px;text-align:right;">Masuk ${thn}</th>
+            <th style="font-size:11px;text-align:right;">Keluar ${thn}</th>
+            <th style="font-size:11px;text-align:right;">Sisa ${thn}</th>
+            <th style="font-size:11px;text-align:right;">Sisa Kumulatif</th>
+          </tr></thead>
+          <tbody>${rowsHtml}</tbody>
+          <tfoot><tr style="background:#fef3e8;">
+            <td class="nm" style="font-weight:800;">TOTAL</td>
+            <td style="text-align:right;font-weight:800;color:#16a34a;">${IDR(acaraList.reduce((s,r)=>s+r.mThn,0))}</td>
+            <td style="text-align:right;font-weight:800;color:#dc2626;">${IDR(acaraList.reduce((s,r)=>s+r.kThn,0))}</td>
+            <td style="text-align:right;font-weight:800;color:#d97706;">${IDR(acaraList.reduce((s,r)=>s+r.sisaThn,0))}</td>
+            <td style="text-align:right;font-weight:800;color:#1a6644;">${IDR(acaraList.reduce((s,r)=>s+r.sisaKumulatif,0))}</td>
+          </tr></tfoot>
+        </table>
+      </div>`;
+
+    // Sisipkan sebelum grafik tahunan
+    const grafik = laporanPrint.querySelector('#chartBarTahunan');
+    const h2Grafik = grafik && grafik.previousElementSibling;
+    if (h2Grafik) laporanPrint.insertBefore(inject, h2Grafik);
+    else laporanPrint.appendChild(inject);
+  };
+
+})();
+</script>
 
   <!-- ═══ TOUCH SUPPORT: efek hover menu di HP ═══ -->
   <script>
