@@ -435,6 +435,18 @@
   [data-theme="dark"] [style*="background:#edefed"] { background: #1a2a22 !important; }
   [data-theme="dark"] [style*="background:#e8f5ef"] { background: #14331f !important; }
 
+  /* ── Dark mode: Dropdown search absensi ─────────────────── */
+  [data-theme="dark"] #absDropdown {
+    background: #1a2e22 !important;
+    border-color: #2d9e6b !important;
+  }
+  [data-theme="dark"] #absDropdown > div {
+    color: #dfece6 !important;
+    border-bottom-color: #2b4538 !important;
+  }
+  [data-theme="dark"] #absDropdown > div:hover { background: #243d2c !important; }
+  [data-theme="dark"] #absDropdown [style*="font-weight:600"] { color: #dfece6 !important; }
+
   /* ── Dark mode: Struktur Organisasi nodes ───────────────── */
   [data-theme="dark"] .so-node {
     background: #1a2e22 !important;
@@ -1311,12 +1323,17 @@
         <p class="muted" style="font-size:11px;margin-top:8px;">
           ℹ️ Ketik nama → pilih status. Klik <b>▼ Lihat &amp; Edit</b> untuk ubah status siswa yang sudah dipilih.
         </p>
+        <div style="margin-top:10px;">
+          <button class="secondary" onclick="openSection('rekap')" style="width:auto;padding:8px 16px;font-size:13px;">📈 Lihat Rekap Kehadiran</button>
+        </div>
       </div>
       <div class="card">
         <h2>Kelola Sesi</h2>
         <p class="muted" style="margin-bottom:10px;">Tambah sesi kalau 1 hari ada lebih dari 1x ngaji.</p>
         <label>Nama Sesi</label>
         <input type="text" id="sesiNama" placeholder="Cth: Ngaji Sore">
+        <label>Tanggal Sesi</label>
+        <input type="date" id="sesiTanggal">
         <div class="row">
           <div><label>Jam Mulai (opsional)</label><input type="time" id="sesiMulai"></div>
           <div><label>Jam Selesai (opsional)</label><input type="time" id="sesiSelesai"></div>
@@ -1324,6 +1341,14 @@
         <button onclick="addSesi()">Tambah Sesi</button>
         <div id="sesiMsg"></div>
         <div id="sesiList" style="margin-top:10px;"></div>
+        <!-- Riwayat sesi yang sudah lewat -->
+        <div id="sesiRiwayatWrap" style="margin-top:16px;display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;cursor:pointer;" onclick="toggleSesiRiwayat()">
+            <h2 style="margin:0;font-size:14px;color:#7a9585;">🕐 Riwayat Sesi (sudah lewat)</h2>
+            <span id="sesiRiwayatToggle" style="font-size:12px;color:#7a9585;font-weight:700;">▶ Tampilkan</span>
+          </div>
+          <div id="sesiRiwayatList" style="display:none;"></div>
+        </div>
       </div>
     </div>
 
@@ -2771,6 +2796,7 @@ async function onLoggedIn(user) {
   $('pgTanggal').valueAsDate = today;
   $('absTanggal').valueAsDate = today;
   $('acTanggal').valueAsDate = today;
+  $('sesiTanggal').valueAsDate = today;
   $('rekapBulan').value = today.toISOString().slice(0, 7);
   $('rekapTahun').value = today.getFullYear();
   $('lapBulan').value = today.toISOString().slice(0, 7);
@@ -3400,31 +3426,98 @@ async function loadSesi() {
     return `<option value="${s.id}">${escapeHtml(s.nama)}${jam}</option>`;
   }).join('');
   if (prev) sel.value = prev;
-  const el = $('sesiList');
-  el.innerHTML = sesiCache.length ? sesiCache.map(s => {
+
+  const today = new Date().toISOString().slice(0, 10);
+  const sesiAktif   = sesiCache.filter(s => !s.tanggal || s.tanggal >= today);
+  const sesiRiwayat = sesiCache.filter(s => s.tanggal && s.tanggal < today)
+                                .sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+
+  const renderItem = (s, isRiwayat) => {
     const jam = s.jam_mulai ? `${s.jam_mulai.slice(0,5)}${s.jam_selesai?' - '+s.jam_selesai.slice(0,5):''}` : 'Tanpa jam';
-    return `<div class="list-item" style="cursor:pointer;" onclick="bukaSesiDetail(${s.id})" title="Klik untuk lihat detail sesi">
-      <div class="left">
-        <div class="name">${escapeHtml(s.nama)}</div>
-        <div class="meta">${jam} &nbsp;·&nbsp; <span style="color:#1a6644;font-weight:600;">📊 Lihat Detail</span></div>
+    const tglLabel = s.tanggal ? `📅 ${s.tanggal}` : '📅 Tanggal belum diset';
+    const bgColor = isRiwayat ? '#f7f7f5' : '#f7faf8';
+    const borderColor = isRiwayat ? '#e5e5e0' : '#e0ece5';
+    return `<div class="list-item" style="flex-direction:column;align-items:stretch;gap:8px;cursor:default;${isRiwayat?'opacity:0.85;':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer;" onclick="bukaSesiDetail(${s.id})" title="Klik untuk lihat detail sesi">
+        <div class="left">
+          <div class="name">${escapeHtml(s.nama)}${isRiwayat ? ' <span style="font-size:10px;background:#e5e7eb;color:#6b7280;padding:2px 7px;border-radius:99px;font-weight:600;vertical-align:middle;">Lewat</span>' : ''}</div>
+          <div class="meta">${jam} &nbsp;·&nbsp; ${tglLabel} &nbsp;·&nbsp; <span style="color:#1a6644;font-weight:600;">📊 Lihat Detail</span></div>
+        </div>
+        <div style="display:flex;gap:6px;" onclick="event.stopPropagation()">
+          <button class="small danger" onclick="deleteSesi(${s.id})">Hapus</button>
+        </div>
       </div>
-      <div style="display:flex;gap:6px;">
-        <button class="small danger" onclick="event.stopPropagation();deleteSesi(${s.id})">Hapus</button>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;background:${bgColor};border-radius:8px;border:1px solid ${borderColor};">
+        <span style="font-size:11px;font-weight:700;color:#7a9585;text-transform:uppercase;letter-spacing:.4px;">Edit Tanggal:</span>
+        <input type="date" id="editTglSesi_${s.id}" value="${s.tanggal||''}"
+          style="padding:5px 8px;border:2px solid #d4e8dc;border-radius:8px;font-size:13px;font-weight:600;color:#1a6644;background:#fff;margin:0;width:auto;">
+        <button onclick="simpanTanggalSesi(${s.id})"
+          style="background:#1a6644;color:#fff;border:none;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;width:auto;">
+          💾 Simpan
+        </button>
+        <span id="msgTglSesi_${s.id}" style="font-size:11px;color:#059669;"></span>
       </div>
     </div>`;
-  }).join('') : '<p class="muted">Belum ada sesi.</p>';
+  };
+
+  const el = $('sesiList');
+  el.innerHTML = sesiAktif.length
+    ? sesiAktif.map(s => renderItem(s, false)).join('')
+    : '<p class="muted">Belum ada sesi mendatang. Tambah di atas.</p>';
+
+  const wrapRiwayat = $('sesiRiwayatWrap');
+  const listRiwayat = $('sesiRiwayatList');
+  if (wrapRiwayat && listRiwayat) {
+    if (sesiRiwayat.length) {
+      wrapRiwayat.style.display = 'block';
+      listRiwayat.innerHTML = sesiRiwayat.map(s => renderItem(s, true)).join('');
+    } else {
+      wrapRiwayat.style.display = 'none';
+    }
+  }
+}
+
+function toggleSesiRiwayat() {
+  const list = $('sesiRiwayatList');
+  const lbl  = $('sesiRiwayatToggle');
+  if (!list) return;
+  const open = list.style.display !== 'none';
+  list.style.display = open ? 'none' : 'block';
+  if (lbl) lbl.textContent = open ? '▶ Tampilkan' : '▲ Sembunyikan';
 }
 
 async function addSesi() {
   const nama = $('sesiNama').value.trim();
   if (!nama) { setMsg('sesiMsg', 'Nama sesi wajib diisi', true); return; }
+  const tanggal = $('sesiTanggal').value || new Date().toISOString().slice(0,10);
   const { error } = await db.from('sesi').insert({
-    nama, jam_mulai: $('sesiMulai').value || null, jam_selesai: $('sesiSelesai').value || null,
+    nama, tanggal,
+    jam_mulai: $('sesiMulai').value || null, jam_selesai: $('sesiSelesai').value || null,
     urutan: sesiCache.length + 1,
   });
   if (error) { setMsg('sesiMsg', 'Gagal: ' + error.message, true); return; }
   setMsg('sesiMsg', '✅ Sesi ditambahkan');
   $('sesiNama').value = ''; $('sesiMulai').value = ''; $('sesiSelesai').value = '';
+  $('sesiTanggal').valueAsDate = new Date();
+  loadSesi();
+}
+
+async function simpanTanggalSesi(sesiId) {
+  const input = $('editTglSesi_' + sesiId);
+  const msg   = $('msgTglSesi_' + sesiId);
+  if (!input) return;
+  const tgl = input.value;
+  if (!tgl) { if (msg) { msg.style.color='#dc2626'; msg.textContent='Tanggal wajib diisi'; } return; }
+  const { error } = await db.from('sesi').update({ tanggal: tgl }).eq('id', sesiId);
+  if (error) {
+    if (msg) { msg.style.color='#dc2626'; msg.textContent='Gagal: ' + error.message; }
+    return;
+  }
+  // Update cache
+  const s = sesiCache.find(x => x.id === sesiId);
+  if (s) s.tanggal = tgl;
+  if (msg) { msg.style.color='#059669'; msg.textContent='✅ Tersimpan'; setTimeout(()=>{ if(msg) msg.textContent=''; }, 2000); }
+  // Refresh list agar label tanggal ikut update
   loadSesi();
 }
 
@@ -3466,8 +3559,8 @@ async function bukaSesiDetail(sesiId) {
   $('editSesiMsg').textContent = '';
   $('sesiDetailModal').style.display = 'flex';
 
-  // Ambil kehadiran + catatan sesi paralel
-  const [kehRes, catRes] = await Promise.all([
+  // Ambil kehadiran + catatan sesi + anggota aktif paralel
+  const [kehRes, catRes, angRes] = await Promise.all([
     db.from('kehadiran')
       .select('anggota_id, status, tanggal, anggota(nama), dicatat_oleh, profiles(nama_lengkap)')
       .eq('sesi_id', sesiId)
@@ -3478,29 +3571,31 @@ async function bukaSesiDetail(sesiId) {
       .eq('sesi_id', sesiId)
       .order('tanggal', { ascending: false })
       .limit(1000),
+    db.from('anggota').select('id, nama, tampil_absensi').eq('status', 'aktif').order('nama'),
   ]);
 
   if (kehRes.error) {
-    // cek apakah error karena tabel catatan_sesi belum ada — bisa diabaikan
     $('sesiDetailBody').innerHTML = `<p class="err">Gagal memuat: ${escapeHtml(kehRes.error.message)}</p>`;
     return;
   }
 
   const rows = kehRes.data || [];
-  // catatan_sesi — bisa belum ada tabelnya, jangan crash
+  const angAktif = (angRes.data || []).filter(a => a.tampil_absensi !== false);
   const catatanArr = catRes.error ? [] : (catRes.data || []);
-  // index catatan per tanggal
   const catatanMap = {};
   catatanArr.forEach(c => { catatanMap[c.tanggal] = c; });
 
-  // Statistik
-  const total  = rows.length;
+  const tanggalSet = [...new Set(rows.map(r => r.tanggal))].sort((a,b) => b.localeCompare(a));
+
+  // Statistik — hitung tidak_hadir termasuk anggota yg tidak ada record di DB per tanggal
   const nHadir = rows.filter(r => r.status === 'hadir').length;
   const nIzin  = rows.filter(r => r.status === 'izin').length;
   const nSakit = rows.filter(r => r.status === 'sakit').length;
-  const nTidak = rows.filter(r => r.status === 'tidak_hadir').length;
-
-  const tanggalSet = [...new Set(rows.map(r => r.tanggal))].sort((a,b) => b.localeCompare(a));
+  const nTidakDB = rows.filter(r => r.status === 'tidak_hadir').length;
+  const angPunyaRecord = new Set(rows.map(r => r.anggota_id));
+  const nTidakImplisit = angAktif.filter(a => !angPunyaRecord.has(a.id)).length * tanggalSet.length;
+  const nTidak = nTidakDB + nTidakImplisit;
+  const total  = nHadir + nIzin + nSakit + nTidak;
 
   // Rekap per siswa
   const siswaStat = {};
@@ -3541,7 +3636,9 @@ async function bukaSesiDetail(sesiId) {
     const h  = data_tgl.filter(r => r.status === 'hadir').length;
     const i  = data_tgl.filter(r => r.status === 'izin').length;
     const sk = data_tgl.filter(r => r.status === 'sakit').length;
-    const tk = data_tgl.filter(r => r.status === 'tidak_hadir').length;
+    const tkDB = data_tgl.filter(r => r.status === 'tidak_hadir').length;
+    const punyaRecordTgl = new Set(data_tgl.map(r => r.anggota_id));
+    const tk = tkDB + angAktif.filter(a => !punyaRecordTgl.has(a.id)).length;
     const cat = catatanMap[tgl] || {};
     const rowId = `ptm_${tgl.replace(/-/g,'_')}`;
     return `<div style="background:#f0f7f3;border-radius:10px;padding:12px;margin-bottom:10px;" id="${rowId}">
@@ -3765,12 +3862,18 @@ async function loadAbsensi() {
     .eq('tanggal', tgl).eq('sesi_id', sesiId);
   absenState = {};
   // Hanya masukkan kehadiran anggota yang AKTIF (ada di anggotaCache)
-  const aktifIds = new Set((ang || []).map(a => a.id));
+  const aktifIds = new Set(anggotaCache.map(a => a.id));
   (keh || []).forEach(k => {
     if (aktifIds.has(k.anggota_id)) absenState[k.anggota_id] = k.status;
   });
-  // Hanya restore siswa yang memang punya data tersimpan — tidak otomatis isi semua siswa
-  // agar daftar review tidak langsung panjang (user bisa edit via tombol ✏️ Edit Kehadiran)
+  // Jika sudah ada data tersimpan: fill semua anggota yg belum ada record sebagai tidak_hadir
+  if (keh && keh.length) {
+    anggotaCache.forEach(a => { if (!absenState[a.id]) absenState[a.id] = 'tidak_hadir'; });
+    const panel = $('absDetailPanel');
+    const lbl   = $('absToggleLabel');
+    if (panel) panel.style.display = 'block';
+    if (lbl)   lbl.textContent = '▲ Sembunyikan';
+  }
   // Reset search
   if ($('absSearch')) $('absSearch').value = '';
   if ($('absDropdown')) $('absDropdown').style.display = 'none';
@@ -3948,9 +4051,9 @@ async function simpanAbsensi() {
   if (!tgl || !sesiId) { setMsg('absMsg', 'Pilih tanggal & sesi dulu', true); return; }
   if (!anggotaCache.length) { setMsg('absMsg', 'Belum ada anggota aktif', true); return; }
   const nowIso = new Date().toISOString();
-  // Hanya simpan siswa yang sudah dipilih (ada di absenState)
+  // Auto-isi semua anggota aktif yang belum dipilih sebagai tidak_hadir
+  anggotaCache.forEach(a => { if (!absenState[a.id]) absenState[a.id] = 'tidak_hadir'; });
   const dipilihIds = Object.keys(absenState).filter(id => absenState[id]);
-  if (!dipilihIds.length) { setMsg('absMsg', 'Belum ada siswa yang dipilih', true); return; }
   const rows = dipilihIds.map(id => ({
     tanggal: tgl, sesi_id: sesiId, anggota_id: parseInt(id),
     status: absenState[id], dicatat_oleh: currentProf.id, updated_at: nowIso,
@@ -3962,6 +4065,11 @@ async function simpanAbsensi() {
   const sakit = rows.filter(r => r.status === 'sakit').length;
   const tidak = rows.filter(r => r.status === 'tidak_hadir').length;
   setMsg('absMsg', `✅ Absensi tersimpan — ${hadir} hadir, ${izin} izin, ${sakit} sakit, ${tidak} tidak hadir`);
+  const panel = $('absDetailPanel');
+  const lbl   = $('absToggleLabel');
+  if (panel) panel.style.display = 'block';
+  if (lbl)   lbl.textContent = '▲ Sembunyikan';
+  _absRenderReview();
 }
 
 // ─────────────── REKAP ───────────────
