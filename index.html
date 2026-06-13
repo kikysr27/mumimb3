@@ -1286,9 +1286,12 @@
       <div class="card">
         <h2>📋 Absensi Kehadiran</h2>
         <div class="row">
-          <div><label>Tanggal</label><input type="date" id="absTanggal" onchange="loadAbsensi()"></div>
+          <div><label>Tanggal</label><input type="date" id="absTanggal" onchange="updateAbsSesiDropdown();loadAbsensi()"></div>
           <div><label>Sesi</label><select id="absSesi" onchange="loadAbsensi()"></select></div>
         </div>
+
+        <!-- Pesan jika tidak ada sesi di tanggal yang dipilih -->
+        <div id="absNoSesiMsg" style="display:none;background:#fef3c7;border:1px solid #fcd34d;color:#92400e;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:10px;line-height:1.5;"></div>
 
         <!-- SEARCH BOX -->
         <label>🔍 Cari & Pilih Siswa</label>
@@ -2861,9 +2864,10 @@ async function loadDashboard() {
                    - (qk || []).reduce((s,x) => s + Number(x.jumlah||0), 0);
   $('sumQurban').textContent = IDR(danaQurban);
 
-  // Dana acara = total pembayaran peserta semua acara
-  const { data: ab } = await db.from('acara_bayar').select('jumlah');
-  const danaAcara = (ab || []).reduce((s,x) => s + Number(x.jumlah||0), 0);
+  // Dana acara = total masuk - total keluar
+  const { data: ab } = await db.from('acara_bayar').select('jumlah, tipe');
+  const danaAcara = (ab||[]).filter(x=>x.tipe==='masuk').reduce((s,x)=>s+Number(x.jumlah||0),0)
+                  - (ab||[]).filter(x=>x.tipe==='keluar').reduce((s,x)=>s+Number(x.jumlah||0),0);
   $('sumAcara').textContent = IDR(danaAcara);
 
   $('sumTotal').textContent = IDR(saldoKas + danaQurban + danaAcara);
@@ -3417,15 +3421,43 @@ async function saveAnggotaEdit() {
 }
 
 // ─────────────── SESI ───────────────
-async function loadSesi() {
-  const { data } = await db.from('sesi').select('*').order('urutan').order('id');
-  sesiCache = data || [];
-  const sel = $('absSesi'), prev = sel.value;
-  sel.innerHTML = sesiCache.map(s => {
+// ─── Filter dropdown absSesi berdasarkan tanggal yang dipilih ───
+function updateAbsSesiDropdown() {
+  const sel = $('absSesi');
+  const noSesiMsg = $('absNoSesiMsg');
+  const tgl = $('absTanggal').value;
+  const prev = sel.value;
+
+  // Filter: tampilkan sesi yang tanggalnya cocok dengan tanggal yang dipilih
+  // Sesi tanpa tanggal dianggap "tanggal belum diset" — tidak ditampilkan
+  const sesiHariIni = tgl
+    ? sesiCache.filter(s => s.tanggal === tgl)
+    : [];
+
+  sel.innerHTML = sesiHariIni.map(s => {
     const jam = s.jam_mulai ? ` (${s.jam_mulai.slice(0,5)}${s.jam_selesai?'-'+s.jam_selesai.slice(0,5):''})` : '';
     return `<option value="${s.id}">${escapeHtml(s.nama)}${jam}</option>`;
   }).join('');
-  if (prev) sel.value = prev;
+
+  // Coba pertahankan pilihan sebelumnya jika masih valid
+  if (prev && sel.querySelector(`option[value="${prev}"]`)) sel.value = prev;
+
+  // Tampilkan/sembunyikan pesan jika tidak ada sesi di tanggal ini
+  if (noSesiMsg) {
+    if (sesiHariIni.length === 0 && tgl) {
+      noSesiMsg.style.display = 'block';
+      noSesiMsg.innerHTML = `⚠️ Tidak ada sesi pengajian di tanggal <strong>${tgl}</strong>. Tambahkan sesi di bagian <em>Kelola Sesi</em> di bawah.`;
+    } else {
+      noSesiMsg.style.display = 'none';
+    }
+  }
+}
+
+async function loadSesi() {
+  const { data } = await db.from('sesi').select('*').order('urutan').order('id');
+  sesiCache = data || [];
+  // Update dropdown absSesi sesuai tanggal yang sedang dipilih
+  updateAbsSesiDropdown();
 
   const today = new Date().toISOString().slice(0, 10);
   const sesiAktif   = sesiCache.filter(s => !s.tanggal || s.tanggal >= today);
@@ -3852,8 +3884,16 @@ function tutupSesiDetail() {
 // ─────────────── ABSENSI ───────────────
 async function loadAbsensi() {
   if (!sesiCache.length) await loadSesi();
+  // Refresh dropdown sesi sesuai tanggal yang dipilih
+  updateAbsSesiDropdown();
   const tgl = $('absTanggal').value, sesiId = $('absSesi').value;
-  if (!tgl || !sesiId) { _absRenderReview(); return; }
+  if (!tgl || !sesiId) {
+    // Reset state agar daftar siswa lama tidak tertinggal
+    absenState = {};
+    anggotaCache = [];
+    _absRenderReview();
+    return;
+  }
   const { data: ang } = await db.from('anggota').select('id, nama, tampil_absensi').eq('status', 'aktif').order('nama');
   // Hanya anggota aktif yang boleh muncul di absensi (tampil_absensi != false)
   anggotaCache = (ang || []).filter(a => a.tampil_absensi !== false);
@@ -8054,9 +8094,10 @@ loadDashboard = async function() {
                    -(qk||[]).reduce((s,x)=>s+Number(x.jumlah||0),0);
   animateCount(document.getElementById('sumQurban'), danaQurban);
 
-  // Dana acara
-  const { data: ab } = await db.from('acara_bayar').select('jumlah');
-  const danaAcara = (ab||[]).reduce((s,x)=>s+Number(x.jumlah||0),0);
+  // Dana acara = total masuk - total keluar
+  const { data: ab } = await db.from('acara_bayar').select('jumlah, tipe');
+  const danaAcara = (ab||[]).filter(x=>x.tipe==='masuk').reduce((s,x)=>s+Number(x.jumlah||0),0)
+                  - (ab||[]).filter(x=>x.tipe==='keluar').reduce((s,x)=>s+Number(x.jumlah||0),0);
   animateCount(document.getElementById('sumAcara'), danaAcara);
 
   const total = saldoKas + danaQurban + danaAcara;
