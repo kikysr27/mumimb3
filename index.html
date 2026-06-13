@@ -1047,10 +1047,20 @@
         <div class="muted" style="font-size:11px;margin-top:8px;">
           Gabungan kas + dana qurban + dana acara. Detail tiap bagian ada di menunya masing-masing.
         </div>
+        <div class="muted" style="font-size:10px;margin-top:4px;font-style:italic;">
+          ⬇ Chart di bawah: Kas &amp; Acara · Dana Qurban tampil di kartu tersendiri
+        </div>
         <div style="max-width:220px;margin:14px auto 0;">
           <canvas id="donutSaldo" height="220"></canvas>
         </div>
+        <p class="muted" style="font-size:10px;text-align:center;margin-top:6px;">Distribusi Kas &amp; Dana Acara</p>
       </div>
+
+      <!-- Card Dana Qurban berdiri sendiri -->
+      <div class="card" id="qurbanStandaloneCard" style="display:none;border:2px solid #ede9fe;background:linear-gradient(135deg,#faf7ff,#f3eefe);">
+        <div id="qurbanStandaloneContent"></div>
+      </div>
+
       <!-- Progress Kas Bulanan -->
       <div class="card" id="progressKasCard" style="display:none;">
         <h2>🎯 Progress Kas Bulan Ini</h2>
@@ -8130,22 +8140,22 @@ loadDashboard = async function() {
   } catch(e) { console.log('stat error',e); }
 };
 
-// Donut chart saldo
+// Donut chart saldo — hanya Kas & Acara (Qurban tampil terpisah)
 let _donutChart = null;
 function renderDonutSaldo(kas, qurban, acara) {
   const canvas = document.getElementById('donutSaldo');
   if (!canvas || typeof Chart === 'undefined') return;
-  const total = kas + qurban + acara;
+  const total = kas + acara; // Qurban tidak dimasukkan ke donut
   if (total <= 0) { canvas.style.display='none'; return; }
   canvas.style.display = '';
   if (_donutChart) { _donutChart.destroy(); _donutChart = null; }
   _donutChart = new Chart(canvas, {
     type: 'doughnut',
     data: {
-      labels: ['Kas', 'Qurban', 'Acara'],
+      labels: ['Kas', 'Dana Acara'],
       datasets: [{
-        data: [kas, qurban, acara],
-        backgroundColor: ['#16a34a','#7c3aed','#d97706'],
+        data: [kas, acara],
+        backgroundColor: ['#16a34a','#d97706'],
         borderWidth: 3,
         borderColor: getComputedStyle(document.documentElement).getPropertyValue('--bg') || '#fff',
       }],
@@ -8164,6 +8174,32 @@ function renderDonutSaldo(kas, qurban, acara) {
       animation: { animateRotate:true, duration:1000 },
     }
   });
+
+  // Render card Qurban terpisah
+  renderQurbanCard(qurban);
+}
+
+// Card Dana Qurban berdiri sendiri
+function renderQurbanCard(danaQurban) {
+  const card = document.getElementById('qurbanStandaloneCard');
+  const content = document.getElementById('qurbanStandaloneContent');
+  if (!card || !content) return;
+  card.style.display = '';
+  const pct = danaQurban > 0 ? 100 : 0;
+  content.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">💜 Dana Qurban</div>
+        <div style="font-size:26px;font-weight:900;color:#7c3aed;">${IDR(danaQurban)}</div>
+      </div>
+      <div style="width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,#ede9fe,#f3eefe);display:flex;flex-direction:column;align-items:center;justify-content:center;border:3px solid #7c3aed;">
+        <span style="font-size:22px;">🐄</span>
+      </div>
+    </div>
+    <div style="background:#f3eefe;border-radius:10px;padding:10px 14px;margin-top:4px;">
+      <div style="font-size:11px;color:#7c3aed;font-weight:600;margin-bottom:2px;">Keterangan</div>
+      <div style="font-size:12px;color:#4c1d95;">Total dana terkumpul untuk program Qurban. Detail transaksi ada di menu <b>Qurban</b>.</div>
+    </div>`;
 }
 
 // Progress kas bulanan
