@@ -4874,27 +4874,47 @@ async function saveAcaraDetail() {
 async function renderAcaraBayar(acaraId) {
   const a = acaraCache.find(x => x.id === acaraId);
   if (!a) return;
-  const { data: bayarD } = await db.from('acara_bayar').select('*')
+  const { data: allD } = await db.from('acara_bayar').select('*')
     .eq('acara_id', acaraId).order('tanggal', { ascending: false });
-  const { data: angD } = await db.from('anggota').select('id, nama, tampil_absensi').order('nama');
-  const bayar = bayarD || [], ang = (angD || []);
-  // Dropdown hanya anggota yang dicentang tampil_absensi
-  const angTampil = ang.filter(a => a.tampil_absensi !== false);
+  // Ambil semua anggota + filter aktif untuk dropdown & daftar belum bayar
+  const { data: angD } = await db.from('anggota').select('id, nama, tampil_absensi, status').order('nama');
+  const allRows = allD || [], ang = (angD || []);
+
+  // Pisah masuk (pembayaran peserta) vs keluar (pengeluaran acara)
+  // Baris lama tanpa kolom tipe dianggap masuk
+  const bayar  = allRows.filter(b => !b.tipe || b.tipe === 'masuk');
+  const keluar = allRows.filter(b => b.tipe === 'keluar');
+
+  // Dropdown hanya anggota aktif yang dicentang tampil_absensi
+  const angTampil = ang.filter(a => a.status === 'aktif' && a.tampil_absensi !== false);
   acaraAngList = angTampil.map(a => ({ id: a.id, nama: a.nama }));
-  const total  = bayar.reduce((s,b) => s + Number(b.jumlah||0), 0);
+
+  const totalMasuk  = bayar.reduce((s,b)  => s + Number(b.jumlah||0), 0);
+  const totalKeluar = keluar.reduce((s,b) => s + Number(b.jumlah||0), 0);
+  const saldoAkhir  = totalMasuk - totalKeluar;
+
   const target = Number(a.anggaran || 0);
   const biaya  = Number(a.biaya_per_siswa || 0);
-  const pct = target > 0 ? Math.min(100, Math.round(total/target*100)) : 0;
+  const pct = target > 0 ? Math.min(100, Math.round(totalMasuk/target*100)) : 0;
 
+  // Kumpulkan siapa saja yang sudah bayar (berdasar anggota_id)
   const agg = {};
   bayar.forEach(b => {
     const k = b.anggota_id || ('x' + (b.nama||''));
-    if (!agg[k]) agg[k] = { nama: b.nama || '(?)', total: 0, count: 0 };
+    if (!agg[k]) agg[k] = { nama: b.nama || '(?)', total: 0, count: 0, anggota_id: b.anggota_id };
     agg[k].total += Number(b.jumlah||0); agg[k].count++;
   });
   const siswaRows = Object.values(agg).sort((x,y) => y.total - x.total);
 
+  // Cari anggota aktif yang BELUM bayar sama sekali
+  const sudahBayarIds = new Set(bayar.map(b => b.anggota_id).filter(Boolean));
+  const belumBayar = angTampil.filter(x => !sudahBayarIds.has(x.id));
+  const jmlSudah = angTampil.filter(x => sudahBayarIds.has(x.id)).length;
+  const jmlBelum = belumBayar.length;
+
   $('amBayarArea').innerHTML = `
+
+    <!-- ══ SECTION: PEMBAYARAN PESERTA ══ -->
     <label>Pilih Siswa</label>
     <input type="text" id="amBayarSearch" autocomplete="off" placeholder="🔍 Cari nama siswa..." oninput="filterSiswa('amBayarSearch','amBayarAng',acaraAngList)">
     <select id="amBayarAng">${angTampil.length ? angTampil.map(x => `<option value="${x.id}">${escapeHtml(x.nama)}</option>`).join('') : '<option value="">— Belum ada anggota —</option>'}</select>
@@ -4904,27 +4924,125 @@ async function renderAcaraBayar(acaraId) {
     </div>
     <label>Foto Bukti (opsional)</label>
     <input type="file" id="amBayarFile" accept="image/*">
-    <button onclick="addAcaraBayar()">Tambah Pembayaran</button>
+    <button onclick="addAcaraBayar()">➕ Tambah Pembayaran Peserta</button>
     <div id="amBayarMsg"></div>
     <div class="muted" style="margin-top:10px;font-size:12px;">
-      Terkumpul <b style="color:#16a34a;">${IDR(total)}</b>${target>0 ? ' / target '+IDR(target)+' ('+pct+'%)' : ''}
+      Terkumpul <b style="color:#16a34a;">${IDR(totalMasuk)}</b>${target>0 ? ' / target '+IDR(target)+' ('+pct+'%)' : ''}
     </div>
     ${target>0 ? `<div class="prog"><div style="width:${pct}%"></div></div>` : ''}
-    ${siswaRows.length ? `<div style="overflow-x:auto;margin-top:10px;"><table class="rekap">
-      <thead><tr><th style="text-align:left">Nama</th><th>Bayar</th><th>Total</th>${biaya>0?'<th>Status</th>':''}</tr></thead>
-      <tbody>${siswaRows.map(r => {
-        const lunas = biaya > 0 && r.total >= biaya;
-        return `<tr><td class="nm">${escapeHtml(r.nama)}</td><td>${r.count}x</td>
-          <td style="font-weight:700;color:#1a6644">${IDR(r.total)}</td>
-          ${biaya>0 ? `<td>${lunas ? '<span class="badge" style="background:#d1fae5;color:#059669">LUNAS</span>' : '<span class="badge" style="background:#fee2e2;color:#dc2626">BELUM</span>'}</td>` : ''}</tr>`;
-      }).join('')}</tbody>
-    </table></div>` : '<p class="muted" style="margin-top:10px;">Belum ada pembayaran peserta.</p>'}
-    ${bayar.length ? '<h2 style="font-size:13px;margin:12px 0 8px;">Riwayat Pembayaran</h2>' + bayar.map(b => `<div class="list-item">
-      <div class="left"><div class="name">${escapeHtml(b.nama||'(?)')}${buktiLink(b.bukti_url)}</div><div class="meta">${b.tanggal}</div></div>
-      <div style="text-align:right;"><span class="badge badge-masuk">${IDR(b.jumlah)}</span>
-        <button class="small danger" style="margin-top:4px" onclick="deleteAcaraBayar(${b.id})">Hapus</button></div>
-    </div>`).join('') : ''}`;
+
+    ${siswaRows.length ? `
+    <div style="margin-top:14px;">
+      <div onclick="(function(el){var b=el.parentElement.querySelector('.bayar-collapse');var open=b.style.display!=='none';b.style.display=open?'none':'block';el.querySelector('.toggle-arrow').textContent=open?'▶':'▼';})(this)"
+        style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:9px 12px;background:#e8f5ef;border-radius:10px;user-select:none;">
+        <span style="font-size:13px;font-weight:700;color:#059669;">✅ Sudah Bayar (${jmlSudah} siswa)</span>
+        <span class="toggle-arrow" style="font-size:11px;color:#059669;font-weight:700;">▶</span>
+      </div>
+      <div class="bayar-collapse" style="display:none;margin-top:6px;overflow-x:auto;">
+        <table class="rekap">
+          <thead><tr><th style="text-align:left">Nama</th><th>Bayar</th><th>Total</th>${biaya>0?'<th>Status</th>':''}</tr></thead>
+          <tbody>${siswaRows.map(r => {
+            const lunas = biaya > 0 && r.total >= biaya;
+            return `<tr><td class="nm">${escapeHtml(r.nama)}</td><td>${r.count}x</td>
+              <td style="font-weight:700;color:#1a6644">${IDR(r.total)}</td>
+              ${biaya>0 ? `<td>${lunas ? '<span class="badge" style="background:#d1fae5;color:#059669">LUNAS</span>' : '<span class="badge" style="background:#fef9c3;color:#b45309">KURANG</span>'}</td>` : ''}</tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>
+    </div>` : '<p class="muted" style="margin-top:10px;">Belum ada pembayaran peserta.</p>'}
+
+    ${jmlBelum > 0 ? `
+    <div style="margin-top:10px;">
+      <div onclick="(function(el){var b=el.parentElement.querySelector('.belum-collapse');var open=b.style.display!=='none';b.style.display=open?'none':'block';el.querySelector('.toggle-arrow').textContent=open?'▶':'▼';})(this)"
+        style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:9px 12px;background:#fee2e2;border-radius:10px;user-select:none;">
+        <span style="font-size:13px;font-weight:700;color:#dc2626;">❌ Belum Bayar (${jmlBelum} siswa)</span>
+        <span class="toggle-arrow" style="font-size:11px;color:#dc2626;font-weight:700;">▶</span>
+      </div>
+      <div class="belum-collapse" style="display:none;margin-top:6px;overflow-x:auto;">
+        <table class="rekap">
+          <thead><tr><th style="text-align:left">Nama</th><th>Status</th></tr></thead>
+          <tbody>${belumBayar.map(x => `
+            <tr>
+              <td class="nm">${escapeHtml(x.nama)}</td>
+              <td><span class="badge" style="background:#fee2e2;color:#dc2626">BELUM BAYAR</span></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>` : angTampil.length > 0 ? `<p style="margin-top:10px;font-size:12px;color:#059669;font-weight:700;">🎉 Semua anggota aktif sudah bayar!</p>` : ''}
+
+    ${bayar.length ? `
+    <div style="margin-top:10px;">
+      <div onclick="(function(el){var b=el.parentElement.querySelector('.riwayat-collapse');var open=b.style.display!=='none';b.style.display=open?'none':'block';el.querySelector('.toggle-arrow').textContent=open?'▶':'▼';})(this)"
+        style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:9px 12px;background:#f0f7f3;border-radius:10px;user-select:none;">
+        <span style="font-size:13px;font-weight:700;color:#1a6644;">📋 Riwayat Pembayaran (${bayar.length} transaksi)</span>
+        <span class="toggle-arrow" style="font-size:11px;color:#1a6644;font-weight:700;">▶</span>
+      </div>
+      <div class="riwayat-collapse" style="display:none;margin-top:6px;">
+        ${bayar.map(b => `<div class="list-item">
+          <div class="left"><div class="name">${escapeHtml(b.nama||'(?)')}${buktiLink(b.bukti_url)}</div><div class="meta">${b.tanggal}</div></div>
+          <div style="text-align:right;"><span class="badge badge-masuk">${IDR(b.jumlah)}</span>
+            <button class="small danger" style="margin-top:4px" onclick="deleteAcaraBayar(${b.id})">Hapus</button></div>
+        </div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    <!-- ══ DIVIDER ══ -->
+    <div style="border-top:2px dashed #e0ece5;margin:20px 0 16px;"></div>
+
+    <!-- ══ SECTION: PENGELUARAN ACARA ══ -->
+    <h2 style="font-size:14px;margin-bottom:10px;color:#dc2626;">🧾 Pengeluaran Acara</h2>
+    <p class="muted" style="font-size:11px;margin-bottom:12px;">Catat semua pengeluaran untuk acara ini (konsumsi, dekorasi, transport, dll).</p>
+    <div class="row">
+      <div><label>Tanggal</label><input type="date" id="amKeluarTgl"></div>
+      <div><label>Jumlah (Rp)</label><input type="number" id="amKeluarJml" min="1" placeholder="100000"></div>
+    </div>
+    <label>Keterangan</label>
+    <input type="text" id="amKeluarKet" placeholder="cth: Konsumsi snack, Sewa sound system...">
+    <label>Foto Bukti (opsional)</label>
+    <input type="file" id="amKeluarFile" accept="image/*">
+    <button onclick="addAcaraKeluar()" style="background:linear-gradient(135deg,#dc2626,#ef4444);">➕ Tambah Pengeluaran</button>
+    <div id="amKeluarMsg"></div>
+
+    ${keluar.length ? `
+    <div style="margin-top:14px;">
+      <div onclick="(function(el){var b=el.parentElement.querySelector('.keluar-collapse');var open=b.style.display!=='none';b.style.display=open?'none':'block';el.querySelector('.toggle-arrow').textContent=open?'▶':'▼';})(this)"
+        style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:9px 12px;background:#fff0f0;border-radius:10px;user-select:none;">
+        <span style="font-size:13px;font-weight:700;color:#dc2626;">🧾 Riwayat Pengeluaran (${keluar.length} item) — Total: ${IDR(totalKeluar)}</span>
+        <span class="toggle-arrow" style="font-size:11px;color:#dc2626;font-weight:700;">▶</span>
+      </div>
+      <div class="keluar-collapse" style="display:none;margin-top:6px;">
+        ${keluar.map(b => `<div class="list-item">
+          <div class="left"><div class="name">${escapeHtml(b.nama||'Pengeluaran')}${buktiLink(b.bukti_url)}</div><div class="meta">${b.tanggal}</div></div>
+          <div style="text-align:right;"><span class="badge badge-keluar">${IDR(b.jumlah)}</span>
+            <button class="small danger" style="margin-top:4px" onclick="deleteAcaraKeluar(${b.id})">Hapus</button></div>
+        </div>`).join('')}
+      </div>
+    </div>` : '<p class="muted" style="margin-top:10px;">Belum ada pengeluaran dicatat.</p>'}
+
+    <!-- ══ SALDO AKHIR ACARA ══ -->
+    <div style="margin-top:20px;border-radius:14px;overflow:hidden;border:2px solid ${saldoAkhir>=0?'#16a34a':'#dc2626'};">
+      <div style="background:${saldoAkhir>=0?'linear-gradient(135deg,#1a6644,#2d9e6b)':'linear-gradient(135deg,#dc2626,#ef4444)'};padding:14px 16px;">
+        <div style="color:rgba(255,255,255,0.85);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">💰 Saldo Akhir Acara</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+          <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:8px 4px;">
+            <div style="color:rgba(255,255,255,0.75);font-size:10px;margin-bottom:2px;">Total Masuk</div>
+            <div style="color:#fff;font-weight:800;font-size:13px;">${IDR(totalMasuk)}</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:8px 4px;">
+            <div style="color:rgba(255,255,255,0.75);font-size:10px;margin-bottom:2px;">Total Keluar</div>
+            <div style="color:#fff;font-weight:800;font-size:13px;">${IDR(totalKeluar)}</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.25);border-radius:8px;padding:8px 4px;border:1px solid rgba(255,255,255,0.4);">
+            <div style="color:rgba(255,255,255,0.85);font-size:10px;margin-bottom:2px;">Sisa Dana</div>
+            <div style="color:#fff;font-weight:900;font-size:14px;">${IDR(saldoAkhir)}</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
   if ($('amBayarTgl')) $('amBayarTgl').valueAsDate = new Date();
+  if ($('amKeluarTgl')) $('amKeluarTgl').valueAsDate = new Date();
 }
 
 async function addAcaraBayar() {
@@ -4942,7 +5060,7 @@ async function addAcaraBayar() {
     const { error } = await db.from('acara_bayar').insert({
       acara_id: currentAcaraId, anggota_id: parseInt(angId), nama,
       tanggal: $('amBayarTgl').value || new Date().toISOString().slice(0,10),
-      jumlah: jml, bukti_url: bukti, dicatat_oleh: currentProf.id,
+      jumlah: jml, bukti_url: bukti, dicatat_oleh: currentProf.id, tipe: 'masuk',
     });
     if (error) {
       if (bukti) { const path = bukti.split('/bukti/')[1]; if (path) db.storage.from('bukti').remove([path]); }
@@ -4952,6 +5070,47 @@ async function addAcaraBayar() {
   } finally { _unlockBtn('addAcaraBayar'); }
 }
 
+async function addAcaraKeluar() {
+  if (!_lockBtn('addAcaraKeluar')) return;
+  try {
+    if (!currentAcaraId) return;
+    const jml = parseUang($('amKeluarJml').value);
+    const ket = $('amKeluarKet').value.trim();
+    if (!jml || jml <= 0) { setMsg('amKeluarMsg', 'Jumlah harus > 0', true); return; }
+    if (!ket) { setMsg('amKeluarMsg', 'Keterangan wajib diisi', true); return; }
+    let bukti = null;
+    try { bukti = await uploadBukti('amKeluarFile'); }
+    catch (e) { setMsg('amKeluarMsg', 'Gagal upload foto: ' + e.message, true); return; }
+    const { error } = await db.from('acara_bayar').insert({
+      acara_id: currentAcaraId, nama: ket,
+      tanggal: $('amKeluarTgl').value || new Date().toISOString().slice(0,10),
+      jumlah: jml, bukti_url: bukti, dicatat_oleh: currentProf.id, tipe: 'keluar',
+    });
+    if (error) {
+      if (bukti) { const path = bukti.split('/bukti/')[1]; if (path) db.storage.from('bukti').remove([path]); }
+      setMsg('amKeluarMsg', 'Gagal: ' + error.message, true); return;
+    }
+    showToast('✅ Pengeluaran dicatat!', 'success');
+    await renderAcaraBayar(currentAcaraId);
+  } finally { _unlockBtn('addAcaraKeluar'); }
+}
+
+async function deleteAcaraKeluar(id) {
+  const { data: row } = await db.from('acara_bayar').select('*').eq('id', id).single();
+  const label = row ? (row.nama || 'Pengeluaran') + ' - ' + IDR(row.jumlah || 0) : 'Pengeluaran #' + id;
+  await renderAcaraBayar(currentAcaraId);
+  showUndoToast(label,
+    async function() { await renderAcaraBayar(currentAcaraId); },
+    async function() {
+      const { data: deleted, error } = await db.from('acara_bayar').delete().eq('id', id).select();
+      if (error) { showToast('Gagal hapus: ' + error.message, 'error'); renderAcaraBayar(currentAcaraId); return; }
+      if (!deleted || deleted.length === 0) { showToast('Hapus GAGAL — Supabase RLS memblokir DELETE.', 'error'); renderAcaraBayar(currentAcaraId); return; }
+      if (row && row.bukti_url) { var p = row.bukti_url.split('/bukti/')[1]; if (p) db.storage.from('bukti').remove([p]); }
+      renderAcaraBayar(currentAcaraId);
+    },
+    '🧾'
+  );
+}
 async function deleteAcaraBayar(id) {
   const { data: row } = await db.from('acara_bayar').select('*').eq('id', id).single();
   const label = row ? (row.nama || '?') + ' - ' + IDR(row.jumlah || 0) : 'Pembayaran #' + id;
