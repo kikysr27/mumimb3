@@ -1452,7 +1452,7 @@
             <button class="prj-filter-btn ac-filter" data-status="cancelled" onclick="acSetFilter('cancelled')" style="width:auto;padding:5px 13px;font-size:12px;background:#fee2e2;color:#dc2626;">❌ Cancelled</button>
           </div>
         </div>
-        <div id="acStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;"></div>
+        <div id="acStats" style="margin-bottom:12px;"></div>
         <div id="acaraList"><p class="muted" style="text-align:center;padding:24px 0;">⏳ Memuat acara...</p></div>
       </div>
 
@@ -1482,6 +1482,11 @@
           <label>🏢 Divisi yang Terlibat <span class="muted" style="font-size:11px;font-weight:400;">(opsional, pilih satu/banyak)</span></label>
           <div id="acDivisiCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:10px;background:#f0f7f3;border-radius:10px;min-height:44px;">
             <span class="muted" style="font-size:12px;">Memuat divisi dari Struktur Org...</span>
+          </div>
+
+          <label>👤 Anggota Bertanggung Jawab <span class="muted" style="font-size:11px;font-weight:400;">(opsional, pilih satu/banyak)</span></label>
+          <div id="acAnggotaCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:10px;background:#f0f7f3;border-radius:10px;max-height:180px;overflow-y:auto;">
+            <span class="muted" style="font-size:12px;">Memuat anggota...</span>
           </div>
 
           <label>Deskripsi <span class="muted" style="font-size:11px;font-weight:400;">(format Notion: judul, sub, bold, link)</span></label>
@@ -2074,9 +2079,23 @@
       </div>
       <label>Biaya per Peserta (Rp) — opsional, untuk hitung status Lunas</label>
       <input type="number" id="amBiaya" min="0" placeholder="0">
+
+      <div style="border-top:2px dashed #e0ece5;margin:14px 0 10px;"></div>
+      <h2 style="font-size:14px;margin-bottom:6px;">🎯 Target Iuran Acara per Kategori</h2>
+      <p class="muted" style="margin-bottom:10px;font-size:11px;">
+        Atur target iuran tiap kategori anggota untuk acara ini (opsional).<br>
+        Kosongkan = kategori tersebut pakai "Biaya per Peserta" di atas (atau tidak ada target).
+      </p>
+      <div id="amTpkArea"><p class="muted" style="font-size:12px;">Memuat kategori...</p></div>
+
       <label>🏢 Divisi yang Terlibat <span class="muted" style="font-size:11px;font-weight:400;">(pilih satu/banyak)</span></label>
       <div id="amDivisiCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:10px;background:#f0f7f3;border-radius:10px;min-height:44px;">
         <span class="muted" style="font-size:12px;">Memuat divisi dari Struktur Org...</span>
+      </div>
+
+      <label>👤 Anggota Bertanggung Jawab <span class="muted" style="font-size:11px;font-weight:400;">(pilih satu/banyak)</span></label>
+      <div id="amAnggotaCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:10px;background:#f0f7f3;border-radius:10px;max-height:180px;overflow-y:auto;">
+        <span class="muted" style="font-size:12px;">Memuat anggota...</span>
       </div>
 
       <label>Deskripsi Lengkap / Detail Acara <span class="muted" style="font-size:11px;font-weight:400;">(format Notion: judul, sub, bold, link)</span></label>
@@ -2529,8 +2548,10 @@ function _getAllDivisiList(){
   return list.filter(function(d){ return d && d.trim(); });
 }
 
-// Render checkbox divisi ke dalam container
-window.renderDivisiCheckboxes = function(containerId, selectedArr){
+// Render checkbox divisi ke dalam container.
+// anggotaContainerId (opsional): jika diisi, toggle divisi akan ikut
+// mencentang/lepas anggota dari divisi tersebut di container tsb.
+window.renderDivisiCheckboxes = function(containerId, selectedArr, anggotaContainerId){
   selectedArr = selectedArr || [];
   var el = document.getElementById(containerId);
   if(!el) return;
@@ -2544,9 +2565,12 @@ window.renderDivisiCheckboxes = function(containerId, selectedArr){
     var cls = chk ? 'prj-divisi-checkbox-wrap checked' : 'prj-divisi-checkbox-wrap';
     var safeVal = String(d).replace(/"/g,'&quot;');
     var safeLabel = String(d).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var syncCall = anggotaContainerId
+      ? ';syncAnggotaWithDivisi(this.value,this.checked,\''+anggotaContainerId+'\')'
+      : '';
     return '<label class="'+cls+'">'
       + '<input type="checkbox" value="'+safeVal+'" '+(chk?'checked':'')
-      + ' onchange="this.parentElement.classList.toggle(\'checked\',this.checked)" style="display:none;">'
+      + ' onchange="this.parentElement.classList.toggle(\'checked\',this.checked)'+syncCall+'" style="display:none;">'
       + ' 🏢 ' + safeLabel + '</label>';
   }).join('');
 };
@@ -2558,6 +2582,92 @@ window.collectSelectedDivisi = function(containerId){
   if(!el) return out;
   el.querySelectorAll('input[type=checkbox]:checked').forEach(function(cb){ out.push(cb.value); });
   return out;
+};
+
+// ─────────────────────────────────────────────────────────────
+//  ANGGOTA BERTANGGUNG JAWAB — reusable untuk Acara (& lainnya)
+// ─────────────────────────────────────────────────────────────
+window._getAllMembersList = function(){
+  var list = [];
+  var divisiMap = {};
+  try {
+    var soRef = (window.so && window.so.members && window.so.members.length) ? window.so : null;
+    if(!soRef){
+      var raw = localStorage.getItem('so_data');
+      if(raw){ soRef = JSON.parse(raw); }
+    }
+    if(soRef){
+      if(soRef.divisis && Array.isArray(soRef.divisis)){
+        soRef.divisis.forEach(function(d){ divisiMap[d.id]=d.nama; });
+      }
+      if(soRef.members && Array.isArray(soRef.members)){
+        list = soRef.members.map(function(m){
+          var divisiNama = m.divisi ? (divisiMap[m.divisi]||m.divisi) : '';
+          return {id:m.id||'', name:m.name||m.nama||'', role:m.role||m.jabatan||'', divisi:divisiNama};
+        });
+      }
+    }
+  } catch(e){}
+  if(!list.length && window.anggotaFull && Array.isArray(window.anggotaFull)){
+    list = window.anggotaFull
+      .filter(function(a){ return a.tampil_absensi !== false; })
+      .map(function(a){ return {id:a.id, name:a.nama||a.name||'', role:'Anggota', divisi:''}; });
+  }
+  return list.filter(function(m){ return m.name; });
+};
+
+// Render checkbox anggota ke dalam container. Toggle divisi (containerId divisi)
+// akan otomatis mencentang/lepas anggota dari divisi terkait.
+window.renderAnggotaCheckboxes = function(containerId, selectedArr){
+  selectedArr = selectedArr || [];
+  var el = document.getElementById(containerId);
+  if(!el) return;
+  var members = window._getAllMembersList();
+  if(!members.length){
+    el.innerHTML = '<span class="muted" style="font-size:12px;">Belum ada anggota di Struktur Org / menu Anggota.</span>';
+    return;
+  }
+  el.innerHTML = members.map(function(m){
+    var chk = selectedArr.indexOf(m.name) >= 0;
+    var cls = chk ? 'prj-divisi-checkbox-wrap checked' : 'prj-divisi-checkbox-wrap';
+    var safeVal = String(m.name).replace(/"/g,'&quot;');
+    var info = (m.role ? ' (' + escapeHtml(m.role) + ')' : '') + (m.divisi ? ' · ' + escapeHtml(m.divisi) : '');
+    return '<label class="'+cls+'" data-divisi="'+escapeHtml(m.divisi||'')+'">'
+      + '<input type="checkbox" value="'+safeVal+'" '+(chk?'checked':'')
+      + ' onchange="this.parentElement.classList.toggle(\'checked\',this.checked)" style="display:none;">'
+      + ' 👤 ' + escapeHtml(m.name) + info + '</label>';
+  }).join('');
+};
+
+// Ambil array nama anggota yang dicentang
+window.collectSelectedAnggota = function(containerId){
+  var out = [];
+  var el = document.getElementById(containerId);
+  if(!el) return out;
+  el.querySelectorAll('input[type=checkbox]:checked').forEach(function(cb){ out.push(cb.value); });
+  return out;
+};
+
+// Saat divisi di-toggle, ikut centang/lepas anggota dari divisi tersebut
+window.syncAnggotaWithDivisi = function(divisiNama, checked, anggotaContainerId){
+  var el = document.getElementById(anggotaContainerId);
+  if(!el) return;
+  el.querySelectorAll('label[data-divisi]').forEach(function(label){
+    if(label.getAttribute('data-divisi') === divisiNama){
+      var cb = label.querySelector('input[type=checkbox]');
+      if(cb){ cb.checked = checked; label.classList.toggle('checked', checked); }
+    }
+  });
+};
+
+// Render chips anggota untuk tampilan list/card
+window.anggotaTagsHTML = function(anggota, small){
+  if(!anggota || !anggota.length) return '';
+  var sz = small ? 'font-size:10px;padding:2px 7px;' : '';
+  return anggota.map(function(a){
+    var safe = String(a).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return '<span class="prj-anggota-chip" style="'+sz+'">👤 '+safe+'</span>';
+  }).join(' ');
 };
 
 // Render chips divisi untuk tampilan list/card
@@ -2588,15 +2698,21 @@ window.showDivisisSqlNotice = function(tableName){
 // retry tanpa divisis dan kasih notice ke user. Mengembalikan {data,error}.
 window.saveSupabaseWithDivisiFallback = async function(qb, payload, tableName){
   var attempt = await qb(payload);
-  if(attempt && attempt.error){
+  var rest = Object.assign({}, payload);
+  var changed = false;
+  while(attempt && attempt.error){
     var msg = String(attempt.error.message||'');
-    if(msg.indexOf('divisis') !== -1 && msg.toLowerCase().indexOf('column') !== -1){
-      // Retry tanpa divisis
-      var rest = Object.assign({}, payload);
+    if(msg.indexOf('divisis') !== -1 && msg.toLowerCase().indexOf('column') !== -1 && rest.hasOwnProperty('divisis')){
       delete rest.divisis;
       showDivisisSqlNotice(tableName);
-      return await qb(rest);
+      changed = true;
+    } else if(msg.indexOf('anggota_acara') !== -1 && msg.toLowerCase().indexOf('column') !== -1 && rest.hasOwnProperty('anggota_acara')){
+      delete rest.anggota_acara;
+      changed = true;
+    } else {
+      break;
     }
+    attempt = await qb(rest);
   }
   return attempt;
 };
@@ -4821,8 +4937,10 @@ function acSetFilter(status) {
 function acOpenForm() {
   $('acListView').style.display = 'none';
   $('acFormView').style.display = 'block';
-  // Render checkbox divisi (kosong utk acara baru)
-  if(window.renderDivisiCheckboxes) renderDivisiCheckboxes('acDivisiCheckboxes', []);
+  // Render checkbox anggota dulu (agar divisi toggle bisa menemukan elemen)
+  if(window.renderAnggotaCheckboxes) renderAnggotaCheckboxes('acAnggotaCheckboxes', []);
+  // Render checkbox divisi (kosong utk acara baru), sinkron ke anggota
+  if(window.renderDivisiCheckboxes) renderDivisiCheckboxes('acDivisiCheckboxes', [], 'acAnggotaCheckboxes');
 }
 
 function acBackToList() {
@@ -4842,12 +4960,16 @@ function acRenderList() {
   const stats = {all:acaraCache.length, not_started:0, on_progress:0, done:0, cancelled:0};
   acaraCache.forEach(a => { if(stats[a.status]!==undefined) stats[a.status]++; });
   const statsEl = $('acStats');
-  if (statsEl) statsEl.innerHTML = [
-    {label:'Total Acara',  v:stats.all,         bg:'#f0f7f3', c:'#1a6644'},
-    {label:'Not Started',  v:stats.not_started, bg:'#f3f4f6', c:'#4b5563'},
-    {label:'On Progress',  v:stats.on_progress, bg:'#fef3c7', c:'#d97706'},
-    {label:'Done',         v:stats.done,        bg:'#d1fae5', c:'#059669'},
-  ].map(s => `<div class="prj-stat-card" style="background:${s.bg}"><div class="sv" style="color:${s.c};">${s.v}</div><div class="sl">${s.label}</div></div>`).join('');
+  if (statsEl) statsEl.innerHTML =
+    `<div style="text-align:center;font-size:13px;font-weight:800;color:#1a6644;margin-bottom:8px;">📅 Total Acara: ${stats.all}</div>` +
+    `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">` +
+    [
+      {label:'Not Started',  v:stats.not_started, bg:'#f3f4f6', c:'#4b5563'},
+      {label:'On Progress',  v:stats.on_progress, bg:'#fef3c7', c:'#d97706'},
+      {label:'Done',         v:stats.done,        bg:'#d1fae5', c:'#059669'},
+      {label:'Cancelled',    v:stats.cancelled,   bg:'#fee2e2', c:'#dc2626'},
+    ].map(s => `<div class="prj-stat-card" style="background:${s.bg}"><div class="sv" style="color:${s.c};">${s.v}</div><div class="sl">${s.label}</div></div>`).join('') +
+    `</div>`;
 
   const el = $('acaraList');
 
@@ -4865,11 +4987,13 @@ function acRenderList() {
           const pic = a.penanggung_jawab ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:#f0f7f3;color:#1a6644;border:1px solid #d4e8dc;">👤 ${escapeHtml(a.penanggung_jawab)}</span>` : '';
           const angg = a.anggaran > 0 ? `<span style="font-size:10px;color:#7a9585;">💰 ${IDR(a.anggaran)}</span>` : '';
           const divTagsKb = (window.divisiTagsHTML && a.divisis && a.divisis.length) ? divisiTagsHTML(a.divisis, true) : '';
+          const anggotaTagsKb = (window.anggotaTagsHTML && a.anggota_acara && a.anggota_acara.length) ? anggotaTagsHTML(a.anggota_acara, true) : '';
           return `<div class="prj-kcard prj-${a.status}" onclick="openAcaraDetail(${a.id})">
             <div class="prj-kcard-name">${escapeHtml(a.nama)}</div>
             ${a.tanggal ? `<div style="font-size:10px;color:#7a9585;margin-bottom:5px;">📅 ${a.tanggal}</div>` : ''}
             ${pic ? `<div class="prj-kcard-tags">${pic}</div>` : ''}
             ${divTagsKb ? `<div class="prj-kcard-tags" style="margin:4px 0;">${divTagsKb}</div>` : ''}
+            ${anggotaTagsKb ? `<div class="prj-kcard-tags" style="margin:4px 0;">${anggotaTagsKb}</div>` : ''}
             ${short ? `<div style="font-size:11px;color:#5f7d6e;margin:4px 0;line-height:1.4;">${descToHTML(short)}</div>` : ''}
             <div class="prj-kcard-foot">${angg}<span style="font-size:10px;color:#2d9e6b;font-weight:700;">Lihat Detail →</span></div>
             <div style="display:flex;gap:4px;margin-top:7px;border-top:1px solid #e0ece5;padding-top:7px;" onclick="event.stopPropagation()">
@@ -4916,6 +5040,7 @@ function acRenderList() {
       </div>
       ${short ? `<div style="font-size:12px;color:#5f7d6e;margin-bottom:8px;line-height:1.5;">${descToHTML(short)}</div>` : ''}
       ${(window.divisiTagsHTML && a.divisis && a.divisis.length) ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${divisiTagsHTML(a.divisis)}</div>` : ''}
+      ${(window.anggotaTagsHTML && a.anggota_acara && a.anggota_acara.length) ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${anggotaTagsHTML(a.anggota_acara)}</div>` : ''}
       ${pic ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${pic}</div>` : ''}
       ${a.anggaran > 0 ? `<div style="font-size:11px;color:#7a9585;margin-bottom:6px;">💰 Anggaran: ${IDR(a.anggaran)}</div>` : ''}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
@@ -4942,6 +5067,8 @@ async function addAcara() {
     if (!nama) { setMsg('acMsg', 'Nama acara wajib diisi', true); return; }
     const selectedDivisi = window.collectSelectedDivisi
       ? collectSelectedDivisi('acDivisiCheckboxes') : [];
+    const selectedAnggota = window.collectSelectedAnggota
+      ? collectSelectedAnggota('acAnggotaCheckboxes') : [];
     const payload = {
       nama,
       deskripsi: $('acDeskripsi').value.trim() || null,
@@ -4950,9 +5077,10 @@ async function addAcara() {
       penanggung_jawab: $('acPIC').value.trim() || null,
       anggaran: parseUang($('acAnggaran').value),
       divisis: selectedDivisi,
+      anggota_acara: selectedAnggota,
       dicatat_oleh: currentProf.id,
     };
-    // Fallback otomatis kalau kolom divisis belum ada
+    // Fallback otomatis kalau kolom divisis/anggota_acara belum ada
     const { error } = await saveSupabaseWithDivisiFallback(
       (p) => db.from('acara').insert(p),
       payload,
@@ -4962,7 +5090,8 @@ async function addAcara() {
     setMsg('acMsg', '✅ Acara tersimpan');
     $('acNama').value = ''; $('acDeskripsi').value = ''; $('acPIC').value = ''; $('acAnggaran').value = '';
     if(window.refreshDescPreview) refreshDescPreview('acDeskripsi');
-    if(window.renderDivisiCheckboxes) renderDivisiCheckboxes('acDivisiCheckboxes', []);
+    if(window.renderAnggotaCheckboxes) renderAnggotaCheckboxes('acAnggotaCheckboxes', []);
+    if(window.renderDivisiCheckboxes) renderDivisiCheckboxes('acDivisiCheckboxes', [], 'acAnggotaCheckboxes');
     await loadAcara();
     setTimeout(acBackToList, 600);
   } finally { _unlockBtn('addAcara', btn); }
@@ -4974,6 +5103,22 @@ async function loadAcara() {
   acaraCache.sort((a,b) => (ST_PRIO[a.status]-ST_PRIO[b.status]) ||
     String(a.tanggal||'').localeCompare(String(b.tanggal||'')));
   acRenderList();
+}
+
+function renderAcaraTpkInputs(tpk) {
+  tpk = tpk || {};
+  const html = kategoriCache.length
+    ? kategoriCache.map(k => `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="flex:1;font-size:13px;font-weight:600;">${escapeHtml(k.nama)}</div>
+          <div style="width:140px;">
+            <input type="number" id="amtpk_${k.id}" min="0" placeholder="0"
+              value="${tpk[String(k.id)] !== undefined ? tpk[String(k.id)] : ''}"
+              style="margin:0;padding:6px 8px;">
+          </div>
+        </div>`).join('')
+    : '<p class="muted" style="font-size:12px;">Belum ada kategori. Tambah di menu Anggota → Kategori.</p>';
+  $('amTpkArea').innerHTML = html;
 }
 
 async function openAcaraDetail(id) {
@@ -4988,8 +5133,11 @@ async function openAcaraDetail(id) {
   $('amBiaya').value     = a.biaya_per_siswa || 0;
   $('amDeskripsi').value = a.deskripsi || '';
   if(window.refreshDescPreview) refreshDescPreview('amDeskripsi');
-  // Render divisi checkboxes dengan data tersimpan
-  if(window.renderDivisiCheckboxes) renderDivisiCheckboxes('amDivisiCheckboxes', a.divisis || []);
+  renderAcaraTpkInputs(a.target_per_kategori || {});
+  // Render checkbox anggota dulu (agar divisi toggle bisa menemukan elemen)
+  if(window.renderAnggotaCheckboxes) renderAnggotaCheckboxes('amAnggotaCheckboxes', a.anggota_acara || []);
+  // Render divisi checkboxes dengan data tersimpan, sinkron ke anggota
+  if(window.renderDivisiCheckboxes) renderDivisiCheckboxes('amDivisiCheckboxes', a.divisis || [], 'amAnggotaCheckboxes');
   $('amMsg').textContent = '';
   $('acaraModal').style.display = 'flex';
   window.scrollTo(0, 0);
@@ -5007,6 +5155,16 @@ async function saveAcaraDetail() {
   if (!nama) { setMsg('amMsg', 'Nama acara wajib diisi', true); return; }
   const selectedDivisi = window.collectSelectedDivisi
     ? collectSelectedDivisi('amDivisiCheckboxes') : [];
+  const selectedAnggota = window.collectSelectedAnggota
+    ? collectSelectedAnggota('amAnggotaCheckboxes') : [];
+  const tpk = {};
+  kategoriCache.forEach(k => {
+    const el = $('amtpk_' + k.id);
+    if (el && el.value.trim() !== '') {
+      const v = parseUang(el.value);
+      if (v >= 0) tpk[String(k.id)] = v;
+    }
+  });
   const payload = {
     nama,
     tanggal:          $('amTanggal').value || null,
@@ -5014,8 +5172,10 @@ async function saveAcaraDetail() {
     penanggung_jawab: $('amPIC').value.trim() || null,
     anggaran:         parseUang($('amAnggaran').value),
     biaya_per_siswa:  parseUang($('amBiaya').value),
+    target_per_kategori: tpk,
     deskripsi:        $('amDeskripsi').value.trim() || null,
     divisis:          selectedDivisi,
+    anggota_acara:    selectedAnggota,
     updated_at:       new Date().toISOString(),
   };
   const { error } = await saveSupabaseWithDivisiFallback(
@@ -5023,7 +5183,24 @@ async function saveAcaraDetail() {
     payload,
     'acara'
   );
-  if (error) { setMsg('amMsg', 'Gagal: ' + error.message, true); return; }
+  if (error) {
+    if (error.message.includes('column') && error.message.includes('target_per_kategori')) {
+      setMsg('amMsg',
+        '❌ Kolom target_per_kategori belum ada di database.\n' +
+        'Jalankan SQL ini di Supabase → SQL Editor:\n' +
+        'ALTER TABLE acara ADD COLUMN IF NOT EXISTS target_per_kategori jsonb DEFAULT \'{}\';',
+        true);
+    } else if (error.message.includes('column') && error.message.includes('anggota_acara')) {
+      setMsg('amMsg',
+        '❌ Kolom anggota_acara belum ada di database.\n' +
+        'Jalankan SQL ini di Supabase → SQL Editor:\n' +
+        'ALTER TABLE acara ADD COLUMN IF NOT EXISTS anggota_acara jsonb DEFAULT \'[]\';',
+        true);
+    } else {
+      setMsg('amMsg', 'Gagal: ' + error.message, true);
+    }
+    return;
+  }
   setMsg('amMsg', '✅ Perubahan tersimpan');
   await loadAcara();
   await renderAcaraBayar(currentAcaraId);
@@ -5035,8 +5212,12 @@ async function renderAcaraBayar(acaraId) {
   const { data: allD } = await db.from('acara_bayar').select('*')
     .eq('acara_id', acaraId).order('tanggal', { ascending: false });
   // Ambil semua anggota + filter aktif untuk dropdown & daftar belum bayar
-  const { data: angD } = await db.from('anggota').select('id, nama, tampil_absensi, status').order('nama');
+  const { data: angD } = await db.from('anggota').select('id, nama, tampil_absensi, status, kategori_id, kategori_anggota(id, nama)').order('nama');
   const allRows = allD || [], ang = (angD || []);
+
+  // Target per kategori untuk acara ini
+  let tpk = {};
+  try { tpk = a.target_per_kategori ? JSON.parse(JSON.stringify(a.target_per_kategori)) : {}; } catch(_) {}
 
   // Pisah masuk (pembayaran peserta) vs keluar (pengeluaran acara)
   // Baris lama tanpa kolom tipe dianggap masuk
@@ -5054,6 +5235,22 @@ async function renderAcaraBayar(acaraId) {
   const target = Number(a.anggaran || 0);
   const biaya  = Number(a.biaya_per_siswa || 0);
   const pct = target > 0 ? Math.min(100, Math.round(totalMasuk/target*100)) : 0;
+  const adaTpk = Object.keys(tpk).length > 0;
+
+  // Map anggota_id -> kategori info, untuk cari target individu
+  const angMap = {};
+  ang.forEach(x => { angMap[String(x.id)] = x; });
+  function getTargetForAng(angotaId) {
+    const m = angotaId ? angMap[String(angotaId)] : null;
+    const katId = m && m.kategori_id ? String(m.kategori_id) : null;
+    if (katId && tpk[katId] !== undefined) return Number(tpk[katId]);
+    if (biaya > 0) return biaya;
+    return null;
+  }
+  function katNamaFor(angotaId) {
+    const m = angotaId ? angMap[String(angotaId)] : null;
+    return m && m.kategori_anggota ? m.kategori_anggota.nama : '—';
+  }
 
   // Kumpulkan siapa saja yang sudah bayar (berdasar anggota_id)
   const agg = {};
@@ -5062,7 +5259,12 @@ async function renderAcaraBayar(acaraId) {
     if (!agg[k]) agg[k] = { nama: b.nama || '(?)', total: 0, count: 0, anggota_id: b.anggota_id };
     agg[k].total += Number(b.jumlah||0); agg[k].count++;
   });
-  const siswaRows = Object.values(agg).sort((x,y) => y.total - x.total);
+  const siswaRows = Object.values(agg).map(r => {
+    const tgt = getTargetForAng(r.anggota_id);
+    const sisa = tgt !== null ? Math.max(0, tgt - r.total) : null;
+    const lunas = tgt !== null && r.total >= tgt;
+    return { ...r, katNama: katNamaFor(r.anggota_id), tgt, sisa, lunas };
+  }).sort((x,y) => y.total - x.total);
 
   // Cari anggota aktif yang BELUM bayar sama sekali
   const sudahBayarIds = new Set(bayar.map(b => b.anggota_id).filter(Boolean));
@@ -5098,12 +5300,12 @@ async function renderAcaraBayar(acaraId) {
       </div>
       <div class="bayar-collapse" style="display:none;margin-top:6px;overflow-x:auto;">
         <table class="rekap">
-          <thead><tr><th style="text-align:left">Nama</th><th>Bayar</th><th>Total</th>${biaya>0?'<th>Status</th>':''}</tr></thead>
+          <thead><tr><th style="text-align:left">Nama</th>${adaTpk?'<th>Kategori</th>':''}<th>Bayar</th><th>Total</th>${adaTpk?'<th>Target</th><th>Sisa</th>':''}${(biaya>0||adaTpk)?'<th>Status</th>':''}</tr></thead>
           <tbody>${siswaRows.map(r => {
-            const lunas = biaya > 0 && r.total >= biaya;
-            return `<tr><td class="nm">${escapeHtml(r.nama)}</td><td>${r.count}x</td>
+            return `<tr><td class="nm">${escapeHtml(r.nama)}</td>${adaTpk?`<td style="font-size:11px;color:#6b7280;">${escapeHtml(r.katNama)}</td>`:''}<td>${r.count}x</td>
               <td style="font-weight:700;color:#1a6644">${IDR(r.total)}</td>
-              ${biaya>0 ? `<td>${lunas ? '<span class="badge" style="background:#d1fae5;color:#059669">LUNAS</span>' : '<span class="badge" style="background:#fef9c3;color:#b45309">KURANG</span>'}</td>` : ''}</tr>`;
+              ${adaTpk?`<td style="text-align:right;">${r.tgt!==null?IDR(r.tgt):'<span style="color:#9ca3af">—</span>'}</td><td style="text-align:right;color:${r.sisa===0?'#16a34a':'#dc2626'};">${r.sisa!==null?IDR(r.sisa):'<span style="color:#9ca3af">—</span>'}</td>`:''}
+              ${(biaya>0||adaTpk) ? `<td>${r.tgt!==null ? (r.lunas ? '<span class="badge" style="background:#d1fae5;color:#059669">LUNAS</span>' : '<span class="badge" style="background:#fef9c3;color:#b45309">KURANG</span>') : '<span class="badge" style="background:#e5e7eb;color:#374151">—</span>'}</td>` : ''}</tr>`;
           }).join('')}</tbody>
         </table>
       </div>
@@ -5118,12 +5320,16 @@ async function renderAcaraBayar(acaraId) {
       </div>
       <div class="belum-collapse" style="display:none;margin-top:6px;overflow-x:auto;">
         <table class="rekap">
-          <thead><tr><th style="text-align:left">Nama</th><th>Status</th></tr></thead>
-          <tbody>${belumBayar.map(x => `
+          <thead><tr><th style="text-align:left">Nama</th>${adaTpk?'<th>Kategori</th><th>Target</th>':''}<th>Status</th></tr></thead>
+          <tbody>${belumBayar.map(x => {
+            const tgt = getTargetForAng(x.id);
+            return `
             <tr>
               <td class="nm">${escapeHtml(x.nama)}</td>
+              ${adaTpk?`<td style="font-size:11px;color:#6b7280;">${escapeHtml(katNamaFor(x.id))}</td><td style="text-align:right;">${tgt!==null?IDR(tgt):'<span style="color:#9ca3af">—</span>'}</td>`:''}
               <td><span class="badge" style="background:#fee2e2;color:#dc2626">BELUM BAYAR</span></td>
-            </tr>`).join('')}
+            </tr>`;
+          }).join('')}
           </tbody>
         </table>
       </div>
@@ -10151,6 +10357,21 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     so_renderAll(); soSave();
     showToast('🗑️ Divisi dihapus');
   };
+  window.so_toggleJobdesk = function(id){
+    var box=$id('so_jobdeskEdit_'+id);
+    if(!box) return;
+    box.style.display = (box.style.display==='none'||!box.style.display) ? 'block' : 'none';
+  };
+  window.so_saveJobdesk = function(id){
+    var ta=$id('so_jobdeskTa_'+id);
+    if(!ta) return;
+    var d=so.divisis.find(function(x){return x.id===id;});
+    if(!d) return;
+    d.jobdesk = ta.value.trim();
+    renderDivisiList();
+    soSave();
+    showToast('✅ Jobdesk divisi tersimpan');
+  };
 
   // ── member CRUD ──────────────────────────────────────────
   window.so_addMember = function(){
@@ -10298,13 +10519,25 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       if(kepala.length) info+='<span style="color:#00695c;font-size:10px;">👑 '+kepala.map(function(k){return esc(k.nama);}).join(', ')+'</span>';
       if(anggota.length) info+=(kepala.length?'<br>':'')+'<span style="font-size:10px;color:#7a9585;">👤 '+anggota.length+' anggota</span>';
       if(!info) info='<span style="font-size:10px;color:#bbb;">Belum ada anggota</span>';
+      var jobdesk = d.jobdesk || '';
+      var jobdeskPreview = jobdesk
+        ? '<div style="margin-top:6px;font-size:11px;color:#5f7d6e;white-space:pre-wrap;line-height:1.5;">📋 '+esc(jobdesk)+'</div>'
+        : '<div style="margin-top:6px;font-size:11px;color:#bbb;">Belum ada jobdesk.</div>';
       return '<div class="so-member-row so-draggable-divisi" draggable="true" data-divisi-id="'+esc(d.id)+'" style="flex-direction:column;align-items:flex-start;gap:4px;cursor:grab;user-select:none;">'
         +'<div style="display:flex;width:100%;align-items:center;gap:8px;">'
         +'<span style="color:#b2d8c4;font-size:14px;padding:0 2px;flex-shrink:0;">⠿</span>'
         +'<b style="font-size:13px;flex:1;">📂 '+esc(d.nama)+'</b>'
-        +'<button class="small danger" style="padding:4px 8px;font-size:11px;" onclick="so_deleteDivisi(\''+esc(d.id)+'\')">🗑️</button>'
+        +'<button class="small" style="padding:4px 8px;font-size:11px;width:auto;" onclick="event.stopPropagation();so_toggleJobdesk(\''+esc(d.id)+'\')">✏️ Jobdesk</button>'
+        +'<button class="small danger" style="padding:4px 8px;font-size:11px;width:auto;" onclick="event.stopPropagation();so_deleteDivisi(\''+esc(d.id)+'\')">🗑️</button>'
         +'</div>'
-        +'<div style="padding-left:22px;">'+info+'</div>'
+        +'<div style="padding-left:22px;width:100%;">'+info+jobdeskPreview+'</div>'
+        +'<div id="so_jobdeskEdit_'+esc(d.id)+'" style="display:none;width:100%;padding-left:22px;margin-top:4px;">'
+        +'<textarea id="so_jobdeskTa_'+esc(d.id)+'" rows="4" placeholder="Tulis tugas/jobdesk divisi ini, satu per baris..." style="font-size:12px;" onclick="event.stopPropagation()">'+esc(jobdesk)+'</textarea>'
+        +'<div style="display:flex;gap:6px;">'
+        +'<button class="small" style="width:auto;padding:5px 12px;font-size:11px;" onclick="event.stopPropagation();so_saveJobdesk(\''+esc(d.id)+'\')">💾 Simpan</button>'
+        +'<button class="small secondary" style="width:auto;padding:5px 12px;font-size:11px;" onclick="event.stopPropagation();so_toggleJobdesk(\''+esc(d.id)+'\')">Batal</button>'
+        +'</div>'
+        +'</div>'
         +'</div>';
     }).join('');
 
@@ -12086,9 +12319,24 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
 
   window.prjDeleteTask = function(prjId,idx){
     var tasks=loadTasks(prjId);
+    var deletedTask = tasks[idx];
+    if(!deletedTask) return;
     tasks.splice(idx,1);
     saveTasks(prjId,tasks);
     prjOpenDetail(prjId);
+
+    var label = deletedTask.text || 'Task';
+    showUndoToast(label,
+      function(){ // onUndo
+        var arr=loadTasks(prjId);
+        arr.splice(Math.min(idx, arr.length), 0, deletedTask);
+        saveTasks(prjId, arr);
+        prjOpenDetail(prjId);
+        showToast('↩️ Task "'+label+'" dikembalikan','success',2500);
+      },
+      function(){ /* permanen, tidak ada aksi tambahan */ },
+      '📝'
+    );
   };
 
   /* ─── TASK DETAIL MODAL ──────────────────────────────── */
@@ -12207,12 +12455,35 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
 
   /* ─── DELETE ─────────────────────────────────────────── */
   window.prjDelete = function(id){
-    if(!confirm('Hapus project ini beserta semua task-nya?')) return;
-    var projects=loadProjects().filter(function(p){return p.id!==id;});
+    var projects=loadProjects();
+    var idx = projects.findIndex(function(p){return p.id===id;});
+    if(idx===-1) return;
+    var deletedProject = projects[idx];
+    var deletedTasks = loadTasks(id);
+    var nama = deletedProject.nama || 'Project';
+
+    projects = projects.filter(function(p){return p.id!==id;});
     saveProjects(projects);
     localStorage.removeItem(TASK_KEY+'_'+id);
-    showToast('🗑️ Project dihapus','warn');
     prjBackToList();
+
+    showUndoToast(nama,
+      function(){ // onUndo
+        var arr=loadProjects();
+        if(!arr.some(function(p){return p.id===id;})){
+          // Kembalikan di posisi semula
+          arr.splice(Math.min(idx, arr.length), 0, deletedProject);
+        }
+        saveProjects(arr);
+        if(deletedTasks && deletedTasks.length){ saveTasks(id, deletedTasks); }
+        prjRenderList();
+        showToast('↩️ Project "'+nama+'" dikembalikan','success',2500);
+      },
+      function(){ // onConfirm (permanen)
+        // Sudah terhapus dari Supabase via saveProjects() di atas, tidak ada aksi tambahan
+      },
+      '🗂️'
+    );
   };
 
   /* ─── OPEN FORM ──────────────────────────────────────── */
