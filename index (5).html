@@ -435,6 +435,64 @@
   [data-theme="dark"] [style*="background:#edefed"] { background: #1a2a22 !important; }
   [data-theme="dark"] [style*="background:#e8f5ef"] { background: #14331f !important; }
 
+  /* ═══════════════ TEMA PUTIH (LIGHT) ═══════════════ */
+  /* Sistem = hijau default. Putih = latar netral terang, kartu tetap putih. */
+  [data-theme="light"] body {
+    background: #e9eeec;
+    background-image: none;
+    color: #0f2e1f;
+  }
+  [data-theme="light"] .topbar,
+  [data-theme="light"] .card,
+  [data-theme="light"] .menu-card,
+  [data-theme="light"] .modal-box { background: #ffffff; }
+
+  /* ═══════════════ TEMA GELAP — PENGUAT (override warna inline) ═══════════════ */
+  /* Latar terang inline → gelap (semua sudut aplikasi ikut gelap) */
+  [data-theme="dark"] [style*="background:#fff"],
+  [data-theme="dark"] [style*="background: #fff"],
+  [data-theme="dark"] [style*="background:#ffffff"],
+  [data-theme="dark"] [style*="background:white"],
+  [data-theme="dark"] [style*="background:#f9fafb"],
+  [data-theme="dark"] [style*="background:#f7faf8"],
+  [data-theme="dark"] [style*="background:#f5faf7"],
+  [data-theme="dark"] [style*="background:#e0ece5"],
+  [data-theme="dark"] [style*="background:#f3f4f6"] { background: #1d3328 !important; }
+  [data-theme="dark"] [style*="background:#f0fdf4"],
+  [data-theme="dark"] [style*="background:#f0faf4"],
+  [data-theme="dark"] [style*="background:#dcfce7"],
+  [data-theme="dark"] [style*="background:#d1fae5"] { background: #14331f !important; }
+  [data-theme="dark"] [style*="background:#fffbeb"],
+  [data-theme="dark"] [style*="background:#fef9c3"],
+  [data-theme="dark"] [style*="background:#fef3c7"],
+  [data-theme="dark"] [style*="background:#fef3e8"],
+  [data-theme="dark"] [style*="background:#fffbf0"],
+  [data-theme="dark"] [style*="background:#fff8e1"],
+  [data-theme="dark"] [style*="background:#fff8f0"] { background: #39310f !important; }
+  [data-theme="dark"] [style*="background:#fff0f0"],
+  [data-theme="dark"] [style*="background:#fee2e2"],
+  [data-theme="dark"] [style*="background:#fef2f2"],
+  [data-theme="dark"] [style*="background:#fecaca"] { background: #3a1a1a !important; }
+  [data-theme="dark"] [style*="background:#f3eefe"],
+  [data-theme="dark"] [style*="background:#faf7ff"],
+  [data-theme="dark"] [style*="background:#ede9fe"],
+  [data-theme="dark"] [style*="background:#dbeafe"] { background: #241a3a !important; }
+
+  /* Teks gelap inline → terang biar tetap kebaca di dark mode */
+  [data-theme="dark"] [style*="color:#0f2e1f"],
+  [data-theme="dark"] [style*="color:#0f2e1e"],
+  [data-theme="dark"] [style*="color:#0a2e1a"],
+  [data-theme="dark"] [style*="color:#0a3d22"],
+  [data-theme="dark"] [style*="color:#374151"],
+  [data-theme="dark"] [style*="color:#111"],
+  [data-theme="dark"] [style*="color:#333"],
+  [data-theme="dark"] [style*="color:#4b5563"] { color: #dfece6 !important; }
+
+  /* Border terang inline → gelap */
+  [data-theme="dark"] [style*="border:2px solid #d4e8dc"],
+  [data-theme="dark"] [style*="border:1px solid #e0ece5"],
+  [data-theme="dark"] [style*="border:1px solid #d4e8dc"] { border-color: #2b4538 !important; }
+
   /* ── Dark mode: Dropdown search absensi ─────────────────── */
   [data-theme="dark"] #absDropdown {
     background: #1a2e22 !important;
@@ -939,9 +997,9 @@
   // Pasang tema sedini mungkin supaya tidak ada kedip warna saat halaman dibuka
   (function () {
     var pref = localStorage.getItem('mb3-theme') || 'system';
-    var actual = pref === 'system'
-      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-      : pref;
+    // 'system' = tema default HIJAU khas aplikasi (BUKAN ikut OS).
+    // 'light' = putih · 'dark' = gelap.
+    var actual = pref === 'system' ? 'green' : pref;
     document.documentElement.setAttribute('data-theme', actual);
   })();
 </script>
@@ -1026,6 +1084,7 @@
         <div class="menu-card" id="menuRiwayat" onclick="openSection('riwayat')" style="display:none;"><div class="ic">🕵️</div><div class="lb">Riwayat</div><div class="sub">Log perubahan</div></div>
         <div class="menu-card" id="menuFoto" onclick="openSection('foto')" style="display:none;"><div class="ic">🗑️</div><div class="lb">Kelola Foto</div><div class="sub">Backup & hapus foto</div></div>
         <div class="menu-card" id="menuAkses" onclick="openSection('akses')" style="display:none;"><div class="ic">🔑</div><div class="lb">Kelola Akses</div><div class="sub">Atur hak user</div></div>
+        <div class="menu-card" id="menuRecycle" onclick="openSection('recycle')" style="display:none;"><div class="ic">🗑️</div><div class="lb">Tempat Sampah</div><div class="sub">Pulihkan data terhapus</div></div>
         <div class="menu-card" onclick="doLogout()"><div class="ic">🚪</div><div class="lb">Logout</div><div class="sub">Keluar dari sistem</div></div>
       </div>
     </div>
@@ -1036,24 +1095,24 @@
       <div class="card">
         <h2>Ringkasan Keuangan</h2>
         <div class="saldo-grid">
-          <div class="saldo-card masuk"><div class="label">Saldo Kas (+ Sisa Acara)</div><div class="value" id="sumKas">Rp 0</div></div>
+          <div class="saldo-card masuk"><div class="label">Saldo Kas</div><div class="value" id="sumKas">Rp 0</div></div>
           <div class="saldo-card" style="background:#f3eefe;color:#7c3aed;"><div class="label">Dana Qurban</div><div class="value" id="sumQurban">Rp 0</div></div>
-          <div class="saldo-card" style="background:#fef3e8;color:#d97706;"><div class="label">Sisa Acara ↳ Kas</div><div class="value" id="sumAcara">Rp 0</div></div>
+          <div class="saldo-card" style="background:#fef3e8;color:#d97706;"><div class="label">Sisa Dana Acara</div><div class="value" id="sumAcara">Rp 0</div></div>
         </div>
         <div class="saldo-card saldo" style="margin-top:8px;">
           <div class="label">TOTAL SELURUH SALDO</div>
           <div class="value" id="sumTotal" style="font-size:21px;">Rp 0</div>
         </div>
         <div class="muted" style="font-size:11px;margin-top:8px;">
-          Saldo Kas sudah termasuk sisa semua acara. Total = Kas + Qurban.
+          Total = Saldo Kas + Sisa Dana Acara. Dana Qurban dihitung terpisah (bidang sendiri).
         </div>
         <div class="muted" style="font-size:10px;margin-top:4px;font-style:italic;">
-          ⬇ Sisa Acara sudah masuk ke Saldo Kas · Dana Qurban terpisah
+          💵 Kiri: khusus kas · 🎉 Kanan: khusus sisa uang acara · 🐐 Qurban: keuangan terpisah, tidak digabung
         </div>
         <div style="max-width:220px;margin:14px auto 0;">
           <canvas id="donutSaldo" height="220"></canvas>
         </div>
-        <p class="muted" style="font-size:10px;text-align:center;margin-top:6px;">Distribusi Saldo Kas &amp; Dana Qurban</p>
+        <p class="muted" style="font-size:10px;text-align:center;margin-top:6px;">Distribusi Saldo Kas, Sisa Dana Acara &amp; Dana Qurban</p>
       </div>
 
       <!-- Card Dana Qurban berdiri sendiri -->
@@ -2052,6 +2111,24 @@
 
     </div>
 
+    <!-- ═══ TEMPAT SAMPAH (RECYCLE BIN) ═══ -->
+    <div id="sec-recycle" class="section" style="display:none;">
+      <button class="back" onclick="goBack()">← Menu</button>
+      <div class="card">
+        <h2>🗑️ Tempat Sampah</h2>
+        <p class="muted" style="margin-bottom:10px;">
+          Semua data yang dihapus dari menu mana pun (oleh user mana pun) ditampung sementara di sini.
+          Hanya admin yang bisa <b>memulihkan</b> atau <b>menghapus permanen</b>.
+        </p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+          <button class="secondary small" onclick="loadRecycle()">🔄 Refresh</button>
+          <button class="danger small" onclick="kosongkanRecycle()">🗑️ Kosongkan Semua</button>
+        </div>
+        <div id="recycleMsg"></div>
+        <div id="recycleList"><p class="muted">Memuat...</p></div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ═══ MODAL DETAIL ACARA ═══ -->
@@ -2121,6 +2198,23 @@
       </div>
       <div id="amMsg"></div>
 
+      <!-- ══ SECTION: TASK & PENANGGUNG JAWAB ══ -->
+      <div style="border-top:2px solid #e0ece5;margin:18px 0 12px;"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:4px;">
+        <h2 style="margin:0;">📋 Task &amp; Penanggung Jawab</h2>
+        <span id="amTaskProgress" style="font-size:12px;font-weight:800;color:#1a6644;"></span>
+      </div>
+      <p class="muted" style="font-size:11px;margin-bottom:10px;">
+        Pecah acara jadi task kecil (cth: <b>Beli sayuran</b>) lalu tentukan <b>divisi penanggung jawab</b>.
+        Klik nama task untuk edit detail lengkap.
+      </p>
+      <div id="amTaskList"><p class="muted" style="font-size:12px;">—</p></div>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <input type="text" id="amNewTask" placeholder="Tambah task baru... (Enter untuk simpan)" style="margin:0;flex:1;"
+          onkeydown="if(event.key==='Enter')acTaskAdd()">
+        <button onclick="acTaskAdd()" style="width:auto;padding:9px 16px;background:linear-gradient(135deg,#1a6644,#2d9e6b);">+ Add</button>
+      </div>
+
       <div style="border-top:2px solid #e0ece5;margin:18px 0 12px;"></div>
       <h2 style="margin-bottom:6px;">💰 Pembayaran Peserta (Opsional)</h2>
       <p class="muted" style="font-size:11px;margin-bottom:10px;">
@@ -2128,6 +2222,91 @@
         supaya status <b>Lunas</b> otomatis terhitung.
       </p>
       <div id="amBayarArea"><p class="muted">—</p></div>
+    </div>
+  </div>
+
+  <!-- ═══ MODAL EDIT TASK ACARA (rich, mirip menu Project + Divisi PJ) ═══ -->
+  <div id="acaraTaskModal" class="task-modal-overlay" style="display:none;z-index:1200;" onclick="if(event.target===this)acTaskCloseEdit()">
+    <div class="task-modal-box">
+      <div class="task-modal-drag"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h2 id="acTaskModalTitle" style="margin:0;font-size:16px;">✏️ Detail Task</h2>
+        <button onclick="acTaskCloseEdit()" style="width:auto;padding:6px 12px;font-size:12px;background:#f0f7f3;color:#1a6644;">✕ Tutup</button>
+      </div>
+
+      <!-- Nama task -->
+      <label>Nama Task</label>
+      <input type="text" id="acTaskName" placeholder="Cth: Beli sayuran" style="font-weight:600;">
+
+      <!-- PENANGGUNG JAWAB — bagian wajib biar tegas -->
+      <label>🏢 Divisi Penanggung Jawab <span style="color:#dc2626;">*</span></label>
+      <select id="acTaskDivisi"><option value="">— Pilih divisi —</option></select>
+      <div id="acTaskDivisiHint" style="display:none;font-size:11px;color:#d97706;margin:-4px 0 10px;">
+        Belum ada divisi. Buat dulu di menu <b>Struktur Organisasi</b>.
+      </div>
+
+      <label>👤 Petugas / Penanggung Jawab Orang (Opsional)</label>
+      <input type="text" id="acTaskAssignee" placeholder="Nama orang yang bertanggung jawab...">
+
+      <!-- Status + Deadline -->
+      <div class="row">
+        <div>
+          <label>Status</label>
+          <select id="acTaskStatus">
+            <option value="todo">⬜ Belum Mulai</option>
+            <option value="progress">🔄 Dikerjakan</option>
+            <option value="done">✅ Selesai</option>
+            <option value="cancelled">❌ Batal</option>
+          </select>
+        </div>
+        <div>
+          <label>📅 Deadline (Opsional)</label>
+          <input type="date" id="acTaskDeadline">
+        </div>
+      </div>
+
+      <label>💰 Anggaran Task (Rp) — Opsional</label>
+      <input type="number" id="acTaskBudget" min="0" placeholder="0">
+
+      <!-- Deskripsi Notion-style + preview (sama seperti menu Project) -->
+      <label>📝 Deskripsi / Catatan Progress <span class="muted" style="font-size:11px;font-weight:400;">(format Notion: judul, sub, bold, link)</span></label>
+      <div class="desc-toolbar">
+        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('acTaskDesc',1)" title="Judul Besar">H1</button>
+        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('acTaskDesc',2)" title="Sub Judul">H2</button>
+        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('acTaskDesc',3)" title="Sub-Sub Judul">H3</button>
+        <button type="button" class="desc-toolbar-btn" onclick="insertBold('acTaskDesc')" title="Tebal"><b>B</b></button>
+        <button type="button" class="desc-toolbar-btn" onclick="insertLinkToDesc('acTaskDesc')" title="Sisipkan Link">🔗 Link</button>
+        <span class="desc-toolbar-hint">Paste URL → auto tanya nama</span>
+      </div>
+      <textarea id="acTaskDesc" placeholder="# Apa yang dikerjakan&#10;## Kebutuhan&#10;## Catatan&#10;Tulis di sini..." style="min-height:110px;resize:vertical;"></textarea>
+      <div class="desc-preview-wrap">
+        <div class="desc-preview-header">
+          <span>👁 Preview Tampilan</span>
+          <span class="preview-status" id="acTaskDesc_preview_status">0 karakter</span>
+        </div>
+        <div class="desc-preview-box" id="acTaskDesc_preview"></div>
+      </div>
+
+      <!-- Link -->
+      <label>🔗 Link Referensi / Dokumen</label>
+      <input type="url" id="acTaskLink" placeholder="https://drive.google.com/... atau link lainnya">
+
+      <!-- Foto (maks 3) -->
+      <label>📸 Foto Progress / Dokumentasi</label>
+      <div id="acTaskPhotoArea" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;min-height:10px;"></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+        <label for="acTaskPhotoInput" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#f0f7f3;border:2px dashed #d4e8dc;border-radius:8px;cursor:pointer;font-size:12px;color:#1a6644;font-weight:600;margin:0;">
+          📷 Upload Foto
+          <input type="file" id="acTaskPhotoInput" accept="image/*" multiple style="display:none;" onchange="acTaskAddPhotos(this.files)">
+        </label>
+        <span class="muted" style="font-size:11px;">Max 3 foto, tiap foto maks 2MB</span>
+      </div>
+
+      <div id="acTaskModalMsg"></div>
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <button onclick="acTaskSaveEdit()" style="flex:1;background:linear-gradient(135deg,#1a6644,#2d9e6b);">💾 Simpan Detail Task</button>
+        <button class="danger" onclick="acTaskDeleteFromModal()" style="width:auto;padding:11px 16px;">🗑️ Hapus</button>
+      </div>
     </div>
   </div>
 
@@ -2499,7 +2678,7 @@ window.insertLinkToDesc = function(textareaId){
 (function setupGlobalDescPreview(){
   if(window._descPreviewSetup) return;
   window._descPreviewSetup = true;
-  var DESC_IDS = ['acDeskripsi','prjDeskripsi','amDeskripsi','mswHasil','taskModalDesc'];
+  var DESC_IDS = ['acDeskripsi','prjDeskripsi','amDeskripsi','mswHasil','taskModalDesc','acTaskDesc'];
   function updatePreview(ta){
     var preview = document.getElementById(ta.id + '_preview');
     if(!preview) return;
@@ -2530,6 +2709,44 @@ window.insertLinkToDesc = function(textareaId){
 // ─────────────────────────────────────────────────────────────
 // Pola sama dengan Project: checkbox divisi dari Struktur Org,
 // disimpan sebagai array nama divisi di field `divisis` (JSONB).
+// ─────────────────────────────────────────────────────────────
+//  REAL-TIME LOADER STRUKTUR ORG
+//  Memuat divisi & anggota dari Supabase tabel struktur_org TANPA
+//  harus membuka menu Struktur Organisasi dulu. Dipakai oleh menu
+//  Acara (divisi terlibat, anggota PJ, task) supaya selalu sinkron.
+// ─────────────────────────────────────────────────────────────
+window._soLoadPromise = null;
+window.ensureStrukturOrgLoaded = function(force){
+  var sudahAda = window.so &&
+    ((window.so.divisis && window.so.divisis.length) ||
+     (window.so.members && window.so.members.length));
+  if(!force && sudahAda) return Promise.resolve(window.so);
+  if(window._soLoadPromise) return window._soLoadPromise;
+  window._soLoadPromise = db.from('struktur_org').select('*').eq('key','main').maybeSingle()
+    .then(function(res){
+      var d = (res && res.data) ? res.data : null;
+      if(d && ((d.members && d.members.length) || (d.divisis && d.divisis.length))){
+        var target = window.so || {};
+        target.divisis = d.divisis || [];
+        target.members = (d.members||[]).map(function(m){
+          if(m.level==='anggota') m.level='anggota-divisi'; return m;
+        });
+        window.so = target;
+        // sinkron ke localStorage juga (fallback offline)
+        try{
+          var raw = localStorage.getItem('so_data');
+          var ls = raw ? JSON.parse(raw) : {};
+          ls.divisis = target.divisis; ls.members = target.members;
+          localStorage.setItem('so_data', JSON.stringify(ls));
+        }catch(e){}
+      }
+      window._soLoadPromise = null;
+      return window.so;
+    })
+    .catch(function(){ window._soLoadPromise = null; return window.so; });
+  return window._soLoadPromise;
+};
+
 function _getAllDivisiList(){
   var list = [];
   try {
@@ -2557,7 +2774,19 @@ window.renderDivisiCheckboxes = function(containerId, selectedArr, anggotaContai
   if(!el) return;
   var list = _getAllDivisiList();
   if(!list.length){
-    el.innerHTML = '<span class="muted" style="font-size:12px;">Belum ada divisi di Struktur Org. Buat divisi dulu di menu Struktur Organisasi.</span>';
+    // Belum termuat di memori → muat real-time dari Supabase, lalu render ulang.
+    el.innerHTML = '<span class="muted" style="font-size:12px;">⏳ Memuat divisi dari Struktur Org...</span>';
+    if(window.ensureStrukturOrgLoaded){
+      window.ensureStrukturOrgLoaded().then(function(){
+        if(_getAllDivisiList().length){
+          renderDivisiCheckboxes(containerId, selectedArr, anggotaContainerId);
+        } else {
+          el.innerHTML = '<span class="muted" style="font-size:12px;">Belum ada divisi di Struktur Org. Buat divisi dulu di menu Struktur Organisasi.</span>';
+        }
+      });
+    } else {
+      el.innerHTML = '<span class="muted" style="font-size:12px;">Belum ada divisi di Struktur Org. Buat divisi dulu di menu Struktur Organisasi.</span>';
+    }
     return;
   }
   el.innerHTML = list.map(function(d){
@@ -2624,7 +2853,19 @@ window.renderAnggotaCheckboxes = function(containerId, selectedArr){
   if(!el) return;
   var members = window._getAllMembersList();
   if(!members.length){
-    el.innerHTML = '<span class="muted" style="font-size:12px;">Belum ada anggota di Struktur Org / menu Anggota.</span>';
+    // Belum termuat → muat real-time dari Supabase, lalu render ulang.
+    el.innerHTML = '<span class="muted" style="font-size:12px;">⏳ Memuat anggota dari Struktur Org...</span>';
+    if(window.ensureStrukturOrgLoaded){
+      window.ensureStrukturOrgLoaded().then(function(){
+        if(window._getAllMembersList().length){
+          renderAnggotaCheckboxes(containerId, selectedArr);
+        } else {
+          el.innerHTML = '<span class="muted" style="font-size:12px;">Belum ada anggota di Struktur Org / menu Anggota.</span>';
+        }
+      });
+    } else {
+      el.innerHTML = '<span class="muted" style="font-size:12px;">Belum ada anggota di Struktur Org / menu Anggota.</span>';
+    }
     return;
   }
   el.innerHTML = members.map(function(m){
@@ -2724,7 +2965,7 @@ window.saveSupabaseWithDivisiFallback = async function(qb, payload, tableName){
 (function setupGlobalDescPaste(){
   if(window._descPasteSetup) return;
   window._descPasteSetup = true;
-  var DESC_IDS = ['acDeskripsi','prjDeskripsi','amDeskripsi','mswHasil','taskModalDesc'];
+  var DESC_IDS = ['acDeskripsi','prjDeskripsi','amDeskripsi','mswHasil','taskModalDesc','acTaskDesc'];
   document.addEventListener('paste', function(e){
     var ta = e.target;
     if(!ta || ta.tagName !== 'TEXTAREA') return;
@@ -2911,13 +3152,17 @@ async function doLogout() {
 async function onLoggedIn(user) {
   $('loginView').style.display = 'none';
   $('appView').style.display = 'block';
-  const { data: prof } = await db.from('profiles').select('nama_lengkap, jabatan, is_super').eq('id', user.id).single();
+  const { data: prof } = await db.from('profiles').select('*').eq('id', user.id).single();
   $('currentUser').textContent = `Login sebagai ${prof?.nama_lengkap || user.email} (${prof?.jabatan || 'Admin'})`;
   isSuper = prof?.is_super === true;
   isMasterAdmin = (user.email === 'admin@mumi.local');
   currentProf = { id: user.id, email: user.email, nama: prof?.nama_lengkap || user.email, jabatan: prof?.jabatan || 'Admin' };
-  $('menuRiwayat').style.display = isSuper ? 'block' : 'none';
-  $('menuFoto').style.display = isSuper ? 'block' : 'none';
+  // Hak akses per-menu (granular). Super admin / master admin = semua menu otomatis.
+  const _akses = (prof && prof.akses_menu) || {};
+  const _can = k => isSuper || isMasterAdmin || _akses[k] === true;
+  $('menuRiwayat').style.display = _can('riwayat') ? 'block' : 'none';
+  $('menuFoto').style.display = _can('foto') ? 'block' : 'none';
+  if ($('menuRecycle')) $('menuRecycle').style.display = _can('recycle') ? 'block' : 'none';
   $('menuAkses').style.display = 'block'; // semua admin bisa lihat Kelola Akses untuk panel SQL Fix
 
   const today = new Date();
@@ -2964,6 +3209,7 @@ function openSection(name) {
     },
     riwayat: loadRiwayat,
     akses: loadKelolAkses,
+    recycle: loadRecycle,
   };
   if (loaders[name]) loaders[name]();
 }
@@ -3481,6 +3727,20 @@ function filterSiswa(searchId, selectId, fullList, placeholder) {
   sel.innerHTML = html;
 }
 
+// Toggle input pembayar NON-ANGGOTA (siswa luar / ikut acara saja).
+// Saat dicentang: sembunyikan pencarian + dropdown anggota, tampilkan kotak
+// nama bebas. Dipakai di form bayar Acara (prefix 'am') & Qurban ('qd').
+// Pembayar non-anggota TIDAK menjadi anggota — hanya tercatat di pembayaran.
+function toggleBayarLuar(prefix) {
+  const on = $(prefix + 'BayarLuar') && $(prefix + 'BayarLuar').checked;
+  const search = $(prefix + 'BayarSearch');
+  const sel = $(prefix + 'BayarAng');
+  const nm = $(prefix + 'BayarNamaLuar');
+  if (search) search.style.display = on ? 'none' : '';
+  if (sel) sel.style.display = on ? 'none' : '';
+  if (nm) { nm.style.display = on ? '' : 'none'; if (on) nm.focus(); }
+}
+
 async function deleteAnggota(id) {
   const a = anggotaFull.find(x => x.id === id);
   const nama = a ? a.nama : 'Anggota #' + id;
@@ -3556,8 +3816,10 @@ function updateAbsSesiDropdown() {
 
   // Filter: tampilkan sesi yang tanggalnya cocok dengan tanggal yang dipilih
   // Sesi tanpa tanggal dianggap "tanggal belum diset" — tidak ditampilkan
+  // [FIX] Bandingkan hanya bagian tanggal (YYYY-MM-DD). Robust kalau kolom
+  // sesi.tanggal ternyata bertipe timestamp ("2026-06-15T00:00:00+00").
   const sesiHariIni = tgl
-    ? sesiCache.filter(s => s.tanggal === tgl)
+    ? sesiCache.filter(s => String(s.tanggal || '').slice(0, 10) === tgl)
     : [];
 
   sel.innerHTML = sesiHariIni.map(s => {
@@ -3582,6 +3844,13 @@ function updateAbsSesiDropdown() {
 async function loadSesi() {
   const { data } = await db.from('sesi').select('*').order('urutan').order('id');
   sesiCache = data || [];
+  renderSesiList();
+}
+
+// Render daftar sesi DARI sesiCache (tanpa re-fetch ke DB). Dipakai untuk
+// update real-time saat hapus/urungkan sesi, supaya item yang dihapus tidak
+// "muncul lagi" akibat fetch ulang sementara baris belum benar-benar dihapus.
+function renderSesiList() {
   // Update dropdown absSesi sesuai tanggal yang sedang dipilih
   updateAbsSesiDropdown();
 
@@ -3657,7 +3926,10 @@ async function addSesi() {
   setMsg('sesiMsg', '✅ Sesi ditambahkan');
   $('sesiNama').value = ''; $('sesiMulai').value = ''; $('sesiSelesai').value = '';
   $('sesiTanggal').valueAsDate = new Date();
-  loadSesi();
+  await loadSesi();
+  // [FIX REAL-TIME] Setelah sesi disimpan, langsung segarkan roster absensi
+  // supaya begitu user pilih tanggal+sesi, daftar siswa siap tanpa refresh manual.
+  try { await loadAbsensi(); } catch (e) {}
 }
 
 async function simpanTanggalSesi(sesiId) {
@@ -3681,16 +3953,27 @@ async function simpanTanggalSesi(sesiId) {
 
 async function deleteSesi(id) {
   if (sesiCache.length <= 1) { showToast('Minimal harus ada 1 sesi.', 'warn'); return; }
-  const s = sesiCache.find(x => x.id === id);
+  const idx = sesiCache.findIndex(x => x.id === id);
+  const s = idx >= 0 ? sesiCache[idx] : null;
   const nama = s ? s.nama : 'Sesi #' + id;
+  // [REAL-TIME] Hapus optimistik dari cache + render ulang TANPA re-fetch.
+  // (loadSesi akan re-fetch & memunculkan lagi item yang belum benar2 dihapus)
   sesiCache = sesiCache.filter(x => x.id !== id);
-  loadSesi();
+  renderSesiList();
   showUndoToast(nama,
-    async function() { sesiCache = []; await loadSesi(); },
+    function() {
+      // URUNGKAN: kembalikan sesi ke posisi semula + render (tanpa re-fetch)
+      if (s && !sesiCache.some(x => x.id === id)) {
+        sesiCache.splice(Math.min(idx, sesiCache.length), 0, s);
+      }
+      renderSesiList();
+    },
     async function() {
+      // KONFIRMASI (timer habis / tombol ✕): hapus permanen dari DB.
+      // Cache & tampilan sudah tanpa sesi ini, jadi langsung hilang (real-time).
       const { data: deleted, error } = await db.from('sesi').delete().eq('id', id).select();
-      if (error) { showToast('Gagal hapus: ' + error.message, 'error'); loadSesi(); return; }
-      if (!deleted || deleted.length === 0) { showToast('❌ Hapus GAGAL — Supabase RLS memblokir DELETE.', 'error'); loadSesi(); }
+      if (error) { showToast('Gagal hapus: ' + error.message, 'error'); await loadSesi(); return; }
+      if (!deleted || deleted.length === 0) { showToast('❌ Hapus GAGAL — Supabase RLS memblokir DELETE.', 'error'); await loadSesi(); }
     },
     '📋'
   );
@@ -3729,7 +4012,7 @@ async function bukaSesiDetail(sesiId) {
       .eq('sesi_id', sesiId)
       .order('tanggal', { ascending: false })
       .limit(1000),
-    db.from('anggota').select('id, nama, tampil_absensi').eq('status', 'aktif').order('nama'),
+    db.from('anggota').select('id, nama, tampil_absensi, status').order('nama'),
   ]);
 
   if (kehRes.error) {
@@ -3738,7 +4021,7 @@ async function bukaSesiDetail(sesiId) {
   }
 
   const rows = kehRes.data || [];
-  const angAktif = (angRes.data || []).filter(a => a.tampil_absensi !== false);
+  const angAktif = (angRes.data || []).filter(a => a.status !== 'tidak_aktif' && a.tampil_absensi !== false);
   const catatanArr = catRes.error ? [] : (catRes.data || []);
   const catatanMap = {};
   catatanArr.forEach(c => { catatanMap[c.tanggal] = c; });
@@ -4008,7 +4291,8 @@ function tutupSesiDetail() {
 }
 
 // ─────────────── ABSENSI ───────────────
-async function loadAbsensi() {
+async function loadAbsensi(opts) {
+  const keepSearch = !!(opts && opts.keepSearch);
   if (!sesiCache.length) await loadSesi();
   // Refresh dropdown sesi sesuai tanggal yang dipilih
   updateAbsSesiDropdown();
@@ -4020,9 +4304,18 @@ async function loadAbsensi() {
     _absRenderReview();
     return;
   }
-  const { data: ang } = await db.from('anggota').select('id, nama, tampil_absensi').eq('status', 'aktif').order('nama');
-  // Hanya anggota aktif yang boleh muncul di absensi (tampil_absensi != false)
-  anggotaCache = (ang || []).filter(a => a.tampil_absensi !== false);
+  const { data: ang, error: angErr } = await db.from('anggota')
+    .select('id, nama, tampil_absensi, status').order('nama');
+  // Fallback ke anggotaFull (dipakai menu Anggota) bila query gagal/kosong
+  let pool = ang || [];
+  if ((angErr || pool.length === 0) && Array.isArray(window.anggotaFull) && anggotaFull.length) {
+    pool = anggotaFull;
+  }
+  // [FIX BUG ABSENSI] Tampilkan SEMUA anggota KECUALI yang status-nya
+  // eksplisit 'tidak_aktif' atau yang absensinya dimatikan. Sebelumnya pakai
+  // .eq('status','aktif') yang membuang anggota ber-status NULL/kosong —
+  // padahal mereka tetap muncul di menu Anggota → search "tidak cocok".
+  anggotaCache = pool.filter(a => a.status !== 'tidak_aktif' && a.tampil_absensi !== false);
   // Load existing absensi untuk hari & sesi ini
   const { data: keh } = await db.from('kehadiran').select('anggota_id, status')
     .eq('tanggal', tgl).eq('sesi_id', sesiId);
@@ -4040,20 +4333,41 @@ async function loadAbsensi() {
     if (panel) panel.style.display = 'block';
     if (lbl)   lbl.textContent = '▲ Sembunyikan';
   }
-  // Reset search
-  if ($('absSearch')) $('absSearch').value = '';
-  if ($('absDropdown')) $('absDropdown').style.display = 'none';
+  // Reset search — kecuali saat dipanggil dari dalam pencarian (keepSearch)
+  if (!keepSearch) {
+    if ($('absSearch')) $('absSearch').value = '';
+    if ($('absDropdown')) $('absDropdown').style.display = 'none';
+  }
   _absRenderReview();
 }
 
 // Dipanggil saat user mengetik di kotak search
-function absOnSearch() {
+async function absOnSearch() {
   const q = ($('absSearch').value || '').trim().toLowerCase();
   const dd = $('absDropdown');
   if (!q) { dd.style.display = 'none'; return; }
-  const cocok = anggotaCache.filter(a => a.nama.toLowerCase().includes(q)).slice(0, 20);
+  const tgl = $('absTanggal').value, sesiId = $('absSesi') ? $('absSesi').value : '';
+  // [FIX REAL-TIME] Kalau roster belum termuat TAPI tanggal+sesi sudah dipilih,
+  // muat otomatis di sini (tanpa perlu refresh manual). keepSearch=true agar
+  // teks yang sedang diketik user tidak terhapus.
+  if (!anggotaCache.length && tgl && sesiId) {
+    dd.innerHTML = '<div style="padding:10px 12px;font-size:13px;color:#7a9585;">⏳ Memuat daftar siswa...</div>';
+    dd.style.display = 'block';
+    try { await loadAbsensi({ keepSearch: true }); } catch (e) {}
+    // user mungkin sudah mengubah teks selama menunggu — ambil nilai terbaru
+    if ((($('absSearch').value || '').trim().toLowerCase()) !== q) return;
+  }
+  // [FIX] Pesan jelas kalau roster tetap kosong (bukan "tidak cocok" yang menyesatkan)
+  if (!anggotaCache.length) {
+    const pesan = (!tgl || !sesiId)
+      ? 'Pilih <b>tanggal</b> &amp; <b>sesi</b> dulu di atas, baru cari siswa.'
+      : 'Belum ada siswa aktif untuk absensi. Cek menu <b>Anggota</b> (status &amp; "Tampil di Absensi").';
+    dd.innerHTML = '<div style="padding:10px 12px;font-size:13px;color:#7a9585;">' + pesan + '</div>';
+    dd.style.display = 'block'; return;
+  }
+  const cocok = anggotaCache.filter(a => (a.nama || '').toLowerCase().includes(q)).slice(0, 20);
   if (!cocok.length) {
-    dd.innerHTML = '<div style="padding:10px 12px;font-size:13px;color:#7a9585;">Tidak ada siswa yang cocok.</div>';
+    dd.innerHTML = '<div style="padding:10px 12px;font-size:13px;color:#7a9585;">Tidak ada siswa bernama "' + escapeHtml(q) + '".</div>';
     dd.style.display = 'block'; return;
   }
   const ddColors = {hadir:'#16a34a',izin:'#d97706',sakit:'#7c3aed',tidak_hadir:'#dc2626'};
@@ -4262,8 +4576,8 @@ async function loadRekap() {
   }
   $('rekapResult').innerHTML = '<p class="muted">Memuat...</p>';
   // Ambil daftar anggota yang wajib ditampilkan (tampil_absensi != false)
-  const { data: angAktif } = await db.from('anggota').select('id, tampil_absensi').eq('status', 'aktif');
-  const tampilSet = new Set((angAktif || []).filter(a => a.tampil_absensi !== false).map(a => String(a.id)));
+  const { data: angAktif } = await db.from('anggota').select('id, tampil_absensi, status');
+  const tampilSet = new Set((angAktif || []).filter(a => a.status !== 'tidak_aktif' && a.tampil_absensi !== false).map(a => String(a.id)));
   const { data, error } = await db.from('kehadiran')
     .select('anggota_id, status, tanggal, sesi_id, anggota(nama)')
     .gte('tanggal', first).lte('tanggal', last).limit(100000);
@@ -4635,7 +4949,12 @@ async function loadPeriodeDetail(id) {
 
     <!-- FORM CATAT PEMASUKAN -->
     <div class="card">
-      <h2>💰 Catat Pemasukan (Bayar Siswa)</h2>
+      <div onclick="(function(el){var b=el.parentElement.querySelector('.qd-bayar-form');var open=b.style.display!=='none';b.style.display=open?'none':'block';el.querySelector('.toggle-arrow').textContent=open?'▶':'▼';})(this)"
+        style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:9px 12px;background:#e8f5ef;border-radius:10px;user-select:none;">
+        <span style="font-size:14px;font-weight:700;color:#059669;">💰 Catat Pemasukan (Bayar Siswa)</span>
+        <span class="toggle-arrow" style="font-size:11px;color:#059669;font-weight:700;">▶</span>
+      </div>
+      <div class="qd-bayar-form" style="display:none;margin-top:10px;">
       <label>Nama Siswa</label>
       <input type="text" id="qdBayarSearch" autocomplete="off" placeholder="🔍 Cari nama siswa..." oninput="filterSiswa('qdBayarSearch','qdBayarAng',qurbanAngList)">
       <select id="qdBayarAng">${ang.filter(a => a.tampil_absensi !== false).length ? ang.filter(a => a.tampil_absensi !== false).map(a => {
@@ -4643,6 +4962,11 @@ async function loadPeriodeDetail(id) {
         const tgt = a.kategori_id && tpk[String(a.kategori_id)] ? ' — target '+IDR(tpk[String(a.kategori_id)]) : '';
         return `<option value="${a.id}">${escapeHtml(a.nama+katNama+tgt)}</option>`;
       }).join('') : '<option value="">— Belum ada anggota —</option>'}</select>
+      <input type="text" id="qdBayarNamaLuar" autocomplete="off" placeholder="Nama pembayar (non-anggota)" style="display:none;">
+      <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:400;cursor:pointer;">
+        <input type="checkbox" id="qdBayarLuar" style="width:auto;margin:0;" onchange="toggleBayarLuar('qd')">
+        <span style="font-size:13px;">Non-anggota (siswa luar / ikut shodaqoh saja — tidak jadi anggota)</span>
+      </label>
       <div class="row">
         <div><label>Tanggal</label><input type="date" id="qdBayarTgl"></div>
         <div><label>Jumlah (Rp)</label><input type="number" id="qdBayarJml" placeholder="50000" min="1"></div>
@@ -4653,6 +4977,7 @@ async function loadPeriodeDetail(id) {
       <input type="file" id="qdBayarFile" accept="image/*">
       <button onclick="addBayarQurban()">Simpan Pemasukan</button>
       <div id="qdBayarMsg"></div>
+      </div><!-- /.qd-bayar-form -->
 
       <h2 style="font-size:13px;margin-top:14px;">Riwayat Pemasukan</h2>
       ${bayar.length ? bayar.map(b => `<div class="list-item">
@@ -4767,16 +5092,25 @@ async function addBayarQurban() {
   if (!_lockBtn('addBayarQurban')) return;
   try {
     if (!currentPeriodeId) return;
-    const angId = $('qdBayarAng').value;
+    const luar = $('qdBayarLuar') && $('qdBayarLuar').checked;
     const jml = parseUang($('qdBayarJml').value);
-    if (!angId) { setMsg('qdBayarMsg', 'Pilih siswa dulu', true); return; }
+    // Pembayar bisa anggota (dropdown) ATAU non-anggota (ketik nama). Non-anggota:
+    // anggota_id = null, hanya tercatat di pemasukan qurban, TIDAK jadi anggota.
+    let angId = null, nama = '';
+    if (luar) {
+      nama = ($('qdBayarNamaLuar').value || '').trim();
+      if (!nama) { setMsg('qdBayarMsg', 'Isi nama pembayar (non-anggota) dulu', true); return; }
+    } else {
+      angId = $('qdBayarAng').value;
+      if (!angId) { setMsg('qdBayarMsg', 'Pilih siswa dulu (atau centang Non-anggota)', true); return; }
+      nama = $('qdBayarAng').selectedOptions[0].textContent;
+    }
     if (!jml || jml <= 0) { setMsg('qdBayarMsg', 'Jumlah harus > 0', true); return; }
     let bukti = null;
     try { bukti = await uploadBukti('qdBayarFile'); }
     catch (e) { setMsg('qdBayarMsg', 'Gagal upload foto: ' + e.message, true); return; }
-    const nama = $('qdBayarAng').selectedOptions[0].textContent;
     const { error } = await db.from('qurban_bayar').insert({
-      periode_id: currentPeriodeId, anggota_id: parseInt(angId), nama,
+      periode_id: currentPeriodeId, anggota_id: luar ? null : parseInt(angId), nama,
       tanggal: $('qdBayarTgl').value || new Date().toISOString().slice(0,10),
       jumlah: jml, catatan: $('qdBayarCat').value.trim() || null,
       bukti_url: bukti, dicatat_oleh: currentProf.id,
@@ -4934,9 +5268,11 @@ function acSetFilter(status) {
   else acRenderList();
 }
 
-function acOpenForm() {
+async function acOpenForm() {
   $('acListView').style.display = 'none';
   $('acFormView').style.display = 'block';
+  // [REAL-TIME] Tarik Struktur Org terbaru (sinkron laptop ↔ HP) sebelum render
+  if(window.ensureStrukturOrgLoaded){ try{ await window.ensureStrukturOrgLoaded(true); }catch(e){} }
   // Render checkbox anggota dulu (agar divisi toggle bisa menemukan elemen)
   if(window.renderAnggotaCheckboxes) renderAnggotaCheckboxes('acAnggotaCheckboxes', []);
   // Render checkbox divisi (kosong utk acara baru), sinkron ke anggota
@@ -5043,6 +5379,15 @@ function acRenderList() {
       ${(window.anggotaTagsHTML && a.anggota_acara && a.anggota_acara.length) ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${anggotaTagsHTML(a.anggota_acara)}</div>` : ''}
       ${pic ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${pic}</div>` : ''}
       ${a.anggaran > 0 ? `<div style="font-size:11px;color:#7a9585;margin-bottom:6px;">💰 Anggaran: ${IDR(a.anggaran)}</div>` : ''}
+      ${(Array.isArray(a.tasks) && a.tasks.length) ? (() => {
+          const aktif = a.tasks.filter(t => t.status !== 'cancelled');
+          const done  = a.tasks.filter(t => t.status === 'done').length;
+          const pct   = aktif.length ? Math.round(done/aktif.length*100) : 0;
+          return `<div style="margin-bottom:6px;">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:#7a9585;margin-bottom:2px;"><span>📋 ${done}/${aktif.length} task selesai</span><span>${pct}%</span></div>
+            <div style="background:#e5e7eb;border-radius:6px;height:4px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#1a6644,#2d9e6b);border-radius:6px;"></div></div>
+          </div>`;
+        })() : ''}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
         <div style="display:flex;gap:6px;" onclick="event.stopPropagation()">
           <select onchange="updateAcaraStatus(${a.id}, this.value)" style="margin:0;font-size:12px;padding:6px;border-radius:8px;">
@@ -5102,6 +5447,8 @@ async function loadAcara() {
   acaraCache = data || [];
   acaraCache.sort((a,b) => (ST_PRIO[a.status]-ST_PRIO[b.status]) ||
     String(a.tanggal||'').localeCompare(String(b.tanggal||'')));
+  // Expose ke window agar modul Task Acara (IIFE terpisah) bisa baca cache.
+  window.acaraCache = acaraCache;
   acRenderList();
 }
 
@@ -5125,6 +5472,7 @@ async function openAcaraDetail(id) {
   const a = acaraCache.find(x => x.id === id);
   if (!a) return;
   currentAcaraId = id;
+  window.currentAcaraId = id;  // agar modul Task Acara tahu acara aktif
   $('amNama').value      = a.nama || '';
   $('amTanggal').value   = a.tanggal || '';
   $('amStatus').value    = a.status;
@@ -5134,6 +5482,9 @@ async function openAcaraDetail(id) {
   $('amDeskripsi').value = a.deskripsi || '';
   if(window.refreshDescPreview) refreshDescPreview('amDeskripsi');
   renderAcaraTpkInputs(a.target_per_kategori || {});
+  // [REAL-TIME] Tarik data Struktur Org terbaru dari Supabase dulu (penting di HP
+  // yang datanya bisa tertinggal dari laptop), baru render daftar divisi/anggota.
+  if(window.ensureStrukturOrgLoaded){ try{ await window.ensureStrukturOrgLoaded(true); }catch(e){} }
   // Render checkbox anggota dulu (agar divisi toggle bisa menemukan elemen)
   if(window.renderAnggotaCheckboxes) renderAnggotaCheckboxes('amAnggotaCheckboxes', a.anggota_acara || []);
   // Render divisi checkboxes dengan data tersimpan, sinkron ke anggota
@@ -5141,12 +5492,14 @@ async function openAcaraDetail(id) {
   $('amMsg').textContent = '';
   $('acaraModal').style.display = 'flex';
   window.scrollTo(0, 0);
+  if (window.acTaskRender) acTaskRender(id);
   await renderAcaraBayar(id);
 }
 
 function closeAcaraDetail() {
   $('acaraModal').style.display = 'none';
   currentAcaraId = null;
+  window.currentAcaraId = null;
 }
 
 async function saveAcaraDetail() {
@@ -5274,18 +5627,30 @@ async function renderAcaraBayar(acaraId) {
 
   $('amBayarArea').innerHTML = `
 
-    <!-- ══ SECTION: PEMBAYARAN PESERTA ══ -->
+    <!-- ══ SECTION: PEMBAYARAN PESERTA (collapsible) ══ -->
+    <div onclick="(function(el){var b=el.parentElement.querySelector('.am-bayar-form');var open=b.style.display!=='none';b.style.display=open?'none':'block';el.querySelector('.toggle-arrow').textContent=open?'▶':'▼';})(this)"
+      style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:9px 12px;background:#e8f5ef;border-radius:10px;user-select:none;margin-bottom:8px;">
+      <span style="font-size:13px;font-weight:700;color:#059669;">➕ Tambah Pembayaran Peserta</span>
+      <span class="toggle-arrow" style="font-size:11px;color:#059669;font-weight:700;">▶</span>
+    </div>
+    <div class="am-bayar-form" style="display:none;">
     <label>Pilih Siswa</label>
     <input type="text" id="amBayarSearch" autocomplete="off" placeholder="🔍 Cari nama siswa..." oninput="filterSiswa('amBayarSearch','amBayarAng',acaraAngList)">
     <select id="amBayarAng">${angTampil.length ? angTampil.map(x => `<option value="${x.id}">${escapeHtml(x.nama)}</option>`).join('') : '<option value="">— Belum ada anggota —</option>'}</select>
+    <input type="text" id="amBayarNamaLuar" autocomplete="off" placeholder="Nama pembayar (non-anggota)" style="display:none;">
+    <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:400;cursor:pointer;">
+      <input type="checkbox" id="amBayarLuar" style="width:auto;margin:0;" onchange="toggleBayarLuar('am')">
+      <span style="font-size:13px;">Non-anggota (siswa luar / ikut acara saja — tidak jadi anggota)</span>
+    </label>
     <div class="row">
       <div><label>Tanggal</label><input type="date" id="amBayarTgl"></div>
       <div><label>Jumlah (Rp)</label><input type="number" id="amBayarJml" min="1" placeholder="50000"></div>
     </div>
     <label>Foto Bukti (opsional)</label>
     <input type="file" id="amBayarFile" accept="image/*">
-    <button onclick="addAcaraBayar()">➕ Tambah Pembayaran Peserta</button>
+    <button onclick="addAcaraBayar()">➕ Simpan Pembayaran Peserta</button>
     <div id="amBayarMsg"></div>
+    </div><!-- /.am-bayar-form -->
     <div class="muted" style="margin-top:10px;font-size:12px;">
       Terkumpul <b style="color:#16a34a;">${IDR(totalMasuk)}</b>${target>0 ? ' / target '+IDR(target)+' ('+pct+'%)' : ''}
     </div>
@@ -5413,16 +5778,25 @@ async function addAcaraBayar() {
   if (!_lockBtn('addAcaraBayar')) return;
   try {
     if (!currentAcaraId) return;
-    const angId = $('amBayarAng').value;
+    const luar = $('amBayarLuar') && $('amBayarLuar').checked;
     const jml = parseUang($('amBayarJml').value);
-    if (!angId) { setMsg('amBayarMsg', 'Pilih siswa dulu', true); return; }
+    // Pembayar bisa anggota (pilih dari dropdown) ATAU non-anggota (ketik nama).
+    // Non-anggota: anggota_id = null, hanya tercatat di pembayaran, TIDAK jadi anggota.
+    let angId = null, nama = '';
+    if (luar) {
+      nama = ($('amBayarNamaLuar').value || '').trim();
+      if (!nama) { setMsg('amBayarMsg', 'Isi nama pembayar (non-anggota) dulu', true); return; }
+    } else {
+      angId = $('amBayarAng').value;
+      if (!angId) { setMsg('amBayarMsg', 'Pilih siswa dulu (atau centang Non-anggota)', true); return; }
+      nama = $('amBayarAng').selectedOptions[0].textContent;
+    }
     if (!jml || jml <= 0) { setMsg('amBayarMsg', 'Jumlah harus > 0', true); return; }
     let bukti = null;
     try { bukti = await uploadBukti('amBayarFile'); }
     catch (e) { setMsg('amBayarMsg', 'Gagal upload foto: ' + e.message, true); return; }
-    const nama = $('amBayarAng').selectedOptions[0].textContent;
     const { error } = await db.from('acara_bayar').insert({
-      acara_id: currentAcaraId, anggota_id: parseInt(angId), nama,
+      acara_id: currentAcaraId, anggota_id: luar ? null : parseInt(angId), nama,
       tanggal: $('amBayarTgl').value || new Date().toISOString().slice(0,10),
       jumlah: jml, bukti_url: bukti, dicatat_oleh: currentProf.id, tipe: 'masuk',
     });
@@ -7512,7 +7886,7 @@ async function loadKelolAkses() {
   // Karena client-side tidak bisa list auth.users, kita pakai tabel profiles
   const { data, error } = await db
     .from('profiles')
-    .select('id, nama_lengkap, jabatan, is_super')
+    .select('*')
     .order('nama_lengkap');
 
   if (error) {
@@ -7533,53 +7907,44 @@ function renderKelolAkses() {
     return;
   }
 
+  const MENUS = [
+    { key:'riwayat', label:'🕵️ Riwayat' },
+    { key:'foto',    label:'🗑️ Kelola Foto' },
+    { key:'recycle', label:'♻️ Tempat Sampah' },
+  ];
+  const canEdit = isMasterAdmin; // hanya admin utama yang boleh ubah
+
   const html = aksesUserList.map((u, i) => {
     const isSelf = (u.id === currentProf?.id);
     const isMaster = isSelf && isMasterAdmin;
-    const sudahPunya = u.is_super === true;
-    const badge = sudahPunya
-      ? '<span class="st-badge st-done" style="font-size:11px;">✅ Punya Akses</span>'
-      : '<span class="st-badge st-cancelled" style="font-size:11px;">🚫 Tidak Ada Akses</span>';
+    const akses = u.akses_menu || {};
+    const full = (u.is_super === true) || isMaster; // super/master = akses penuh
     const masterBadge = isMaster
-      ? '<span class="st-badge st-in_progress" style="font-size:10px;margin-left:4px;">👑 Master Admin</span>'
-      : '';
+      ? '<span class="st-badge st-in_progress" style="font-size:10px;margin-left:4px;">👑 Master Admin (akses penuh)</span>'
+      : (u.is_super === true ? '<span class="st-badge st-done" style="font-size:10px;margin-left:4px;">⭐ Super (akses penuh)</span>' : '');
 
-    // Tombol toggle — disabled untuk diri sendiri (admin@mumi.local tidak bisa dicabut)
-    const btnDisabled = isMaster ? 'disabled title="Admin utama tidak bisa diubah"' : '';
-    const btnLabel = sudahPunya ? '🚫 Cabut Akses' : '✅ Beri Akses';
-    const btnClass = sudahPunya ? 'danger' : 'secondary';
+    const cekboxes = MENUS.map(m => {
+      const on = full || akses[m.key] === true;
+      const dis = (!canEdit || isMaster) ? 'disabled' : '';
+      return `<label class="prj-divisi-checkbox-wrap ${on ? 'checked' : ''}" style="font-size:12px;">
+        <input type="checkbox" ${on ? 'checked' : ''} ${dis}
+          onchange="setMenuAkses('${u.id}','${m.key}',this.checked,${i})"
+          style="width:16px;height:16px;margin:0;accent-color:#1a6644;"> ${m.label}</label>`;
+    }).join('');
 
     return `<div style="padding:12px;background:#f0f7f3;border-radius:8px;margin-bottom:8px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
-        <div style="flex:1;">
-          <div style="font-weight:700;font-size:13px;">
-            ${escapeHtml(u.nama_lengkap || '(tanpa nama)')}
-            ${masterBadge}
-          </div>
-          <div class="muted" style="font-size:11px;margin-top:2px;">
-            Jabatan: ${escapeHtml(u.jabatan || '-')}
-          </div>
-          <div style="margin-top:6px;">${badge}</div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-          <button class="small ${btnClass}" ${btnDisabled}
-            onclick="toggleAksesUser('${u.id}', ${sudahPunya}, ${i})">
-            ${btnLabel}
-          </button>
-        </div>
-      </div>
+      <div style="font-weight:700;font-size:13px;">${escapeHtml(u.nama_lengkap || '(tanpa nama)')}${masterBadge}</div>
+      <div class="muted" style="font-size:11px;margin:2px 0 8px;">Jabatan: ${escapeHtml(u.jabatan || '-')}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">${cekboxes}</div>
     </div>`;
   }).join('');
 
   $('aksesList').innerHTML = `
     <div style="margin-bottom:12px;padding:10px 12px;background:#fef9c3;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e;">
-      ⚠️ <b>Catatan:</b> User yang diberi akses bisa melihat <b>Riwayat</b> dan <b>Kelola Foto</b>,
-      tapi <b>tidak bisa</b> menambah atau mencabut akses user lain.
-      Hanya <b>admin@mumi.local</b> yang bisa mengubah daftar ini.
+      ⚠️ <b>Centang menu</b> yang boleh dilihat tiap user. Contoh: User A hanya ☑ Kelola Foto, User B hanya ☑ Tempat Sampah, User C hanya ☑ Riwayat, User D centang ketiga-tiganya.<br>
+      Hanya <b>admin@mumi.local</b> yang bisa mengubah. Perubahan berlaku saat user <b>login berikutnya</b>.
     </div>
-    <div style="font-size:12px;color:#6b7280;margin-bottom:8px;">
-      Total ${aksesUserList.length} user · ${aksesUserList.filter(u=>u.is_super).length} punya akses
-    </div>
+    <div style="font-size:12px;color:#6b7280;margin-bottom:8px;">Total ${aksesUserList.length} user</div>
     ${html}`;
 }
 
@@ -7621,6 +7986,51 @@ async function toggleAksesUser(userId, sudahPunya, idx) {
   // Update cache lokal
   aksesUserList[idx].is_super = !sudahPunya;
   setMsg('aksesMsg', '✅ Berhasil ' + aksiLabel + ' untuk ' + nama);
+  renderKelolAkses();
+}
+
+// ── Set akses PER-MENU (checkbox): riwayat / foto / recycle ──
+async function setMenuAkses(userId, key, checked, idx) {
+  if (!isMasterAdmin) { alert('Hanya admin@mumi.local yang bisa mengubah akses user.'); renderKelolAkses(); return; }
+  const u = aksesUserList[idx];
+  if (!u) return;
+  if (userId === currentProf?.id) { alert('Akses admin utama tidak bisa diubah.'); renderKelolAkses(); return; }
+
+  // Mulai dari hak yang ada. Kalau user sebelumnya "super (akses penuh)",
+  // konversi dulu ke granular (semua true) lalu matikan is_super agar
+  // pilihan per-menu mulai berlaku.
+  let cur = Object.assign({}, u.akses_menu || {});
+  const wasSuper = u.is_super === true;
+  if (wasSuper) cur = { riwayat: true, foto: true, recycle: true };
+  cur[key] = checked;
+
+  const payload = { akses_menu: cur };
+  if (wasSuper) payload.is_super = false;
+
+  const { error } = await db.from('profiles').update(payload).eq('id', userId);
+  if (error) {
+    const m = error.message || '';
+    if (m.includes('akses_menu') || m.includes('column')) {
+      alert('❌ Kolom "akses_menu" belum ada di tabel profiles.\n\n' +
+        'Jalankan SQL ini di Supabase → SQL Editor:\n\n' +
+        "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS akses_menu jsonb DEFAULT '{}'::jsonb;");
+    } else if (m.includes('RLS') || error.code === '42501' || m.includes('permission')) {
+      alert('❌ RLS Supabase memblokir UPDATE profiles. Tambahkan policy UPDATE untuk authenticated.');
+    } else {
+      alert('❌ Gagal menyimpan: ' + m);
+    }
+    renderKelolAkses();
+    return;
+  }
+
+  // Update cache lokal
+  u.akses_menu = cur;
+  if (wasSuper) u.is_super = false;
+  const namaMenu = { riwayat: 'Riwayat', foto: 'Kelola Foto', recycle: 'Tempat Sampah' }[key] || key;
+  setMsg('aksesMsg', '✅ ' + (checked ? 'Diberikan' : 'Dicabut') + ' akses ' + namaMenu + ' untuk ' + (u.nama_lengkap || 'user'));
+  if (typeof _auditLog === 'function') {
+    _auditLog('akses_user', 'UPDATE', null, { user: u.nama_lengkap, menu: namaMenu, diberikan: checked });
+  }
   renderKelolAkses();
 }
 
@@ -8245,10 +8655,9 @@ async function hapusSatuFoto(idx) {
 
 // ─────────────── TEMA TAMPILAN ───────────────
 function applyTheme(pref) {
-  // pref: 'light' (Terang) | 'dark' (Gelap) | 'system' (ikut pengaturan HP)
-  const actual = pref === 'system'
-    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-    : pref;
+  // pref: 'system' (default HIJAU) | 'light' (Putih) | 'dark' (Gelap)
+  // 'system' TIDAK ikut OS — selalu tema hijau khas aplikasi (sesuai permintaan user).
+  const actual = pref === 'system' ? 'green' : pref;
   document.documentElement.setAttribute('data-theme', actual);
   localStorage.setItem('mb3-theme', pref);
   const icons = { light: '☀️', dark: '🌙', system: '🖥️' };
@@ -8256,15 +8665,15 @@ function applyTheme(pref) {
   if (btn) btn.textContent = icons[pref] || '🖥️';
 }
 function cycleTheme() {
-  const urut = ['light', 'dark', 'system'];
+  const urut = ['system', 'light', 'dark'];
   const skrg = localStorage.getItem('mb3-theme') || 'system';
-  applyTheme(urut[(urut.indexOf(skrg) + 1) % urut.length]);
+  const next = urut[(urut.indexOf(skrg) + 1) % urut.length];
+  applyTheme(next);
+  const namaMode = { system: '🖥️ Sistem (Hijau default)', light: '☀️ Terang (Putih)', dark: '🌙 Gelap' };
+  if (typeof showToast === 'function') showToast('Tema: ' + namaMode[next], 'info', 1800);
 }
-// Samakan label tombol + ikuti perubahan tema OS otomatis bila mode "Sistem"
+// Terapkan tema tersimpan saat halaman load
 applyTheme(localStorage.getItem('mb3-theme') || 'system');
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-  if ((localStorage.getItem('mb3-theme') || 'system') === 'system') applyTheme('system');
-});
 
 
 // ═══════════════════════════════════════════════════════════════
@@ -8473,35 +8882,36 @@ loadDashboard = async function() {
   const sisaAcara = (ab||[]).filter(x=>x.tipe==='masuk').reduce((s,x)=>s+Number(x.jumlah||0),0)
                   - (ab||[]).filter(x=>x.tipe==='keluar').reduce((s,x)=>s+Number(x.jumlah||0),0);
 
-  // Saldo Kas = kas murni + sisa semua acara
-  const saldoKas = saldoKasMurni + sisaAcara;
+  // [UBAH] KARTU KIRI = KHUSUS KAS MURNI (tidak digabung sisa acara)
+  const saldoKas = saldoKasMurni;
   animateCount(document.getElementById('sumKas'), saldoKas);
 
-  // Update label kartu Saldo Kas
+  // Label kartu kiri: khusus kas
   const labelKas = document.querySelector('#sec-saldo .saldo-card.masuk .label');
-  if (labelKas) labelKas.textContent = 'Saldo Kas (+ Sisa Acara)';
+  if (labelKas) labelKas.textContent = 'Saldo Kas';
 
-  // Kartu "Dana Acara" tampilkan sisa acara (sub-info, sudah masuk sumKas jadi tidak double-count)
+  // [UBAH] KARTU KANAN = KHUSUS SISA DANA ACARA (terpisah dari kas)
   const elAcara = document.getElementById('sumAcara');
   if (elAcara) {
     animateCount(elAcara, sisaAcara);
     const cardAcara = elAcara.closest('.saldo-card');
     if (cardAcara) {
       const lbl = cardAcara.querySelector('.label');
-      if (lbl) lbl.textContent = 'Sisa Acara ↳ Kas';
+      if (lbl) lbl.textContent = 'Sisa Dana Acara';
     }
   }
 
-  // Total = kas (sudah include sisa acara) + qurban SAJA (acara tidak double-count)
-  const total = saldoKas + danaQurban;
+  // [UBAH] TOTAL = Kas + Sisa Acara SAJA. Dana Qurban TIDAK ikut dijumlah —
+  // qurban punya bidang/kas sendiri, terpisah dari kas organisasi.
+  const total = saldoKas + sisaAcara;
   animateCount(document.getElementById('sumTotal'), total);
 
   // Update keterangan total
   const keterTotal = document.querySelector('#sec-saldo .card > .muted');
-  if (keterTotal) keterTotal.textContent = 'Gabungan kas (termasuk sisa acara) + dana qurban.';
+  if (keterTotal) keterTotal.textContent = 'Total = Saldo Kas + Sisa Dana Acara. Dana Qurban dihitung terpisah (bidang sendiri).';
 
-  // Donut: kas (sudah include sisa acara) vs qurban
-  setTimeout(() => renderDonutSaldo(saldoKas, danaQurban, 0), 200);
+  // Donut: Kas vs Sisa Acara saja (Qurban terpisah di kartunya sendiri)
+  setTimeout(() => renderDonutSaldo(saldoKas, sisaAcara, danaQurban), 200);
 
   // Render progress kas bulanan
   renderProgressKas();
@@ -8529,20 +8939,27 @@ loadDashboard = async function() {
 
 // Donut chart saldo — hanya Kas & Acara (Qurban tampil terpisah)
 let _donutChart = null;
-function renderDonutSaldo(kas, qurban, acara) {
+function renderDonutSaldo(kas, acara, qurban) {
   const canvas = document.getElementById('donutSaldo');
+  // Qurban SELALU dirender di kartunya sendiri (bidang terpisah, tidak ikut donut)
+  renderQurbanCard(qurban);
   if (!canvas || typeof Chart === 'undefined') return;
-  const total = kas + acara; // Qurban tidak dimasukkan ke donut
+  const total = kas + acara; // Qurban TIDAK dimasukkan ke donut
   if (total <= 0) { canvas.style.display='none'; return; }
   canvas.style.display = '';
   if (_donutChart) { _donutChart.destroy(); _donutChart = null; }
+  // Hanya tampilkan bagian yang nilainya > 0
+  const segs = [
+    { label:'Saldo Kas',       val:kas,    color:'#16a34a' },
+    { label:'Sisa Dana Acara', val:acara,  color:'#d97706' },
+  ].filter(s => s.val > 0);
   _donutChart = new Chart(canvas, {
     type: 'doughnut',
     data: {
-      labels: ['Saldo Kas (+ Sisa Acara)', 'Dana Qurban'],
+      labels: segs.map(s => s.label),
       datasets: [{
-        data: [kas, acara],
-        backgroundColor: ['#16a34a','#7c3aed'],
+        data: segs.map(s => s.val),
+        backgroundColor: segs.map(s => s.color),
         borderWidth: 3,
         borderColor: getComputedStyle(document.documentElement).getPropertyValue('--bg') || '#fff',
       }],
@@ -8562,8 +8979,6 @@ function renderDonutSaldo(kas, qurban, acara) {
     }
   });
 
-  // Render card Qurban terpisah
-  renderQurbanCard(qurban);
 }
 
 // Card Dana Qurban berdiri sendiri
@@ -8789,40 +9204,86 @@ resetAutoLogout();
 // ⑪ BACKUP SEMUA DATA KE CSV
 // ═══════════════════════════════════════════════════════════════
 async function backupSemuaData() {
-  showToast('Menyiapkan backup...', 'info', 2000);
-  const { jsPDF } = window.jspdf || {};
+  showToast('Menyiapkan backup semua data...', 'info', 2000);
   const rows = [
     ['BACKUP DATA MUMI MB3'],
     ['Tanggal Backup', new Date().toLocaleString('id-ID')],
     [],
   ];
+
+  // ── SEMUA TABEL / MENU yang dipakai aplikasi ──
+  // order: [kolom, ascending] — opsional (cosmetic). Kalau kolomnya tidak ada,
+  // query otomatis di-retry tanpa order supaya datanya tetap ke-backup.
+  const tabel = [
+    { nama: 'transaksi',           judul: 'TRANSAKSI KAS',          order: ['tanggal', false] },
+    { nama: 'kas_bulan',           judul: 'KAS PER BULAN' },
+    { nama: 'anggota',             judul: 'ANGGOTA',                order: ['nama', true] },
+    { nama: 'kategori_anggota',    judul: 'KATEGORI ANGGOTA' },
+    { nama: 'sesi',                judul: 'SESI / PERTEMUAN',       order: ['tanggal', false] },
+    { nama: 'kehadiran',           judul: 'KEHADIRAN' },
+    { nama: 'catatan_sesi',        judul: 'CATATAN SESI' },
+    { nama: 'acara',               judul: 'ACARA',                  order: ['tanggal', false] },
+    { nama: 'acara_bayar',         judul: 'PEMBAYARAN ACARA' },
+    { nama: 'qurban_periode',      judul: 'QURBAN - PERIODE' },
+    { nama: 'qurban_bayar',        judul: 'QURBAN - PEMBAYARAN' },
+    { nama: 'qurban_keluar',       judul: 'QURBAN - PENGELUARAN' },
+    { nama: 'musyawarah',          judul: 'MUSYAWARAH',             order: ['tanggal', false] },
+    { nama: 'musyawarah_peserta',  judul: 'MUSYAWARAH - PESERTA' },
+    { nama: 'musyawarah_keuangan', judul: 'MUSYAWARAH - KEUANGAN' },
+    { nama: 'struktur_org',        judul: 'STRUKTUR ORGANISASI' },
+    { nama: 'projects',            judul: 'PROJECTS / PROGRAM' },
+    { nama: 'audit_log',           judul: 'LOG AKTIVITAS' },
+    { nama: 'profiles',            judul: 'PROFIL PENGGUNA' },
+  ];
+
+  let okCount = 0;
+  const gagal = [];
+
+  for (const t of tabel) {
+    try {
+      let q = db.from(t.nama).select('*');
+      if (t.order) q = q.order(t.order[0], { ascending: t.order[1] });
+      let { data, error } = await q;
+      // Kalau gagal karena kolom order tidak ada → retry tanpa order
+      if (error && t.order) {
+        ({ data, error } = await db.from(t.nama).select('*'));
+      }
+      if (error) throw error;
+
+      rows.push(['=== ' + t.judul + ' ===']);
+      const list = data || [];
+      if (list.length === 0) {
+        rows.push(['(kosong)']);
+      } else {
+        // Header otomatis dari nama kolom → SEMUA kolom ikut ter-backup
+        const kolom = Object.keys(list[0]);
+        rows.push(kolom);
+        list.forEach(r => rows.push(kolom.map(k => {
+          const v = r[k];
+          return (v !== null && typeof v === 'object') ? JSON.stringify(v) : v;
+        })));
+      }
+      rows.push([]);
+      okCount++;
+    } catch (e) {
+      // PENTING: satu tabel gagal TIDAK menggagalkan seluruh backup
+      rows.push(['=== ' + t.judul + ' ===']);
+      rows.push(['GAGAL DIMUAT', (e && e.message) || String(e)]);
+      rows.push([]);
+      gagal.push(t.nama);
+    }
+  }
+
   try {
-    const { data: tx } = await db.from('transaksi').select('*').order('tanggal',{ascending:false});
-    rows.push(['=== TRANSAKSI KAS ===']);
-    rows.push(['ID','Tanggal','Tipe','Kategori','Jumlah','Keterangan']);
-    (tx||[]).forEach(t => rows.push([t.id,t.tanggal,t.tipe,t.kategori,t.jumlah,t.keterangan||'']));
-    rows.push([]);
-
-    const { data: ang } = await db.from('anggota').select('*').order('nama');
-    rows.push(['=== ANGGOTA ===']);
-    rows.push(['ID','Nama','Kontak','Status','Alamat']);
-    (ang||[]).forEach(a => rows.push([a.id,a.nama,a.kontak||'',a.status,a.alamat||'']));
-    rows.push([]);
-
-    const { data: ac } = await db.from('acara').select('*').order('tanggal',{ascending:false});
-    rows.push(['=== ACARA ===']);
-    rows.push(['ID','Nama','Tanggal','Status']);
-    (ac||[]).forEach(a => rows.push([a.id,a.nama,a.tanggal||'',a.status||'']));
-    rows.push([]);
-
-    const { data: qp } = await db.from('qurban_periode').select('*');
-    rows.push(['=== QURBAN PERIODE ===']);
-    rows.push(['ID','Nama','Target']);
-    (qp||[]).forEach(q => rows.push([q.id,q.nama||'',q.target_dana||0]));
-
-    downloadCSV('backup-mumi-mb3-'+new Date().toISOString().slice(0,10)+'.csv', rows);
-    showToast('Backup berhasil didownload!', 'success');
-  } catch(e) { showToast('Gagal backup: '+e.message, 'error'); }
+    downloadCSV('backup-mumi-mb3-' + new Date().toISOString().slice(0,10) + '.csv', rows);
+    if (gagal.length === 0) {
+      showToast('Backup semua data berhasil! (' + okCount + ' tabel)', 'success');
+    } else {
+      showToast('Backup selesai: ' + okCount + ' OK, gagal: ' + gagal.join(', '), 'info', 6000);
+    }
+  } catch (e) {
+    showToast('Gagal membuat file backup: ' + e.message, 'error');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -11924,6 +12385,295 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
 })(); // end IIFE
 </script>
 
+<!-- ═══ ACARA TASK MODULE (Task + Penanggung Jawab per Acara) ═══ -->
+<script>
+(function(){
+  'use strict';
+  var AC_TASK_KEY = 'mb3-acara-tasks-';
+  var _editAcaraId = null;
+  var _editTaskId  = null;
+  var _curId       = null;  // id acara aktif (di-set saat acTaskRender dipanggil)
+  var _acTaskPhotos = [];   // foto task yang sedang diedit (base64), maks 3
+
+  // id acara aktif — utamakan yang di-track modul, fallback ke global.
+  function curId(){ return (_curId != null) ? _curId : window.currentAcaraId; }
+
+  var ST = {
+    todo:      {label:'⬜ Belum Mulai', badge:'#e5e7eb', c:'#4b5563'},
+    progress:  {label:'🔄 Dikerjakan',  badge:'#fef3c7', c:'#d97706'},
+    done:      {label:'✅ Selesai',      badge:'#d1fae5', c:'#059669'},
+    cancelled: {label:'❌ Batal',        badge:'#fee2e2', c:'#dc2626'}
+  };
+
+  function $id(id){ return document.getElementById(id); }
+  function uuid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function fmtDate(d){ if(!d) return ''; var p=String(d).split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : d; }
+
+  // ── LOAD: prioritas kolom acara.tasks → fallback localStorage ──
+  function loadTasks(acaraId){
+    var a = (window.acaraCache||[]).find(function(x){ return x.id===acaraId; });
+    if(a && Array.isArray(a.tasks)) return a.tasks;
+    try{ return JSON.parse(localStorage.getItem(AC_TASK_KEY+acaraId)||'[]'); }catch(e){ return []; }
+  }
+
+  // ── SAVE: cache + localStorage + Supabase (fallback aman kalau kolom belum ada) ──
+  function saveTasks(acaraId, arr){
+    var a = (window.acaraCache||[]).find(function(x){ return x.id===acaraId; });
+    if(a) a.tasks = arr;
+    try{ localStorage.setItem(AC_TASK_KEY+acaraId, JSON.stringify(arr)); }catch(e){}
+    db.from('acara').update({ tasks: arr }).eq('id', acaraId).then(function(res){
+      if(res && res.error){
+        var msg = String(res.error.message||'');
+        if(msg.indexOf('tasks')!==-1 && msg.toLowerCase().indexOf('column')!==-1){
+          if(!window._acTaskSqlNoticeShown){
+            window._acTaskSqlNoticeShown = true;
+            if(window.showToast) showToast('⚠️ Kolom "tasks" belum ada — task tersimpan lokal. Jalankan di Supabase: ALTER TABLE acara ADD COLUMN IF NOT EXISTS tasks jsonb DEFAULT \'[]\';','warn',9000);
+          }
+        } else { console.warn('Acara task save error:', msg); }
+      }
+    });
+  }
+
+  function progress(tasks){
+    var aktif = tasks.filter(function(t){ return t.status!=='cancelled'; });
+    if(!aktif.length) return -1;
+    var done = aktif.filter(function(t){ return t.status==='done'; }).length;
+    return Math.round(done/aktif.length*100);
+  }
+
+  // ── RENDER LIST DI DALAM MODAL DETAIL ACARA ──
+  window.acTaskRender = function(acaraId){
+    if(acaraId==null) acaraId = curId();
+    if(acaraId!=null) _curId = acaraId;  // ingat acara aktif untuk add/toggle/delete
+    var listEl = $id('amTaskList');
+    if(!listEl) return;
+    var tasks = loadTasks(acaraId);
+    var pEl = $id('amTaskProgress');
+    if(pEl){
+      var aktif = tasks.filter(function(t){ return t.status!=='cancelled'; });
+      var done  = tasks.filter(function(t){ return t.status==='done'; }).length;
+      var pct   = progress(tasks);
+      pEl.textContent = (tasks.length && pct>=0) ? (pct+'% • '+done+'/'+aktif.length+' selesai') : '';
+    }
+    if(!tasks.length){
+      listEl.innerHTML = '<p class="muted" style="font-size:12px;">Belum ada task. Tambahkan di bawah.</p>';
+      return;
+    }
+    listEl.innerHTML = tasks.map(function(t){
+      var st = ST[t.status] || ST.todo;
+      var meta = [];
+      if(t.divisi)   meta.push('<span class="prj-divisi-tag" style="font-size:10px;padding:2px 7px;">🏢 '+esc(t.divisi)+'</span>');
+      if(t.assignee) meta.push('<span class="prj-anggota-chip" style="font-size:10px;padding:2px 7px;">👤 '+esc(t.assignee)+'</span>');
+      if(t.deadline) meta.push('<span style="font-size:10px;color:#d97706;">📅 '+fmtDate(t.deadline)+'</span>');
+      if(t.budget)   meta.push('<span style="font-size:10px;color:#7a9585;">💰 Rp '+Number(t.budget).toLocaleString('id')+'</span>');
+      if(t.desc)     meta.push('<span style="font-size:10px;color:#7a9585;">📝 '+esc(String(t.desc).slice(0,40))+(String(t.desc).length>40?'…':'')+'</span>');
+      if(t.link)     meta.push('<span style="font-size:10px;color:#2563eb;">🔗 Link</span>');
+      if(t.photos && t.photos.length) meta.push('<img src="'+t.photos[0]+'" style="width:18px;height:18px;object-fit:cover;border-radius:4px;vertical-align:middle;border:1px solid #d4e8dc;">'+(t.photos.length>1?'<span style="font-size:10px;color:#7a9585;">+'+(t.photos.length-1)+'</span>':''));
+      var done = t.status==='done';
+      return '<div class="prj-task-item'+(done?' done-task':'')+'" onclick="acTaskOpenEdit(\''+t.id+'\')" title="Klik untuk edit detail">'
+        +'<input type="checkbox" class="prj-checkbox" '+(done?'checked':'')+' onclick="event.stopPropagation()" onchange="event.stopPropagation();acTaskToggle(\''+t.id+'\',this.checked)">'
+        +'<div class="prj-task-body">'
+        +'<div class="prj-task-title">'+esc(t.text)+'</div>'
+        +'<div class="prj-task-meta"><span class="st-badge" style="background:'+st.badge+';color:'+st.c+';font-size:10px;padding:2px 7px;border-radius:6px;">'+st.label+'</span> '+meta.join(' ')+'</div>'
+        +'</div>'
+        +'<button onclick="event.stopPropagation();acTaskDelete(\''+t.id+'\')" style="width:auto;padding:3px 8px;font-size:11px;background:#fee2e2;color:#dc2626;flex-shrink:0;">✕</button>'
+        +'</div>';
+    }).join('');
+  };
+
+  // ── QUICK ADD ──
+  window.acTaskAdd = function(){
+    var id = curId();
+    if(id==null){ if(window.showToast) showToast('Buka detail acara dulu sebelum menambah task.','error'); return; }
+    var inp = $id('amNewTask');
+    var text = inp ? inp.value.trim() : '';
+    if(!text){ if(window.showToast) showToast('Tulis nama task dulu!','error'); return; }
+    var tasks = loadTasks(id).slice();
+    tasks.push({ id:uuid(), text:text, divisi:'', assignee:'', status:'todo', deadline:'', budget:'', desc:'', created:new Date().toISOString() });
+    saveTasks(id, tasks);
+    if(inp) inp.value='';
+    acTaskRender(id);
+    if(window.showToast) showToast('✅ Task ditambahkan! Klik untuk atur penanggung jawab.','success',3000);
+  };
+
+  // ── TOGGLE SELESAI ──
+  window.acTaskToggle = function(taskId, done){
+    var id = curId(); if(id==null) return;
+    var tasks = loadTasks(id).slice();
+    var t = tasks.find(function(x){ return x.id===taskId; });
+    if(t){ t.status = done ? 'done' : 'todo'; }
+    saveTasks(id, tasks);
+    acTaskRender(id);
+  };
+
+  // ── HAPUS (dengan undo) ──
+  window.acTaskDelete = function(taskId){
+    var id = curId(); if(id==null) return;
+    var tasks = loadTasks(id).slice();
+    var idx = tasks.findIndex(function(x){ return x.id===taskId; });
+    if(idx<0) return;
+    var removed = tasks[idx];
+    tasks.splice(idx,1);
+    saveTasks(id, tasks);
+    acTaskRender(id);
+    if(window.showUndoToast){
+      showUndoToast(removed.text||'Task', function(){
+        var arr = loadTasks(id).slice();
+        arr.splice(Math.min(idx, arr.length), 0, removed);
+        saveTasks(id, arr); acTaskRender(id);
+        if(window.showToast) showToast('↩️ Task dikembalikan','success',2500);
+      }, function(){}, '📝');
+    } else if(window.showToast){ showToast('Task dihapus','success'); }
+  };
+
+  // ── BUKA MODAL EDIT ──
+  // Isi dropdown divisi dari Struktur Org (dipakai setelah data dimuat)
+  function fillDivisiDropdown(selectedDivisi){
+    var sel = $id('acTaskDivisi');
+    var divisiList = (typeof _getAllDivisiList==='function') ? _getAllDivisiList() : [];
+    var opts = '<option value="">— Pilih divisi —</option>' + divisiList.map(function(d){
+      return '<option value="'+esc(d)+'"'+(selectedDivisi===d?' selected':'')+'>🏢 '+esc(d)+'</option>';
+    }).join('');
+    if(selectedDivisi && divisiList.indexOf(selectedDivisi)<0){
+      opts += '<option value="'+esc(selectedDivisi)+'" selected>🏢 '+esc(selectedDivisi)+' (lama)</option>';
+    }
+    if(sel) sel.innerHTML = opts;
+    var hint = $id('acTaskDivisiHint');
+    if(hint) hint.style.display = divisiList.length ? 'none' : 'block';
+  }
+
+  window.acTaskOpenEdit = function(taskId){
+    var id = curId(); if(id==null) return;
+    var t = loadTasks(id).find(function(x){ return x.id===taskId; });
+    if(!t) return;
+    _editAcaraId = id; _editTaskId = taskId;
+    // [REAL-TIME] tampilkan dulu apa yang ada, lalu tarik data terbaru dari
+    // Supabase (penting di HP) dan isi ulang dropdown divisi.
+    fillDivisiDropdown(t.divisi);
+    if(window.ensureStrukturOrgLoaded){
+      window.ensureStrukturOrgLoaded(true).then(function(){ fillDivisiDropdown(t.divisi); });
+    }
+    $id('acTaskName').value     = t.text || '';
+    $id('acTaskAssignee').value = t.assignee || '';
+    $id('acTaskStatus').value   = t.status || 'todo';
+    $id('acTaskDeadline').value = t.deadline || '';
+    $id('acTaskBudget').value   = t.budget || '';
+    $id('acTaskDesc').value     = t.desc || '';
+    $id('acTaskLink').value     = t.link || '';
+    if(window.refreshDescPreview) refreshDescPreview('acTaskDesc');
+    _acTaskPhotos = (t.photos || []).slice();
+    renderAcTaskPhotos();
+    $id('acTaskModalMsg').innerHTML = '';
+    $id('acaraTaskModal').style.display = 'flex';
+    setTimeout(function(){ $id('acTaskName').focus(); }, 100);
+  };
+
+  window.acTaskCloseEdit = function(){
+    $id('acaraTaskModal').style.display = 'none';
+    _editAcaraId = null; _editTaskId = null;
+    _acTaskPhotos = [];
+    var inp = $id('acTaskPhotoInput'); if(inp) inp.value = '';
+  };
+
+  // ── FOTO TASK (maks 3, kompres ke 600px) — mirip menu Project ──
+  function renderAcTaskPhotos(){
+    var area = $id('acTaskPhotoArea');
+    if(!area) return;
+    if(!_acTaskPhotos.length){
+      area.innerHTML = '<span class="muted" style="font-size:11px;">Belum ada foto.</span>';
+      return;
+    }
+    area.innerHTML = _acTaskPhotos.map(function(src, i){
+      return '<div style="position:relative;display:inline-block;">'
+        +'<img src="'+src+'" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid #d4e8dc;display:block;">'
+        +'<button onclick="acTaskRemovePhoto('+i+')" title="Hapus foto" '
+        +'style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;padding:0;border-radius:50%;background:#dc2626;color:#fff;font-size:10px;line-height:20px;text-align:center;min-width:0;">✕</button>'
+        +'</div>';
+    }).join('');
+  }
+
+  window.acTaskRemovePhoto = function(idx){
+    _acTaskPhotos.splice(idx, 1);
+    renderAcTaskPhotos();
+  };
+
+  window.acTaskAddPhotos = function(files){
+    var remaining = 3 - _acTaskPhotos.length;
+    if(remaining <= 0){ if(window.showToast) showToast('Maksimal 3 foto per task','warn'); return; }
+    var toAdd = Math.min(files.length, remaining);
+    var loaded = 0;
+    for(var i=0;i<toAdd;i++){
+      (function(file){
+        if(file.size > 2*1024*1024){
+          if(window.showToast) showToast('Foto "'+file.name+'" > 2MB, dilewati','warn');
+          loaded++; if(loaded===toAdd) renderAcTaskPhotos(); return;
+        }
+        var img2 = new Image();
+        var url2 = URL.createObjectURL(file);
+        img2.onload = function(){
+          var MAX=600, w=img2.width, h=img2.height;
+          var scale=Math.min(1,MAX/Math.max(w,h));
+          var c=document.createElement('canvas'); c.width=Math.round(w*scale); c.height=Math.round(h*scale);
+          c.getContext('2d').drawImage(img2,0,0,c.width,c.height);
+          URL.revokeObjectURL(url2);
+          c.toBlob(function(blob){
+            var fr=new FileReader();
+            fr.onload=function(ev){
+              _acTaskPhotos.push(ev.target.result);
+              loaded++;
+              if(loaded===toAdd) renderAcTaskPhotos();
+            };
+            fr.readAsDataURL(blob);
+          },'image/jpeg',0.8);
+        };
+        img2.src = url2;
+      })(files[i]);
+    }
+  };
+
+  // ── SIMPAN EDIT ──
+  window.acTaskSaveEdit = function(){
+    if(_editAcaraId==null || _editTaskId==null) return;
+    var name = ($id('acTaskName').value||'').trim();
+    if(!name){ $id('acTaskModalMsg').innerHTML = '<div class="err">Nama task tidak boleh kosong!</div>'; return; }
+    var divisi = $id('acTaskDivisi').value || '';
+    var divisiList = (typeof _getAllDivisiList==='function') ? _getAllDivisiList() : [];
+    // [TEGAS] Wajib pilih Divisi Penanggung Jawab — KECUALI memang belum ada
+    // divisi sama sekali di Struktur Org (biar tidak menghalangi).
+    if(!divisi && divisiList.length){
+      $id('acTaskModalMsg').innerHTML = '<div class="err">Pilih Divisi Penanggung Jawab dulu — biar jelas siapa yang bertanggung jawab.</div>';
+      return;
+    }
+    var tasks = loadTasks(_editAcaraId).slice();
+    var t = tasks.find(function(x){ return x.id===_editTaskId; });
+    if(!t) return;
+    t.text     = name;
+    t.divisi   = divisi;
+    t.assignee = ($id('acTaskAssignee').value||'').trim();
+    t.status   = $id('acTaskStatus').value || 'todo';
+    t.deadline = $id('acTaskDeadline').value || '';
+    t.budget   = ($id('acTaskBudget').value||'').trim();
+    t.desc     = ($id('acTaskDesc').value||'').trim();
+    t.link     = ($id('acTaskLink').value||'').trim();
+    t.photos   = _acTaskPhotos.slice();
+    t.updated  = new Date().toISOString();
+    saveTasks(_editAcaraId, tasks);
+    var rid = _editAcaraId;
+    acTaskCloseEdit();
+    acTaskRender(rid);
+    if(window.showToast) showToast('✅ Task tersimpan!','success');
+  };
+
+  window.acTaskDeleteFromModal = function(){
+    if(_editTaskId==null) return;
+    var tid = _editTaskId;
+    acTaskCloseEdit();
+    window.acTaskDelete(tid);
+  };
+})();
+</script>
+
 <!-- ═══ PROJECT MODULE SCRIPT ═══ -->
 <script>
 (function(){
@@ -12247,6 +12997,44 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       taskHtml='<p class="muted" style="font-size:12px;">Belum ada task. Tambahkan di bawah.</p>';
     }
 
+    // ─── SECTION PEMASUKAN / PEMBAYARAN (anggota + non-anggota) ───
+    // Pembayar bisa anggota (pilih dari dropdown) atau non-anggota (ketik nama).
+    // Non-anggota TIDAK jadi anggota — hanya tercatat di pemasukan project ini.
+    // Disimpan di p._bayar (ikut tersimpan dalam JSON project, tanpa tabel baru).
+    var bayarList = p._bayar || [];
+    var totalBayar = bayarList.reduce(function(s,b){ return s + (Number(b.jumlah)||0); }, 0);
+    var budgetNum = parseInt(p.budget)||0;
+    var pctBayar = budgetNum>0 ? Math.min(100, Math.round(totalBayar/budgetNum*100)) : 0;
+    var bayarMembersOpts = getMembersList().map(function(m){ var nm=escapeHtml(m.name); return '<option value="'+nm+'">'+nm+'</option>'; }).join('');
+    // List untuk kotak pencarian (filterSiswa): pakai NAMA sbg value & label,
+    // konsisten dgn dropdown project yg berbasis nama. Global agar bisa diakses
+    // dari oninput. (filterSiswa memakai field .id sbg value & .nama sbg teks.)
+    window.prjBayarAngList = getMembersList().map(function(m){ return { id:m.name, nama:m.name }; });
+    var bayarRiwayat = bayarList.length ? bayarList.map(function(b){
+      return '<div class="list-item"><div class="left"><div class="name">'+escapeHtml(b.nama||'(?)')+(b.luar?' <span style="font-size:10px;color:#b45309;font-weight:700;">(non-anggota)</span>':'')+buktiLink(b.bukti_url)+'</div><div class="meta">'+(b.tanggal||'')+(b.keterangan?' · '+escapeHtml(b.keterangan):'')+'</div></div><div style="text-align:right;"><span class="badge badge-masuk">'+IDR(b.jumlah)+'</span><button class="small danger" style="margin-top:4px" onclick="prjDeleteBayar(\''+id+'\',\''+b.id+'\')">Hapus</button></div></div>';
+    }).join('') : '<p class="muted" style="font-size:12px;">Belum ada pemasukan.</p>';
+    // Toggle buka/tutup form (collapsed default) supaya hemat ruang saat anggota banyak.
+    var bayarToggle = '(function(el){var b=el.parentElement.querySelector(\'.prj-bayar-form\');var open=b.style.display!==\'none\';b.style.display=open?\'none\':\'block\';el.querySelector(\'.toggle-arrow\').textContent=open?\'▶\':\'▼\';})(this)';
+    var bayarHtml = '<div style="border-top:2px dashed #e0ece5;margin:14px 0 12px;"></div>'
+      +'<div style="font-size:11px;font-weight:700;color:#7a9585;text-transform:uppercase;margin-bottom:6px;">💰 Pemasukan / Pembayaran</div>'
+      +'<div class="muted" style="font-size:12px;margin-bottom:6px;">Terkumpul <b style="color:#16a34a;">'+IDR(totalBayar)+'</b>'+(budgetNum>0?' / budget '+IDR(budgetNum)+' ('+pctBayar+'%)':'')+'</div>'
+      +(budgetNum>0?'<div class="prog"><div style="width:'+pctBayar+'%;height:100%;background:linear-gradient(90deg,#1a6644,#2d9e6b);border-radius:10px;"></div></div>':'')
+      // Header collapsible: klik untuk buka/tutup form tambah pemasukan
+      +'<div onclick="'+bayarToggle+'" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:9px 12px;background:#e8f5ef;border-radius:10px;user-select:none;margin-top:8px;"><span style="font-size:13px;font-weight:700;color:#059669;">➕ Tambah Pemasukan</span><span class="toggle-arrow" style="font-size:11px;color:#059669;font-weight:700;">▶</span></div>'
+      +'<div class="prj-bayar-form" style="display:none;margin-top:8px;">'
+        +'<label>Pilih Anggota</label>'
+        +'<input type="text" id="prjBayarSearch" autocomplete="off" placeholder="🔍 Cari nama anggota..." oninput="filterSiswa(\'prjBayarSearch\',\'prjBayarAng\',prjBayarAngList)">'
+        +'<select id="prjBayarAng">'+(bayarMembersOpts||'<option value="">— Belum ada anggota —</option>')+'</select>'
+        +'<input type="text" id="prjBayarNamaLuar" autocomplete="off" placeholder="Nama pembayar (non-anggota)" style="display:none;">'
+        +'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:400;cursor:pointer;"><input type="checkbox" id="prjBayarLuar" style="width:auto;margin:0;" onchange="toggleBayarLuar(\'prj\')"><span style="font-size:13px;">Non-anggota (ikut bayar/shodaqoh saja — tidak jadi anggota)</span></label>'
+        +'<div class="row"><div><label>Tanggal</label><input type="date" id="prjBayarTgl"></div><div><label>Jumlah (Rp)</label><input type="number" id="prjBayarJml" min="1" placeholder="50000"></div></div>'
+        +'<label>Keterangan (opsional)</label><input type="text" id="prjBayarKet" placeholder="cth: donasi, iuran, shodaqoh">'
+        +'<label>Foto Bukti (opsional)</label><input type="file" id="prjBayarFile" accept="image/*">'
+        +'<button onclick="prjAddBayar(\''+id+'\')">➕ Simpan Pemasukan</button>'
+        +'<div id="prjBayarMsg"></div>'
+      +'</div>'
+      +'<div style="margin-top:10px;">'+bayarRiwayat+'</div>';
+
     $id('prjDetailContent').innerHTML='<div class="card">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:12px;">'
       +'<div><h2 style="margin:0;font-size:18px;">'+p.nama+'</h2></div>'
@@ -12276,6 +13064,8 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       +(anggotaChips?'<div style="margin-bottom:12px;"><div style="font-size:11px;font-weight:700;color:#7a9585;text-transform:uppercase;margin-bottom:5px;">Tim Penanggung Jawab</div><div style="display:flex;flex-wrap:wrap;gap:4px;">'+anggotaChips+'</div></div>':'')
       // Progress
       +(progress>=0?'<div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:11px;font-weight:700;color:#7a9585;text-transform:uppercase;">Progress Task</span><span style="font-size:12px;font-weight:800;color:#1a6644;">'+progress+'%</span></div><div class="prog"><div style="width:'+progress+'%;height:100%;background:linear-gradient(90deg,#1a6644,#2d9e6b);border-radius:10px;transition:width 1s;"></div></div></div>':'')
+      // Pemasukan / Pembayaran
+      +bayarHtml
       // Tasks
       +'<div style="font-size:11px;font-weight:700;color:#7a9585;text-transform:uppercase;margin-bottom:8px;">📋 Task List</div>'
       +taskHtml
@@ -12286,6 +13076,55 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       +'</div>'
       +'<p style="font-size:11px;color:#7a9585;margin-top:6px;">💡 Klik nama task untuk tambah deskripsi, foto, link, dan detail lainnya.</p>'
       +'</div>';
+    if($id('prjBayarTgl')) $id('prjBayarTgl').valueAsDate = new Date();
+  };
+
+  /* ─── PEMASUKAN / PEMBAYARAN PROJECT (anggota + non-anggota) ─────────────
+     Disimpan di p._bayar (ikut dalam JSON project). Pembayar non-anggota
+     hanya tercatat di sini — TIDAK menjadi anggota. */
+  window.prjAddBayar = async function(prjId){
+    var projects=loadProjects();
+    var p=projects.find(function(x){ return x.id===prjId; });
+    if(!p) return;
+    var luar = $('prjBayarLuar') && $('prjBayarLuar').checked;
+    var jml = parseUang($('prjBayarJml').value);
+    var nama='';
+    if(luar){
+      nama = ($('prjBayarNamaLuar').value||'').trim();
+      if(!nama){ setMsg('prjBayarMsg','Isi nama pembayar (non-anggota) dulu', true); return; }
+    } else {
+      nama = $('prjBayarAng').value;
+      if(!nama){ setMsg('prjBayarMsg','Pilih anggota dulu (atau centang Non-anggota)', true); return; }
+    }
+    if(!jml || jml<=0){ setMsg('prjBayarMsg','Jumlah harus > 0', true); return; }
+    var bukti=null;
+    try { if(typeof uploadBukti==='function') bukti = await uploadBukti('prjBayarFile'); }
+    catch(e){ setMsg('prjBayarMsg','Gagal upload foto: '+e.message, true); return; }
+    p._bayar = p._bayar || [];
+    p._bayar.unshift({
+      id: uuid(),
+      tanggal: $('prjBayarTgl').value || new Date().toISOString().slice(0,10),
+      nama: nama, jumlah: jml,
+      keterangan: ($('prjBayarKet').value||'').trim() || null,
+      luar: !!luar, bukti_url: bukti||null,
+      created: new Date().toISOString(),
+      dicatat_oleh: (window.currentProf && window.currentProf.id) || null,
+    });
+    p.updated = new Date().toISOString();
+    saveProjects(projects);
+    showToast('✅ Pemasukan ditambahkan!');
+    prjOpenDetail(prjId);
+  };
+
+  window.prjDeleteBayar = function(prjId, bayarId){
+    var projects=loadProjects();
+    var p=projects.find(function(x){ return x.id===prjId; });
+    if(!p || !p._bayar) return;
+    p._bayar = p._bayar.filter(function(b){ return String(b.id)!==String(bayarId); });
+    p.updated = new Date().toISOString();
+    saveProjects(projects);
+    showToast('Pemasukan dihapus');
+    prjOpenDetail(prjId);
   };
 
   /* ─── TASKS ──────────────────────────────────────────── */
@@ -12839,7 +13678,8 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       <div style="margin-top:10px;padding:10px 14px;background:linear-gradient(135deg,#fef3e8,#fffbf0);border-radius:10px;border-left:3px solid #d97706;">
         <div style="font-size:10px;font-weight:700;color:#d97706;text-transform:uppercase;margin-bottom:2px;">ℹ️ Catatan</div>
         <div style="font-size:11px;color:#92400e;">
-          Sisa setiap acara otomatis terhitung sebagai bagian dari kas organisasi.
+          Sisa setiap acara dihitung <b>terpisah</b> dari Saldo Kas, dan ditampilkan sebagai
+          <b>Sisa Dana Acara</b> di Ringkasan Keuangan (ikut dijumlah ke Total Seluruh Saldo).
           Untuk melihat rincian transaksi, buka menu <b>Acara</b> → pilih acara.
         </div>
       </div>`;
@@ -13062,6 +13902,198 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
 
 })();
 </script>
+
+  <!-- ═══ TEMPAT SAMPAH / RECYCLE BIN ═══ -->
+  <script>
+  (function(){
+    'use strict';
+    // Tabel yang barisnya ditampung ke recycle bin saat dihapus.
+    // (recycle_bin, audit_log, projects, struktur_org SENGAJA tidak ditampung)
+    var CAPTURE = {
+      transaksi:'💵 Kas / Transaksi', anggota:'👥 Anggota', sesi:'📅 Sesi Ngaji',
+      kehadiran:'📋 Kehadiran', catatan_sesi:'📝 Catatan Sesi',
+      acara:'📅 Acara', acara_bayar:'🎪 Pembayaran/Pengeluaran Acara',
+      qurban_periode:'🐐 Periode Qurban', qurban_bayar:'💰 Pemasukan Qurban',
+      qurban_keluar:'💸 Pengeluaran Qurban', kategori_anggota:'🏷️ Kategori Anggota',
+      musyawarah:'🗣️ Musyawarah', musyawarah_peserta:'👤 Peserta Musyawarah',
+      musyawarah_keuangan:'💵 Keuangan Musyawarah'
+    };
+    window._recycleTabelLabel = CAPTURE;
+
+    function labelRow(tabel, r){
+      if(!r) return '(data)';
+      var n = r.nama || r.judul || r.keterangan || r.text || r.bulan || '';
+      var extra = [];
+      if(r.jumlah != null) extra.push(IDR(r.jumlah));
+      if(r.tanggal) extra.push(String(r.tanggal));
+      var s = String(n || '');
+      if(extra.length) s += (s ? ' — ' : '') + extra.join(' · ');
+      return s || ('ID ' + (r.id != null ? r.id : '?'));
+    }
+
+    var _origFrom = db.from.bind(db);
+    var FILTER_METHODS = ['eq','neq','gt','gte','lt','lte','like','ilike','is','in','contains','match'];
+
+    // Snapshot baris yang AKAN dihapus → simpan ke recycle_bin (tidak memblokir delete)
+    function snapshot(tabel, filters){
+      if(!filters.length) return Promise.resolve(); // jangan snapshot delete tanpa filter (bahaya: 1 tabel penuh)
+      var q = _origFrom(tabel).select('*');
+      filters.forEach(function(f){ q = q[f.m].apply(q, f.args); });
+      return q.then(function(res){
+        var rows = (res && res.data) || [];
+        if(!rows.length) return;
+        var oleh = (window.currentProf && (currentProf.nama_lengkap || currentProf.nama)) || '(tidak diketahui)';
+        var recs = rows.map(function(r){
+          return { tabel: tabel, label: labelRow(tabel, r), data: r, oleh_nama: oleh, deleted_at: new Date().toISOString() };
+        });
+        return _origFrom('recycle_bin').insert(recs).then(function(){}, function(){});
+      }, function(){ /* snapshot gagal → diam, jangan ganggu delete */ });
+    }
+
+    // Patch db.from(): bungkus .delete() untuk tabel yang di-capture
+    db.from = function(tabel){
+      var qb = _origFrom(tabel);
+      if(!CAPTURE[tabel]) return qb;
+      var _origDelete = qb.delete.bind(qb);
+      qb.delete = function(){
+        var fb = _origDelete.apply(qb, arguments);
+        return wrap(fb, [], tabel);
+      };
+      return qb;
+    };
+
+    function wrap(fb, filters, tabel){
+      return new Proxy(fb, {
+        get: function(target, prop){
+          if(prop === 'then'){
+            return function(resolve, reject){
+              return snapshot(tabel, filters)
+                .catch(function(){})
+                .then(function(){ return target; }) // jalankan delete asli & adopsi hasilnya
+                .then(resolve, reject);
+            };
+          }
+          var val = target[prop];
+          if(typeof val === 'function'){
+            return function(){
+              var args = Array.prototype.slice.call(arguments);
+              if(FILTER_METHODS.indexOf(prop) !== -1) filters.push({ m: prop, args: args });
+              var r = val.apply(target, args);
+              if(r && typeof r.then === 'function') return wrap(r, filters, tabel);
+              return r;
+            };
+          }
+          return val;
+        }
+      });
+    }
+  })();
+
+  // ── Data & tampilan Tempat Sampah ──
+  var recycleData = [];
+  async function loadRecycle(){
+    var el = $('recycleList');
+    if(!el) return;
+    el.innerHTML = '<p class="muted">Memuat...</p>';
+    var res = await db.from('recycle_bin').select('*').order('deleted_at', { ascending:false }).limit(2000);
+    if(res.error){
+      var m = res.error.message || '';
+      if(m.indexOf('recycle_bin') !== -1 || res.error.code === '42P01'){
+        el.innerHTML = '<div class="card" style="border:2px solid #fde68a;background:#fef9c3;">'
+          + '<h2 style="color:#92400e;">⚠️ Tabel Belum Dibuat</h2>'
+          + '<p style="font-size:13px;color:#78350f;margin-bottom:10px;">Jalankan SQL ini sekali di <b>Supabase → SQL Editor</b> agar Tempat Sampah berfungsi:</p>'
+          + '<pre style="background:#1a1a1a;color:#4ade80;padding:14px;border-radius:8px;font-size:11px;overflow-x:auto;white-space:pre-wrap;">'
+          + 'CREATE TABLE IF NOT EXISTS recycle_bin (\n'
+          + '  id bigserial PRIMARY KEY,\n'
+          + '  tabel text NOT NULL,\n'
+          + '  label text,\n'
+          + '  data jsonb NOT NULL,\n'
+          + '  oleh_nama text,\n'
+          + '  deleted_at timestamptz DEFAULT now()\n'
+          + ');\n'
+          + 'ALTER TABLE recycle_bin ENABLE ROW LEVEL SECURITY;\n'
+          + 'CREATE POLICY "allow_all_recycle" ON recycle_bin FOR ALL\n'
+          + '  USING (auth.uid() IS NOT NULL) WITH CHECK (auth.uid() IS NOT NULL);'
+          + '</pre>'
+          + '<button onclick="loadRecycle()" class="secondary" style="margin-top:8px;">🔄 Coba Lagi</button></div>';
+        return;
+      }
+      el.innerHTML = '<p class="err">Gagal memuat: ' + escapeHtml(m) + '</p>';
+      return;
+    }
+    recycleData = res.data || [];
+    renderRecycle();
+  }
+
+  function renderRecycle(){
+    var el = $('recycleList');
+    if(!el) return;
+    if(!recycleData.length){
+      el.innerHTML = '<p class="muted">🗑️ Tempat sampah kosong. Semua data yang dihapus dari menu mana pun akan otomatis muncul di sini.</p>';
+      return;
+    }
+    var LABELS = window._recycleTabelLabel || {};
+    el.innerHTML = recycleData.map(function(e){
+      var modul = LABELS[e.tabel] || e.tabel;
+      return '<div style="padding:12px;background:#f0f7f3;border-radius:10px;margin-bottom:8px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">'
+        + '<div style="flex:1;min-width:0;">'
+        + '<div style="font-weight:700;font-size:13px;word-break:break-word;">' + escapeHtml(e.label || '(tanpa nama)') + '</div>'
+        + '<div class="muted" style="font-size:11px;margin-top:2px;">' + escapeHtml(modul) + ' · dihapus ' + _fmtWaktu(e.deleted_at) + (e.oleh_nama ? (' · oleh ' + escapeHtml(e.oleh_nama)) : '') + '</div>'
+        + '</div>'
+        + '<div style="display:flex;gap:6px;flex-shrink:0;">'
+        + '<button class="small" onclick="restoreRecycle(' + e.id + ')" style="background:linear-gradient(135deg,#1a6644,#2d9e6b);">↩ Pulihkan</button>'
+        + '<button class="small danger" onclick="hapusPermanenRecycle(' + e.id + ')">🗑️ Hapus Permanen</button>'
+        + '</div></div></div>';
+    }).join('');
+  }
+
+  async function restoreRecycle(id){
+    var e = recycleData.find(function(x){ return x.id === id; });
+    if(!e){ showToast('Data tidak ditemukan','error'); return; }
+    var row = e.data || {};
+    // Re-insert ke tabel asal — upsert by id biar aman kalau id-nya masih ada
+    var res = await db.from(e.tabel).upsert(row, { onConflict: 'id' }).select();
+    if(res.error){
+      // Fallback: insert tanpa id (biar di-generate ulang) kalau upsert gagal
+      var tanpaId = Object.assign({}, row); delete tanpaId.id;
+      res = await db.from(e.tabel).insert(tanpaId).select();
+    }
+    if(res.error){ showToast('Gagal memulihkan: ' + res.error.message, 'error', 6000); return; }
+    await db.from('recycle_bin').delete().eq('id', id);
+    recycleData = recycleData.filter(function(x){ return x.id !== id; });
+    renderRecycle();
+    showToast('✅ "' + (e.label || 'Data') + '" berhasil dipulihkan', 'success');
+    // Refresh menu terkait kalau sedang terbuka
+    try {
+      var map = { transaksi: loadKasMasuk, anggota: loadAnggota, sesi: loadSesi, acara: loadAcara,
+                  qurban_periode: loadQurban, kategori_anggota: loadKategori, musyawarah: loadMusyawarah };
+      if (map[e.tabel]) map[e.tabel]();
+    } catch(_) {}
+  }
+
+  async function hapusPermanenRecycle(id){
+    var e = recycleData.find(function(x){ return x.id === id; });
+    if(!(await askConfirm('Hapus PERMANEN "' + (e ? e.label : 'data') + '"?\nData ini TIDAK bisa dikembalikan lagi.'))) return;
+    var res = await db.from('recycle_bin').delete().eq('id', id);
+    if(res.error){ showToast('Gagal: ' + res.error.message, 'error'); return; }
+    recycleData = recycleData.filter(function(x){ return x.id !== id; });
+    renderRecycle();
+    showToast('Dihapus permanen', 'success');
+  }
+
+  async function kosongkanRecycle(){
+    if(!recycleData.length){ showToast('Tempat sampah sudah kosong','warn'); return; }
+    if(!(await askConfirm('Kosongkan SEMUA ' + recycleData.length + ' item di tempat sampah?\nSemua data TIDAK bisa dikembalikan lagi.'))) return;
+    var ids = recycleData.map(function(x){ return x.id; });
+    for(var i=0;i<ids.length;i+=100){
+      await db.from('recycle_bin').delete().in('id', ids.slice(i, i+100));
+    }
+    recycleData = [];
+    renderRecycle();
+    showToast('🗑️ Tempat sampah dikosongkan', 'success');
+  }
+  </script>
 
   <!-- ═══ TOUCH SUPPORT: efek hover menu di HP ═══ -->
   <script>
