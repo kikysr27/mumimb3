@@ -57,6 +57,126 @@
   [data-theme="dark"] .desc-h2 { color: #4ade80; }
   [data-theme="dark"] .desc-h3 { color: #34d399; }
 
+  /* ─── TABLE PICKER POPUP (visual grid kayak Word) ─── */
+  .table-picker-popup {
+    position: fixed; z-index: 1100;
+    background: #fff; border: 1.5px solid #d4e8dc; border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    padding: 10px;
+    font-family: inherit;
+    animation: ctxIn 0.12s ease-out;
+  }
+  .table-picker-popup .tp-label {
+    font-size: 11px; font-weight: 800; color: #1a6644;
+    margin-bottom: 8px;
+  }
+  .table-picker-popup .tp-grid {
+    display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px;
+    margin-bottom: 6px;
+  }
+  .table-picker-popup .tp-cell {
+    width: 16px; height: 16px;
+    background: #fff; border: 1px solid #d4d4d8;
+    border-radius: 2px; cursor: pointer;
+    transition: background 0.08s;
+  }
+  .table-picker-popup .tp-cell.hover {
+    background: #2d9e6b; border-color: #1a6644;
+  }
+  .table-picker-popup .tp-size {
+    font-size: 11px; color: #4a6056; text-align: center;
+    font-weight: 600;
+  }
+
+  /* Tabel dalam wysiwyg editor */
+  .wysiwyg-editor table.md-table, #editor table.md-table,
+  .wysiwyg-editor table, #editor table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8px 0;
+    font-size: 13px;
+  }
+  .wysiwyg-editor table td, .wysiwyg-editor table th,
+  #editor table td, #editor table th {
+    border: 1px solid #d4e8dc;
+    padding: 6px 8px;
+    min-width: 40px;
+    vertical-align: top;
+  }
+  .wysiwyg-editor table td:focus, #editor table td:focus {
+    outline: 2px solid #2d9e6b; outline-offset: -2px;
+    background: #f0f7f3;
+  }
+  .wysiwyg-editor table tr:first-child td, #editor table tr:first-child td {
+    background: #f0f7f3;
+  }
+  [data-theme="dark"] .wysiwyg-editor table td, [data-theme="dark"] .wysiwyg-editor table th {
+    border-color: rgba(45,158,107,0.3); color: #d4e8dc;
+  }
+  [data-theme="dark"] .wysiwyg-editor table tr:first-child td {
+    background: rgba(45,158,107,0.15);
+  }
+
+  /* Gambar dalam editor */
+  .wysiwyg-editor img, #editor img {
+    max-width: 100%; height: auto;
+    border-radius: 6px; margin: 6px 0;
+    display: block;
+  }
+
+  /* ─── COLOR PICKER POPUP (Word-style) ─── */
+  .color-picker-popup {
+    position: fixed; z-index: 1100;
+    background: #fff; border: 1.5px solid #d4e8dc; border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+    padding: 10px;
+    min-width: 240px;
+    font-family: inherit;
+    animation: ctxIn 0.12s ease-out;
+  }
+  .color-picker-popup .cp-section { margin-bottom: 4px; }
+  .color-picker-popup .cp-label {
+    font-size: 10px; font-weight: 800; color: #4a6056;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    margin-bottom: 4px;
+  }
+  .color-picker-popup .cp-grid {
+    display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px;
+    margin-bottom: 6px;
+  }
+  .color-picker-popup .cp-swatch {
+    width: 24px; height: 24px; border: 1px solid #d4d4d8;
+    border-radius: 4px; cursor: pointer; padding: 0; margin: 0;
+    transition: transform 0.1s;
+  }
+  .color-picker-popup .cp-swatch:hover {
+    transform: scale(1.15); border-color: #1a6644;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+  .color-picker-popup .cp-remove {
+    width: 100%; background: #fff0f0; color: #b91c1c;
+    border: 1px solid #fca5a5; padding: 6px;
+    border-radius: 6px; font-size: 11px; font-weight: 700;
+    cursor: pointer; margin: 0 0 6px 0;
+  }
+  .color-picker-popup .cp-remove:hover { background: #fee2e2; }
+  .color-picker-popup .cp-custom {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 0;
+  }
+  .color-picker-popup .cp-custom-input {
+    width: 32px; height: 24px; padding: 0; cursor: pointer;
+    border: 1px solid #d4d4d8; border-radius: 4px; margin: 0;
+  }
+  [data-theme="dark"] .color-picker-popup { background: rgba(20,40,30,0.95); border-color: rgba(45,158,107,0.4); }
+  [data-theme="dark"] .color-picker-popup .cp-label { color: #aac0b3; }
+
+  /* Visual untuk sub/sup/strike di editor */
+  .wysiwyg-editor sup, #editor sup { font-size: 0.75em; vertical-align: super; line-height: 0; }
+  .wysiwyg-editor sub, #editor sub { font-size: 0.75em; vertical-align: sub; line-height: 0; }
+  .wysiwyg-editor s, .wysiwyg-editor strike, .wysiwyg-editor del,
+  #editor s, #editor strike, #editor del { text-decoration: line-through; }
+
   /* ─── STYLE PICKER POPUP (Font / Ukuran / Spasi / Align) ─── */
   .style-picker-popup {
     position: fixed; z-index: 1100;
@@ -524,9 +644,10 @@
 
   /* Bold inline */
   .desc-bold { font-weight: 800; }
-  /* Italic, underline, highlight inline */
+  /* Italic, underline, strike, highlight inline */
   .desc-italic { font-style: italic; }
   .desc-underline { text-decoration: underline; text-underline-offset: 3px; }
+  .desc-strike { text-decoration: line-through; }
   .desc-highlight {
     background: #fef08a; color: #422006;
     padding: 0 4px; border-radius: 3px;
@@ -1551,8 +1672,9 @@
         <div class="menu-card" onclick="openSection('absensi')"><div class="ic">📋</div><div class="lb">Absensi</div><div class="sub">Catat kehadiran</div></div>
         <div class="menu-card" onclick="openSection('musyawarah')"><div class="ic">🗣️</div><div class="lb">Musyawarah</div><div class="sub">Meeting & hasil rapat</div></div>
         <div class="menu-card" onclick="openSection('rekap')"><div class="ic">📈</div><div class="lb">Rekap</div><div class="sub">Rekap kehadiran</div></div>
-        <div class="menu-card" onclick="openSection('acara')"><div class="ic">📅</div><div class="lb">Acara</div><div class="sub">Event & progress</div></div>
+        <div class="menu-card" onclick="openSection('acara')"><div class="ic">🎉</div><div class="lb">Acara</div><div class="sub">Event & progress</div></div>
         <div class="menu-card" onclick="openSection('kalender')"><div class="ic">📆</div><div class="lb">Kalender</div><div class="sub">Cari tanggal kosong</div></div>
+        <div class="menu-card" onclick="openSection('catatan')"><div class="ic">📝</div><div class="lb">Catatan</div><div class="sub">Catatan bebas</div></div>
         <div class="menu-card" onclick="openSection('laporan')"><div class="ic">📑</div><div class="lb">Laporan</div><div class="sub">Laporan & cetak PDF</div></div>
         <div class="menu-card" onclick="openSection('strukorg')"><div class="ic">🏛️</div><div class="lb">Struktur Org.</div><div class="sub">Bagan organisasi & PDF</div></div>
         <div class="menu-card" onclick="openSection('project')"><div class="ic">🗂️</div><div class="lb">Project</div><div class="sub">Kelola proyek & tim</div></div>
@@ -1567,7 +1689,7 @@
     <!-- ═══ SALDO ═══ -->
     <div id="sec-saldo" class="section" style="display:none;">
       <button class="back" onclick="goBack()">← Menu</button>
-      <div class="card">
+      <div class="card" data-no-collapse>
         <h2>Ringkasan Keuangan</h2>
         <div class="saldo-grid">
           <div class="saldo-card masuk"><div class="label">Saldo Kas</div><div class="value" id="sumKas">Rp 0</div></div>
@@ -1612,6 +1734,31 @@
       <div class="card">
         <h2>10 Transaksi Terakhir</h2>
         <div id="lastTx"><p class="muted">Belum ada transaksi.</p></div>
+      </div>
+
+      <!-- Arsip Tahunan Saldo -->
+      <div class="card" id="arsipSaldoCard">
+        <h2>📦 Arsip Saldo Tahunan</h2>
+        <p class="muted" style="font-size:11px;margin-bottom:10px;">
+          Simpan snapshot <b>Sisa Dana per Acara</b>, <b>Statistik Singkat</b>, dan <b>10 Transaksi Terakhir</b>
+          sebelum ganti tahun. Bisa dilihat kapan saja sebagai referensi.
+        </p>
+        <button onclick="arsipkanSaldoTahunIni()" style="background:linear-gradient(135deg,#d97706,#f59e0b);">
+          📦 Arsipkan Snapshot Tahun Ini
+        </button>
+        <div id="arsipSaldoList" style="margin-top:12px;">
+          <p class="muted" style="font-size:11px;">Belum ada arsip.</p>
+        </div>
+        <div id="arsipSaldoMsg" style="margin-top:6px;font-size:11px;"></div>
+      </div>
+    </div>
+
+    <!-- Modal Lihat Arsip Saldo -->
+    <div id="arsipSaldoModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeArsipSaldoModal()">
+      <div class="modal-box" style="max-width:680px;">
+        <button class="modal-close" onclick="closeArsipSaldoModal()">✕ Tutup</button>
+        <h2 id="arsipSaldoModalTitle" style="margin-bottom:10px;">📦 Arsip Saldo</h2>
+        <div id="arsipSaldoModalContent"></div>
       </div>
     </div>
 
@@ -1815,12 +1962,39 @@
       </div>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-          <h2 style="margin-bottom:0;">Daftar Anggota</h2>
-          <button class="small" onclick="exportAnggotaPDF()" style="background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;display:flex;align-items:center;gap:6px;width:auto;padding:8px 14px;font-size:12px;">
-            📄 Export PDF
-          </button>
+          <h2 style="margin-bottom:0;">Daftar Anggota <span id="anggotaCount" class="muted" style="font-size:12px;font-weight:400;"></span></h2>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button id="anggotaToggleBtn" class="small secondary" onclick="toggleAnggotaList()" style="width:auto;padding:8px 12px;font-size:12px;">
+              👁️ Tampilkan
+            </button>
+            <button class="small" onclick="exportAnggotaPDF()" style="background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;display:flex;align-items:center;gap:6px;width:auto;padding:8px 14px;font-size:12px;">
+              📄 Export PDF
+            </button>
+          </div>
         </div>
-        <div id="listAnggota"><p class="muted">Belum ada anggota.</p></div>
+        <input id="anggotaSearch" type="text" placeholder="🔍 Cari nama anggota..."
+               oninput="filterListAnggota()" style="margin-bottom:8px;display:none;">
+        <div id="listAnggotaWrap" style="display:none;">
+          <div id="listAnggota"><p class="muted">Belum ada anggota.</p></div>
+        </div>
+        <p id="anggotaHiddenHint" class="muted" style="font-size:12px;padding:14px;text-align:center;background:#f7faf8;border-radius:8px;">
+          📋 Daftar anggota disembunyikan. Klik tombol <b>👁️ Tampilkan</b> di atas, atau ketik di kotak pencarian, untuk melihat.
+        </p>
+      </div>
+
+      <!-- ═══ KATEGORI ANGGOTA (cuma nama — target iuran/dana diatur di menu masing-masing) ═══ -->
+      <div class="card">
+        <h2>🏷️ Kategori Anggota</h2>
+        <p class="muted" style="margin-bottom:10px;font-size:12px;">
+          Daftar kategori anggota (Pekerja UMR, Non-UMR, Usaha, Pelajar, Mencari Kerja, dll.).
+          Tambah/hapus bebas. <b>Target nominal</b> (kas bulanan / dana acara / qurban) diatur
+          di menu masing-masing — di sini cuma kelola namanya.
+        </p>
+        <label>Nama Kategori Baru</label>
+        <input type="text" id="agKatNama" placeholder="Cth: Pekerja UMR / Pelajar / Wirausaha">
+        <button onclick="addKategoriFromAnggota()">➕ Tambah Kategori</button>
+        <div id="agKatMsg"></div>
+        <div id="agKatList" style="margin-top:12px;"></div>
       </div>
     </div>
 
@@ -1918,9 +2092,31 @@
           </div>
           <input id="mswSearch" type="text" placeholder="🔍 Cari judul, tanggal, atau peserta..."
             oninput="renderMswList()" style="margin-bottom:8px;">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px;">
+            <label style="font-size:11px;color:#7a9585;font-weight:700;text-transform:uppercase;margin:0;letter-spacing:0.4px;">📅 Periode:</label>
+            <select id="mswFilterTahun" onchange="renderMswList()" style="width:auto;padding:7px 10px;font-size:12px;margin:0;">
+              <option value="semua">Semua Tahun</option>
+            </select>
+            <select id="mswFilterBulan" onchange="renderMswList()" style="width:auto;padding:7px 10px;font-size:12px;margin:0;">
+              <option value="semua">Semua Bulan</option>
+              <option value="01">Januari</option>
+              <option value="02">Februari</option>
+              <option value="03">Maret</option>
+              <option value="04">April</option>
+              <option value="05">Mei</option>
+              <option value="06">Juni</option>
+              <option value="07">Juli</option>
+              <option value="08">Agustus</option>
+              <option value="09">September</option>
+              <option value="10">Oktober</option>
+              <option value="11">November</option>
+              <option value="12">Desember</option>
+            </select>
+            <span id="mswFilterCount" style="font-size:11px;color:#7a9585;font-weight:700;"></span>
+          </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:4px;">
             <select id="mswFilterStatus" onchange="renderMswList()" style="width:auto;padding:7px 10px;font-size:12px;margin:0;">
-              <option value="semua">Semua</option>
+              <option value="semua">Semua Status</option>
               <option value="aktif">Aktif</option>
               <option value="arsip">Arsip</option>
             </select>
@@ -2038,7 +2234,13 @@
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('bold')" title="Tebal (Ctrl+B)"><b>B</b></button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('italic')" title="Miring (Ctrl+I)"><i>I</i></button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('underline')" title="Garis Bawah (Ctrl+U)" style="text-decoration:underline;">U</button>
-            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('highlight')" title="Highlight" style="background:#fef08a;color:#422006;">🖍</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('strikethrough')" title="Coret" style="text-decoration:line-through;">S</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('superscript')" title="Superscript">x²</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('subscript')" title="Subscript">x₂</button>
+            <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('acDeskripsi'), this, 'fore')" title="Warna Huruf" style="border-bottom:3px solid #dc2626;">A▾</button>
+            <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('acDeskripsi'), this, 'hilite')" title="Warna Highlight" style="background:#fef08a;color:#422006;">🖍▾</button>
+            <button type="button" class="desc-toolbar-btn" data-table-btn onclick="window.showTablePicker(document.getElementById('acDeskripsi'), this)" title="Sisipkan Tabel">⊞ Tabel</button>
+            <button type="button" class="desc-toolbar-btn" onclick="window.pickImageForEditor(document.getElementById('acDeskripsi'))" title="Sisipkan Gambar">🖼️ Gambar</button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('link')" title="Sisipkan Link (Ctrl+K)">🔗 Link</button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('ul')" title="Bullet List">• List</button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('ol')" title="Numbered List">1. List</button>
@@ -2098,6 +2300,54 @@
     </div>
 
     <!-- ═══ KALENDER KEGIATAN ═══ -->
+    <!-- ═══ CATATAN BEBAS ═══ -->
+    <div id="sec-catatan" class="section" style="display:none;">
+      <button class="back" onclick="goBack()">← Menu</button>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+          <h2 style="margin:0;">📝 Catatan</h2>
+          <button onclick="bukaCatatanBaru()" style="width:auto;padding:8px 14px;font-size:13px;">➕ Catatan Baru</button>
+        </div>
+        <p class="muted" style="font-size:12px;margin-bottom:10px;">
+          Catatan bebas dengan format lengkap (heading, bold, tabel, gambar, dll.) — sama seperti notulensi musyawarah atau deskripsi acara.
+        </p>
+        <input id="catatanSearch" type="text" placeholder="🔍 Cari judul catatan..." oninput="renderCatatanList()" style="margin-bottom:8px;">
+        <div id="catatanList"><p class="muted">Memuat catatan...</p></div>
+      </div>
+
+      <!-- Form edit/buat catatan -->
+      <div id="catatanFormCard" class="card" style="display:none;">
+        <button class="back" onclick="tutupFormCatatan()" style="margin-bottom:10px;">← Kembali ke Daftar</button>
+        <label>Judul Catatan</label>
+        <input id="catJudul" type="text" placeholder="Cth: Ide acara perpisahan, Kontak vendor, Resep snack...">
+        <label>Isi Catatan</label>
+        <div class="desc-toolbar">
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('h1')" title="Judul Besar">H1</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('h2')" title="Sub Judul">H2</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('h3')" title="Sub-Sub">H3</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('bold')" title="Tebal"><b>B</b></button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('italic')" title="Miring"><i>I</i></button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('underline')" title="Garis Bawah" style="text-decoration:underline;">U</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('strikethrough')" title="Coret" style="text-decoration:line-through;">S</button>
+          <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('catIsi'), this, 'fore')" title="Warna Huruf" style="border-bottom:3px solid #dc2626;">A▾</button>
+          <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('catIsi'), this, 'hilite')" title="Warna Highlight" style="background:#fef08a;color:#422006;">🖍▾</button>
+          <button type="button" class="desc-toolbar-btn" data-table-btn onclick="window.showTablePicker(document.getElementById('catIsi'), this)" title="Tabel">⊞ Tabel</button>
+          <button type="button" class="desc-toolbar-btn" onclick="window.pickImageForEditor(document.getElementById('catIsi'))" title="Gambar">🖼️ Gambar</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('link')" title="Link">🔗 Link</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('ul')" title="Bullet">• List</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('ol')" title="Numbered">1. List</button>
+          <button type="button" class="desc-toolbar-btn" data-style-btn onclick="window.showStylePicker(document.getElementById('catIsi'), this)" title="Style" style="background:#dbeafe;color:#1e3a8a;">Aa Style ▾</button>
+        </div>
+        <div id="catIsi" class="wysiwyg-editor" contenteditable="true" spellcheck="true" style="min-height:280px;max-height:600px;"
+             data-placeholder="Tulis catatan apa saja di sini. Pilih kata lalu klik tombol format di atas, atau klik kanan..."></div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <button onclick="simpanCatatan()" style="flex:1;">💾 Simpan Catatan</button>
+          <button id="catatanHapusBtn" class="danger" onclick="hapusCatatan()" style="flex:1;display:none;">🗑️ Hapus</button>
+        </div>
+        <div id="catMsg" style="margin-top:6px;"></div>
+      </div>
+    </div>
+
     <div id="sec-kalender" class="section" style="display:none;">
       <button class="back" onclick="goBack()">← Menu</button>
       <div class="card">
@@ -2254,7 +2504,13 @@
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('bold')" title="Tebal (Ctrl+B)"><b>B</b></button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('italic')" title="Miring (Ctrl+I)"><i>I</i></button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('underline')" title="Garis Bawah (Ctrl+U)" style="text-decoration:underline;">U</button>
-            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('highlight')" title="Highlight" style="background:#fef08a;color:#422006;">🖍</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('strikethrough')" title="Coret" style="text-decoration:line-through;">S</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('superscript')" title="Superscript">x²</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('subscript')" title="Subscript">x₂</button>
+            <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('prjDeskripsi'), this, 'fore')" title="Warna Huruf" style="border-bottom:3px solid #dc2626;">A▾</button>
+            <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('prjDeskripsi'), this, 'hilite')" title="Warna Highlight" style="background:#fef08a;color:#422006;">🖍▾</button>
+            <button type="button" class="desc-toolbar-btn" data-table-btn onclick="window.showTablePicker(document.getElementById('prjDeskripsi'), this)" title="Sisipkan Tabel">⊞ Tabel</button>
+            <button type="button" class="desc-toolbar-btn" onclick="window.pickImageForEditor(document.getElementById('prjDeskripsi'))" title="Sisipkan Gambar">🖼️ Gambar</button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('link')" title="Sisipkan Link (Ctrl+K)">🔗 Link</button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('ul')" title="Bullet List">• List</button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('ol')" title="Numbered List">1. List</button>
@@ -2702,7 +2958,13 @@
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('bold')" title="Tebal (Ctrl+B)"><b>B</b></button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('italic')" title="Miring (Ctrl+I)"><i>I</i></button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('underline')" title="Garis Bawah (Ctrl+U)" style="text-decoration:underline;">U</button>
-        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('highlight')" title="Highlight" style="background:#fef08a;color:#422006;">🖍</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('strikethrough')" title="Coret" style="text-decoration:line-through;">S</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('superscript')" title="Superscript">x²</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('subscript')" title="Subscript">x₂</button>
+        <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('amDeskripsi'), this, 'fore')" title="Warna Huruf" style="border-bottom:3px solid #dc2626;">A▾</button>
+        <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('amDeskripsi'), this, 'hilite')" title="Warna Highlight" style="background:#fef08a;color:#422006;">🖍▾</button>
+        <button type="button" class="desc-toolbar-btn" data-table-btn onclick="window.showTablePicker(document.getElementById('amDeskripsi'), this)" title="Sisipkan Tabel">⊞ Tabel</button>
+        <button type="button" class="desc-toolbar-btn" onclick="window.pickImageForEditor(document.getElementById('amDeskripsi'))" title="Sisipkan Gambar">🖼️ Gambar</button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('link')" title="Sisipkan Link (Ctrl+K)">🔗 Link</button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('ul')" title="Bullet List">• List</button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('ol')" title="Numbered List">1. List</button>
@@ -3070,6 +3332,15 @@ function escapeHtml(s) {
 //   https://url                → link biru otomatis
 function descToHTML(text){
   if(text === null || text === undefined || text === '') return '';
+  // ─── Pre-process: extract raw HTML blocks ([[html]]...[[/html]]) ───
+  // Tabel, gambar, dan elemen kompleks disimpan as-is dalam markdown via marker.
+  // Kita pull out dulu supaya tidak ter-escape, lalu restore di akhir.
+  var _htmlBlocks = [];
+  text = String(text).replace(/\[\[html\]\]([\s\S]*?)\[\[\/html\]\]/g, function(_, raw) {
+    _htmlBlocks.push(raw);
+    return 'HTMLBLK' + (_htmlBlocks.length - 1) + '';
+  });
+
   // Pre-process: group consecutive list lines into UL/OL blocks
   var rawLines = String(text).split('\n');
   var processedLines = [];
@@ -3183,6 +3454,10 @@ function descToHTML(text){
     var isLast = j === out.length - 1;
     if(!isBlock && !isLast && !nextIsBlock) html += '<br>';
   }
+  // ─── Restore raw HTML blocks (table, gambar, dll.) ───
+  html = html.replace(/HTMLBLK(\d+)/g, function(_, idx) {
+    return _htmlBlocks[parseInt(idx, 10)] || '';
+  });
   return html;
 }
 
@@ -3220,6 +3495,16 @@ function _buildNestedList(items, listType, baseIndent) {
 function _descInline(text){
   // Mention: @[Nama](mention:ID) → <a class="md-mention" data-id="ID">@Nama</a>
   text = text.replace(/@\[([^\]]+)\]\(mention:([^)]+)\)/g, '<a class="md-mention" data-id="$2" contenteditable="false">@$1</a>');
+  // Strikethrough: ~~teks~~
+  text = text.replace(/~~([^~\n]+)~~/g, '<span class="desc-strike">$1</span>');
+  // Superscript: ^^teks^^ (double caret supaya tidak konflik dengan matematika 2^3)
+  text = text.replace(/\^\^([^\^\n]+)\^\^/g, '<sup>$1</sup>');
+  // Subscript: ,,teks,, (double koma)
+  text = text.replace(/,,([^,\n]+),,/g, '<sub>$1</sub>');
+  // Font color: {c#HEX}teks{/c} → span color
+  text = text.replace(/\{c(#[0-9a-fA-F]{3,6}|[a-z]+)\}([\s\S]+?)\{\/c\}/g, '<span style="color:$1;">$2</span>');
+  // Highlight color: {h#HEX}teks{/h} → span background
+  text = text.replace(/\{h(#[0-9a-fA-F]{3,6}|[a-z]+)\}([\s\S]+?)\{\/h\}/g, '<span style="background-color:$1;padding:0 4px;border-radius:3px;">$2</span>');
   // Bold: **teks** → harus diproses SEBELUM italic supaya tidak konflik
   text = text.replace(/\*\*([^*\n]+)\*\*/g, '<span class="desc-bold">$1</span>');
   // Italic: *teks* (single asterisks)
@@ -3254,9 +3539,65 @@ window.markdownToEditableHtml = function(md) {
     .replace(/<span class="desc-bold">([\s\S]*?)<\/span>/g, '<b>$1</b>')
     .replace(/<span class="desc-italic">([\s\S]*?)<\/span>/g, '<i>$1</i>')
     .replace(/<span class="desc-underline">([\s\S]*?)<\/span>/g, '<u>$1</u>')
+    .replace(/<span class="desc-strike">([\s\S]*?)<\/span>/g, '<s>$1</s>')
     .replace(/<span class="desc-highlight">([\s\S]*?)<\/span>/g, '<mark>$1</mark>');
   if (!html.trim()) html = '<p><br></p>';
   return html;
+};
+
+// ─── HELPER: konversi markdown → PLAIN TEXT untuk preview (strip semua syntax) ───
+// Dipakai di semua tempat yang menampilkan PREVIEW SINGKAT (acara list, musyawarah list,
+// project list, catatan list, dll.) supaya tidak ada syntax mentah bocor ke layar walau
+// di-truncate di tengah-tengah format.
+window.mdToPlainText = function(text, maxLen) {
+  if (!text) return '';
+  var s = String(text);
+  // 1. Hapus blok HTML mentah (tabel/gambar)
+  s = s.replace(/\[\[html\]\][\s\S]*?\[\[\/html\]\]/g, '[Tabel/Gambar]');
+  s = s.replace(/\[\[html\]\][\s\S]*$/g, '[Tabel/Gambar]'); // marker tidak lengkap
+  // 2. Polling, checkbox task, mention, link
+  s = s.replace(/\[POLL:[^\]]+\]/g, '[Polling]');
+  s = s.replace(/^[\s]*-\s*\[(x|X| )\]\s*/gm, '');
+  s = s.replace(/@\[([^\]]+)\]\(mention:[^)]+\)/g, '@$1');
+  s = s.replace(/\[([^\[\]]+)\]\((?:https?:\/\/|www\.)[^\s)]+\)/g, '$1');
+  // 3. Heading & list markers
+  s = s.replace(/^[#]{1,6}\s+/gm, '');
+  s = s.replace(/^[\s]*[-*]\s+/gm, '');
+  s = s.replace(/^[\s]*\d+\.\s+/gm, '');
+  // 4. Inline format — proses pasangan lengkap dulu
+  s = s.replace(/\{c[#a-zA-Z0-9]+\}([\s\S]+?)\{\/c\}/g, '$1');  // font color
+  s = s.replace(/\{h[#a-zA-Z0-9]+\}([\s\S]+?)\{\/h\}/g, '$1');  // highlight color
+  s = s.replace(/~~([^~\n]+)~~/g, '$1');                              // strikethrough
+  s = s.replace(/\*\*([^*\n]+)\*\*/g, '$1');                          // bold
+  s = s.replace(/__([^_\n]+)__/g, '$1');                              // underline
+  s = s.replace(/==([^=\n]+)==/g, '$1');                              // highlight kuning
+  s = s.replace(/\^\^([^\^\n]+)\^\^/g, '$1');                         // superscript
+  s = s.replace(/,,([^,\n]+),,/g, '$1');                              // subscript
+  s = s.replace(/(^|[^*])\*([^*\n]+)\*([^*]|$)/g, '$1$2$3');          // italic
+  // 5. Bersihkan SISA syntax yang tidak lengkap akibat truncation
+  s = s.replace(/\{c[#a-zA-Z0-9]*\}?/g, '');
+  s = s.replace(/\{h[#a-zA-Z0-9]*\}?/g, '');
+  s = s.replace(/\{\/[ch]\}/g, '');
+  s = s.replace(/\*{2,}/g, '').replace(/={2,}/g, '');
+  s = s.replace(/~~/g, '').replace(/__/g, '').replace(/\^\^/g, '').replace(/,,/g, '');
+  // 6. Rapikan whitespace
+  s = s.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
+  // 7. Truncate
+  if (maxLen && s.length > maxLen) {
+    s = s.slice(0, maxLen).trim() + '…';
+  }
+  return s;
+};
+
+// Helper global: convert rgb(R, G, B) ke #RRGGBB hex. Kalau sudah hex/named, return as-is.
+window.rgbToHex = function(rgb) {
+  if (!rgb) return rgb;
+  rgb = String(rgb).trim();
+  if (rgb.startsWith('#')) return rgb;
+  var m = rgb.match(/rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (!m) return rgb;
+  var toHex = function(n) { var h = parseInt(n, 10).toString(16); return h.length === 1 ? '0' + h : h; };
+  return '#' + toHex(m[1]) + toHex(m[2]) + toHex(m[3]);
 };
 
 // ─── HELPER: konversi contenteditable HTML → markdown (untuk simpan ke DB) ───
@@ -3284,8 +3625,26 @@ window.htmlElementToMarkdown = function(rootEl) {
           out += inner ? '*' + inner + '*' : '';
         else if (tag === 'u' || cls.indexOf('desc-underline') >= 0)
           out += inner ? '__' + inner + '__' : '';
-        else if (tag === 'mark' || cls.indexOf('desc-highlight') >= 0)
-          out += inner ? '==' + inner + '==' : '';
+        else if (tag === 's' || tag === 'strike' || tag === 'del' || cls.indexOf('desc-strike') >= 0)
+          out += inner ? '~~' + inner + '~~' : '';
+        else if (tag === 'sup')
+          out += inner ? '^^' + inner + '^^' : '';
+        else if (tag === 'sub')
+          out += inner ? ',,' + inner + ',,' : '';
+        else if (tag === 'font') {
+          var fc = c.getAttribute('color') || '';
+          out += fc ? ('{c' + fc + '}' + inner + '{/c}') : inner;
+        }
+        else if (tag === 'mark' || cls.indexOf('desc-highlight') >= 0) {
+          var ms = c.getAttribute('style') || '';
+          var mbg = ms.match(/background(?:-color)?\s*:\s*([^;]+)/i);
+          if (mbg) {
+            var mhex = (typeof rgbToHex === 'function') ? rgbToHex(mbg[1].trim()) : mbg[1].trim();
+            out += inner ? '{h' + mhex + '}' + inner + '{/h}' : '';
+          } else {
+            out += inner ? '==' + inner + '==' : '';
+          }
+        }
         else if (cls.indexOf('md-todo') >= 0) {
           // Checkbox task: <div class="md-todo" data-checked="true/false">...<span class="md-todo-text">TEXT</span></div>
           var todoChecked = c.getAttribute('data-checked') === 'true';
@@ -3318,6 +3677,11 @@ window.htmlElementToMarkdown = function(rootEl) {
           out += '[' + inner + '](' + href + ')';
         }
         else if (tag === 'br') out += '\n';
+        else if (tag === 'table' || tag === 'img') {
+          // Simpan as-is dalam marker [[html]]...[[/html]] supaya tidak ter-escape saat descToHTML
+          if (out.length > 0 && !out.endsWith('\n')) out += '\n';
+          out += '[[html]]' + c.outerHTML + '[[/html]]\n';
+        }
         else if (tag === 'ul' || tag === 'ol') {
           // List: convert each <li> ke markdown line
           if (out.length > 0 && !out.endsWith('\n')) out += '\n';
@@ -3346,6 +3710,21 @@ window.htmlElementToMarkdown = function(rootEl) {
           if (out.length > 0 && !out.endsWith('\n')) out += '\n';
           out += inner;
           if (!out.endsWith('\n')) out += '\n';
+        }
+        else if (tag === 'span') {
+          // span dengan style color / background-color (dari execCommand)
+          var spanStyle = c.getAttribute('style') || '';
+          var colorM = spanStyle.match(/(?:^|[;\s])color\s*:\s*([^;]+)/i);
+          var bgM    = spanStyle.match(/background(?:-color)?\s*:\s*([^;]+)/i);
+          if (colorM && colorM[1].trim() && colorM[1].trim() !== 'inherit') {
+            var fchex = (typeof rgbToHex === 'function') ? rgbToHex(colorM[1].trim()) : colorM[1].trim();
+            out += '{c' + fchex + '}' + inner + '{/c}';
+          } else if (bgM && bgM[1].trim() && bgM[1].trim() !== 'transparent') {
+            var bchex = (typeof rgbToHex === 'function') ? rgbToHex(bgM[1].trim()) : bgM[1].trim();
+            out += '{h' + bchex + '}' + inner + '{/h}';
+          } else {
+            out += inner;
+          }
         }
         else out += inner;
       }
@@ -3396,6 +3775,45 @@ window.attachWysiwyg = function(editorEl) {
         case 'italic': document.execCommand('italic'); break;
         case 'underline': document.execCommand('underline'); break;
         case 'highlight': toggleHighlight(); break;
+        case 'strikethrough': document.execCommand('strikeThrough'); break;
+        case 'superscript': document.execCommand('superscript'); break;
+        case 'subscript': document.execCommand('subscript'); break;
+        case 'foreColor':
+          if (value === 'remove') document.execCommand('foreColor', false, 'inherit');
+          else document.execCommand('foreColor', false, value);
+          break;
+        case 'hiliteColor':
+          if (value === 'remove') {
+            try { document.execCommand('hiliteColor', false, 'transparent'); document.execCommand('backColor', false, 'transparent'); } catch(e){}
+          } else {
+            try { document.execCommand('hiliteColor', false, value); }
+            catch(e) { document.execCommand('backColor', false, value); }
+          }
+          break;
+        case 'insertTable': {
+          // value = { rows, cols }
+          var rows = (value && value.rows) || 3;
+          var cols = (value && value.cols) || 3;
+          var tableHtml = '<table class="md-table"><tbody>';
+          for (var rr = 0; rr < rows; rr++) {
+            tableHtml += '<tr>';
+            for (var cc = 0; cc < cols; cc++) {
+              tableHtml += '<td>' + (rr === 0 ? '<b>Kolom ' + (cc+1) + '</b>' : '&nbsp;') + '</td>';
+            }
+            tableHtml += '</tr>';
+          }
+          tableHtml += '</tbody></table><div><br></div>';
+          document.execCommand('insertHTML', false, tableHtml);
+          break;
+        }
+        case 'insertImage': {
+          // value = data URL
+          if (value) {
+            var imgHtml = '<img src="' + value + '" style="max-width:100%;height:auto;border-radius:6px;margin:6px 0;" alt="gambar"><div><br></div>';
+            document.execCommand('insertHTML', false, imgHtml);
+          }
+          break;
+        }
         case 'ul': document.execCommand('insertUnorderedList'); break;
         case 'ol': document.execCommand('insertOrderedList'); break;
         case 'indent': document.execCommand('indent'); break;
@@ -3815,6 +4233,169 @@ window.updateActionItemsPanel = function(editorEl, panelEl) {
       }
     };
   });
+};
+
+// ─── TABLE PICKER popup (visual grid kayak Word) ───
+window.showTablePicker = function(editorEl, anchorBtn) {
+  if (!editorEl) return;
+  var pop = document.getElementById('wysiwygTablePicker');
+  if (!pop) {
+    pop = document.createElement('div');
+    pop.id = 'wysiwygTablePicker';
+    pop.className = 'table-picker-popup';
+    pop.style.display = 'none';
+    document.body.appendChild(pop);
+    document.addEventListener('click', function(e){
+      if (!pop.contains(e.target) && !e.target.closest('[data-table-btn]')) pop.style.display = 'none';
+    });
+  }
+
+  var MAX_R = 8, MAX_C = 10;
+  var html = '<div class="tp-label">⊞ Sisipkan Tabel</div>';
+  html += '<div class="tp-grid" id="tpGrid">';
+  for (var r = 0; r < MAX_R; r++) {
+    for (var c = 0; c < MAX_C; c++) {
+      html += '<div class="tp-cell" data-r="' + (r+1) + '" data-c="' + (c+1) + '"></div>';
+    }
+  }
+  html += '</div>';
+  html += '<div class="tp-size" id="tpSize">Pilih ukuran tabel</div>';
+  pop.innerHTML = html;
+
+  pop.style.display = 'block';
+  var rect = anchorBtn.getBoundingClientRect();
+  var pw = pop.offsetWidth, vw = window.innerWidth;
+  pop.style.left = Math.min(rect.left, vw - pw - 12) + 'px';
+  pop.style.top  = (rect.bottom + 6) + 'px';
+
+  var grid = pop.querySelector('#tpGrid');
+  var sizeLabel = pop.querySelector('#tpSize');
+  grid.onmouseover = function(e) {
+    var cell = e.target.closest('.tp-cell');
+    if (!cell) return;
+    var rr = parseInt(cell.dataset.r, 10);
+    var cc = parseInt(cell.dataset.c, 10);
+    sizeLabel.textContent = rr + ' baris × ' + cc + ' kolom';
+    grid.querySelectorAll('.tp-cell').forEach(function(x) {
+      var xr = parseInt(x.dataset.r, 10), xc = parseInt(x.dataset.c, 10);
+      x.classList.toggle('hover', xr <= rr && xc <= cc);
+    });
+  };
+  grid.onclick = function(e) {
+    var cell = e.target.closest('.tp-cell');
+    if (!cell) return;
+    var rr = parseInt(cell.dataset.r, 10);
+    var cc = parseInt(cell.dataset.c, 10);
+    editorEl.applyFmt('insertTable', { rows: rr, cols: cc });
+    pop.style.display = 'none';
+  };
+};
+
+// ─── IMAGE PICKER (upload dari device) ───
+window.pickImageForEditor = function(editorEl) {
+  if (!editorEl) return;
+  var inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.style.display = 'none';
+  inp.onchange = function() {
+    var file = inp.files && inp.files[0];
+    if (!file) return;
+    // Validasi ukuran (max 2MB supaya markdown DB tidak meledak)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Ukuran gambar maks 2MB. File Anda: ' + (file.size / 1024 / 1024).toFixed(1) + 'MB');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      editorEl.applyFmt('insertImage', e.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+  document.body.appendChild(inp);
+  inp.click();
+  setTimeout(function() { if (inp.parentNode) inp.parentNode.removeChild(inp); }, 1000);
+};
+
+// ─── COLOR PICKER popup (Word-style) untuk Font Color & Highlight Color ───
+// mode: 'fore' = warna huruf, 'hilite' = warna highlight
+window.showColorPicker = function(editorEl, anchorBtn, mode) {
+  if (!editorEl) return;
+  var pop = document.getElementById('wysiwygColorPicker');
+  if (!pop) {
+    pop = document.createElement('div');
+    pop.id = 'wysiwygColorPicker';
+    pop.className = 'color-picker-popup';
+    pop.style.display = 'none';
+    document.body.appendChild(pop);
+    document.addEventListener('click', function(e){
+      if (!pop.contains(e.target) && !e.target.closest('[data-color-btn]')) pop.style.display = 'none';
+    });
+    document.addEventListener('scroll', function(){ pop.style.display = 'none'; }, true);
+  }
+
+  // Palet warna (Word-style)
+  var THEME_COLORS = [
+    '#000000', '#404040', '#808080', '#a0a0a0', '#c0c0c0', '#d9d9d9', '#f2f2f2', '#ffffff',
+    '#7c2d12', '#a16207', '#15803d', '#0e7490', '#1e40af', '#6b21a8', '#9f1239', '#dc2626',
+    '#ea580c', '#ca8a04', '#16a34a', '#0891b2', '#2563eb', '#9333ea', '#db2777', '#f43f5e',
+    '#fb923c', '#facc15', '#86efac', '#67e8f9', '#93c5fd', '#c4b5fd', '#f9a8d4', '#fca5a5',
+  ];
+  var STANDARD_COLORS = [
+    '#dc2626', '#ea580c', '#f59e0b', '#facc15', '#84cc16', '#22c55e', '#06b6d4', '#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#000000',
+  ];
+
+  var modeLabel = mode === 'fore' ? '🎨 Warna Huruf' : '🖍 Warna Highlight';
+  var actName = mode === 'fore' ? 'foreColor' : 'hiliteColor';
+
+  pop.innerHTML =
+    '<div class="cp-section"><div class="cp-label">' + modeLabel + '</div></div>' +
+    '<div class="cp-grid">' +
+      THEME_COLORS.map(function(c){
+        return '<button class="cp-swatch" style="background:' + c + ';" data-color="' + c + '" title="' + c + '"></button>';
+      }).join('') +
+    '</div>' +
+    '<div class="cp-section"><div class="cp-label">Warna Standar</div></div>' +
+    '<div class="cp-grid">' +
+      STANDARD_COLORS.map(function(c){
+        return '<button class="cp-swatch" style="background:' + c + ';" data-color="' + c + '" title="' + c + '"></button>';
+      }).join('') +
+    '</div>' +
+    '<div class="cp-section" style="border-top:1px dashed #d4e8dc;padding-top:8px;margin-top:6px;">' +
+      '<button class="cp-remove" data-color="remove">' + (mode === 'fore' ? '↺ Reset Warna Huruf' : '⨯ Hapus Highlight') + '</button>' +
+      '<div class="cp-custom">' +
+        '<label style="font-size:11px;color:#7a9585;margin:0;">Custom: </label>' +
+        '<input type="color" class="cp-custom-input" value="#ff0000">' +
+      '</div>' +
+    '</div>';
+
+  // Position
+  pop.style.display = 'block';
+  var rect = anchorBtn.getBoundingClientRect();
+  var pw = pop.offsetWidth, vw = window.innerWidth;
+  var x = Math.min(rect.left, vw - pw - 12);
+  pop.style.left = x + 'px';
+  pop.style.top  = (rect.bottom + 6) + 'px';
+
+  // Handler swatch
+  pop.querySelectorAll('.cp-swatch').forEach(function(b){
+    b.onclick = function(e){
+      e.stopPropagation();
+      editorEl.applyFmt(actName, b.dataset.color);
+      pop.style.display = 'none';
+    };
+  });
+  var rm = pop.querySelector('.cp-remove');
+  if (rm) rm.onclick = function(e){
+    e.stopPropagation();
+    editorEl.applyFmt(actName, 'remove');
+    pop.style.display = 'none';
+  };
+  var customInp = pop.querySelector('.cp-custom-input');
+  if (customInp) customInp.onchange = function(){
+    editorEl.applyFmt(actName, customInp.value);
+    pop.style.display = 'none';
+  };
 };
 
 // ─── STYLE PICKER popup (Font / Ukuran / Line Spacing) — Word-style ───
@@ -4614,6 +5195,7 @@ function openSection(name) {
     akses: loadKelolAkses,
     recycle: loadRecycle,
     kalender: loadKalender,
+    catatan: loadCatatan,
   };
   if (loaders[name]) loaders[name]();
 }
@@ -4656,6 +5238,22 @@ function openSection(name) {
     applyState(card);
   }
 
+  // Helper global: pasang collapsible ke card yang baru dibuat dinamis
+  // (mis. Sisa Dana per Acara yang di-inject after async fetch)
+  window.makeCollapsible = function(card) {
+    if (!card) return;
+    if (card.hasAttribute && card.hasAttribute('data-no-collapse')) return;
+    if (card.classList.contains('collapsible-card')) {
+      // Sudah collapsible — cukup re-apply state (untuk kasus re-render)
+      applyState(card);
+      return;
+    }
+    var h2 = card.querySelector(':scope > h2');
+    if (!h2) return;
+    card.classList.add('collapsible-card');
+    applyState(card);
+  };
+
   window.setupCollapsibleSection = function(name) {
     if (COLLAPSIBLE_SECTIONS.indexOf(name) < 0) return;
     const sec = document.getElementById('sec-' + name);
@@ -4690,7 +5288,9 @@ function openSection(name) {
     });
 
     // Mark semua direct .card child sebagai collapsible — default tertutup
+    // Skip card dengan attribute `data-no-collapse` (mis. Ringkasan Keuangan)
     sec.querySelectorAll(':scope > .card').forEach(function(card) {
+      if (card.hasAttribute('data-no-collapse')) return;
       const h2 = card.querySelector(':scope > h2');
       if (!h2) return;
       card.classList.add('collapsible-card');
@@ -4950,6 +5550,171 @@ function kalSelect(dateStr) {
   }, 100);
 }
 
+// ─────────────── CATATAN BEBAS ───────────────
+// Storage: tabel Supabase `catatan` (fallback ke localStorage kalau tabel belum ada).
+// Struktur: { id, judul, isi, dibuat_oleh, created_at, updated_at }
+let catatanCache = [];
+let currentCatatanId = null;
+const CAT_LS_KEY = 'catatan_lokal_v1';
+
+async function loadCatatan() {
+  document.getElementById('catatanFormCard').style.display = 'none';
+  document.querySelector('#sec-catatan .card').style.display = 'block';
+  const listEl = document.getElementById('catatanList');
+  listEl.innerHTML = '<p class="muted">Memuat...</p>';
+  // Coba Supabase dulu
+  try {
+    const { data, error } = await db.from('catatan').select('*').order('updated_at', { ascending: false });
+    if (error) {
+      const msg = error.message || '';
+      if (msg.includes('catatan') || msg.includes('relation') || error.code === '42P01') {
+        // Tabel belum ada → pakai localStorage
+        catatanCache = _loadCatatanLocal();
+      } else { throw error; }
+    } else {
+      catatanCache = data || [];
+    }
+  } catch (e) {
+    console.warn('loadCatatan err:', e);
+    catatanCache = _loadCatatanLocal();
+  }
+  renderCatatanList();
+}
+
+function _loadCatatanLocal() {
+  try { return JSON.parse(localStorage.getItem(CAT_LS_KEY) || '[]'); } catch(e) { return []; }
+}
+function _saveCatatanLocal(arr) {
+  try { localStorage.setItem(CAT_LS_KEY, JSON.stringify(arr)); } catch(e) {}
+}
+
+function renderCatatanList() {
+  const q = (document.getElementById('catatanSearch')?.value || '').toLowerCase();
+  const list = catatanCache.filter(c => {
+    if (!q) return true;
+    return ((c.judul || '') + ' ' + (c.isi || '')).toLowerCase().includes(q);
+  });
+  const el = document.getElementById('catatanList');
+  if (!list.length) {
+    el.innerHTML = q
+      ? '<p class="muted" style="text-align:center;padding:14px;">🔍 Tidak ada catatan cocok dengan "' + escapeHtml(q) + '"</p>'
+      : '<p class="muted" style="text-align:center;padding:20px;">📝 Belum ada catatan. Klik <b>+ Catatan Baru</b> untuk mulai.</p>';
+    return;
+  }
+  el.innerHTML = list.map(c => {
+    const tgl = c.updated_at ? new Date(c.updated_at).toLocaleString('id-ID', { dateStyle:'long', timeStyle:'short' }) : '';
+    const preview = window.mdToPlainText(c.isi || '', 140);
+    return `<div onclick="bukaCatatan(${c.id})" style="padding:12px 14px;background:#fafdfb;border:1px solid #d4e8dc;border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;"
+      onmouseover="this.style.background='#f0f7f3'" onmouseout="this.style.background='#fafdfb'">
+      <div style="font-weight:700;font-size:14px;color:#1a6644;">📝 ${escapeHtml(c.judul || '(tanpa judul)')}</div>
+      ${preview ? `<div class="muted" style="font-size:12px;margin-top:4px;line-height:1.4;">${escapeHtml(preview)}${preview.length === 140 ? '...' : ''}</div>` : ''}
+      ${tgl ? `<div class="muted" style="font-size:10px;margin-top:4px;">⏰ ${tgl}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function bukaCatatanBaru() {
+  currentCatatanId = null;
+  document.querySelector('#sec-catatan .card').style.display = 'none';
+  const form = document.getElementById('catatanFormCard');
+  form.style.display = 'block';
+  document.getElementById('catJudul').value = '';
+  const isiEl = document.getElementById('catIsi');
+  isiEl.innerHTML = '<p><br></p>';
+  if (window.attachWysiwyg) window.attachWysiwyg(isiEl);
+  document.getElementById('catatanHapusBtn').style.display = 'none';
+  document.getElementById('catMsg').textContent = '';
+  setTimeout(() => document.getElementById('catJudul').focus(), 100);
+}
+
+function bukaCatatan(id) {
+  const c = catatanCache.find(x => x.id === id);
+  if (!c) return;
+  currentCatatanId = id;
+  document.querySelector('#sec-catatan .card').style.display = 'none';
+  const form = document.getElementById('catatanFormCard');
+  form.style.display = 'block';
+  document.getElementById('catJudul').value = c.judul || '';
+  const isiEl = document.getElementById('catIsi');
+  isiEl.innerHTML = window.markdownToEditableHtml(c.isi || '');
+  if (window.attachWysiwyg) window.attachWysiwyg(isiEl);
+  document.getElementById('catatanHapusBtn').style.display = 'block';
+  document.getElementById('catMsg').textContent = '';
+}
+
+function tutupFormCatatan() {
+  document.getElementById('catatanFormCard').style.display = 'none';
+  document.querySelector('#sec-catatan .card').style.display = 'block';
+  currentCatatanId = null;
+}
+
+async function simpanCatatan() {
+  const judul = (document.getElementById('catJudul').value || '').trim();
+  const isiEl = document.getElementById('catIsi');
+  const isi = isiEl ? (window.htmlElementToMarkdown(isiEl) || '').trim() : '';
+  if (!judul && !isi) {
+    setMsg('catMsg', 'Judul atau isi catatan tidak boleh kosong dua-duanya.', true);
+    return;
+  }
+  const payload = {
+    judul: judul || '(tanpa judul)',
+    isi: isi,
+    updated_at: new Date().toISOString(),
+  };
+  // Try Supabase
+  try {
+    if (currentCatatanId) {
+      // Update
+      const { error } = await db.from('catatan').update(payload).eq('id', currentCatatanId);
+      if (error) throw error;
+    } else {
+      payload.created_at = new Date().toISOString();
+      if (window.currentProf?.id) payload.dibuat_oleh = currentProf.id;
+      const { data, error } = await db.from('catatan').insert(payload).select().single();
+      if (error) throw error;
+      currentCatatanId = data.id;
+    }
+    setMsg('catMsg', '✅ Catatan tersimpan!', false);
+    await loadCatatan();
+    setTimeout(tutupFormCatatan, 800);
+  } catch (e) {
+    // Fallback localStorage
+    const arr = _loadCatatanLocal();
+    if (currentCatatanId) {
+      const idx = arr.findIndex(x => x.id === currentCatatanId);
+      if (idx >= 0) arr[idx] = { ...arr[idx], ...payload };
+    } else {
+      const id = 'l' + Date.now() + Math.floor(Math.random()*1000);
+      currentCatatanId = id;
+      arr.unshift({ id, ...payload, created_at: new Date().toISOString() });
+    }
+    _saveCatatanLocal(arr);
+    catatanCache = arr;
+    setMsg('catMsg', '✅ Catatan tersimpan (lokal). Untuk sync antar device, buat tabel "catatan" di Supabase.', false);
+    renderCatatanList();
+    setTimeout(tutupFormCatatan, 1500);
+  }
+}
+
+async function hapusCatatan() {
+  if (!currentCatatanId) return;
+  if (!confirm('Hapus catatan ini secara permanen?')) return;
+  try {
+    if (typeof currentCatatanId === 'string' && currentCatatanId.startsWith('l')) {
+      // localStorage
+      const arr = _loadCatatanLocal().filter(x => x.id !== currentCatatanId);
+      _saveCatatanLocal(arr);
+    } else {
+      await db.from('catatan').delete().eq('id', currentCatatanId);
+    }
+    setMsg('catMsg', '✅ Catatan dihapus', false);
+    await loadCatatan();
+    setTimeout(tutupFormCatatan, 600);
+  } catch (e) {
+    setMsg('catMsg', 'Gagal hapus: ' + e.message, true);
+  }
+}
+
 // ─────────────── DASHBOARD ───────────────
 async function loadDashboard() {
   // Saldo kas (dari transaksi)
@@ -5172,7 +5937,28 @@ async function loadAnggota() {
   anggotaFull = list;
   // Expose ke window — dipakai mention dropdown @ di notulensi musyawarah
   window.anggotaCache = list;
+  // Update count badge di header card
+  const cnt = $('anggotaCount');
+  if (cnt) cnt.textContent = list.length ? '· ' + list.length + ' anggota' : '';
+  // Render daftar (terfilter sesuai search saat ini)
+  renderListAnggotaFiltered();
+  // dropdown anggota di Kas Masuk
+  $('kmAnggota').innerHTML = '<option value="">— Tidak terkait anggota —</option>' +
+    list.map(a => `<option value="${a.id}">${escapeHtml(a.nama)}</option>`).join('');
+  if ($('kmAnggotaSearch')) $('kmAnggotaSearch').value = '';
+}
+
+// Render daftar anggota dari anggotaFull, terfilter sesuai search box
+function renderListAnggotaFiltered() {
+  const q = ($('anggotaSearch')?.value || '').toLowerCase().trim();
+  const list = (anggotaFull || []).filter(a => {
+    if (!q) return true;
+    const hay = [a.nama, a.kontak, a.status, a.alamat, a.catatan,
+                 a.kategori_anggota?.nama || ''].join(' ').toLowerCase();
+    return hay.includes(q);
+  });
   const el = $('listAnggota');
+  if (!el) return;
   el.innerHTML = list.length ? list.map(a => {
     const kat = a.kategori_anggota ? ' · ' + escapeHtml(a.kategori_anggota.nama) : '';
     const absenBadge = (a.tampil_absensi === false)
@@ -5188,11 +5974,46 @@ async function loadAnggota() {
         <button class="small danger" onclick="deleteAnggota(${a.id})">Hapus</button>
       </div>
     </div>`;
-  }).join('') : '<p class="muted">Belum ada anggota.</p>';
-  // dropdown anggota di Kas Masuk
-  $('kmAnggota').innerHTML = '<option value="">— Tidak terkait anggota —</option>' +
-    list.map(a => `<option value="${a.id}">${escapeHtml(a.nama)}</option>`).join('');
-  if ($('kmAnggotaSearch')) $('kmAnggotaSearch').value = '';
+  }).join('') : (
+    q ? `<p class="muted" style="text-align:center;padding:14px;">🔍 Tidak ada anggota cocok dengan "${escapeHtml(q)}"</p>`
+      : '<p class="muted">Belum ada anggota.</p>'
+  );
+}
+
+// Toggle Tampilkan/Sembunyikan daftar anggota — default tersembunyi
+function toggleAnggotaList() {
+  const wrap   = $('listAnggotaWrap');
+  const hint   = $('anggotaHiddenHint');
+  const search = $('anggotaSearch');
+  const btn    = $('anggotaToggleBtn');
+  if (!wrap || !btn) return;
+  const isShown = wrap.style.display !== 'none';
+  if (isShown) {
+    wrap.style.display = 'none';
+    if (search) { search.style.display = 'none'; search.value = ''; }
+    if (hint) hint.style.display = 'block';
+    btn.innerHTML = '👁️ Tampilkan';
+    // Reset filter saat ditutup
+    renderListAnggotaFiltered();
+  } else {
+    wrap.style.display = 'block';
+    if (search) { search.style.display = 'block'; setTimeout(() => search.focus(), 100); }
+    if (hint) hint.style.display = 'none';
+    btn.innerHTML = '🙈 Sembunyikan';
+  }
+}
+
+// Saat user ngetik di search box — auto buka list + filter
+function filterListAnggota() {
+  const wrap = $('listAnggotaWrap');
+  const hint = $('anggotaHiddenHint');
+  const btn  = $('anggotaToggleBtn');
+  if (wrap && wrap.style.display === 'none') {
+    wrap.style.display = 'block';
+    if (hint) hint.style.display = 'none';
+    if (btn)  btn.innerHTML = '🙈 Sembunyikan';
+  }
+  renderListAnggotaFiltered();
 }
 
 // ─────────── EXPORT ANGGOTA PDF ───────────
@@ -6423,12 +7244,11 @@ function renderRekapTable() {
   }), { hadir: 0, izin: 0, sakit: 0, th: 0 });
   const totTotal = tot.hadir + tot.izin + tot.sakit + tot.th;
   const totPct = totTotal > 0 ? Math.round(tot.hadir / totTotal * 100) : 0;
-  const rankLabel = (i) => i === 0 ? ' 🥇' : i === 1 ? ' 🥈' : i === 2 ? ' 🥉' : '';
   $('rekapTableWrap').innerHTML = `
     <div style="overflow-x:auto;"><table class="rekap">
       <thead><tr><th style="text-align:left">Nama</th><th>Hadir</th><th>Izin</th><th>Sakit</th><th>Tdk Hadir</th><th>% Hadir</th></tr></thead>
       <tbody>${rows.map((r, i) => `<tr>
-        <td class="nm">${escapeHtml(r.nama)}${rankLabel(i)}</td>
+        <td class="nm">${escapeHtml(r.nama)}</td>
         <td style="color:#16a34a;font-weight:700">${r.hadir}</td>
         <td style="color:#d97706">${r.izin}</td>
         <td style="color:#7c3aed">${r.sakit}</td>
@@ -7087,7 +7907,7 @@ function acRenderList() {
       AC_COLS.map(col => {
         const colAcara = acaraCache.filter(a => a.status === col.key);
         const cards = colAcara.map(a => {
-          const short = (a.deskripsi || '').slice(0, 70) + ((a.deskripsi||'').length > 70 ? '..' : '');
+          const short = window.mdToPlainText(a.deskripsi || '', 70);
           const pic = a.penanggung_jawab ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:#f0f7f3;color:#1a6644;border:1px solid #d4e8dc;">👤 ${escapeHtml(a.penanggung_jawab)}</span>` : '';
           const angg = a.anggaran > 0 ? `<span style="font-size:10px;color:#7a9585;">💰 ${IDR(a.anggaran)}</span>` : '';
           const divTagsKb = (window.divisiTagsHTML && a.divisis && a.divisis.length) ? divisiTagsHTML(a.divisis, true) : '';
@@ -7098,7 +7918,7 @@ function acRenderList() {
             ${pic ? `<div class="prj-kcard-tags">${pic}</div>` : ''}
             ${divTagsKb ? `<div class="prj-kcard-tags" style="margin:4px 0;">${divTagsKb}</div>` : ''}
             ${anggotaTagsKb ? `<div class="prj-kcard-tags" style="margin:4px 0;">${anggotaTagsKb}</div>` : ''}
-            ${short ? `<div style="font-size:11px;color:#5f7d6e;margin:4px 0;line-height:1.4;">${descToHTML(short)}</div>` : ''}
+            ${short ? `<div style="font-size:11px;color:#5f7d6e;margin:4px 0;line-height:1.4;">${escapeHtml(short)}</div>` : ''}
             <div class="prj-kcard-foot">${angg}<span style="font-size:10px;color:#2d9e6b;font-weight:700;">Lihat Detail →</span></div>
             <div style="display:flex;gap:4px;margin-top:7px;border-top:1px solid #e0ece5;padding-top:7px;" onclick="event.stopPropagation()">
               <button onclick="event.stopPropagation();updateAcaraStatus(${a.id},document.getElementById('acKbSt${a.id}')?document.getElementById('acKbSt${a.id}').value:'not_started')" style="display:none"></button>
@@ -7130,7 +7950,7 @@ function acRenderList() {
     return;
   }
   el.innerHTML = filtered.map(a => {
-    const short = (a.deskripsi || '').slice(0, 110) + ((a.deskripsi||'').length > 110 ? '..' : '');
+    const short = window.mdToPlainText(a.deskripsi || '', 110);
     const pic = a.penanggung_jawab ? `<span class="prj-anggota-chip">👤 ${escapeHtml(a.penanggung_jawab)}</span>` : '';
     return `<div class="prj-card prj-${a.status}" onclick="openAcaraDetail(${a.id})">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
@@ -7142,7 +7962,7 @@ function acRenderList() {
         </div>
         <div style="text-align:right;flex-shrink:0;">${a.tanggal ? `<span class="prj-due-badge prj-due-ok">📅 ${a.tanggal}</span>` : ''}</div>
       </div>
-      ${short ? `<div style="font-size:12px;color:#5f7d6e;margin-bottom:8px;line-height:1.5;">${descToHTML(short)}</div>` : ''}
+      ${short ? `<div style="font-size:12px;color:#5f7d6e;margin-bottom:8px;line-height:1.5;">${escapeHtml(short)}</div>` : ''}
       ${(window.divisiTagsHTML && a.divisis && a.divisis.length) ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${divisiTagsHTML(a.divisis)}</div>` : ''}
       ${(window.anggotaTagsHTML && a.anggota_acara && a.anggota_acara.length) ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${anggotaTagsHTML(a.anggota_acara)}</div>` : ''}
       ${pic ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${pic}</div>` : ''}
@@ -7873,7 +8693,7 @@ async function exportAcaraPDF() {
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(6.5);
       doc.setTextColor(...T_MUTED);
-      let desc = a.deskripsi.replace(/\n/g, ' ').slice(0, 55);
+      let desc = window.mdToPlainText(a.deskripsi || '', 55);
       while (doc.getTextWidth(desc) > maxNW && desc.length > 3) desc = desc.slice(0, -2) + '..';
       doc.text(desc, COL.nama, y + 10);
     }
@@ -8313,10 +9133,13 @@ function renderIuran() {
 async function loadKategori() {
   const { data } = await db.from('kategori_anggota').select('*').order('urutan').order('id');
   kategoriCache = data || [];
-  $('agKategori').innerHTML = kategoriCache.length
-    ? kategoriCache.map(k => `<option value="${k.id}">${escapeHtml(k.nama)}</option>`).join('')
-    : '<option value="">— Belum ada kategori —</option>';
-  $('katList').innerHTML = kategoriCache.length ? kategoriCache.map(k => `
+  if ($('agKategori')) {
+    $('agKategori').innerHTML = kategoriCache.length
+      ? kategoriCache.map(k => `<option value="${k.id}">${escapeHtml(k.nama)}</option>`).join('')
+      : '<option value="">— Belum ada kategori —</option>';
+  }
+  // Versi LENGKAP (dengan input target kas/bulan) — untuk menu Kas Masuk
+  const katHtmlFull = kategoriCache.length ? kategoriCache.map(k => `
     <div class="list-item">
       <div class="left">
         <div class="name">${escapeHtml(k.nama)}</div>
@@ -8328,6 +9151,18 @@ async function loadKategori() {
         <button class="small danger" onclick="deleteKategori(${k.id})">Hapus</button>
       </div>
     </div>`).join('') : '<p class="muted">Belum ada kategori.</p>';
+  // Versi SIMPLE (cuma nama) — untuk menu Anggota
+  const katHtmlSimple = kategoriCache.length ? kategoriCache.map(k => `
+    <div class="list-item">
+      <div class="left">
+        <div class="name">${escapeHtml(k.nama)}</div>
+      </div>
+      <div>
+        <button class="small danger" onclick="deleteKategori(${k.id})">Hapus</button>
+      </div>
+    </div>`).join('') : '<p class="muted">Belum ada kategori.</p>';
+  if ($('katList')) $('katList').innerHTML = katHtmlFull;
+  if ($('agKatList')) $('agKatList').innerHTML = katHtmlSimple;
 }
 
 async function addKategori() {
@@ -8339,6 +9174,19 @@ async function addKategori() {
   if (error) { setMsg('katMsg', 'Gagal: ' + error.message, true); return; }
   setMsg('katMsg', '✅ Kategori ditambahkan');
   $('katNama').value = ''; $('katIuran').value = '';
+  loadKategori();
+}
+
+// Versi untuk form Kategori di menu Anggota — cuma nama (target diatur di menu Kas/Acara/Qurban)
+async function addKategoriFromAnggota() {
+  const nama = ($('agKatNama')?.value || '').trim();
+  if (!nama) { setMsg('agKatMsg', 'Nama kategori wajib diisi', true); return; }
+  const { error } = await db.from('kategori_anggota').insert({
+    nama, iuran_kas: 0, urutan: kategoriCache.length + 1,
+  });
+  if (error) { setMsg('agKatMsg', 'Gagal: ' + error.message, true); return; }
+  setMsg('agKatMsg', '✅ Kategori "' + nama + '" ditambahkan. Atur target nominal di menu Kas Masuk / Acara / Qurban.');
+  $('agKatNama').value = '';
   loadKategori();
 }
 
@@ -8477,13 +9325,30 @@ function cetakRekap() {
   const totPct = totTotal > 0 ? Math.round(tot.hadir / totTotal * 100) : 0;
   const sortLabel = ($('rekapSort') && $('rekapSort').selectedOptions[0]?.textContent) || 'Hadir terbanyak';
 
+  // Helper: bersihkan teks dari karakter Unicode yang nggak didukung Helvetica
+  // (emoji, panah, ge/le, bullet, em-dash, dll. → diganti ASCII supaya tidak kacau)
+  const pdfSafe = (s) => String(s || '')
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2300}-\u{23FF}]/gu, '') // emoji
+    .replace(/[→➜➔]/g, '->')   // → → ->
+    .replace(/[←⬅]/g, '<-')         // ← ← <-
+    .replace(/[≥]/g, '>=')               // ≥ → >=
+    .replace(/[≤]/g, '<=')               // ≤ → <=
+    .replace(/[≠]/g, '!=')               // ≠ → !=
+    .replace(/[•·∙]/g, '-')    // • · ∙ → -
+    .replace(/[—–]/g, '-')          // em-dash → -
+    .replace(/[…]/g, '...')              // … → ...
+    .replace(/[‘’]/g, "'")          // smart quote → '
+    .replace(/[“”]/g, '"')          // smart quote → "
+    .replace(/ /g, ' ')                  // nbsp → spasi
+    .trim();
+
   // ── Header hijau ──
   doc.setFillColor(26, 102, 68);
   doc.rect(0, 0, PW, 22, 'F');
   doc.setFontSize(14); doc.setTextColor(255, 255, 255); doc.setFont(undefined, 'bold');
-  doc.text('REKAP KEHADIRAN — MUMI MB3', PW / 2, 10, { align: 'center' });
+  doc.text('REKAP KEHADIRAN - MUMI MB3', PW / 2, 10, { align: 'center' });
   doc.setFontSize(9); doc.setFont(undefined, 'normal');
-  doc.text('Periode: ' + rekapMeta.label + '   ·   ' + rekapMeta.sesi + ' sesi   ·   ' + rekapMeta.siswa + ' siswa', PW / 2, 17, { align: 'center' });
+  doc.text('Periode: ' + pdfSafe(rekapMeta.label) + '  |  ' + rekapMeta.sesi + ' sesi  |  ' + rekapMeta.siswa + ' siswa', PW / 2, 17, { align: 'center' });
 
   // ── Ringkasan stat box (4 kotak) ──
   const statBoxes = [
@@ -8504,80 +9369,68 @@ function cetakRekap() {
   });
   // % kehadiran keseluruhan
   doc.setFontSize(9); doc.setTextColor(26, 102, 68); doc.setFont(undefined, 'bold');
-  doc.text('Tingkat Kehadiran Keseluruhan: ' + totPct + '%   |   Diurutkan: ' + sortLabel, PW / 2, 49, { align: 'center' });
+  doc.text('Tingkat Kehadiran Keseluruhan: ' + totPct + '%  |  Diurutkan: ' + pdfSafe(sortLabel), PW / 2, 49, { align: 'center' });
   doc.setDrawColor(200, 200, 200); doc.line(14, 51, PW - 14, 51);
 
-  // ── Tabel utama dengan warna baris ──
+  // ── Tabel utama dengan warna baris (tanpa kolom Peringkat — emoji medali rusak di PDF) ──
   doc.autoTable({
     startY: 54,
-    head: [['No.', 'Nama Siswa', 'Hadir', 'Izin', 'Sakit', 'Tdk Hadir', 'Total', '% Hadir', 'Peringkat']],
+    head: [['No.', 'Nama Siswa', 'Hadir', 'Izin', 'Sakit', 'Tdk Hadir', 'Total', '% Hadir']],
     body: rows.map((r, i) => [
       String(i + 1),
-      r.nama,
+      pdfSafe(r.nama),
       r.hadir,
       r.izin,
       r.sakit,
       r.tidak_hadir,
       r.total || (r.hadir + r.izin + r.sakit + r.tidak_hadir),
       r.pct + '%',
-      i === 0 ? '🥇 Terbaik' : i === 1 ? '🥈 2' : i === 2 ? '🥉 3' : String(i + 1),
     ]),
-    foot: [['', 'TOTAL', tot.hadir, tot.izin, tot.sakit, tot.th, totTotal, totPct + '%', '']],
-    styles: { fontSize: 8, cellPadding: 2.5 },
-    headStyles: { fillColor: [26, 102, 68], textColor: 255, fontStyle: 'bold', fontSize: 8 },
-    footStyles: { fillColor: [232, 245, 239], textColor: [15, 46, 31], fontStyle: 'bold', fontSize: 8 },
+    foot: [['', 'TOTAL', tot.hadir, tot.izin, tot.sakit, tot.th, totTotal, totPct + '%']],
+    showFoot: 'lastPage',  // ← TOTAL hanya di halaman terakhir
+    showHead: 'everyPage', // ← Header tetap di setiap halaman supaya kolom jelas
+    styles: { fontSize: 9, cellPadding: 3 },
+    headStyles: { fillColor: [26, 102, 68], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+    footStyles: { fillColor: [232, 245, 239], textColor: [15, 46, 31], fontStyle: 'bold', fontSize: 9 },
     columnStyles: {
-      0: { cellWidth: 9,  halign: 'center' },
-      1: { cellWidth: 45 },
-      2: { cellWidth: 16, halign: 'center', textColor: [22, 163, 74],  fontStyle: 'bold' },
-      3: { cellWidth: 14, halign: 'center', textColor: [217, 119, 6]  },
-      4: { cellWidth: 14, halign: 'center', textColor: [124, 58, 237] },
-      5: { cellWidth: 18, halign: 'center', textColor: [220, 38, 38]  },
-      6: { cellWidth: 14, halign: 'center' },
-      7: { cellWidth: 17, halign: 'center', fontStyle: 'bold' },
-      8: { cellWidth: 'auto', halign: 'center' },
+      0: { cellWidth: 12, halign: 'center' },
+      1: { cellWidth: 'auto' },
+      2: { cellWidth: 20, halign: 'center', textColor: [22, 163, 74],  fontStyle: 'bold' },
+      3: { cellWidth: 18, halign: 'center', textColor: [217, 119, 6]  },
+      4: { cellWidth: 18, halign: 'center', textColor: [124, 58, 237] },
+      5: { cellWidth: 22, halign: 'center', textColor: [220, 38, 38]  },
+      6: { cellWidth: 18, halign: 'center' },
+      7: { cellWidth: 22, halign: 'center', fontStyle: 'bold' },
     },
     didParseCell: function(data) {
       if (data.section === 'body') {
         const r = rows[data.row.index];
         if (!r) return;
-        // Warnai kolom % Hadir berdasarkan nilai
         if (data.column.index === 7) {
           data.cell.styles.textColor =
             r.pct >= 80 ? [22, 163, 74] :
             r.pct >= 60 ? [217, 119, 6] : [220, 38, 38];
         }
-        // Zebra stripe
         if (data.row.index % 2 === 0) data.cell.styles.fillColor = [247, 250, 248];
       }
     },
   });
 
-  // ── Grafik (jika ada) ──
-  if (chartRekap) {
-    try {
-      let y = doc.lastAutoTable.finalY + 8;
-      if (y > 175) { doc.addPage(); y = 20; }
-      doc.setFontSize(10); doc.setTextColor(26, 102, 68); doc.setFont(undefined, 'bold');
-      doc.text('Grafik Kehadiran per Siswa', 14, y);
-      doc.addImage(chartRekap.toBase64Image(), 'PNG', 14, y + 4, 182, 95);
-    } catch (e) { console.log('chart pdf err', e); }
-  }
-
   // ── Analisis teks (highlight siswa terbaik & perlu perhatian) ──
-  let yAna = doc.lastAutoTable ? doc.lastAutoTable.finalY + (chartRekap ? 110 : 8) : 200;
+  let yAna = doc.lastAutoTable ? doc.lastAutoTable.finalY + 8 : 200;
   if (yAna > 240) { doc.addPage(); yAna = 20; }
   const best = rows[0], worst = rows[rows.length - 1];
   doc.setFontSize(9); doc.setTextColor(26, 102, 68); doc.setFont(undefined, 'bold');
   doc.text('Catatan Analisis:', 14, yAna);
   doc.setFont(undefined, 'normal'); doc.setTextColor(55, 65, 81);
+  // Pakai - (dash) bukan • (bullet), >= bukan ≥ supaya tidak rusak di Helvetica
   const lines = [
-    '• Kehadiran tertinggi: ' + best.nama + ' (' + best.hadir + ' kali hadir, ' + best.pct + '%)',
-    '• Kehadiran terendah: ' + worst.nama + ' (' + worst.hadir + ' kali hadir, ' + worst.pct + '%)',
-    '• Siswa dengan kehadiran ≥ 80%: ' + rows.filter(r => r.pct >= 80).length + ' dari ' + rows.length + ' siswa',
-    '• Siswa dengan kehadiran < 60% (perlu perhatian): ' + rows.filter(r => r.pct < 60).length + ' siswa',
+    '- Kehadiran tertinggi: ' + pdfSafe(best.nama) + ' (' + best.hadir + ' kali hadir, ' + best.pct + '%)',
+    '- Kehadiran terendah: ' + pdfSafe(worst.nama) + ' (' + worst.hadir + ' kali hadir, ' + worst.pct + '%)',
+    '- Siswa dengan kehadiran >= 80%: ' + rows.filter(r => r.pct >= 80).length + ' dari ' + rows.length + ' siswa',
+    '- Siswa dengan kehadiran < 60% (perlu perhatian): ' + rows.filter(r => r.pct < 60).length + ' siswa',
   ];
-  lines.forEach((l, i) => { doc.text(l, 14, yAna + 6 + i * 6); });
+  lines.forEach((l, i) => { doc.text(pdfSafe(l), 14, yAna + 6 + i * 6); });
 
   _pdfFooter(doc);
   doc.save('rekap-kehadiran-' + rekapMeta.label.replace(/ /g, '-') + '.pdf');
@@ -8589,85 +9442,231 @@ function cetakLaporan() {
   if (!window.jspdf) { alert('Library PDF belum termuat. Cek koneksi internet, lalu coba lagi.'); return; }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-  _pdfHeader(doc, 'LAPORAN KEUANGAN — MUMI MB3', 'Periode: ' + d.bulanNama + ' ' + d.y);
-  // Ringkasan gabungan
+  _pdfHeader(doc, 'LAPORAN KEUANGAN - MUMI MB3', 'Periode: ' + d.bulanNama + ' ' + d.y);
+
+  // Helper: section header dengan border kiri warna
+  function sectionHeader(y, title, color) {
+    doc.setFillColor(color[0], color[1], color[2]);
+    doc.rect(14, y - 4, 1.5, 7, 'F');
+    doc.setFontSize(11); doc.setTextColor(color[0], color[1], color[2]); doc.setFont(undefined, 'bold');
+    doc.text(title, 18, y + 1);
+    doc.setFont(undefined, 'normal');
+  }
+
+  // Helper: convert kategori obj jadi rows dengan persen
+  const catRowsArr = (obj) => {
+    const ent = Object.entries(obj || {}).sort((a,b) => b[1] - a[1]);
+    const tot = ent.reduce((s, e) => s + e[1], 0);
+    if (!ent.length) return [['Tidak ada', '', '']];
+    return ent.map(([k, v]) => [k, IDR(v), (tot ? Math.round(v/tot*100) : 0) + '%']);
+  };
+
+  // ── SECTION 1: LAPORAN KAS ──
+  let y = 32;
+  sectionHeader(y, 'Laporan Kas', [22, 163, 74]);
+  y += 6;
+
+  const kasAkhir = (d.kasAwal||0) + (d.kasMasuk||0) - (d.kasKeluar||0);
+  const acaraAkhir = (d.acaraAwal||0) + (d.acaraMasuk||0) - (d.acaraKeluar||0);
+  const totalSaldoKas = kasAkhir + acaraAkhir;
+
   doc.autoTable({
-    startY: 28, theme: 'grid', styles: { fontSize: 9 },
+    startY: y,
+    theme: 'grid',
     body: [
-      ['Saldo Awal Bulan (Gabungan)', IDR(d.saldoAwal)],
-      ['Total Pemasukan (Kas+Qurban+Acara)', IDR(d.totMasuk)],
-      ['Total Pengeluaran (Kas+Qurban+Acara)', IDR(d.totKeluar)],
-      ['SALDO AKHIR GABUNGAN', IDR(d.saldoAkhir)],
+      ['Saldo Awal Bulan (Kas Murni)', IDR(d.kasAwal||0)],
+      ['Pemasukan Kas', '+ ' + IDR(d.kasMasuk||0)],
+      ['Pengeluaran Kas', '- ' + IDR(d.kasKeluar||0)],
+      ['Kas Murni Akhir Bulan', IDR(kasAkhir)],
+      ['+ Sisa Dana Acara (masuk kas)', '+ ' + IDR(acaraAkhir)],
+      ['TOTAL SALDO KAS', IDR(totalSaldoKas)],
     ],
-    bodyStyles: { fontStyle: 'normal' },
+    styles: { fontSize: 9, cellPadding: 2.5 },
+    columnStyles: {
+      0: { cellWidth: 'auto' },
+      1: { cellWidth: 50, halign: 'right', fontStyle: 'bold' },
+    },
     didParseCell: function(data) {
-      if (data.row.index === 3) data.cell.styles.fontStyle = 'bold';
-    }
+      const idx = data.row.index;
+      if (idx === 1) data.cell.styles.textColor = [22, 163, 74];
+      if (idx === 2) data.cell.styles.textColor = [220, 38, 38];
+      if (idx === 3) { data.cell.styles.fillColor = [240, 250, 244]; data.cell.styles.textColor = [22, 163, 74]; }
+      if (idx === 4) { data.cell.styles.fillColor = [254, 243, 232]; data.cell.styles.textColor = [217, 119, 6]; }
+      if (idx === 5) {
+        data.cell.styles.fillColor = [232, 245, 239];
+        data.cell.styles.textColor = [26, 102, 68];
+        data.cell.styles.fontStyle = 'bold';
+        data.cell.styles.fontSize = 10;
+      }
+    },
   });
-  // Rincian per sumber
-  const sumberBody = [];
-  if ((d.kasAwal||0)||(d.kasMasuk||0)||(d.kasKeluar||0))
-    sumberBody.push(['Kas', IDR(d.kasAwal||0), '+'+IDR(d.kasMasuk||0), '-'+IDR(d.kasKeluar||0), IDR((d.kasAwal||0)+(d.kasMasuk||0)-(d.kasKeluar||0))]);
-  if ((d.qurbanAwal||0)||(d.qurbanMasuk||0)||(d.qurbanKeluar||0))
-    sumberBody.push(['Qurban', IDR(d.qurbanAwal||0), '+'+IDR(d.qurbanMasuk||0), '-'+IDR(d.qurbanKeluar||0), IDR((d.qurbanAwal||0)+(d.qurbanMasuk||0)-(d.qurbanKeluar||0))]);
-  if ((d.acaraAwal||0)||(d.acaraMasuk||0)||(d.acaraKeluar||0))
-    sumberBody.push(['Acara', IDR(d.acaraAwal||0), '+'+IDR(d.acaraMasuk||0), '-'+IDR(d.acaraKeluar||0), IDR((d.acaraAwal||0)+(d.acaraMasuk||0)-(d.acaraKeluar||0))]);
-  if (sumberBody.length) {
+
+  // Rincian Pemasukan Kas
+  if (Object.keys(d.catKasMasuk || {}).length) {
+    y = doc.lastAutoTable.finalY + 5;
+    if (y > 250) { doc.addPage(); y = 20; }
+    doc.setFontSize(10); doc.setTextColor(22, 163, 74); doc.setFont(undefined, 'bold');
+    doc.text('Rincian Pemasukan Kas', 14, y);
     doc.autoTable({
-      startY: doc.lastAutoTable.finalY + 6,
-      head: [['Sumber', 'Saldo Awal', 'Pemasukan', 'Pengeluaran', 'Saldo Akhir']],
-      body: sumberBody,
-      foot: [['TOTAL', IDR(d.saldoAwal), '+'+IDR(d.totMasuk), '-'+IDR(d.totKeluar), IDR(d.saldoAkhir)]],
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [26,102,68] },
-      footStyles: { fillColor: [232,245,239], textColor: [15,46,31], fontStyle: 'bold' },
+      startY: y + 2,
+      head: [['Kategori', 'Jumlah', '%']],
+      body: catRowsArr(d.catKasMasuk),
+      styles: { fontSize: 9, cellPadding: 2 },
+      headStyles: { fillColor: [22, 163, 74], textColor: 255, fontStyle: 'bold' },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 45, halign: 'right', fontStyle: 'bold', textColor: [22, 163, 74] },
+        2: { cellWidth: 20, halign: 'center' },
+      },
     });
   }
-  const catBody = obj => {
-    const e = Object.entries(obj).sort((a,b) => b[1]-a[1]);
-    return e.length ? e.map(([k,v]) => [k, IDR(v)]) : [['Tidak ada', '']];
-  };
-  doc.autoTable({
-    startY: doc.lastAutoTable.finalY + 6,
-    head: [['Pemasukan per Kategori','Jumlah']], body: catBody(d.catMasuk),
-    styles: { fontSize: 8 }, headStyles: { fillColor: [22,163,74] },
-  });
-  doc.autoTable({
-    startY: doc.lastAutoTable.finalY + 6,
-    head: [['Pengeluaran per Kategori','Jumlah']], body: catBody(d.catKeluar),
-    styles: { fontSize: 8 }, headStyles: { fillColor: [220,38,38] },
-  });
-  let y = doc.lastAutoTable.finalY + 8;
+
+  // Rincian Pengeluaran Kas
+  if (Object.keys(d.catKasKeluar || {}).length) {
+    y = doc.lastAutoTable.finalY + 5;
+    if (y > 250) { doc.addPage(); y = 20; }
+    doc.setFontSize(10); doc.setTextColor(220, 38, 38); doc.setFont(undefined, 'bold');
+    doc.text('Rincian Pengeluaran Kas', 14, y);
+    doc.autoTable({
+      startY: y + 2,
+      head: [['Kategori', 'Jumlah', '%']],
+      body: catRowsArr(d.catKasKeluar),
+      styles: { fontSize: 9, cellPadding: 2 },
+      headStyles: { fillColor: [220, 38, 38], textColor: 255, fontStyle: 'bold' },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 45, halign: 'right', fontStyle: 'bold', textColor: [220, 38, 38] },
+        2: { cellWidth: 20, halign: 'center' },
+      },
+    });
+  }
+
+  // ── SECTION 2: LAPORAN DANA QURBAN (jika ada) ──
+  const adaQurban = (d.qurbanMasuk || 0) || (d.qurbanKeluar || 0) || (d.qurbanAwal || 0);
+  if (adaQurban) {
+    y = doc.lastAutoTable.finalY + 8;
+    if (y > 245) { doc.addPage(); y = 20; }
+    sectionHeader(y, 'Laporan Dana Qurban', [124, 58, 237]);
+    y += 6;
+    const qurbanAkhir = (d.qurbanAwal||0) + (d.qurbanMasuk||0) - (d.qurbanKeluar||0);
+    doc.autoTable({
+      startY: y, theme: 'grid',
+      body: [
+        ['Saldo Awal Bulan', IDR(d.qurbanAwal||0)],
+        ['Pemasukan Qurban', '+ ' + IDR(d.qurbanMasuk||0)],
+        ['Pengeluaran Qurban', '- ' + IDR(d.qurbanKeluar||0)],
+        ['SISA DANA QURBAN', IDR(qurbanAkhir)],
+      ],
+      styles: { fontSize: 9, cellPadding: 2.5 },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 50, halign: 'right', fontStyle: 'bold' },
+      },
+      didParseCell: function(data) {
+        const idx = data.row.index;
+        if (idx === 1) data.cell.styles.textColor = [22, 163, 74];
+        if (idx === 2) data.cell.styles.textColor = [220, 38, 38];
+        if (idx === 3) {
+          data.cell.styles.fillColor = [243, 238, 254];
+          data.cell.styles.textColor = [124, 58, 237];
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.fontSize = 10;
+        }
+      },
+    });
+  }
+
+  // ── SECTION 3: LAPORAN DANA ACARA (jika ada) ──
+  const adaAcara = (d.acaraMasuk || 0) || (d.acaraKeluar || 0) || (d.acaraAwal || 0);
+  if (adaAcara) {
+    y = doc.lastAutoTable.finalY + 8;
+    if (y > 245) { doc.addPage(); y = 20; }
+    sectionHeader(y, 'Laporan Dana Acara', [217, 119, 6]);
+    y += 6;
+    doc.autoTable({
+      startY: y, theme: 'grid',
+      body: [
+        ['Saldo Awal Bulan', IDR(d.acaraAwal||0)],
+        ['Pemasukan Acara', '+ ' + IDR(d.acaraMasuk||0)],
+        ['Pengeluaran Acara', '- ' + IDR(d.acaraKeluar||0)],
+        ['SISA DANA ACARA', IDR(acaraAkhir)],
+      ],
+      styles: { fontSize: 9, cellPadding: 2.5 },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 50, halign: 'right', fontStyle: 'bold' },
+      },
+      didParseCell: function(data) {
+        const idx = data.row.index;
+        if (idx === 1) data.cell.styles.textColor = [22, 163, 74];
+        if (idx === 2) data.cell.styles.textColor = [220, 38, 38];
+        if (idx === 3) {
+          data.cell.styles.fillColor = [254, 243, 232];
+          data.cell.styles.textColor = [217, 119, 6];
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.fontSize = 10;
+        }
+      },
+    });
+  }
+
+  // ── SECTION 4: GRAFIK ──
+  y = doc.lastAutoTable.finalY + 10;
   if (chartBar) {
     try {
-      if (y > 190) { doc.addPage(); y = 20; }
-      doc.setFontSize(10); doc.setTextColor(26,102,68);
-      doc.text('Grafik Pemasukan vs Pengeluaran (6 Bulan)', 14, y);
+      if (y > 180) { doc.addPage(); y = 20; }
+      doc.setFontSize(10); doc.setTextColor(26, 102, 68); doc.setFont(undefined, 'bold');
+      doc.text('Grafik Kas - 6 Bulan Terakhir', 14, y);
       doc.addImage(chartBar.toBase64Image(), 'PNG', 14, y + 4, 182, 75);
-      y += 88;
-    } catch (e) {}
+      y += 85;
+    } catch (e) { console.log('chartBar pdf err', e); }
   }
   if (chartPie) {
     try {
       if (y > 165) { doc.addPage(); y = 20; }
-      doc.setFontSize(10); doc.setTextColor(26,102,68);
-      doc.text('Komposisi Pengeluaran', 14, y);
+      doc.setFontSize(10); doc.setTextColor(26, 102, 68); doc.setFont(undefined, 'bold');
+      doc.text('Komposisi Pengeluaran Kas Bulan Ini', 14, y);
       doc.addImage(chartPie.toBase64Image(), 'PNG', 45, y + 4, 110, 100);
-    } catch (e) {}
+    } catch (e) { console.log('chartPie pdf err', e); }
   }
+
+  // Footer dengan info transaksi
+  const lastY = doc.lastAutoTable ? doc.lastAutoTable.finalY : y;
+  if (lastY + 20 < 280) {
+    doc.setFontSize(8); doc.setTextColor(122, 149, 133); doc.setFont(undefined, 'normal');
+    doc.text(d.jumlahTx + ' transaksi pada periode ini', 105, lastY + 12, { align: 'center' });
+    doc.text('Dicetak: ' + new Date().toLocaleString('id-ID') + ' - Sistem MUMI MB3', 105, lastY + 17, { align: 'center' });
+  }
+
   _pdfFooter(doc);
   doc.save('laporan-keuangan-' + d.bulanNama + '-' + d.y + '.pdf');
 }
 
 // ─────────────── EXPORT CSV ───────────────
 function downloadCSV(filename, rows) {
+  // Sanitasi karakter Unicode "halus" yang sering bermasalah di viewer Windows-1252
+  // (em-dash, smart quotes, dll. → tetap UTF-8 valid tapi diganti versi ASCII supaya
+  //  kalaupun text viewer salah baca, masih kelihatan rapi)
+  const sanitize = s => String(s ?? '')
+    .replace(/[–—]/g, '-')      // en-dash, em-dash → -
+    .replace(/[‘’]/g, "'")      // smart single quote → '
+    .replace(/[“”]/g, '"')      // smart double quote → "
+    .replace(/[…]/g, '...')          // ellipsis → ...
+    .replace(/[ ]/g, ' ');           // non-breaking space → spasi
   const esc = v => {
-    const s = String(v ?? '');
+    const s = sanitize(v);
     return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   };
   const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
-  // ﻿ (BOM) supaya Excel kenali UTF-8 dengan benar
-  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  // ﻿ (BOM UTF-8) supaya Excel kenali encoding dengan benar
+  // Pakai Uint8Array supaya byte BOM (EF BB BF) ditulis explicit, bukan sebagai string
+  const BOM = new Uint8Array([0xEF, 0xBB, 0xBF]);
+  const encoder = new TextEncoder();
+  const csvBytes = encoder.encode(csv);
+  const combined = new Uint8Array(BOM.length + csvBytes.length);
+  combined.set(BOM, 0);
+  combined.set(csvBytes, BOM.length);
+  const blob = new Blob([combined], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = filename;
@@ -9841,23 +10840,28 @@ async function setMenuAkses(userId, key, checked, idx) {
 
 // ─────────────── ARSIP KAS BULANAN ───────────────
 function loadKasBulanSection() {
-  // Tampilkan cache kalau sudah ada, sambil refresh di background
   if (kasBulanCache.length) renderKasBulan();
-  cekSemuaBulan();
+  // Auto-pastikan bulan berjalan sudah ada di DB (penting kalau user sudah login
+  // dari bulan sebelumnya & sekarang sudah pindah bulan tanpa logout).
+  // skipCek=true supaya cekSemuaBulan di bawah tidak double-run.
+  (async () => {
+    await _autoInitKasBulan(true);
+    await cekSemuaBulan();
+  })();
 }
 
 
 let kasBulanCache = [];
 
-// Dipanggil saat login — buat record bulan berjalan kalau belum ada, lalu cek status semua bulan
-async function _autoInitKasBulan() {
+// Dipanggil saat login + saat buka menu Kas Masuk
+// — buat record bulan berjalan kalau belum ada
+// — kalau skipCek=true, jangan trigger _cekStatusSemuaBulan (caller akan handle sendiri)
+async function _autoInitKasBulan(skipCek) {
   const today = new Date();
   const bulanIni = today.toISOString().slice(0, 7); // "YYYY-MM"
   try {
-    // Pastikan bulan ini sudah ada di tabel kas_bulan
     const { data: existing, error: selErr } = await db.from('kas_bulan').select('id').eq('bulan', bulanIni).maybeSingle();
     if (selErr) {
-      // Tabel belum ada — tampilkan pesan di console, jangan crash
       if (selErr.message.includes('kas_bulan') || selErr.message.includes('relation') || selErr.code === '42P01') {
         console.warn('Tabel kas_bulan belum ada. Buat dulu via SQL Editor Supabase.');
       } else {
@@ -9866,10 +10870,10 @@ async function _autoInitKasBulan() {
       return;
     }
     if (!existing) {
-      await db.from('kas_bulan').insert({ bulan: bulanIni, status: 'on_progress' });
+      const { error: insErr } = await db.from('kas_bulan').insert({ bulan: bulanIni, status: 'on_progress' });
+      if (!insErr) console.log('✅ Auto-create kas_bulan untuk', bulanIni);
     }
-    // Cek & update status semua bulan di background (tidak blokir UI)
-    _cekStatusSemuaBulan(false);
+    if (!skipCek) _cekStatusSemuaBulan(false);
   } catch (e) {
     console.warn('_autoInitKasBulan gagal:', e.message);
   }
@@ -9975,16 +10979,39 @@ function renderKasBulan() {
   }).join('');
 }
 
-// Klik "Lihat Detail" → isi filter iuran dan tampilkan
+// Klik "Lihat Detail" → buka card Iuran (kalau terkunci) + isi filter + scroll
 function lihatBulanKas(bulan) {
   $('iuranMode').value = 'bulan';
   $('iuranBulanWrap').style.display = 'block';
   $('iuranTahunWrap').style.display = 'none';
   $('iuranBulan').value = bulan;
+
+  // Force expand card "Iuran Kas Siswa" kalau sedang collapsed
+  // (fitur collapsible bisa sembunyikan card; pastikan kelihatan saat klik detail)
+  try {
+    const iuranEl = $('iuranResult');
+    const card = iuranEl && iuranEl.closest('.card.collapsible-card');
+    if (card && card.classList.contains('card-collapsed')) {
+      card.classList.remove('card-collapsed');
+      // Update localStorage agar tetap terbuka di-reload
+      const sec = card.closest('.section');
+      const secId = sec ? sec.id : 'global';
+      const h2 = card.querySelector(':scope > h2');
+      if (h2) {
+        const key = secId + '::' + h2.textContent.trim().slice(0, 80);
+        const ls = JSON.parse(localStorage.getItem('expandedCards_v1') || '[]');
+        if (ls.indexOf(key) < 0) {
+          ls.push(key);
+          localStorage.setItem('expandedCards_v1', JSON.stringify(ls));
+        }
+      }
+    }
+  } catch(e) { console.warn('expand iuran card:', e); }
+
   loadIuran();
-  // Scroll ke tabel iuran
+  // Scroll ke tabel iuran (setelah card di-expand)
   const el = $('iuranResult');
-  if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+  if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 350);
 }
 
 // Tombol "Cek & Perbarui Semua Status"
@@ -11037,7 +12064,9 @@ async function backupSemuaData() {
     { nama: 'musyawarah_keuangan', judul: 'MUSYAWARAH - KEUANGAN' },
     { nama: 'struktur_org',        judul: 'STRUKTUR ORGANISASI' },
     { nama: 'projects',            judul: 'PROJECTS / PROGRAM' },
-    { nama: 'audit_log',           judul: 'LOG AKTIVITAS' },
+    { nama: 'arsip_saldo',         judul: 'ARSIP SALDO TAHUNAN' },
+    { nama: 'recycle_bin',         judul: 'TEMPAT SAMPAH (RECYCLE)' },
+    { nama: 'audit_log',           judul: 'LOG AKTIVITAS',          order: ['waktu', false] },
     { nama: 'profiles',            judul: 'PROFIL PENGGUNA' },
   ];
 
@@ -11117,14 +12146,215 @@ function _injectBackupBtn() {
   if (topbar && !document.getElementById('backupBtn')) {
     const btn = document.createElement('button');
     btn.id = 'backupBtn';
-    btn.title = 'Backup semua data ke CSV';
+    btn.title = 'Backup semua data (pilih CSV atau PDF)';
     btn.innerHTML = '💾';
     btn.style.cssText = 'width:auto;padding:7px 10px;background:rgba(240,247,243,.9);color:#1a6644;border:none;border-radius:10px;cursor:pointer;font-size:15px;';
-    btn.onclick = backupSemuaData;
+    btn.onclick = pilihModeBackup;
     // Insert before themeBtn
     const themeBtn = document.getElementById('themeBtn');
     if (themeBtn) topbar.insertBefore(btn, themeBtn);
     else topbar.insertBefore(btn, topbar.firstChild);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Modal: pilih format backup (CSV atau PDF)
+// ═══════════════════════════════════════════════════════════════
+function pilihModeBackup() {
+  let modal = document.getElementById('backupModeModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'backupModeModal';
+    modal.className = 'modal-overlay';
+    modal.style.cssText = 'display:flex;align-items:center;justify-content:center;';
+    modal.onclick = function(e) { if (e.target === modal) modal.style.display = 'none'; };
+    modal.innerHTML =
+      '<div class="modal-box" style="max-width:380px;text-align:center;">' +
+        '<h2 style="margin-bottom:10px;">💾 Backup Semua Data</h2>' +
+        '<p class="muted" style="font-size:12px;margin-bottom:18px;">Pilih format file backup yang Anda inginkan:</p>' +
+        '<div style="display:flex;gap:10px;flex-direction:column;">' +
+          '<button onclick="document.getElementById(\'backupModeModal\').style.display=\'none\';backupSemuaData();" ' +
+            'style="background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;padding:14px;border-radius:10px;text-align:left;display:flex;align-items:center;gap:12px;">' +
+            '<span style="font-size:28px;">📊</span>' +
+            '<div style="flex:1;"><div style="font-weight:800;font-size:14px;">Format CSV</div><div style="font-size:11px;opacity:0.9;font-weight:400;">Bisa dibuka di Excel / Google Sheets. Cocok untuk olah data, sort/filter.</div></div>' +
+          '</button>' +
+          '<button onclick="document.getElementById(\'backupModeModal\').style.display=\'none\';backupSemuaDataPDF();" ' +
+            'style="background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;padding:14px;border-radius:10px;text-align:left;display:flex;align-items:center;gap:12px;">' +
+            '<span style="font-size:28px;">📑</span>' +
+            '<div style="flex:1;"><div style="font-weight:800;font-size:14px;">Format PDF</div><div style="font-size:11px;opacity:0.9;font-weight:400;">Tampilan rapi, siap di-print/baca. Cocok untuk arsip & laporan resmi.</div></div>' +
+          '</button>' +
+          '<button onclick="document.getElementById(\'backupModeModal\').style.display=\'none\';" ' +
+            'style="background:#f3f4f6;color:#6b7280;padding:9px;border-radius:8px;font-size:12px;">' +
+            'Batal' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(modal);
+  }
+  modal.style.display = 'flex';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Backup PDF — semua tabel dirender rapi, siap untuk arsip/print
+// ═══════════════════════════════════════════════════════════════
+async function backupSemuaDataPDF() {
+  if (!window.jspdf) { alert('Library PDF belum termuat. Cek koneksi internet, lalu coba lagi.'); return; }
+  showToast('Menyiapkan backup PDF — mungkin perlu beberapa detik...', 'info', 3000);
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const PW = doc.internal.pageSize.getWidth();
+  const PH = doc.internal.pageSize.getHeight();
+
+  // Sanitasi karakter Unicode → ASCII (Helvetica tidak support emoji/Unicode khusus)
+  const pdfSafe = (s) => {
+    if (s === null || s === undefined) return '';
+    if (typeof s === 'object') s = JSON.stringify(s);
+    return String(s)
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2300}-\u{23FF}]/gu, '')
+      .replace(/[→➜➔]/g, '->').replace(/[←⬅]/g, '<-')
+      .replace(/[≥]/g, '>=').replace(/[≤]/g, '<=').replace(/[≠]/g, '!=')
+      .replace(/[•·∙]/g, '-').replace(/[—–]/g, '-').replace(/[…]/g, '...')
+      .replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/ /g, ' ');
+  };
+
+  // Cover page
+  doc.setFillColor(26, 102, 68);
+  doc.rect(0, 0, PW, PH, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(28); doc.setFont(undefined, 'bold');
+  doc.text('BACKUP DATA', PW/2, PH/2 - 30, { align: 'center' });
+  doc.setFontSize(36);
+  doc.text('MUMI MB3', PW/2, PH/2 - 15, { align: 'center' });
+  doc.setFontSize(11); doc.setFont(undefined, 'normal');
+  doc.text('Snapshot lengkap seluruh data organisasi', PW/2, PH/2 + 5, { align: 'center' });
+  doc.setFontSize(13); doc.setFont(undefined, 'bold');
+  doc.text('Tanggal Backup:', PW/2, PH/2 + 25, { align: 'center' });
+  doc.setFont(undefined, 'normal');
+  doc.text(new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' }), PW/2, PH/2 + 32, { align: 'center' });
+
+  // Daftar tabel yang di-backup
+  const tabel = [
+    { nama: 'transaksi',           judul: 'TRANSAKSI KAS',          warna: [22, 163, 74],   order: ['tanggal', false] },
+    { nama: 'kas_bulan',           judul: 'KAS PER BULAN',          warna: [22, 163, 74] },
+    { nama: 'anggota',             judul: 'ANGGOTA',                warna: [26, 102, 68],   order: ['nama', true] },
+    { nama: 'kategori_anggota',    judul: 'KATEGORI ANGGOTA',       warna: [26, 102, 68] },
+    { nama: 'sesi',                judul: 'SESI / PERTEMUAN',       warna: [124, 58, 237],  order: ['tanggal', false] },
+    { nama: 'kehadiran',           judul: 'KEHADIRAN',              warna: [124, 58, 237] },
+    { nama: 'catatan_sesi',        judul: 'CATATAN SESI',           warna: [124, 58, 237] },
+    { nama: 'acara',               judul: 'ACARA',                  warna: [217, 119, 6],   order: ['tanggal', false] },
+    { nama: 'acara_bayar',         judul: 'PEMBAYARAN ACARA',       warna: [217, 119, 6] },
+    { nama: 'qurban_periode',      judul: 'QURBAN - PERIODE',       warna: [192, 132, 252] },
+    { nama: 'qurban_bayar',        judul: 'QURBAN - PEMBAYARAN',    warna: [192, 132, 252] },
+    { nama: 'qurban_keluar',       judul: 'QURBAN - PENGELUARAN',   warna: [192, 132, 252] },
+    { nama: 'musyawarah',          judul: 'MUSYAWARAH',             warna: [37, 99, 235],   order: ['tanggal', false] },
+    { nama: 'musyawarah_peserta',  judul: 'MUSYAWARAH - PESERTA',   warna: [37, 99, 235] },
+    { nama: 'musyawarah_keuangan', judul: 'MUSYAWARAH - KEUANGAN',  warna: [37, 99, 235] },
+    { nama: 'struktur_org',        judul: 'STRUKTUR ORGANISASI',    warna: [156, 39, 176] },
+    { nama: 'projects',            judul: 'PROJECTS / PROGRAM',     warna: [126, 87, 194] },
+    { nama: 'arsip_saldo',         judul: 'ARSIP SALDO TAHUNAN',    warna: [217, 119, 6] },
+    { nama: 'recycle_bin',         judul: 'TEMPAT SAMPAH',          warna: [107, 114, 128] },
+    { nama: 'audit_log',           judul: 'LOG AKTIVITAS (100 TERAKHIR)', warna: [55, 65, 81], order: ['waktu', false], limit: 100 },
+    { nama: 'profiles',            judul: 'PROFIL PENGGUNA',        warna: [55, 65, 81] },
+  ];
+
+  // Helper: render satu section tabel
+  const renderSection = (t, data) => {
+    doc.addPage();
+    // Section header (banner warna)
+    doc.setFillColor(t.warna[0], t.warna[1], t.warna[2]);
+    doc.rect(0, 0, PW, 16, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14); doc.setFont(undefined, 'bold');
+    doc.text(t.judul, 14, 11);
+    doc.setFontSize(9); doc.setFont(undefined, 'normal');
+    doc.text((data && data.length ? data.length + ' record' : 'kosong'), PW - 14, 11, { align: 'right' });
+
+    if (!data || !data.length) {
+      doc.setTextColor(150, 150, 150);
+      doc.setFontSize(11); doc.setFont(undefined, 'italic');
+      doc.text('(Tidak ada data)', PW/2, PH/2, { align: 'center' });
+      return;
+    }
+
+    // Build kolom & body — sembunyikan kolom HUGE (photo base64, data jsonb panjang)
+    let kolom = Object.keys(data[0]);
+    // Filter kolom yang berisi base64 image / data terlalu besar
+    const sampelRow = data[0];
+    kolom = kolom.filter(k => {
+      const v = sampelRow[k];
+      if (typeof v === 'string' && v.length > 500) return false; // skip data panjang
+      return true;
+    });
+
+    const body = data.map(r => kolom.map(k => {
+      const v = r[k];
+      if (v === null || v === undefined) return '-';
+      if (typeof v === 'object') {
+        const s = JSON.stringify(v);
+        return pdfSafe(s.length > 60 ? s.slice(0, 57) + '...' : s);
+      }
+      const s = String(v);
+      return pdfSafe(s.length > 80 ? s.slice(0, 77) + '...' : s);
+    }));
+
+    doc.autoTable({
+      startY: 20,
+      head: [kolom.map(k => k.toUpperCase())],
+      body: body,
+      styles: { fontSize: 7, cellPadding: 1.8, overflow: 'linebreak', cellWidth: 'wrap' },
+      headStyles: { fillColor: t.warna, textColor: 255, fontStyle: 'bold', fontSize: 7 },
+      alternateRowStyles: { fillColor: [247, 250, 248] },
+      margin: { top: 20, left: 8, right: 8 },
+      showHead: 'everyPage',
+      didDrawPage: function(data) {
+        // Re-draw section header di setiap halaman section ini
+        if (data.pageNumber > 1) {
+          doc.setFillColor(t.warna[0], t.warna[1], t.warna[2]);
+          doc.rect(0, 0, PW, 10, 'F');
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(9); doc.setFont(undefined, 'bold');
+          doc.text(t.judul + ' (lanjutan)', 14, 7);
+          doc.setFontSize(8); doc.setFont(undefined, 'normal');
+          doc.text('Halaman ' + data.pageNumber, PW - 14, 7, { align: 'right' });
+        }
+      },
+    });
+  };
+
+  // Ambil & render setiap tabel
+  let ok = 0, gagal = [];
+  for (const t of tabel) {
+    try {
+      let q = db.from(t.nama).select('*');
+      if (t.order) q = q.order(t.order[0], { ascending: t.order[1] });
+      if (t.limit) q = q.limit(t.limit);
+      let { data, error } = await q;
+      if (error && t.order) { ({ data, error } = await db.from(t.nama).select('*').limit(t.limit || 1000)); }
+      if (error) { gagal.push(t.nama); continue; }
+      renderSection(t, data || []);
+      ok++;
+    } catch (e) {
+      console.warn('Backup PDF gagal table', t.nama, e);
+      gagal.push(t.nama);
+    }
+  }
+
+  // Footer di setiap halaman
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    if (i === 1) continue; // skip cover
+    doc.setFontSize(7); doc.setTextColor(150, 150, 150); doc.setFont(undefined, 'normal');
+    doc.text('Backup MUMI MB3  |  ' + new Date().toLocaleDateString('id-ID'), 8, PH - 4);
+    doc.text('Halaman ' + i + ' dari ' + totalPages, PW - 8, PH - 4, { align: 'right' });
+  }
+
+  doc.save('backup-mumi-mb3-' + new Date().toISOString().slice(0, 10) + '.pdf');
+  if (gagal.length === 0) {
+    showToast('Backup PDF berhasil! (' + ok + ' tabel)', 'success', 4000);
+  } else {
+    showToast('Backup PDF selesai: ' + ok + ' OK, gagal: ' + gagal.join(', '), 'info', 6000);
   }
 }
 
@@ -11804,24 +13034,85 @@ CREATE POLICY "allow_all_msw_keuangan" ON musyawarah_keuangan FOR ALL USING (aut
     $('mswList').innerHTML = '<p class="err">Gagal memuat: ' + escapeHtml(e.message) + '</p>';
     return;
   }
+  _refreshMswTahunDropdown();
   renderMswList();
+}
+
+// ─── Populate dropdown tahun dari data musyawarah (panggil setelah mswCache update) ───
+function _refreshMswTahunDropdown() {
+  const sel = $('mswFilterTahun');
+  if (!sel) return;
+  const prev = sel.value;
+  const tahunSet = new Set();
+  (mswCache || []).forEach(m => {
+    if (m.tanggal) tahunSet.add(String(m.tanggal).slice(0, 4));
+  });
+  const tahunList = Array.from(tahunSet).sort().reverse();
+  const tahunSekarang = String(new Date().getFullYear());
+  // Hitung count per tahun
+  const counts = {};
+  (mswCache || []).forEach(m => {
+    const y = m.tanggal ? String(m.tanggal).slice(0, 4) : null;
+    if (y) counts[y] = (counts[y] || 0) + 1;
+  });
+  let opts = '<option value="semua">Semua Tahun (' + (mswCache || []).length + ')</option>';
+  tahunList.forEach(y => {
+    opts += `<option value="${y}">${y} (${counts[y]||0})</option>`;
+  });
+  sel.innerHTML = opts;
+  // Pertahankan pilihan sebelumnya, atau default ke tahun sekarang kalau ada datanya
+  if (prev && (prev === 'semua' || tahunList.includes(prev))) {
+    sel.value = prev;
+  } else if (tahunList.includes(tahunSekarang)) {
+    sel.value = tahunSekarang;
+  } else {
+    sel.value = 'semua';
+  }
 }
 
 // ─── Render daftar musyawarah ───
 function renderMswList() {
   const q = ($('mswSearch')?.value || '').toLowerCase();
   const filterStatus = $('mswFilterStatus')?.value || 'semua';
+  const filterTahun  = $('mswFilterTahun')?.value || 'semua';
+  const filterBulan  = $('mswFilterBulan')?.value || 'semua';
   const mswSeleksiMode = $('mswModeSeleksi')?.checked;
 
   let list = mswCache.filter(m => {
     if (filterStatus !== 'semua' && m.status !== filterStatus) return false;
+    // Filter periode (Tahun-Bulan)
+    if (filterTahun !== 'semua' || filterBulan !== 'semua') {
+      const tgl = m.tanggal || '';
+      const yy = tgl.slice(0, 4);
+      const mm = tgl.slice(5, 7);
+      if (filterTahun !== 'semua' && yy !== filterTahun) return false;
+      if (filterBulan !== 'semua' && mm !== filterBulan) return false;
+    }
     if (!q) return true;
     const pesertaNames = (m.musyawarah_peserta || []).map(p => p.nama || '').join(' ');
     return [m.judul, m.tanggal, m.tempat, m.hasil, pesertaNames].join(' ').toLowerCase().includes(q);
   });
 
+  // Update info count di toolbar
+  const countEl = $('mswFilterCount');
+  if (countEl) {
+    let label = '';
+    if (filterTahun !== 'semua' || filterBulan !== 'semua') {
+      const NAMA_BULAN = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+      const blStr = filterBulan !== 'semua' ? (NAMA_BULAN[parseInt(filterBulan,10)] + ' ') : '';
+      const thStr = filterTahun !== 'semua' ? filterTahun : '';
+      label = '· ' + list.length + ' di ' + blStr + thStr;
+    } else {
+      label = '· ' + list.length + ' total';
+    }
+    countEl.textContent = label;
+  }
+
   if (!list.length) {
-    $('mswList').innerHTML = '<p class="muted" style="padding:0 4px;">Belum ada musyawarah. Klik ➕ untuk menambah.</p>';
+    const filterAktif = (filterTahun !== 'semua' || filterBulan !== 'semua' || q || filterStatus !== 'semua');
+    $('mswList').innerHTML = filterAktif
+      ? '<p class="muted" style="padding:0 4px;">📭 Tidak ada musyawarah cocok dengan filter ini. Coba ubah Tahun/Bulan atau hapus pencarian.</p>'
+      : '<p class="muted" style="padding:0 4px;">Belum ada musyawarah. Klik ➕ untuk menambah.</p>';
     return;
   }
 
@@ -11851,7 +13142,7 @@ function renderMswList() {
             <span class="st-badge ${arsip?'st-cancelled':'st-done'}" style="font-size:10px;">${arsip?'📦 Arsip':'✅ Aktif'}</span>
           </div>
           ${(window.divisiTagsHTML && m.divisis && m.divisis.length) ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">${divisiTagsHTML(m.divisis, true)}</div>` : ''}
-          ${m.hasil ? `<div style="font-size:12px;color:#374151;margin-top:6px;line-height:1.5;">${descToHTML(m.hasil.slice(0,100))}${m.hasil.length>100?'…':''}</div>` : ''}
+          ${m.hasil ? `<div style="font-size:12px;color:#374151;margin-top:6px;line-height:1.5;">${escapeHtml(window.mdToPlainText(m.hasil, 100))}</div>` : ''}
         </div>
       </div>
       <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
@@ -12050,7 +13341,13 @@ function renderMswForm(msw, peserta=[], keuangan=[]) {
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('bold')" title="Tebal (Ctrl+B)"><b>B</b></button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('italic')" title="Miring (Ctrl+I)"><i>I</i></button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('underline')" title="Garis Bawah (Ctrl+U)" style="text-decoration:underline;">U</button>
-        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('highlight')" title="Highlight" style="background:#fef08a;color:#422006;">🖍</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('strikethrough')" title="Coret (Strikethrough)" style="text-decoration:line-through;">S</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('superscript')" title="Superscript (atas)">x²</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('subscript')" title="Subscript (bawah)">x₂</button>
+        <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('mswHasil'), this, 'fore')" title="Warna Huruf" style="border-bottom:3px solid #dc2626;">A▾</button>
+        <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('mswHasil'), this, 'hilite')" title="Warna Highlight" style="background:#fef08a;color:#422006;">🖍▾</button>
+        <button type="button" class="desc-toolbar-btn" data-table-btn onclick="window.showTablePicker(document.getElementById('mswHasil'), this)" title="Sisipkan Tabel">⊞ Tabel</button>
+        <button type="button" class="desc-toolbar-btn" onclick="window.pickImageForEditor(document.getElementById('mswHasil'))" title="Sisipkan Gambar dari device">🖼️ Gambar</button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('link')" title="Sisipkan Link (Ctrl+K)">🔗 Link</button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('ul')" title="Bullet List">• List</button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('ol')" title="Numbered List">1. List</button>
@@ -12232,6 +13529,7 @@ function _bukaWysiwygTabBaru(opts) {
     .replace(/<span class="desc-bold">([\s\S]*?)<\/span>/g, '<b>$1</b>')
     .replace(/<span class="desc-italic">([\s\S]*?)<\/span>/g, '<i>$1</i>')
     .replace(/<span class="desc-underline">([\s\S]*?)<\/span>/g, '<u>$1</u>')
+    .replace(/<span class="desc-strike">([\s\S]*?)<\/span>/g, '<s>$1</s>')
     .replace(/<span class="desc-highlight">([\s\S]*?)<\/span>/g, '<mark>$1</mark>');
   if (!initHtml.trim()) initHtml = '<p><br></p>';
 
@@ -12586,8 +13884,26 @@ function _bukaWysiwygTabBaru(opts) {
           out += inner ? '*' + inner + '*' : '';
         else if (tag === 'u' || cls.indexOf('desc-underline') >= 0)
           out += inner ? '__' + inner + '__' : '';
-        else if (tag === 'mark' || cls.indexOf('desc-highlight') >= 0)
-          out += inner ? '==' + inner + '==' : '';
+        else if (tag === 's' || tag === 'strike' || tag === 'del' || cls.indexOf('desc-strike') >= 0)
+          out += inner ? '~~' + inner + '~~' : '';
+        else if (tag === 'sup')
+          out += inner ? '^^' + inner + '^^' : '';
+        else if (tag === 'sub')
+          out += inner ? ',,' + inner + ',,' : '';
+        else if (tag === 'font') {
+          var fc = c.getAttribute('color') || '';
+          out += fc ? ('{c' + fc + '}' + inner + '{/c}') : inner;
+        }
+        else if (tag === 'mark' || cls.indexOf('desc-highlight') >= 0) {
+          var ms = c.getAttribute('style') || '';
+          var mbg = ms.match(/background(?:-color)?\s*:\s*([^;]+)/i);
+          if (mbg) {
+            var mhex = (typeof rgbToHex === 'function') ? rgbToHex(mbg[1].trim()) : mbg[1].trim();
+            out += inner ? '{h' + mhex + '}' + inner + '{/h}' : '';
+          } else {
+            out += inner ? '==' + inner + '==' : '';
+          }
+        }
         else if (tag === 'a') {
           var href = c.getAttribute('href') || '';
           out += '[' + inner + '](' + href + ')';
@@ -15469,7 +16785,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
         +'</div>'
         +'<div style="text-align:right;flex-shrink:0;">'+(p.tanggal_selesai?dueBadge(p.tanggal_selesai):'')+'</div>'
         +'</div>'
-        +(p.deskripsi?'<div style="font-size:12px;color:#5f7d6e;margin-bottom:8px;line-height:1.5;">'+p.deskripsi.slice(0,120)+(p.deskripsi.length>120?'…':'')+'</div>':'')
+        +(p.deskripsi?'<div style="font-size:12px;color:#5f7d6e;margin-bottom:8px;line-height:1.5;">'+escapeHtml(window.mdToPlainText(p.deskripsi, 120))+'</div>':'')
         +(divisiTags?'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">'+divisiTags+'</div>':'')
         +(anggotaChips||moreAnggota?'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">'+anggotaChips+moreAnggota+'</div>':'')
         +progressBar
@@ -15508,7 +16824,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     if(tasks.length){
       taskHtml='<div style="margin-top:4px;">'+tasks.map(function(t,i){
         var metaHtml='';
-        if(t.desc) metaHtml+='<span class="prj-task-desc-preview">📝 '+descToHTML(t.desc.slice(0,60))+(t.desc.length>60?'…':'')+'</span>';
+        if(t.desc) metaHtml+='<span class="prj-task-desc-preview">📝 '+escapeHtml(window.mdToPlainText(t.desc, 60))+'</span>';
         if(t.link) metaHtml+='<span class="prj-task-link-chip">🔗 Link</span>';
         if(t.photos&&t.photos.length) metaHtml+='<img src="'+t.photos[0]+'" class="prj-task-photo-thumb" alt="foto">';
         if(t.assignee) metaHtml+='<span style="font-size:10px;color:#7a9585;">👤 '+t.assignee+'</span>';
@@ -16197,6 +17513,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       card.innerHTML = `
         <h2>🎪 Sisa Dana per Acara</h2>
         <p class="muted" style="font-size:12px;">Belum ada transaksi acara yang tercatat.</p>`;
+      if (window.makeCollapsible) window.makeCollapsible(card);
       return;
     }
 
@@ -16240,6 +17557,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
           Untuk melihat rincian transaksi, buka menu <b>Acara</b> → pilih acara.
         </div>
       </div>`;
+    if (window.makeCollapsible) window.makeCollapsible(card);
   }
 
   // Hook openSection saldo
@@ -16248,6 +17566,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     _origOpenSaldo(name);
     if (name === 'saldo') {
       renderSaldoSisaAcara();
+      if (window.renderArsipSaldoList) window.renderArsipSaldoList();
     }
   };
 
@@ -16257,6 +17576,184 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     await _origLD.apply(this, arguments);
     // Card sisa acara
     renderSaldoSisaAcara();
+    if (window.renderArsipSaldoList) window.renderArsipSaldoList();
+  };
+
+  // ─── ARSIP SALDO TAHUNAN ───
+  // Snapshot data dashboard (sisa per acara, statistik, 10 trx) → simpan per tahun
+  // Storage: localStorage utama + Supabase optional (kalau tabel arsip_saldo ada)
+  const _ARSIP_LS_KEY = 'arsip_saldo_v1';
+
+  function _loadArsip() {
+    try { return JSON.parse(localStorage.getItem(_ARSIP_LS_KEY) || '{}'); } catch(e) { return {}; }
+  }
+  function _saveArsip(obj) {
+    try { localStorage.setItem(_ARSIP_LS_KEY, JSON.stringify(obj)); } catch(e) {}
+  }
+
+  // Expose ke window — biar bisa dipanggil dari button onclick HTML
+  window.arsipkanSaldoTahunIni = async function() {
+    const tahun = new Date().getFullYear();
+    const arsip = _loadArsip();
+    if (arsip[tahun]) {
+      if (!confirm('Snapshot tahun ' + tahun + ' sudah ada. Replace dengan data terbaru?')) return;
+    }
+    // Snapshot
+    let sisaAcara = [];
+    try { sisaAcara = await fetchSisaPerAcara(); } catch(e) {}
+    const statistik = {
+      anggota: document.getElementById('statAnggota')?.textContent || '—',
+      hadir:   document.getElementById('statHadir')?.textContent || '—',
+      acara:   document.getElementById('statAcara')?.textContent || '—',
+      qurban:  document.getElementById('statQurban')?.textContent || '—',
+    };
+    const ringkasan = {
+      saldo_kas:   document.getElementById('sumKas')?.textContent || 'Rp 0',
+      dana_qurban: document.getElementById('sumQurban')?.textContent || 'Rp 0',
+      dana_acara:  document.getElementById('sumAcara')?.textContent || 'Rp 0',
+      total:       document.getElementById('sumTotal')?.textContent || 'Rp 0',
+    };
+    let transaksi_terakhir = [];
+    try {
+      const { data: tx } = await db.from('transaksi')
+        .select('id, tanggal, kategori, tipe, jumlah, deskripsi, anggota(nama)')
+        .order('tanggal', { ascending: false }).order('created_at', { ascending: false }).limit(10);
+      transaksi_terakhir = tx || [];
+    } catch(e) {}
+    const snapshot = {
+      tahun, snapshot_at: new Date().toISOString(),
+      ringkasan, statistik, sisa_per_acara: sisaAcara, transaksi_terakhir
+    };
+    arsip[tahun] = snapshot;
+    _saveArsip(arsip);
+    // Try sync to Supabase (kalau tabel ada — kalau belum, hanya local)
+    try {
+      const { error } = await db.from('arsip_saldo').upsert({ tahun, data: snapshot }, { onConflict: 'tahun' });
+      if (error && !/relation|does not exist|arsip_saldo/i.test(error.message)) {
+        console.warn('arsip Supabase warning:', error.message);
+      }
+    } catch(e) {}
+    const msgEl = document.getElementById('arsipSaldoMsg');
+    if (msgEl) {
+      msgEl.innerHTML = '<span style="color:#16a34a;">✅ Snapshot tahun ' + tahun + ' tersimpan!</span>';
+      setTimeout(function(){ if(msgEl) msgEl.innerHTML = ''; }, 4000);
+    }
+    window.renderArsipSaldoList();
+  };
+
+  window.renderArsipSaldoList = async function() {
+    const listEl = document.getElementById('arsipSaldoList');
+    if (!listEl) return;
+    let arsip = _loadArsip();
+    // Coba merge dari Supabase juga
+    try {
+      const { data } = await db.from('arsip_saldo').select('tahun, data');
+      if (Array.isArray(data)) {
+        data.forEach(function(r) {
+          if (r.data && (!arsip[r.tahun] || (r.data.snapshot_at || '') > (arsip[r.tahun].snapshot_at || ''))) {
+            arsip[r.tahun] = r.data;
+          }
+        });
+      }
+    } catch(e) {}
+    const tahunList = Object.keys(arsip).map(Number).sort((a,b) => b - a);
+    if (!tahunList.length) {
+      listEl.innerHTML = '<p class="muted" style="font-size:11px;">Belum ada arsip. Klik tombol di atas untuk buat snapshot.</p>';
+      return;
+    }
+    const tahunSekarang = new Date().getFullYear();
+    listEl.innerHTML = tahunList.map(function(t) {
+      const s = arsip[t];
+      const tanggal = s.snapshot_at ? new Date(s.snapshot_at).toLocaleString('id-ID', { dateStyle:'long', timeStyle:'short' }) : '—';
+      const isCurrent = t === tahunSekarang;
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;background:' + (isCurrent ? '#fef3c7' : '#f0fdf4') + ';border-radius:8px;margin-bottom:5px;flex-wrap:wrap;">' +
+        '<div>' +
+          '<div style="font-weight:700;font-size:13px;color:#1a6644;">📅 Tahun ' + t + (isCurrent?' <span style="font-size:10px;background:#f59e0b;color:#fff;padding:1px 6px;border-radius:99px;">aktif</span>':'') + '</div>' +
+          '<div class="muted" style="font-size:10px;">Dibuat: ' + escapeHtml(tanggal) + '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:5px;">' +
+          '<button class="small secondary" onclick="window.lihatArsipSaldo(' + t + ')">👁️ Lihat</button>' +
+          '<button class="small danger" onclick="window.hapusArsipSaldo(' + t + ')">🗑</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  };
+
+  window.lihatArsipSaldo = function(tahun) {
+    const arsip = _loadArsip();
+    const s = arsip[tahun];
+    if (!s) { alert('Arsip tahun ' + tahun + ' tidak ditemukan.'); return; }
+    const tanggal = s.snapshot_at ? new Date(s.snapshot_at).toLocaleString('id-ID', { dateStyle:'long', timeStyle:'short' }) : '—';
+    document.getElementById('arsipSaldoModalTitle').textContent = '📦 Arsip Saldo — Tahun ' + tahun;
+    let html = '<div class="muted" style="font-size:11px;margin-bottom:14px;">Snapshot diambil: ' + escapeHtml(tanggal) + '</div>';
+    // Ringkasan
+    if (s.ringkasan) {
+      html += '<h3 style="font-size:14px;margin:0 0 8px;color:#1a6644;">💰 Ringkasan Keuangan</h3>';
+      html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:14px;">' +
+        '<div style="padding:8px;background:#f0fdf4;border-radius:6px;"><div style="font-size:10px;color:#7a9585;">Saldo Kas</div><div style="font-weight:800;color:#16a34a;">' + escapeHtml(s.ringkasan.saldo_kas) + '</div></div>' +
+        '<div style="padding:8px;background:#faf7ff;border-radius:6px;"><div style="font-size:10px;color:#7a9585;">Dana Qurban</div><div style="font-weight:800;color:#7c3aed;">' + escapeHtml(s.ringkasan.dana_qurban) + '</div></div>' +
+        '<div style="padding:8px;background:#fef3e8;border-radius:6px;"><div style="font-size:10px;color:#7a9585;">Dana Acara</div><div style="font-weight:800;color:#d97706;">' + escapeHtml(s.ringkasan.dana_acara) + '</div></div>' +
+        '<div style="padding:8px;background:#e8f5ef;border-radius:6px;"><div style="font-size:10px;color:#7a9585;">TOTAL</div><div style="font-weight:900;color:#1a6644;">' + escapeHtml(s.ringkasan.total) + '</div></div>' +
+        '</div>';
+    }
+    // Statistik
+    if (s.statistik) {
+      html += '<h3 style="font-size:14px;margin:0 0 8px;color:#1a6644;">📊 Statistik Singkat</h3>';
+      html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px;text-align:center;">' +
+        '<div style="padding:8px;background:#f7faf8;border-radius:6px;"><div style="font-size:18px;font-weight:800;color:#1a6644;">' + escapeHtml(s.statistik.anggota) + '</div><div style="font-size:10px;color:#7a9585;">Anggota Aktif</div></div>' +
+        '<div style="padding:8px;background:#f7faf8;border-radius:6px;"><div style="font-size:18px;font-weight:800;color:#1a6644;">' + escapeHtml(s.statistik.hadir) + '</div><div style="font-size:10px;color:#7a9585;">Kehadiran</div></div>' +
+        '<div style="padding:8px;background:#f7faf8;border-radius:6px;"><div style="font-size:18px;font-weight:800;color:#1a6644;">' + escapeHtml(s.statistik.acara) + '</div><div style="font-size:10px;color:#7a9585;">Acara Berjalan</div></div>' +
+        '<div style="padding:8px;background:#f7faf8;border-radius:6px;"><div style="font-size:14px;font-weight:800;color:#1a6644;">' + escapeHtml(s.statistik.qurban) + '</div><div style="font-size:10px;color:#7a9585;">Dana Qurban</div></div>' +
+        '</div>';
+    }
+    // Sisa per acara
+    if (s.sisa_per_acara && s.sisa_per_acara.length) {
+      html += '<h3 style="font-size:14px;margin:0 0 8px;color:#1a6644;">🎪 Sisa Dana per Acara</h3>';
+      const ada = s.sisa_per_acara.filter(function(r){return r.masuk>0||r.keluar>0;});
+      if (ada.length) {
+        const totMasuk = ada.reduce((x,r)=>x+r.masuk,0);
+        const totKeluar = ada.reduce((x,r)=>x+r.keluar,0);
+        const totSisa = ada.reduce((x,r)=>x+r.sisa,0);
+        html += '<div style="overflow-x:auto;margin-bottom:14px;"><table class="rekap"><thead><tr><th style="text-align:left;font-size:11px;">Acara</th><th style="font-size:11px;text-align:right;">Masuk</th><th style="font-size:11px;text-align:right;">Keluar</th><th style="font-size:11px;text-align:right;">Sisa</th></tr></thead><tbody>' +
+          ada.map(function(r) {
+            return '<tr><td style="font-size:12px;">' + escapeHtml(r.nama||'-') + '</td>' +
+              '<td style="font-size:12px;text-align:right;color:#16a34a;">' + IDR(r.masuk) + '</td>' +
+              '<td style="font-size:12px;text-align:right;color:#dc2626;">' + IDR(r.keluar) + '</td>' +
+              '<td style="font-size:12px;text-align:right;font-weight:800;color:' + (r.sisa>=0?'#1a6644':'#dc2626') + ';">' + IDR(r.sisa) + '</td></tr>';
+          }).join('') +
+          '</tbody><tfoot><tr style="background:#e8f5ef;"><td style="font-weight:800;font-size:12px;">TOTAL</td>' +
+          '<td style="text-align:right;font-weight:800;color:#16a34a;">' + IDR(totMasuk) + '</td>' +
+          '<td style="text-align:right;font-weight:800;color:#dc2626;">' + IDR(totKeluar) + '</td>' +
+          '<td style="text-align:right;font-weight:900;color:' + (totSisa>=0?'#1a6644':'#dc2626') + ';">' + IDR(totSisa) + '</td></tr></tfoot></table></div>';
+      }
+    }
+    // Transaksi terakhir
+    if (s.transaksi_terakhir && s.transaksi_terakhir.length) {
+      html += '<h3 style="font-size:14px;margin:0 0 8px;color:#1a6644;">📋 10 Transaksi Terakhir</h3>';
+      html += '<div style="display:flex;flex-direction:column;gap:5px;">';
+      s.transaksi_terakhir.forEach(function(t) {
+        const tipe = t.tipe === 'masuk' ? '+ ' : '- ';
+        const color = t.tipe === 'masuk' ? '#16a34a' : '#dc2626';
+        html += '<div style="padding:8px 10px;background:#f7faf8;border-radius:7px;font-size:12px;display:flex;justify-content:space-between;gap:8px;">' +
+          '<div><div style="font-weight:600;">' + escapeHtml(t.deskripsi || '-') + '</div><div class="muted" style="font-size:10px;">' + escapeHtml(t.tanggal||'') + ' · ' + escapeHtml(t.kategori||'-') + '</div></div>' +
+          '<div style="font-weight:800;color:' + color + ';white-space:nowrap;">' + tipe + IDR(t.jumlah||0) + '</div>' +
+          '</div>';
+      });
+      html += '</div>';
+    }
+    document.getElementById('arsipSaldoModalContent').innerHTML = html;
+    document.getElementById('arsipSaldoModal').style.display = 'flex';
+  };
+  window.closeArsipSaldoModal = function() {
+    document.getElementById('arsipSaldoModal').style.display = 'none';
+  };
+  window.hapusArsipSaldo = async function(tahun) {
+    if (!confirm('Hapus arsip tahun ' + tahun + ' secara permanen?')) return;
+    const arsip = _loadArsip();
+    delete arsip[tahun];
+    _saveArsip(arsip);
+    try { await db.from('arsip_saldo').delete().eq('tahun', tahun); } catch(e) {}
+    window.renderArsipSaldoList();
   };
 
   /* ──────────────────────────────────────────────────────────────
