@@ -57,8 +57,482 @@
   [data-theme="dark"] .desc-h2 { color: #4ade80; }
   [data-theme="dark"] .desc-h3 { color: #34d399; }
 
+  /* ─── STYLE PICKER POPUP (Font / Ukuran / Spasi / Align) ─── */
+  .style-picker-popup {
+    position: fixed; z-index: 1100;
+    background: #fff; border: 1.5px solid #d4e8dc; border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+    padding: 12px 14px;
+    min-width: 280px; max-width: 360px;
+    font-family: inherit;
+    animation: ctxIn 0.12s ease-out;
+  }
+  .style-picker-popup .sp-section { margin-bottom: 10px; }
+  .style-picker-popup .sp-section:last-child { margin-bottom: 0; }
+  .style-picker-popup .sp-label {
+    font-size: 11px; font-weight: 800; color: #4a6056;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    margin-bottom: 5px;
+  }
+  .style-picker-popup .sp-select {
+    width: 100%; padding: 6px 8px;
+    border: 1px solid #d4e8dc; border-radius: 6px;
+    font-size: 12px; background: #f7faf8;
+  }
+  .style-picker-popup .sp-row {
+    display: flex; flex-wrap: wrap; gap: 4px;
+  }
+  .style-picker-popup .sp-chip {
+    background: #fff; color: #1a6644;
+    border: 1px solid #d4e8dc; padding: 5px 10px;
+    border-radius: 6px; font-size: 11px; font-weight: 600;
+    cursor: pointer; width: auto; margin: 0;
+    transition: all 0.12s;
+  }
+  .style-picker-popup .sp-chip:hover { background: #f0f7f3; border-color: #1a6644; }
+  .style-picker-popup .sp-chip.active { background: #1a6644; color: #fff; border-color: #1a6644; }
+  .style-picker-popup .sp-reset {
+    width: 100%; background: #fff0f0; color: #b91c1c;
+    border: 1px solid #fca5a5; padding: 6px;
+    border-radius: 6px; font-size: 12px; font-weight: 700;
+    cursor: pointer; margin: 0;
+  }
+  .style-picker-popup .sp-reset:hover { background: #fee2e2; }
+  [data-theme="dark"] .style-picker-popup { background: rgba(20,40,30,0.95); border-color: rgba(45,158,107,0.4); color: #d4e8dc; }
+  [data-theme="dark"] .style-picker-popup .sp-label { color: #aac0b3; }
+  [data-theme="dark"] .style-picker-popup .sp-select { background: rgba(45,158,107,0.1); border-color: rgba(45,158,107,0.3); color: #d4e8dc; }
+  [data-theme="dark"] .style-picker-popup .sp-chip { background: rgba(45,158,107,0.08); border-color: rgba(45,158,107,0.3); color: #6fdcab; }
+  [data-theme="dark"] .style-picker-popup .sp-chip:hover { background: rgba(45,158,107,0.2); }
+  [data-theme="dark"] .style-picker-popup .sp-chip.active { background: #2d9e6b; color: #fff; border-color: #2d9e6b; }
+
+  /* List rendering di WYSIWYG editor */
+  .wysiwyg-editor ul, .wysiwyg-editor ol {
+    margin: 6px 0 6px 8px; padding-left: 22px;
+  }
+  .wysiwyg-editor ul li, .wysiwyg-editor ol li {
+    margin: 2px 0; line-height: 1.6;
+  }
+  .wysiwyg-editor ul { list-style-type: disc; }
+  .wysiwyg-editor ol { list-style-type: decimal; }
+  .wysiwyg-editor ul ul { list-style-type: circle; }
+  .wysiwyg-editor ul ul ul { list-style-type: square; }
+  .wysiwyg-editor ol ol { list-style-type: lower-alpha; }
+  .wysiwyg-editor ol ol ol { list-style-type: lower-roman; }
+
+  /* ─── AUTO-SAVE STATUS INDICATOR (Word/Excel-style) ─── */
+  .autosave-status {
+    font-size: 11px; font-weight: 600;
+    padding: 4px 10px; border-radius: 99px;
+    background: #f3f4f6; color: #6b7280;
+    display: inline-flex; align-items: center; gap: 4px;
+    transition: all 0.25s;
+    white-space: nowrap; user-select: none;
+  }
+  .autosave-status.saving { background: #fef3c7; color: #92400e; }
+  .autosave-status.saving::before { content: '💾'; animation: as-pulse 1s ease-in-out infinite; }
+  .autosave-status.saved { background: #dcfce7; color: #166534; }
+  .autosave-status.dirty { background: #ffedd5; color: #9a3412; }
+  .autosave-status.dirty::before { content: '●'; animation: as-pulse 1.4s ease-in-out infinite; }
+  .autosave-status.error { background: #fee2e2; color: #991b1b; }
+  @keyframes as-pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.45; }
+  }
+  [data-theme="dark"] .autosave-status { background: rgba(45,158,107,0.1); color: #aac0b3; }
+  [data-theme="dark"] .autosave-status.saving { background: rgba(245,158,11,0.25); color: #fcd34d; }
+  [data-theme="dark"] .autosave-status.saved { background: rgba(34,197,94,0.25); color: #86efac; }
+  [data-theme="dark"] .autosave-status.dirty { background: rgba(249,115,22,0.25); color: #fdba74; }
+  [data-theme="dark"] .autosave-status.error { background: rgba(220,38,38,0.25); color: #fca5a5; }
+
+  /* ─── CHECKBOX TASK, MENTION, POLL (Notion-style) ─── */
+  .md-todo {
+    display: flex; align-items: flex-start; gap: 9px;
+    padding: 4px 8px 4px 4px; margin: 2px 0;
+    border-radius: 6px; transition: background 0.12s;
+  }
+  .md-todo:hover { background: #f0f7f3; }
+  .md-todo input[type="checkbox"] {
+    width: 17px; height: 17px; margin: 3px 0 0;
+    cursor: pointer; flex-shrink: 0;
+    accent-color: #1a6644;
+  }
+  .md-todo-text { flex: 1; line-height: 1.6; }
+  .md-todo[data-checked="true"] .md-todo-text {
+    text-decoration: line-through;
+    color: #9ca3af; opacity: 0.75;
+  }
+  .md-mention {
+    display: inline-block; padding: 1px 7px;
+    background: #ddd6fe; color: #5b21b6;
+    border-radius: 99px; font-weight: 600;
+    text-decoration: none; font-size: 0.92em;
+    margin: 0 1px;
+  }
+  .md-mention:hover { background: #c4b5fd; color: #4c1d95; }
+  .md-poll {
+    margin: 10px 0; padding: 14px;
+    background: linear-gradient(135deg,#fef9c3,#fde68a);
+    border: 1.5px solid #f59e0b; border-radius: 12px;
+  }
+  .md-poll-q {
+    font-weight: 700; font-size: 14px; color: #78350f;
+    margin-bottom: 10px;
+  }
+  .md-poll-opts {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .md-poll-opt {
+    background: #fff; color: #78350f;
+    border: 1.5px solid #f59e0b; padding: 7px 14px;
+    border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; width: auto; margin: 0;
+    transition: all 0.15s;
+  }
+  .md-poll-opt:hover { background: #fef3c7; transform: translateY(-1px); }
+  .md-poll-opt.voted { background: #f59e0b; color: #fff; border-color: #d97706; }
+  .md-poll-results {
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px dashed #f59e0b;
+    font-size: 12px; color: #78350f;
+  }
+  .md-poll-results .poll-bar {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 4px;
+  }
+  .md-poll-results .poll-bar-fill {
+    height: 8px; background: #f59e0b; border-radius: 4px;
+    transition: width 0.3s;
+  }
+  .md-poll-results .poll-bar-label { min-width: 80px; }
+  .md-poll-results .poll-bar-count { min-width: 35px; text-align: right; font-weight: 700; }
+
+  /* Mention dropdown popup */
+  .mention-popup {
+    position: absolute; z-index: 9999;
+    background: #fff; border: 1.5px solid #d4e8dc; border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    min-width: 220px; max-height: 280px; overflow-y: auto;
+    padding: 4px;
+  }
+  .mention-popup-item {
+    padding: 8px 12px; cursor: pointer; border-radius: 6px;
+    font-size: 13px; display: flex; align-items: center; gap: 8px;
+  }
+  .mention-popup-item:hover, .mention-popup-item.active {
+    background: #ddd6fe; color: #5b21b6;
+  }
+  .mention-popup-item .name { font-weight: 600; }
+  .mention-popup-item .meta { font-size: 11px; color: #7a9585; }
+  .mention-popup-empty {
+    padding: 14px; text-align: center;
+    color: #9ca3af; font-size: 12px; font-style: italic;
+  }
+
+  /* Action Items panel */
+  .action-items-panel {
+    margin-top: 12px; padding: 12px 14px;
+    background: linear-gradient(135deg,#f0f7f3,#dcfce7);
+    border: 1.5px solid #86efac; border-radius: 12px;
+  }
+  .ai-header {
+    display: flex; align-items: center; justify-content: space-between;
+    font-weight: 800; font-size: 13px; color: #14532d;
+    margin-bottom: 8px;
+  }
+  .ai-header .ai-progress {
+    background: #fff; padding: 3px 10px; border-radius: 99px;
+    font-size: 11px; font-weight: 700;
+  }
+  .ai-list { display: flex; flex-direction: column; gap: 4px; }
+  .ai-item {
+    background: #fff; padding: 7px 10px; border-radius: 7px;
+    font-size: 12px; cursor: pointer;
+    display: flex; align-items: flex-start; gap: 8px;
+    border-left: 3px solid #16a34a; transition: all 0.12s;
+  }
+  .ai-item:hover { background: #f7fdf9; transform: translateX(2px); }
+  .ai-item.done {
+    opacity: 0.6;
+    text-decoration: line-through;
+    border-left-color: #d1d5db;
+  }
+  .ai-item .ai-text { flex: 1; }
+  .ai-item .ai-mentions {
+    display: flex; gap: 4px; flex-wrap: wrap; margin-top: 3px;
+  }
+  .ai-item .ai-mention-pill {
+    background: #ddd6fe; color: #5b21b6;
+    padding: 1px 6px; border-radius: 99px; font-size: 10px; font-weight: 600;
+  }
+  .ai-empty {
+    text-align: center; font-size: 12px;
+    color: #166534; font-style: italic; padding: 6px;
+  }
+
+  [data-theme="dark"] .md-todo:hover { background: rgba(45,158,107,0.18); }
+  [data-theme="dark"] .md-mention { background: rgba(124,58,237,0.3); color: #c4b5fd; }
+  [data-theme="dark"] .md-poll { background: linear-gradient(135deg,rgba(245,158,11,0.18),rgba(217,119,6,0.12)); border-color: rgba(245,158,11,0.4); }
+  [data-theme="dark"] .md-poll-q { color: #fcd34d; }
+  [data-theme="dark"] .md-poll-opt { background: rgba(20,40,30,0.7); color: #fcd34d; }
+  [data-theme="dark"] .md-poll-opt:hover { background: rgba(245,158,11,0.2); }
+  [data-theme="dark"] .mention-popup { background: rgba(20,40,30,0.95); border-color: rgba(45,158,107,0.4); color: #d4e8dc; }
+  [data-theme="dark"] .mention-popup-item:hover, [data-theme="dark"] .mention-popup-item.active { background: rgba(124,58,237,0.3); color: #c4b5fd; }
+  [data-theme="dark"] .action-items-panel { background: linear-gradient(135deg,rgba(45,158,107,0.18),rgba(22,163,74,0.12)); border-color: rgba(45,158,107,0.4); }
+  [data-theme="dark"] .ai-header { color: #86efac; }
+  [data-theme="dark"] .ai-item { background: rgba(20,40,30,0.7); color: #d4e8dc; }
+  [data-theme="dark"] .ai-empty { color: #86efac; }
+
+  /* ─── KALENDER KEGIATAN ─── */
+  .kal-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .kal-header h2 {
+    margin: 0; flex: 1; text-align: center; font-size: 18px;
+    color: #1a6644;
+  }
+  .kal-header button.kal-nav {
+    width: 38px; height: 38px; padding: 0;
+    background: #1a6644; color: #fff; border: none;
+    border-radius: 8px; font-size: 18px; font-weight: 800;
+    cursor: pointer; margin: 0;
+  }
+  .kal-header button.kal-nav:hover { background: #2d9e6b; }
+  .kal-header button.kal-today-btn {
+    width: auto; padding: 7px 14px;
+    background: #fff; color: #1a6644;
+    border: 1.5px solid #1a6644; border-radius: 8px;
+    font-size: 12px; font-weight: 700; cursor: pointer; margin: 0;
+  }
+  .kal-header button.kal-today-btn:hover { background: #f0f7f3; }
+  .kal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 4px; background: #e8efeb; padding: 4px;
+    border-radius: 10px;
+  }
+  .kal-dow {
+    background: #1a6644; color: #fff;
+    padding: 7px 0; text-align: center;
+    font-size: 11px; font-weight: 800; letter-spacing: 0.6px;
+    border-radius: 6px;
+  }
+  .kal-dow.dow-sun { background: #b91c1c; }
+  .kal-cell {
+    background: #fff; border-radius: 6px;
+    min-height: 56px; padding: 5px 4px;
+    cursor: pointer; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    transition: all 0.15s; user-select: none;
+  }
+  .kal-cell:hover:not(.kal-empty) {
+    background: #f0f7f3; transform: scale(1.05);
+    box-shadow: 0 2px 6px rgba(26,102,68,0.2);
+    z-index: 2;
+  }
+  .kal-cell.kal-empty { background: transparent; cursor: default; }
+  .kal-cell.kal-today {
+    background: #fef3c7; border: 2px solid #f59e0b;
+  }
+  .kal-cell.kal-today:hover { background: #fde68a; }
+  .kal-cell.kal-free .kal-num { color: #16a34a; }
+  .kal-cell.kal-busy { background: #fafdfb; }
+  .kal-cell.kal-selected {
+    background: #1a6644 !important; color: #fff;
+    box-shadow: 0 0 0 3px #facc15;
+  }
+  .kal-cell.kal-selected .kal-num { color: #fff !important; }
+  .kal-num {
+    font-size: 14px; font-weight: 700; color: #1a2a23;
+    line-height: 1;
+  }
+  .kal-cell.kal-sun .kal-num { color: #b91c1c; }
+  .kal-dots {
+    display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap;
+    justify-content: center;
+  }
+  .kal-dot {
+    display: inline-block; width: 7px; height: 7px;
+    border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.18);
+  }
+  .kal-dot.dot-acara { background: #16a34a; }
+  .kal-dot.dot-msw   { background: #7c3aed; }
+  .kal-dot.dot-prj   { background: #f59e0b; }
+  .kal-legend {
+    display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+    margin-top: 12px; padding: 10px;
+    background: #f7faf8; border-radius: 8px;
+    font-size: 12px; color: #4a6056;
+  }
+  .kal-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+  .kal-detail {
+    margin-top: 14px; padding: 16px;
+    background: #fafdfb; border: 1.5px solid #d4e8dc;
+    border-radius: 10px;
+  }
+  .kal-detail-title {
+    font-size: 15px; font-weight: 800; color: #0a3d22;
+    margin: 0 0 12px; padding-bottom: 8px;
+    border-bottom: 2px solid #d4e8dc;
+  }
+  .kal-detail-empty {
+    text-align: center; padding: 20px 12px;
+    background: linear-gradient(135deg,#dcfce7,#bbf7d0);
+    border-radius: 10px;
+  }
+  .kal-detail-empty .ic { font-size: 32px; margin-bottom: 6px; }
+  .kal-detail-empty .lb { font-size: 14px; font-weight: 800; color: #15803d; }
+  .kal-detail-empty .sub { font-size: 11px; color: #166534; margin-top: 4px; }
+  .kal-act-group { margin-bottom: 14px; }
+  .kal-act-group:last-child { margin-bottom: 0; }
+  .kal-act-group-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px; font-weight: 700; font-size: 13px;
+  }
+  .kal-act-group-header .pill {
+    background: rgba(0,0,0,0.06); color: inherit;
+    padding: 2px 8px; border-radius: 99px; font-size: 11px;
+  }
+  .kal-act-item {
+    background: #fff; padding: 10px 12px; border-radius: 8px;
+    margin-bottom: 6px; border-left: 3px solid #1a6644;
+    font-size: 13px;
+  }
+  .kal-act-item.act-acara { border-left-color: #16a34a; }
+  .kal-act-item.act-msw   { border-left-color: #7c3aed; }
+  .kal-act-item.act-prj   { border-left-color: #f59e0b; }
+  .kal-act-item .nama { font-weight: 700; color: #1a2a23; }
+  .kal-act-item .meta { font-size: 11px; color: #6b7280; margin-top: 3px; }
+  .st-on { color: #16a34a; font-weight: 700; }
+  .st-not { color: #6b7280; }
+  .st-done { color: #1a6644; font-weight: 700; }
+  .st-cancel { color: #dc2626; }
+
+  [data-theme="dark"] .kal-grid { background: rgba(45,158,107,0.15); }
+  [data-theme="dark"] .kal-cell { background: rgba(20,40,30,0.7); color: #d4e8dc; }
+  [data-theme="dark"] .kal-cell.kal-empty { background: transparent; }
+  [data-theme="dark"] .kal-cell:hover:not(.kal-empty) { background: rgba(45,158,107,0.25); }
+  [data-theme="dark"] .kal-cell.kal-today { background: rgba(245,158,11,0.25); border-color: #f59e0b; }
+  [data-theme="dark"] .kal-cell.kal-busy { background: rgba(20,40,30,0.5); }
+  [data-theme="dark"] .kal-num { color: #d4e8dc; }
+  [data-theme="dark"] .kal-cell.kal-free .kal-num { color: #4ade80; }
+  [data-theme="dark"] .kal-detail { background: rgba(20,40,30,0.7); border-color: rgba(45,158,107,0.35); color: #d4e8dc; }
+  [data-theme="dark"] .kal-detail-title { color: #6fdcab; border-bottom-color: rgba(45,158,107,0.35); }
+  [data-theme="dark"] .kal-detail-empty { background: linear-gradient(135deg,rgba(34,197,94,0.18),rgba(74,222,128,0.12)); }
+  [data-theme="dark"] .kal-detail-empty .lb { color: #4ade80; }
+  [data-theme="dark"] .kal-detail-empty .sub { color: #86efac; }
+  [data-theme="dark"] .kal-act-item { background: rgba(45,158,107,0.1); color: #d4e8dc; }
+  [data-theme="dark"] .kal-act-item .nama { color: #d4e8dc; }
+  [data-theme="dark"] .kal-act-item .meta { color: #8aa99a; }
+  [data-theme="dark"] .kal-legend { background: rgba(45,158,107,0.1); color: #aac0b3; }
+  [data-theme="dark"] .kal-header h2 { color: #6fdcab; }
+
+  @media (max-width: 500px) {
+    .kal-cell { min-height: 46px; padding: 3px 2px; }
+    .kal-num { font-size: 12px; }
+    .kal-dot { width: 6px; height: 6px; }
+    .kal-dow { font-size: 10px; padding: 5px 0; letter-spacing: 0.3px; }
+    .kal-header h2 { font-size: 15px; }
+  }
+
+  /* ─── COLLAPSIBLE CARD — klik H2 untuk sembunyikan/tampilkan isi ─── */
+  .card.collapsible-card > h2 {
+    cursor: pointer; user-select: none;
+    display: flex; align-items: center; gap: 8px;
+    position: relative; padding-right: 28px;
+    transition: opacity 0.15s;
+  }
+  .card.collapsible-card > h2:hover { opacity: 0.78; }
+  .card.collapsible-card > h2::after {
+    content: '▾';
+    position: absolute; right: 6px; top: 50%;
+    transform: translateY(-50%) rotate(0deg);
+    font-size: 0.8em; opacity: 0.55;
+    transition: transform 0.2s;
+  }
+  .card.collapsible-card.card-collapsed > h2::after {
+    transform: translateY(-50%) rotate(-90deg);
+  }
+  .card.collapsible-card.card-collapsed > h2 {
+    margin-bottom: 0 !important;
+  }
+  .card.collapsible-card.card-collapsed > *:not(h2) {
+    display: none !important;
+  }
+  .collapse-bar {
+    display: flex; gap: 6px; justify-content: flex-end;
+    margin: -4px 0 8px;
+  }
+  .collapse-bar button {
+    background: transparent; color: #7a9585; border: 1px solid #d4e8dc;
+    padding: 4px 10px; border-radius: 6px;
+    font-size: 11px; font-weight: 600; cursor: pointer;
+    width: auto; margin: 0;
+  }
+  .collapse-bar button:hover { background: #f0f7f3; color: #1a6644; }
+  [data-theme="dark"] .collapse-bar button {
+    border-color: rgba(45,158,107,0.3); color: #8aa99a;
+  }
+  [data-theme="dark"] .collapse-bar button:hover { background: rgba(45,158,107,0.15); color: #6fdcab; }
+
+  /* ─── WYSIWYG editor (contenteditable) untuk form notulensi ─── */
+  .wysiwyg-editor {
+    min-height: 140px; padding: 14px 16px;
+    border: 2px solid #d4e8dc; border-radius: 10px;
+    background: #fafdfb; outline: none;
+    font-size: 14px; line-height: 1.7; color: #2c3e35;
+    overflow-y: auto; max-height: 360px;
+    margin-bottom: 12px;
+    cursor: text;
+  }
+  .wysiwyg-editor:focus { border-color: #2d9e6b; background: #fff; box-shadow: 0 0 0 3px rgba(45,158,107,0.12); }
+  .wysiwyg-editor:empty::before {
+    content: attr(data-placeholder);
+    color: #9fb5a7; font-style: italic; pointer-events: none;
+  }
+  .wysiwyg-editor > :first-child { margin-top: 0; }
+  .wysiwyg-editor h1, .wysiwyg-editor .desc-h1 {
+    font-weight: 800; font-size: 1.35em; line-height: 1.3;
+    color: #0a3d22; margin: 8px 0 4px;
+  }
+  .wysiwyg-editor h2, .wysiwyg-editor .desc-h2 {
+    font-weight: 700; font-size: 1.17em; line-height: 1.3;
+    color: #1a6644; margin: 6px 0 3px;
+  }
+  .wysiwyg-editor h3, .wysiwyg-editor .desc-h3 {
+    font-weight: 600; font-size: 1.06em; line-height: 1.3;
+    color: #2d9e6b; margin: 5px 0 2px;
+  }
+  .wysiwyg-editor b, .wysiwyg-editor strong { font-weight: 800; color: #0a3d22; }
+  .wysiwyg-editor i, .wysiwyg-editor em { font-style: italic; }
+  .wysiwyg-editor u { text-decoration: underline; text-underline-offset: 3px; }
+  .wysiwyg-editor mark {
+    background: #fef08a; color: #422006;
+    padding: 0 4px; border-radius: 3px;
+    box-decoration-break: clone; -webkit-box-decoration-break: clone;
+  }
+  .wysiwyg-editor a { color: #1a6644; text-decoration: underline; }
+  .wysiwyg-editor a:hover { color: #2d9e6b; }
+  .wysiwyg-editor p { margin: 4px 0; }
+  [data-theme="dark"] .wysiwyg-editor {
+    background: rgba(20,40,30,0.6); border-color: rgba(45,158,107,0.3); color: #d4e8dc;
+  }
+  [data-theme="dark"] .wysiwyg-editor:focus { background: rgba(20,40,30,0.85); border-color: #4ade80; }
+  [data-theme="dark"] .wysiwyg-editor h1, [data-theme="dark"] .wysiwyg-editor .desc-h1 { color: #6fdcab; }
+  [data-theme="dark"] .wysiwyg-editor h2, [data-theme="dark"] .wysiwyg-editor .desc-h2 { color: #4ade80; }
+  [data-theme="dark"] .wysiwyg-editor h3, [data-theme="dark"] .wysiwyg-editor .desc-h3 { color: #34d399; }
+  [data-theme="dark"] .wysiwyg-editor mark { background: #ca8a04; color: #fef9c3; }
+
   /* Bold inline */
   .desc-bold { font-weight: 800; }
+  /* Italic, underline, highlight inline */
+  .desc-italic { font-style: italic; }
+  .desc-underline { text-decoration: underline; text-underline-offset: 3px; }
+  .desc-highlight {
+    background: #fef08a; color: #422006;
+    padding: 0 4px; border-radius: 3px;
+    box-decoration-break: clone; -webkit-box-decoration-break: clone;
+  }
+  [data-theme="dark"] .desc-highlight { background: #ca8a04; color: #fef9c3; }
 
   /* Toolbar di atas textarea deskripsi */
   .desc-toolbar {
@@ -1078,6 +1552,7 @@
         <div class="menu-card" onclick="openSection('musyawarah')"><div class="ic">🗣️</div><div class="lb">Musyawarah</div><div class="sub">Meeting & hasil rapat</div></div>
         <div class="menu-card" onclick="openSection('rekap')"><div class="ic">📈</div><div class="lb">Rekap</div><div class="sub">Rekap kehadiran</div></div>
         <div class="menu-card" onclick="openSection('acara')"><div class="ic">📅</div><div class="lb">Acara</div><div class="sub">Event & progress</div></div>
+        <div class="menu-card" onclick="openSection('kalender')"><div class="ic">📆</div><div class="lb">Kalender</div><div class="sub">Cari tanggal kosong</div></div>
         <div class="menu-card" onclick="openSection('laporan')"><div class="ic">📑</div><div class="lb">Laporan</div><div class="sub">Laporan & cetak PDF</div></div>
         <div class="menu-card" onclick="openSection('strukorg')"><div class="ic">🏛️</div><div class="lb">Struktur Org.</div><div class="sub">Bagan organisasi & PDF</div></div>
         <div class="menu-card" onclick="openSection('project')"><div class="ic">🗂️</div><div class="lb">Project</div><div class="sub">Kelola proyek & tim</div></div>
@@ -1419,7 +1894,13 @@
             <h2 style="margin:0;font-size:14px;color:#7a9585;">🕐 Riwayat Sesi (sudah lewat)</h2>
             <span id="sesiRiwayatToggle" style="font-size:12px;color:#7a9585;font-weight:700;">▶ Tampilkan</span>
           </div>
-          <div id="sesiRiwayatList" style="display:none;"></div>
+          <div id="sesiRiwayatBody" style="display:none;">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+              <label style="font-size:12px;color:#7a9585;font-weight:600;margin:0;text-transform:none;letter-spacing:0;">Filter Bulan:</label>
+              <select id="sesiRiwayatFilter" onchange="renderSesiList()" style="width:auto;padding:6px 10px;font-size:13px;margin:0;flex:1;max-width:260px;"></select>
+            </div>
+            <div id="sesiRiwayatList"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1548,22 +2029,31 @@
             <span class="muted" style="font-size:12px;">Memuat anggota...</span>
           </div>
 
-          <label>Deskripsi <span class="muted" style="font-size:11px;font-weight:400;">(format Notion: judul, sub, bold, link)</span></label>
+          <label>Deskripsi <span class="muted" style="font-size:11px;font-weight:400;">(pilih kata, klik tombol / klik kanan)</span></label>
           <div class="desc-toolbar">
-            <button type="button" class="desc-toolbar-btn" onclick="insertHeading('acDeskripsi',1)" title="Judul Besar">H1</button>
-            <button type="button" class="desc-toolbar-btn" onclick="insertHeading('acDeskripsi',2)" title="Sub Judul">H2</button>
-            <button type="button" class="desc-toolbar-btn" onclick="insertHeading('acDeskripsi',3)" title="Sub-Sub Judul">H3</button>
-            <button type="button" class="desc-toolbar-btn" onclick="insertBold('acDeskripsi')" title="Tebal"><b>B</b></button>
-            <button type="button" class="desc-toolbar-btn" onclick="insertLinkToDesc('acDeskripsi')" title="Sisipkan Link">🔗 Link</button>
-            <span class="desc-toolbar-hint">Paste URL → auto tanya nama</span>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('h1')" title="Judul Besar">H1</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('h2')" title="Sub Judul">H2</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('h3')" title="Sub-Sub Judul">H3</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('p')" title="Teks biasa">¶</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('bold')" title="Tebal (Ctrl+B)"><b>B</b></button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('italic')" title="Miring (Ctrl+I)"><i>I</i></button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('underline')" title="Garis Bawah (Ctrl+U)" style="text-decoration:underline;">U</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('highlight')" title="Highlight" style="background:#fef08a;color:#422006;">🖍</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('link')" title="Sisipkan Link (Ctrl+K)">🔗 Link</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('ul')" title="Bullet List">• List</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('ol')" title="Numbered List">1. List</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('outdent')" title="Kurangi indent">⇤</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('indent')" title="Tambah indent">⇥</button>
+            <button type="button" class="desc-toolbar-btn" data-style-btn onclick="window.showStylePicker(document.getElementById('acDeskripsi'), this)" title="Font, Ukuran, Spasi, Align" style="background:#dbeafe;color:#1e3a8a;">Aa Style ▾</button>
+            <button type="button" class="desc-toolbar-btn" onclick="window.insertTodoToEditor(document.getElementById('acDeskripsi'))" title="Tambah tugas (checkbox)" style="background:#dcfce7;color:#14532d;">☑️ Tugas</button>
+            <button type="button" class="desc-toolbar-btn" onclick="window.showMentionPopup(document.getElementById('acDeskripsi'),'@')" title="Tag anggota" style="background:#ede9fe;color:#5b21b6;">@ Mention</button>
+            <button type="button" class="desc-toolbar-btn" onclick="window.insertPollToEditor(document.getElementById('acDeskripsi'))" title="Buat polling" style="background:#fef3c7;color:#78350f;">🗳️ Poll</button>
+            <span class="desc-toolbar-hint" style="margin-left:auto;">Klik kanan untuk menu lengkap</span>
           </div>
-          <textarea id="acDeskripsi" rows="4" placeholder="# Judul Besar&#10;## Sub Judul&#10;Tulis detail di sini. Tekan paste URL untuk link otomatis."></textarea>
-          <div class="desc-preview-wrap">
-            <div class="desc-preview-header">
-              <span>👁 Preview Tampilan</span>
-              <span class="preview-status" id="acDeskripsi_preview_status">0 karakter</span>
-            </div>
-            <div class="desc-preview-box" id="acDeskripsi_preview"></div>
+          <div id="acDeskripsi" class="wysiwyg-editor" contenteditable="true" spellcheck="true"
+               data-placeholder="Tulis detail acara. Ketik @ untuk tag, ☑️ untuk tugas, 🗳️ untuk polling..."></div>
+          <div id="acActionItems" class="action-items-panel" style="margin-top:10px;display:none;">
+            <div class="ai-empty">📝 Belum ada tugas.</div>
           </div>
           <button onclick="addAcara()">💾 Simpan Acara</button>
           <div id="acMsg"></div>
@@ -1605,6 +2095,20 @@
         </div>
       </div>
       <div id="laporanArea"></div>
+    </div>
+
+    <!-- ═══ KALENDER KEGIATAN ═══ -->
+    <div id="sec-kalender" class="section" style="display:none;">
+      <button class="back" onclick="goBack()">← Menu</button>
+      <div class="card">
+        <h2 style="margin-bottom:6px;">📆 Kalender Kegiatan</h2>
+        <p class="muted" style="font-size:12px;margin-bottom:14px;">
+          Klik tanggal untuk lihat kegiatan apa saja (acara / musyawarah / project) atau cek apakah masih kosong.
+        </p>
+        <div id="kalenderContent">
+          <p class="muted">Memuat data kegiatan...</p>
+        </div>
+      </div>
     </div>
 
     <!-- ═══ RIWAYAT (AUDIT LOG) ═══ -->
@@ -1741,22 +2245,36 @@
           <label>Nama Project</label>
           <input type="text" id="prjNama" placeholder="Cth: Pembuatan Website MUMI MB3">
 
-          <label>Deskripsi <span class="muted" style="font-size:11px;font-weight:400;">(format Notion: judul, sub, bold, link)</span></label>
+          <label>Deskripsi <span class="muted" style="font-size:11px;font-weight:400;">(pilih kata, klik tombol / klik kanan)</span></label>
           <div class="desc-toolbar">
-            <button type="button" class="desc-toolbar-btn" onclick="insertHeading('prjDeskripsi',1)" title="Judul Besar">H1</button>
-            <button type="button" class="desc-toolbar-btn" onclick="insertHeading('prjDeskripsi',2)" title="Sub Judul">H2</button>
-            <button type="button" class="desc-toolbar-btn" onclick="insertHeading('prjDeskripsi',3)" title="Sub-Sub Judul">H3</button>
-            <button type="button" class="desc-toolbar-btn" onclick="insertBold('prjDeskripsi')" title="Tebal"><b>B</b></button>
-            <button type="button" class="desc-toolbar-btn" onclick="insertLinkToDesc('prjDeskripsi')" title="Sisipkan Link">🔗 Link</button>
-            <span class="desc-toolbar-hint">Paste URL → auto tanya nama</span>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('h1')" title="Judul Besar">H1</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('h2')" title="Sub Judul">H2</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('h3')" title="Sub-Sub Judul">H3</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('p')" title="Teks biasa">¶</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('bold')" title="Tebal (Ctrl+B)"><b>B</b></button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('italic')" title="Miring (Ctrl+I)"><i>I</i></button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('underline')" title="Garis Bawah (Ctrl+U)" style="text-decoration:underline;">U</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('highlight')" title="Highlight" style="background:#fef08a;color:#422006;">🖍</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('link')" title="Sisipkan Link (Ctrl+K)">🔗 Link</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('ul')" title="Bullet List">• List</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('ol')" title="Numbered List">1. List</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('outdent')" title="Kurangi indent">⇤</button>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('indent')" title="Tambah indent">⇥</button>
+            <button type="button" class="desc-toolbar-btn" data-style-btn onclick="window.showStylePicker(document.getElementById('prjDeskripsi'), this)" title="Font, Ukuran, Spasi, Align" style="background:#dbeafe;color:#1e3a8a;">Aa Style ▾</button>
+            <button type="button" class="desc-toolbar-btn" onclick="window.insertTodoToEditor(document.getElementById('prjDeskripsi'))" title="Tambah tugas (checkbox)" style="background:#dcfce7;color:#14532d;">☑️ Tugas</button>
+            <button type="button" class="desc-toolbar-btn" onclick="window.showMentionPopup(document.getElementById('prjDeskripsi'),'@')" title="Tag anggota" style="background:#ede9fe;color:#5b21b6;">@ Mention</button>
+            <button type="button" class="desc-toolbar-btn" onclick="window.insertPollToEditor(document.getElementById('prjDeskripsi'))" title="Buat polling" style="background:#fef3c7;color:#78350f;">🗳️ Poll</button>
+            <span id="prjAutoSaveStatus" class="autosave-status saved" style="margin:0 0 0 auto;">✓ Tersimpan</span>
+            <button type="button" onclick="bukaProjectTabBaru()"
+               style="background:#1a6644;color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;width:auto;margin:0;text-transform:none;letter-spacing:0;display:inline-flex;align-items:center;gap:4px;line-height:1;"
+               title="Buka editor di tab baru — tampilan lebih lebar">
+              📖 Tab Baru
+            </button>
           </div>
-          <textarea id="prjDeskripsi" placeholder="# Tujuan Project&#10;## Latar Belakang&#10;Jelaskan project di sini. Paste URL otomatis jadi link." style="min-height:100px;resize:vertical;"></textarea>
-          <div class="desc-preview-wrap">
-            <div class="desc-preview-header">
-              <span>👁 Preview Tampilan</span>
-              <span class="preview-status" id="prjDeskripsi_preview_status">0 karakter</span>
-            </div>
-            <div class="desc-preview-box" id="prjDeskripsi_preview"></div>
+          <div id="prjDeskripsi" class="wysiwyg-editor" contenteditable="true" spellcheck="true" style="min-height:140px;max-height:400px;"
+               data-placeholder="Jelaskan project. Ketik @ untuk tag, ☑️ untuk tugas, 🗳️ untuk polling..."></div>
+          <div id="prjActionItems" class="action-items-panel" style="margin-top:10px;">
+            <div class="ai-empty">📝 Belum ada tugas. Klik tombol ☑️ Tugas di toolbar untuk tambah.</div>
           </div>
 
           <div class="row">
@@ -2175,22 +2693,36 @@
         <span class="muted" style="font-size:12px;">Memuat anggota...</span>
       </div>
 
-      <label>Deskripsi Lengkap / Detail Acara <span class="muted" style="font-size:11px;font-weight:400;">(format Notion: judul, sub, bold, link)</span></label>
+      <label>Deskripsi Lengkap / Detail Acara <span class="muted" style="font-size:11px;font-weight:400;">(pilih kata, klik tombol / klik kanan)</span></label>
       <div class="desc-toolbar">
-        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('amDeskripsi',1)" title="Judul Besar">H1</button>
-        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('amDeskripsi',2)" title="Sub Judul">H2</button>
-        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('amDeskripsi',3)" title="Sub-Sub Judul">H3</button>
-        <button type="button" class="desc-toolbar-btn" onclick="insertBold('amDeskripsi')" title="Tebal"><b>B</b></button>
-        <button type="button" class="desc-toolbar-btn" onclick="insertLinkToDesc('amDeskripsi')" title="Sisipkan Link">🔗 Link</button>
-        <span class="desc-toolbar-hint">Paste URL → auto tanya nama</span>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('h1')" title="Judul Besar">H1</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('h2')" title="Sub Judul">H2</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('h3')" title="Sub-Sub Judul">H3</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('p')" title="Teks biasa">¶</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('bold')" title="Tebal (Ctrl+B)"><b>B</b></button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('italic')" title="Miring (Ctrl+I)"><i>I</i></button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('underline')" title="Garis Bawah (Ctrl+U)" style="text-decoration:underline;">U</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('highlight')" title="Highlight" style="background:#fef08a;color:#422006;">🖍</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('link')" title="Sisipkan Link (Ctrl+K)">🔗 Link</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('ul')" title="Bullet List">• List</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('ol')" title="Numbered List">1. List</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('outdent')" title="Kurangi indent">⇤</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('indent')" title="Tambah indent">⇥</button>
+        <button type="button" class="desc-toolbar-btn" data-style-btn onclick="window.showStylePicker(document.getElementById('amDeskripsi'), this)" title="Font, Ukuran, Spasi, Align" style="background:#dbeafe;color:#1e3a8a;">Aa Style ▾</button>
+        <button type="button" class="desc-toolbar-btn" onclick="window.insertTodoToEditor(document.getElementById('amDeskripsi'))" title="Tambah tugas (checkbox)" style="background:#dcfce7;color:#14532d;">☑️ Tugas</button>
+        <button type="button" class="desc-toolbar-btn" onclick="window.showMentionPopup(document.getElementById('amDeskripsi'),'@')" title="Tag anggota (atau ketik @)" style="background:#ede9fe;color:#5b21b6;">@ Mention</button>
+        <button type="button" class="desc-toolbar-btn" onclick="window.insertPollToEditor(document.getElementById('amDeskripsi'))" title="Buat polling" style="background:#fef3c7;color:#78350f;">🗳️ Poll</button>
+        <span id="amAutoSaveStatus" class="autosave-status saved" style="margin:0 0 0 auto;">✓ Tersimpan</span>
+        <button type="button" onclick="bukaAcaraTabBaru()"
+           style="background:#1a6644;color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;width:auto;margin:0;text-transform:none;letter-spacing:0;display:inline-flex;align-items:center;gap:4px;line-height:1;"
+           title="Buka editor di tab baru — tampilan lebih lebar">
+          📖 Tab Baru
+        </button>
       </div>
-      <textarea id="amDeskripsi" rows="8" placeholder="# Tema Acara&#10;## Susunan Acara&#10;1. Pembukaan&#10;2. Sambutan&#10;## Perlengkapan&#10;Tulis di sini..."></textarea>
-      <div class="desc-preview-wrap">
-        <div class="desc-preview-header">
-          <span>👁 Preview Tampilan</span>
-          <span class="preview-status" id="amDeskripsi_preview_status">0 karakter</span>
-        </div>
-        <div class="desc-preview-box" id="amDeskripsi_preview"></div>
+      <div id="amDeskripsi" class="wysiwyg-editor" contenteditable="true" spellcheck="true" style="min-height:200px;max-height:500px;"
+           data-placeholder="Tulis detail acara. Ketik @ untuk tag, ☑️ untuk tugas, 🗳️ untuk polling..."></div>
+      <div id="amActionItems" class="action-items-panel" style="margin-top:10px;">
+        <div class="ai-empty">📝 Belum ada tugas. Klik tombol ☑️ Tugas di toolbar untuk tambah.</div>
       </div>
       <div style="display:flex;gap:8px;margin-top:2px;">
         <button onclick="saveAcaraDetail()" style="flex:1;">💾 Simpan Perubahan</button>
@@ -2538,17 +3070,92 @@ function escapeHtml(s) {
 //   https://url                → link biru otomatis
 function descToHTML(text){
   if(text === null || text === undefined || text === '') return '';
-  // Split per baris — heading bekerja per baris penuh
-  var lines = String(text).split('\n');
+  // Pre-process: group consecutive list lines into UL/OL blocks
+  var rawLines = String(text).split('\n');
+  var processedLines = [];
+  var i0 = 0;
+  while (i0 < rawLines.length) {
+    var ln = rawLines[i0];
+    // Skip kalau ini sudah todo (- [ ]) — biar diproses sebagai checkbox
+    var todoCheck = ln.match(/^- \[( |x|X)\] /);
+    if (todoCheck) { processedLines.push(ln); i0++; continue; }
+    var ulMatch = ln.match(/^(\s*)[-*]\s+(.+)$/);
+    var olMatch = ln.match(/^(\s*)(\d+)\.\s+(.+)$/);
+    if (ulMatch || olMatch) {
+      var listType = ulMatch ? 'ul' : 'ol';
+      var listItems = [];
+      while (i0 < rawLines.length) {
+        var curLn = rawLines[i0];
+        var ulM = curLn.match(/^(\s*)[-*]\s+(.+)$/);
+        var olM = curLn.match(/^(\s*)(\d+)\.\s+(.+)$/);
+        var curTodo = curLn.match(/^- \[( |x|X)\] /);
+        if (curTodo) break;
+        if (!ulM && !olM) break;
+        var curType = ulM ? 'ul' : 'ol';
+        if (curType !== listType) break;
+        listItems.push({
+          indent: (ulM ? ulM[1] : olM[1]).length,
+          text: ulM ? ulM[2] : olM[3]
+        });
+        i0++;
+      }
+      // Build nested HTML
+      var listHtml = _buildNestedList(listItems, listType, 0);
+      processedLines.push('__LIST_BLOCK__' + listHtml);
+      continue;
+    }
+    processedLines.push(ln);
+    i0++;
+  }
+
+  var lines = processedLines;
   var out = [];
   for(var i = 0; i < lines.length; i++){
     var line = lines[i];
+    // List block: render as-is (sudah HTML)
+    if (line.indexOf('__LIST_BLOCK__') === 0) {
+      out.push(line.slice('__LIST_BLOCK__'.length));
+      continue;
+    }
     // 1. Escape HTML entities (keamanan XSS) — TAPI jangan escape kurung kotak/biasa
     //    karena dipakai markdown link. Escape `<` `>` `&` `"` `'` saja.
     var esc = line
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
       .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    // 2. Cek heading di awal baris
+
+    // 2a. CHECKBOX TASK — `- [ ] text` atau `- [x] text`
+    var todoMatch = esc.match(/^- \[( |x|X)\] (.*)$/);
+    if (todoMatch) {
+      var isChecked = todoMatch[1].toLowerCase() === 'x';
+      var todoText = _descInline(todoMatch[2]);
+      out.push('<div class="md-todo" data-checked="' + (isChecked?'true':'false') + '">' +
+               '<input type="checkbox"' + (isChecked?' checked':'') + ' contenteditable="false">' +
+               '<span class="md-todo-text">' + todoText + '</span></div>');
+      continue;
+    }
+
+    // 2b. POLL BLOCK — `[POLL:id|Pertanyaan|Opsi1|Opsi2|Opsi3]`
+    var pollMatch = esc.match(/^\[POLL:([^|\]]+)\|([^\]]+)\]$/);
+    if (pollMatch) {
+      var pollId = pollMatch[1];
+      var pollParts = pollMatch[2].split('|');
+      var pollQ = pollParts[0];
+      var pollOpts = pollParts.slice(1);
+      var pollHtml = '<div class="md-poll" data-poll-id="' + pollId.replace(/"/g,'&quot;') + '" contenteditable="false">';
+      pollHtml += '<div class="md-poll-q">🗳️ ' + pollQ + '</div>';
+      pollHtml += '<div class="md-poll-opts">';
+      pollOpts.forEach(function(opt) {
+        var optEsc = opt.replace(/"/g,'&quot;');
+        pollHtml += '<button class="md-poll-opt" data-opt="' + optEsc + '" onclick="mdPollVote(this)">' + opt + '</button>';
+      });
+      pollHtml += '</div>';
+      pollHtml += '<div class="md-poll-results" data-poll-id="' + pollId.replace(/"/g,'&quot;') + '"></div>';
+      pollHtml += '</div>';
+      out.push(pollHtml);
+      continue;
+    }
+
+    // 3. Cek heading di awal baris
     var content, wrapStart = '', wrapEnd = '';
     var h3m = esc.match(/^###\s+(.+)$/);
     var h2m = esc.match(/^##\s+(.+)$/);
@@ -2557,32 +3164,70 @@ function descToHTML(text){
     else if(h2m){ content = h2m[1]; wrapStart = '<div class="desc-h2">'; wrapEnd = '</div>'; }
     else if(h1m){ content = h1m[1]; wrapStart = '<div class="desc-h1">'; wrapEnd = '</div>'; }
     else { content = esc; }
-    // 3. Inline format: bold, link
+    // 4. Inline format: bold, link, mention
     content = _descInline(content);
-    // 4. Bungkus baris
+    // 5. Bungkus baris
     if(wrapStart){
       out.push(wrapStart + content + wrapEnd);
     } else {
       out.push(content);
     }
   }
-  // 5. Gabung — heading di-render sebagai block, baris biasa pakai <br> kalau bukan di akhir
+  // 6. Gabung — heading/todo/poll/list di-render sebagai block, baris biasa pakai <br>
   var html = '';
+  var BLOCK_RE = /^(<div class="(desc-h|md-todo|md-poll)|<ul|<ol)/;
   for(var j = 0; j < out.length; j++){
     html += out[j];
-    var isHeading = /^<div class="desc-h/.test(out[j]);
-    var nextIsHeading = j + 1 < out.length && /^<div class="desc-h/.test(out[j+1]);
+    var isBlock = BLOCK_RE.test(out[j]);
+    var nextIsBlock = j + 1 < out.length && BLOCK_RE.test(out[j+1]);
     var isLast = j === out.length - 1;
-    // Tambah <br> setelah baris biasa (bukan heading) kalau bukan baris terakhir
-    if(!isHeading && !isLast && !nextIsHeading) html += '<br>';
+    if(!isBlock && !isLast && !nextIsBlock) html += '<br>';
   }
   return html;
 }
 
-// Helper internal: inline format (bold, link) — text sudah ter-escape
+// Helper: build nested HTML list dari array items (dengan indent level)
+function _buildNestedList(items, listType, baseIndent) {
+  if (!items.length) return '';
+  var html = '<' + listType + '>';
+  var idx = 0;
+  while (idx < items.length) {
+    var item = items[idx];
+    if (item.indent < baseIndent) break;
+    if (item.indent === baseIndent) {
+      // Item di level ini
+      var children = [];
+      var j = idx + 1;
+      while (j < items.length && items[j].indent > baseIndent) {
+        children.push(items[j]); j++;
+      }
+      html += '<li>' + _descInline(item.text);
+      if (children.length) {
+        // Tentukan tipe sub-list (sementara samakan tipe parent — bisa di-detect dari raw text nanti)
+        html += _buildNestedList(children, listType, baseIndent + 2);
+      }
+      html += '</li>';
+      idx = j;
+    } else {
+      idx++;
+    }
+  }
+  html += '</' + listType + '>';
+  return html;
+}
+
+// Helper internal: inline format (bold, link, mention) — text sudah ter-escape
 function _descInline(text){
-  // Bold: **teks** → <span class="desc-bold">teks</span>
+  // Mention: @[Nama](mention:ID) → <a class="md-mention" data-id="ID">@Nama</a>
+  text = text.replace(/@\[([^\]]+)\]\(mention:([^)]+)\)/g, '<a class="md-mention" data-id="$2" contenteditable="false">@$1</a>');
+  // Bold: **teks** → harus diproses SEBELUM italic supaya tidak konflik
   text = text.replace(/\*\*([^*\n]+)\*\*/g, '<span class="desc-bold">$1</span>');
+  // Italic: *teks* (single asterisks)
+  text = text.replace(/(^|[^*])\*([^*\n]+)\*([^*]|$)/g, '$1<span class="desc-italic">$2</span>$3');
+  // Underline: __teks__
+  text = text.replace(/__([^_\n]+)__/g, '<span class="desc-underline">$1</span>');
+  // Highlight: ==teks== → kuning
+  text = text.replace(/==([^=\n]+)==/g, '<span class="desc-highlight">$1</span>');
   // Markdown link: [label](url) — url harus http/https
   text = text.replace(/\[([^\[\]]+)\]\(((?:https?:\/\/|www\.)[^\s)]+)\)/g, function(_, label, url){
     var safeUrl = /^https?:\/\//i.test(url) ? url : 'https://' + url;
@@ -2594,6 +3239,762 @@ function _descInline(text){
   });
   return text;
 }
+
+// ─── HELPER: konversi markdown → HTML untuk contenteditable WYSIWYG ───
+// (descToHTML pakai <div class="desc-h1"> dst., kita normalisasi jadi tag native
+//  supaya execCommand bold/italic/underline bisa toggle dengan benar)
+window.markdownToEditableHtml = function(md) {
+  var html = descToHTML(md || '');
+  // Normalisasi class span/div → tag native supaya execCommand toggle bekerja
+  // CATATAN: md-todo, md-poll, md-mention BIARKAN as-is (interactive elements)
+  html = html
+    .replace(/<div class="desc-h1">([\s\S]*?)<\/div>/g, '<h1>$1</h1>')
+    .replace(/<div class="desc-h2">([\s\S]*?)<\/div>/g, '<h2>$1</h2>')
+    .replace(/<div class="desc-h3">([\s\S]*?)<\/div>/g, '<h3>$1</h3>')
+    .replace(/<span class="desc-bold">([\s\S]*?)<\/span>/g, '<b>$1</b>')
+    .replace(/<span class="desc-italic">([\s\S]*?)<\/span>/g, '<i>$1</i>')
+    .replace(/<span class="desc-underline">([\s\S]*?)<\/span>/g, '<u>$1</u>')
+    .replace(/<span class="desc-highlight">([\s\S]*?)<\/span>/g, '<mark>$1</mark>');
+  if (!html.trim()) html = '<p><br></p>';
+  return html;
+};
+
+// ─── HELPER: konversi contenteditable HTML → markdown (untuk simpan ke DB) ───
+window.htmlElementToMarkdown = function(rootEl) {
+  if (!rootEl) return '';
+  function walk(node) {
+    var out = '';
+    for (var i = 0; i < node.childNodes.length; i++) {
+      var c = node.childNodes[i];
+      if (c.nodeType === 3) {
+        out += c.textContent;
+      } else if (c.nodeType === 1) {
+        var tag = c.tagName.toLowerCase();
+        var cls = c.className || '';
+        var inner = walk(c);
+        if (tag === 'h1' || cls.indexOf('desc-h1') >= 0)
+          out += '\n# ' + inner.replace(/^\s+|\s+$/g, '') + '\n';
+        else if (tag === 'h2' || cls.indexOf('desc-h2') >= 0)
+          out += '\n## ' + inner.replace(/^\s+|\s+$/g, '') + '\n';
+        else if (tag === 'h3' || cls.indexOf('desc-h3') >= 0)
+          out += '\n### ' + inner.replace(/^\s+|\s+$/g, '') + '\n';
+        else if (tag === 'b' || tag === 'strong' || cls.indexOf('desc-bold') >= 0)
+          out += inner ? '**' + inner + '**' : '';
+        else if (tag === 'i' || tag === 'em' || cls.indexOf('desc-italic') >= 0)
+          out += inner ? '*' + inner + '*' : '';
+        else if (tag === 'u' || cls.indexOf('desc-underline') >= 0)
+          out += inner ? '__' + inner + '__' : '';
+        else if (tag === 'mark' || cls.indexOf('desc-highlight') >= 0)
+          out += inner ? '==' + inner + '==' : '';
+        else if (cls.indexOf('md-todo') >= 0) {
+          // Checkbox task: <div class="md-todo" data-checked="true/false">...<span class="md-todo-text">TEXT</span></div>
+          var todoChecked = c.getAttribute('data-checked') === 'true';
+          var textSpan = c.querySelector('.md-todo-text');
+          var todoText = textSpan ? walk(textSpan) : '';
+          if (out.length > 0 && !out.endsWith('\n')) out += '\n';
+          out += '- [' + (todoChecked ? 'x' : ' ') + '] ' + todoText.replace(/\n/g,' ').replace(/^\s+|\s+$/g,'') + '\n';
+        }
+        else if (cls.indexOf('md-poll') >= 0) {
+          // Poll: <div class="md-poll" data-poll-id="ID"><div class="md-poll-q">🗳️ Q</div><div class="md-poll-opts">[buttons]</div>...</div>
+          var pollId = c.getAttribute('data-poll-id') || ('p' + Math.floor(Math.random()*1e9));
+          var qEl = c.querySelector('.md-poll-q');
+          var qText = qEl ? (qEl.textContent || '').replace(/^🗳️\s*/, '').trim() : '';
+          var optBtns = c.querySelectorAll('.md-poll-opt');
+          var opts = [];
+          for (var oi = 0; oi < optBtns.length; oi++) {
+            opts.push((optBtns[oi].getAttribute('data-opt') || optBtns[oi].textContent || '').trim().split('|').join('/'));
+          }
+          if (out.length > 0 && !out.endsWith('\n')) out += '\n';
+          out += '[POLL:' + pollId + '|' + qText.split('|').join('/') + '|' + opts.join('|') + ']\n';
+        }
+        else if (cls.indexOf('md-mention') >= 0) {
+          // Mention: <a class="md-mention" data-id="ID">@Nama</a>
+          var mId = c.getAttribute('data-id') || '';
+          var mNama = (c.textContent || '').replace(/^@/, '');
+          out += '@[' + mNama + '](mention:' + mId + ')';
+        }
+        else if (tag === 'a') {
+          var href = c.getAttribute('href') || '';
+          out += '[' + inner + '](' + href + ')';
+        }
+        else if (tag === 'br') out += '\n';
+        else if (tag === 'ul' || tag === 'ol') {
+          // List: convert each <li> ke markdown line
+          if (out.length > 0 && !out.endsWith('\n')) out += '\n';
+          var items = c.children;
+          var counter = 1;
+          for (var li = 0; li < items.length; li++) {
+            if (items[li].tagName !== 'LI') continue;
+            var liInner = walk(items[li]).replace(/^\s+|\s+$/g,'').replace(/\n/g,' ');
+            // Hitung level nesting (indent 2 space per level)
+            var depth = 0, parent = items[li].parentElement;
+            while (parent && parent !== rootEl) {
+              if (parent.tagName === 'LI') depth++;
+              parent = parent.parentElement;
+            }
+            var indent = '  '.repeat(depth);
+            var marker = tag === 'ol' ? (counter++ + '. ') : '- ';
+            out += indent + marker + liInner + '\n';
+          }
+        }
+        else if (tag === 'li') {
+          // LI di luar UL/OL (jarang) — treat as plain bullet
+          if (out.length > 0 && !out.endsWith('\n')) out += '\n';
+          out += '- ' + inner.replace(/\n/g,' ') + '\n';
+        }
+        else if (tag === 'div' || tag === 'p') {
+          if (out.length > 0 && !out.endsWith('\n')) out += '\n';
+          out += inner;
+          if (!out.endsWith('\n')) out += '\n';
+        }
+        else out += inner;
+      }
+    }
+    return out;
+  }
+  return walk(rootEl)
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/^\s+|\s+$/g, '');
+};
+
+// ─── HELPER: pasang WYSIWYG mode (toolbar, context menu, paste handler) di element contenteditable ───
+window.attachWysiwyg = function(editorEl) {
+  if (!editorEl || editorEl._wysiwygAttached) return;
+  editorEl._wysiwygAttached = true;
+
+  // Toggle highlight via <mark> (tidak ada execCommand untuk ini)
+  function toggleHighlight() {
+    var sel = window.getSelection();
+    if (!sel.rangeCount || sel.isCollapsed) return;
+    var range = sel.getRangeAt(0);
+    var p = sel.anchorNode;
+    while (p && p !== editorEl) {
+      if (p.nodeType === 1 && p.tagName === 'MARK') {
+        var parent = p.parentNode;
+        while (p.firstChild) parent.insertBefore(p.firstChild, p);
+        parent.removeChild(p);
+        return;
+      }
+      p = p.parentNode;
+    }
+    var m = document.createElement('mark');
+    try { range.surroundContents(m); }
+    catch(e) { m.appendChild(range.extractContents()); range.insertNode(m); }
+    sel.removeAllRanges();
+  }
+
+  editorEl.applyFmt = function(act, value) {
+    editorEl.focus();
+    try {
+      switch(act) {
+        case 'h1': document.execCommand('formatBlock', false, 'h1'); break;
+        case 'h2': document.execCommand('formatBlock', false, 'h2'); break;
+        case 'h3': document.execCommand('formatBlock', false, 'h3'); break;
+        case 'p':  document.execCommand('formatBlock', false, 'p'); break;
+        case 'bold': document.execCommand('bold'); break;
+        case 'italic': document.execCommand('italic'); break;
+        case 'underline': document.execCommand('underline'); break;
+        case 'highlight': toggleHighlight(); break;
+        case 'ul': document.execCommand('insertUnorderedList'); break;
+        case 'ol': document.execCommand('insertOrderedList'); break;
+        case 'indent': document.execCommand('indent'); break;
+        case 'outdent': document.execCommand('outdent'); break;
+        case 'align-left': document.execCommand('justifyLeft'); break;
+        case 'align-center': document.execCommand('justifyCenter'); break;
+        case 'align-right': document.execCommand('justifyRight'); break;
+        case 'align-justify': document.execCommand('justifyFull'); break;
+        case 'fontFamily':
+          // Editor-wide setting (semua teks pakai font ini)
+          editorEl.style.fontFamily = value || '';
+          try { localStorage.setItem('wysiwyg_fontFamily', value || ''); } catch(_){}
+          break;
+        case 'fontSize':
+          editorEl.style.fontSize = value || '';
+          try { localStorage.setItem('wysiwyg_fontSize', value || ''); } catch(_){}
+          break;
+        case 'lineHeight':
+          editorEl.style.lineHeight = value || '';
+          try { localStorage.setItem('wysiwyg_lineHeight', value || ''); } catch(_){}
+          break;
+        case 'link': {
+          var url = prompt('Tempelkan URL:');
+          if (!url) break;
+          if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+          document.execCommand('createLink', false, url);
+          break;
+        }
+        case 'clear': document.execCommand('removeFormat'); break;
+        case 'cut': document.execCommand('cut'); break;
+        case 'copy': document.execCommand('copy'); break;
+        case 'paste': document.execCommand('paste'); break;
+        case 'delete': document.execCommand('delete'); break;
+        case 'selectall': document.execCommand('selectAll'); break;
+      }
+    } catch(e) { console.error('fmt error:', e); }
+    try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){}
+  };
+
+  // Pulihkan style dari localStorage (sekali per editor)
+  if (!editorEl._stylesLoaded) {
+    editorEl._stylesLoaded = true;
+    try {
+      var ff = localStorage.getItem('wysiwyg_fontFamily');
+      var fs = localStorage.getItem('wysiwyg_fontSize');
+      var lh = localStorage.getItem('wysiwyg_lineHeight');
+      if (ff) editorEl.style.fontFamily = ff;
+      if (fs) editorEl.style.fontSize = fs;
+      if (lh) editorEl.style.lineHeight = lh;
+    } catch(_){}
+  }
+
+  // Paste handler: bersihkan formatting dari clipboard (paste sebagai plain text)
+  // supaya tidak bawa style dari Word/Google Docs yang ribet
+  editorEl.addEventListener('paste', function(e) {
+    e.preventDefault();
+    var text = (e.clipboardData || window.clipboardData).getData('text/plain');
+    document.execCommand('insertText', false, text);
+  });
+
+  // Click handler untuk checkbox task — toggle + strikethrough
+  editorEl.addEventListener('click', function(e) {
+    if (e.target.matches && e.target.matches('input[type="checkbox"]')) {
+      window.toggleTodoCheckbox(e.target);
+    }
+  });
+
+  // Render hasil poll saat editor di-load
+  setTimeout(function(){ window.renderAllPollResults(editorEl); }, 50);
+
+  // @ Mention trigger: deteksi ketikan @
+  editorEl.addEventListener('keyup', function(e) {
+    if (e.key === '@') {
+      window.showMentionPopup(editorEl, '@');
+    } else if (e.key === 'Escape' && window._mentionPopupEl) {
+      window._mentionPopupEl.style.display = 'none';
+    } else if (window._mentionPopupEl && window._mentionPopupEl.style.display === 'block' && window._mentionPopupEl._editor === editorEl) {
+      // User sedang ketik di belakang @ → filter list
+      try {
+        var sel = window.getSelection();
+        if (sel.rangeCount) {
+          var r = sel.getRangeAt(0);
+          var txt = r.startContainer.textContent || '';
+          var off = r.startOffset;
+          // Cari @ terakhir sebelum kursor
+          var atIdx = txt.lastIndexOf('@', off - 1);
+          if (atIdx >= 0) {
+            var afterAt = txt.slice(atIdx + 1, off);
+            // Stop kalau ada spasi (mention dibatalkan)
+            if (/\s/.test(afterAt)) {
+              window._mentionPopupEl.style.display = 'none';
+            } else {
+              window._mentionPopupEl._renderItems(afterAt);
+            }
+          } else {
+            window._mentionPopupEl.style.display = 'none';
+          }
+        }
+      } catch(_) {}
+    }
+  });
+
+  // Context menu (right-click)
+  var menu = document.getElementById('wysiwygCtxMenu');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.id = 'wysiwygCtxMenu';
+    menu.className = 'ctx-menu';
+    menu.style.display = 'none';
+    menu.innerHTML =
+      '<div class="group-label">Gaya Teks</div>' +
+      '<button data-act="h1"><span class="ic">H1</span><span class="label">Judul Besar</span></button>' +
+      '<button data-act="h2"><span class="ic">H2</span><span class="label">Sub Judul</span></button>' +
+      '<button data-act="h3"><span class="ic">H3</span><span class="label">Sub-Sub Judul</span></button>' +
+      '<button data-act="p"><span class="ic">¶</span><span class="label">Teks Biasa</span></button>' +
+      '<hr>' +
+      '<div class="group-label">Format Inline</div>' +
+      '<button data-act="bold"><span class="ic"><b>B</b></span><span class="label">Tebal</span><span class="shortcut">Ctrl+B</span></button>' +
+      '<button data-act="italic"><span class="ic"><i>I</i></span><span class="label">Miring</span><span class="shortcut">Ctrl+I</span></button>' +
+      '<button data-act="underline"><span class="ic" style="text-decoration:underline;">U</span><span class="label">Garis Bawah</span><span class="shortcut">Ctrl+U</span></button>' +
+      '<button data-act="highlight"><span class="ic">🖍</span><span class="label">Highlight</span></button>' +
+      '<button data-act="link"><span class="ic">🔗</span><span class="label">Sisipkan Link</span><span class="shortcut">Ctrl+K</span></button>' +
+      '<button data-act="clear"><span class="ic" style="color:#dc2626;">⨯</span><span class="label">Hapus Format</span></button>' +
+      '<hr>' +
+      '<div class="group-label">Edit</div>' +
+      '<button data-act="cut"><span class="ic">✂</span><span class="label">Potong</span><span class="shortcut">Ctrl+X</span></button>' +
+      '<button data-act="copy"><span class="ic">📋</span><span class="label">Salin</span><span class="shortcut">Ctrl+C</span></button>' +
+      '<button data-act="paste"><span class="ic">📥</span><span class="label">Tempel</span><span class="shortcut">Ctrl+V</span></button>' +
+      '<button data-act="delete"><span class="ic">🗑</span><span class="label">Hapus Pilihan</span><span class="shortcut">Del</span></button>' +
+      '<hr>' +
+      '<button data-act="selectall"><span class="ic">⬚</span><span class="label">Pilih Semua</span><span class="shortcut">Ctrl+A</span></button>';
+    document.body.appendChild(menu);
+    document.addEventListener('click', function(e) {
+      if (!menu.contains(e.target)) menu.style.display = 'none';
+    });
+    document.addEventListener('scroll', function(){ menu.style.display = 'none'; }, true);
+  }
+
+  editorEl.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    var sel = window.getSelection();
+    var hasSel = sel.rangeCount > 0 && !sel.isCollapsed;
+    menu.querySelectorAll('button').forEach(function(b) {
+      var a = b.dataset.act;
+      var needSel = ['bold','italic','underline','highlight','cut','copy','delete','clear'].indexOf(a) >= 0;
+      b.disabled = needSel && !hasSel;
+    });
+    // Hapus handler lama, pasang yang baru utk editor ini
+    menu.onclick = function(ev) {
+      var btn = ev.target.closest('button');
+      if (!btn || btn.disabled) return;
+      ev.stopPropagation();
+      editorEl.applyFmt(btn.dataset.act);
+      menu.style.display = 'none';
+    };
+    menu.style.display = 'block';
+    var mw = menu.offsetWidth, mh = menu.offsetHeight;
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var x = e.clientX, y = e.clientY;
+    if (x + mw > vw - 8) x = vw - mw - 8;
+    if (y + mh > vh - 8) y = vh - mh - 8;
+    menu.style.left = x + 'px';
+    menu.style.top  = y + 'px';
+  });
+
+  // Shortcut Ctrl+Shift+H (highlight) + Ctrl+K (link). B/I/U sudah native.
+  editorEl.addEventListener('keydown', function(e) {
+    var ctrl = e.ctrlKey || e.metaKey;
+    if (!ctrl) return;
+    var k = (e.key || '').toLowerCase();
+    if (e.shiftKey && k === 'h') { e.preventDefault(); editorEl.applyFmt('highlight'); }
+    else if (k === 'k') { e.preventDefault(); editorEl.applyFmt('link'); }
+  });
+};
+
+// ─── HELPER: Insert checkbox task ke contenteditable editor ───
+window.insertTodoToEditor = function(editorEl) {
+  if (!editorEl) return;
+  editorEl.focus();
+  // Sisipkan node md-todo di posisi kursor (line baru)
+  var html = '<div class="md-todo" data-checked="false">' +
+             '<input type="checkbox" contenteditable="false">' +
+             '<span class="md-todo-text">Tugas baru...</span></div>';
+  document.execCommand('insertHTML', false, html);
+  try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(e){}
+};
+
+// ─── HELPER: Toggle checkbox + strikethrough ───
+window.toggleTodoCheckbox = function(input) {
+  var todo = input.closest('.md-todo');
+  if (!todo) return;
+  todo.setAttribute('data-checked', input.checked ? 'true' : 'false');
+  var editor = todo.closest('.wysiwyg-editor');
+  if (editor) {
+    try { editor.dispatchEvent(new Event('input', { bubbles: true })); } catch(e){}
+  }
+};
+
+// ─── HELPER: Insert mention via dropdown ───
+window.insertMentionToEditor = function(editorEl, anggota) {
+  if (!editorEl || !anggota) return;
+  editorEl.focus();
+  var safeNama = (anggota.nama || 'Anggota').replace(/[<>&"']/g, function(c) {
+    return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+  });
+  var html = '<a class="md-mention" data-id="' + anggota.id + '" contenteditable="false">@' + safeNama + '</a>&nbsp;';
+  document.execCommand('insertHTML', false, html);
+  try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(e){}
+};
+
+// ─── HELPER: Show mention dropdown popup ───
+window._mentionPopupEl = null;
+window.showMentionPopup = function(editorEl, atSign) {
+  // anggotaCache: list anggota dari main app
+  if (!Array.isArray(window.anggotaCache) || !window.anggotaCache.length) {
+    showToast && showToast('Daftar anggota belum termuat. Buka menu Anggota dulu sekali.', 'warn');
+    return;
+  }
+  // Buat / reuse popup
+  var pop = window._mentionPopupEl;
+  if (!pop) {
+    pop = document.createElement('div');
+    pop.className = 'mention-popup';
+    document.body.appendChild(pop);
+    window._mentionPopupEl = pop;
+    document.addEventListener('click', function(e){
+      if (!pop.contains(e.target)) pop.style.display = 'none';
+    });
+  }
+
+  // Posisikan di bawah cursor
+  var sel = window.getSelection();
+  var rect = null;
+  if (sel.rangeCount) {
+    var r = sel.getRangeAt(0).cloneRange();
+    r.collapse(false);
+    rect = r.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) {
+      // Fallback: pakai rect editor
+      rect = editorEl.getBoundingClientRect();
+      rect = { left: rect.left + 20, bottom: rect.top + 30 };
+    }
+  } else {
+    rect = editorEl.getBoundingClientRect();
+  }
+  pop.style.left = (rect.left) + 'px';
+  pop.style.top  = (rect.bottom + 6) + 'px';
+
+  function renderItems(filter) {
+    filter = (filter || '').toLowerCase();
+    var matches = window.anggotaCache
+      .filter(function(a) { return !filter || (a.nama||'').toLowerCase().indexOf(filter) >= 0; })
+      .slice(0, 8);
+    if (!matches.length) {
+      pop.innerHTML = '<div class="mention-popup-empty">Tidak ada anggota cocok</div>';
+      return;
+    }
+    pop.innerHTML = matches.map(function(a, i) {
+      return '<div class="mention-popup-item' + (i===0?' active':'') + '" data-id="' + a.id + '" data-nama="' + (a.nama||'').replace(/"/g,'&quot;') + '">' +
+        '<span class="name">@' + escapeHtml(a.nama || '?') + '</span>' +
+        (a.status ? '<span class="meta">' + escapeHtml(a.status) + '</span>' : '') +
+        '</div>';
+    }).join('');
+    // Click handler
+    pop.querySelectorAll('.mention-popup-item').forEach(function(it) {
+      it.onclick = function(e) {
+        e.stopPropagation();
+        // Hapus karakter @ yang barusan diketik (atSign node + offset)
+        try {
+          var s = window.getSelection();
+          if (s.rangeCount) {
+            var r = s.getRangeAt(0);
+            // Hapus 1 karakter sebelum kursor (yaitu @)
+            r.setStart(r.startContainer, Math.max(0, r.startOffset - 1));
+            r.deleteContents();
+          }
+        } catch(_){}
+        insertMentionToEditor(editorEl, { id: it.dataset.id, nama: it.dataset.nama });
+        pop.style.display = 'none';
+      };
+    });
+  }
+  renderItems('');
+  pop.style.display = 'block';
+  pop._editor = editorEl;
+  pop._renderItems = renderItems;
+};
+
+// ─── HELPER: Insert poll via modal ───
+window.insertPollToEditor = function(editorEl) {
+  if (!editorEl) return;
+  var q = prompt('Pertanyaan polling:');
+  if (!q) return;
+  var optsStr = prompt('Opsi pilihan, pisahkan dengan koma:\n(contoh: Setuju, Tidak Setuju, Netral)', 'Setuju, Tidak Setuju');
+  if (!optsStr) return;
+  var opts = optsStr.split(',').map(function(s){return s.trim().replace(/\|/g,'/');}).filter(Boolean);
+  if (opts.length < 2) { alert('Minimal 2 opsi.'); return; }
+  q = q.replace(/\|/g,'/').replace(/[<>]/g,'');
+  var pollId = 'p' + Date.now().toString(36) + Math.floor(Math.random()*1000).toString(36);
+  // Build poll HTML langsung (struktur sama dengan output descToHTML)
+  var pollHtml = '<div class="md-poll" data-poll-id="' + pollId + '" contenteditable="false">' +
+    '<div class="md-poll-q">🗳️ ' + escapeHtml(q) + '</div>' +
+    '<div class="md-poll-opts">' +
+    opts.map(function(o){
+      var oEsc = o.replace(/"/g,'&quot;');
+      return '<button class="md-poll-opt" data-opt="' + oEsc + '" onclick="mdPollVote(this)">' + escapeHtml(o) + '</button>';
+    }).join('') +
+    '</div>' +
+    '<div class="md-poll-results" data-poll-id="' + pollId + '"></div>' +
+    '</div><div><br></div>';
+  editorEl.focus();
+  document.execCommand('insertHTML', false, pollHtml);
+  try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(e){}
+};
+
+// ─── HELPER: Polling vote (simpan di localStorage per user) ───
+window.mdPollVote = function(btn) {
+  var poll = btn.closest('.md-poll');
+  if (!poll) return;
+  var pollId = poll.getAttribute('data-poll-id');
+  var opt = btn.getAttribute('data-opt');
+  var userId = (window.currentProf && (currentProf.id || currentProf.email)) || 'anonymous';
+  var LS_KEY = 'mdPollVotes_v1';
+  var allVotes;
+  try { allVotes = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch(e) { allVotes = {}; }
+  if (!allVotes[pollId]) allVotes[pollId] = { votes: {}, totals: {} };
+  var p = allVotes[pollId];
+  // Hapus vote lama user ini dulu
+  var prev = p.votes[userId];
+  if (prev) { p.totals[prev] = Math.max(0, (p.totals[prev]||0) - 1); }
+  // Vote baru
+  p.votes[userId] = opt;
+  p.totals[opt] = (p.totals[opt]||0) + 1;
+  try { localStorage.setItem(LS_KEY, JSON.stringify(allVotes)); } catch(e){}
+  mdPollRenderResults(poll);
+};
+
+// ─── HELPER: Render hasil poll ───
+window.mdPollRenderResults = function(pollEl) {
+  var pollId = pollEl.getAttribute('data-poll-id');
+  var resultsEl = pollEl.querySelector('.md-poll-results');
+  if (!resultsEl) return;
+  var userId = (window.currentProf && (currentProf.id || currentProf.email)) || 'anonymous';
+  var allVotes;
+  try { allVotes = JSON.parse(localStorage.getItem('mdPollVotes_v1') || '{}'); } catch(e) { allVotes = {}; }
+  var p = allVotes[pollId];
+  if (!p) {
+    resultsEl.innerHTML = '<span style="opacity:0.7;">Belum ada vote</span>';
+    return;
+  }
+  var total = Object.values(p.totals || {}).reduce(function(a,b){return a+b;}, 0);
+  var myVote = p.votes[userId];
+  // Tandai tombol yang user pilih
+  pollEl.querySelectorAll('.md-poll-opt').forEach(function(b) {
+    if (b.getAttribute('data-opt') === myVote) b.classList.add('voted');
+    else b.classList.remove('voted');
+  });
+  // Render bar grafik
+  var opts = Array.from(pollEl.querySelectorAll('.md-poll-opt')).map(function(b){return b.getAttribute('data-opt');});
+  var html = '';
+  opts.forEach(function(o) {
+    var count = p.totals[o] || 0;
+    var pct = total ? Math.round(count/total*100) : 0;
+    html += '<div class="poll-bar">' +
+      '<span class="poll-bar-label">' + escapeHtml(o) + '</span>' +
+      '<span class="poll-bar-fill" style="width:' + pct + '%;flex:1;max-width:50%;"></span>' +
+      '<span class="poll-bar-count">' + count + ' (' + pct + '%)</span></div>';
+  });
+  html += '<div style="margin-top:6px;opacity:0.7;">Total: ' + total + ' suara' + (myVote ? ' · Pilihanmu: <b>' + escapeHtml(myVote) + '</b>' : '') + '</div>';
+  resultsEl.innerHTML = html;
+};
+
+// ─── HELPER: Render semua poll results di dalam editor ───
+window.renderAllPollResults = function(scopeEl) {
+  (scopeEl || document).querySelectorAll('.md-poll').forEach(mdPollRenderResults);
+};
+
+// ─── HELPER: Update Action Items panel dari editor ───
+window.updateActionItemsPanel = function(editorEl, panelEl) {
+  if (!editorEl || !panelEl) return;
+  var todos = editorEl.querySelectorAll('.md-todo');
+  var total = todos.length;
+  var done = 0;
+  var rows = [];
+  todos.forEach(function(t, i) {
+    var checked = t.getAttribute('data-checked') === 'true';
+    if (checked) done++;
+    var textEl = t.querySelector('.md-todo-text');
+    var text = textEl ? textEl.textContent.trim() : '';
+    var mentions = Array.from(t.querySelectorAll('.md-mention')).map(function(m){
+      return '<span class="ai-mention-pill">' + escapeHtml(m.textContent) + '</span>';
+    }).join('');
+    rows.push('<div class="ai-item ' + (checked?'done':'') + '" data-idx="' + i + '">' +
+      (checked ? '✅' : '⬜') +
+      '<div class="ai-text">' + escapeHtml(text || '(kosong)') +
+      (mentions ? '<div class="ai-mentions">' + mentions + '</div>' : '') +
+      '</div></div>');
+  });
+  if (!total) {
+    panelEl.innerHTML = '<div class="ai-empty">📝 Belum ada tugas. Klik tombol ☑️ Tugas di toolbar untuk tambah.</div>';
+    return;
+  }
+  panelEl.innerHTML =
+    '<div class="ai-header">' +
+      '<span>📋 Action Items</span>' +
+      '<span class="ai-progress">' + done + ' / ' + total + ' selesai</span>' +
+    '</div>' +
+    '<div class="ai-list">' + rows.join('') + '</div>';
+  // Click jump ke editor checkbox terkait
+  panelEl.querySelectorAll('.ai-item').forEach(function(it, i) {
+    it.onclick = function() {
+      var todoEl = todos[i];
+      if (todoEl) {
+        todoEl.scrollIntoView({ behavior:'smooth', block:'center' });
+        var cb = todoEl.querySelector('input[type="checkbox"]');
+        if (cb) cb.focus();
+      }
+    };
+  });
+};
+
+// ─── STYLE PICKER popup (Font / Ukuran / Line Spacing) — Word-style ───
+window.showStylePicker = function(editorEl, anchorEl) {
+  if (!editorEl) return;
+  var pop = document.getElementById('wysiwygStylePicker');
+  if (!pop) {
+    pop = document.createElement('div');
+    pop.id = 'wysiwygStylePicker';
+    pop.className = 'style-picker-popup';
+    pop.style.display = 'none';
+    document.body.appendChild(pop);
+    document.addEventListener('click', function(e){
+      if (!pop.contains(e.target) && !e.target.closest('[data-style-btn]')) pop.style.display = 'none';
+    });
+    document.addEventListener('scroll', function(){ pop.style.display = 'none'; }, true);
+  }
+
+  var FONTS = [
+    { label: 'Default (Sistem)', value: '' },
+    { label: 'Sans-serif', value: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif' },
+    { label: 'Serif', value: 'Georgia, "Times New Roman", Times, serif' },
+    { label: 'Monospace', value: 'ui-monospace, "Cascadia Code", "Consolas", monospace' },
+    { label: 'Arial', value: 'Arial, sans-serif' },
+    { label: 'Calibri', value: 'Calibri, sans-serif' },
+    { label: 'Times New Roman', value: '"Times New Roman", serif' },
+    { label: 'Courier New', value: '"Courier New", monospace' },
+    { label: 'Verdana', value: 'Verdana, sans-serif' },
+    { label: 'Tahoma', value: 'Tahoma, sans-serif' },
+    { label: 'Georgia', value: 'Georgia, serif' },
+  ];
+  var SIZES = ['12px','13px','14px','15px','16px','17px','18px','20px','22px','24px'];
+  var LINE_HEIGHTS = ['1.0','1.15','1.5','1.7','2.0','2.5','3.0'];
+
+  var curFont = editorEl.style.fontFamily || '';
+  var curSize = editorEl.style.fontSize || '14px';
+  var curLh   = editorEl.style.lineHeight || '1.7';
+
+  pop.innerHTML =
+    '<div class="sp-section">' +
+      '<div class="sp-label">🔤 Font</div>' +
+      '<select class="sp-select" data-act="fontFamily">' +
+        FONTS.map(function(f){
+          return '<option value="' + f.value.replace(/"/g,'&quot;') + '"' + (f.value === curFont ? ' selected':'') + '>' + f.label + '</option>';
+        }).join('') +
+      '</select>' +
+    '</div>' +
+    '<div class="sp-section">' +
+      '<div class="sp-label">📏 Ukuran Teks</div>' +
+      '<div class="sp-row">' +
+        SIZES.map(function(s){
+          return '<button class="sp-chip' + (s === curSize ? ' active':'') + '" data-act="fontSize" data-val="' + s + '">' + s + '</button>';
+        }).join('') +
+      '</div>' +
+    '</div>' +
+    '<div class="sp-section">' +
+      '<div class="sp-label">📐 Spasi Baris</div>' +
+      '<div class="sp-row">' +
+        LINE_HEIGHTS.map(function(s){
+          return '<button class="sp-chip' + (s === curLh ? ' active':'') + '" data-act="lineHeight" data-val="' + s + '">' + s + '</button>';
+        }).join('') +
+      '</div>' +
+    '</div>' +
+    '<div class="sp-section">' +
+      '<div class="sp-label">↔ Perataan</div>' +
+      '<div class="sp-row">' +
+        '<button class="sp-chip" data-act="align-left">⬅ Kiri</button>' +
+        '<button class="sp-chip" data-act="align-center">↔ Tengah</button>' +
+        '<button class="sp-chip" data-act="align-right">➡ Kanan</button>' +
+        '<button class="sp-chip" data-act="align-justify">≡ Justify</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="sp-section" style="border-top:1px dashed #d4e8dc;padding-top:8px;">' +
+      '<button class="sp-reset" data-act="reset">↺ Reset ke Default</button>' +
+    '</div>';
+
+  // Posisi: di bawah anchor
+  pop.style.display = 'block';
+  var rect = anchorEl.getBoundingClientRect();
+  var pw = pop.offsetWidth, vw = window.innerWidth;
+  var x = Math.min(rect.left, vw - pw - 12);
+  pop.style.left = x + 'px';
+  pop.style.top  = (rect.bottom + 6) + 'px';
+
+  // Handlers
+  pop.querySelectorAll('select.sp-select').forEach(function(sel) {
+    sel.onchange = function() {
+      var act = sel.dataset.act;
+      editorEl.applyFmt(act, sel.value);
+    };
+  });
+  pop.querySelectorAll('button.sp-chip').forEach(function(b) {
+    b.onclick = function(e) {
+      e.stopPropagation();
+      var act = b.dataset.act;
+      var val = b.dataset.val;
+      editorEl.applyFmt(act, val);
+      // Highlight aktif
+      pop.querySelectorAll('button.sp-chip[data-act="' + act + '"]').forEach(function(x){x.classList.remove('active');});
+      b.classList.add('active');
+    };
+  });
+  var resetBtn = pop.querySelector('button.sp-reset');
+  if (resetBtn) resetBtn.onclick = function(e) {
+    e.stopPropagation();
+    editorEl.style.fontFamily = '';
+    editorEl.style.fontSize = '';
+    editorEl.style.lineHeight = '';
+    try {
+      localStorage.removeItem('wysiwyg_fontFamily');
+      localStorage.removeItem('wysiwyg_fontSize');
+      localStorage.removeItem('wysiwyg_lineHeight');
+    } catch(_){}
+    pop.style.display = 'none';
+  };
+};
+
+// ─── AUTO-SAVE: setiap perubahan editor otomatis disimpan setelah debounce (Word/Excel-style) ───
+// opts: { saveFn: async (markdown) => void, statusEl: HTMLElement, delay?: number }
+window.attachAutoSave = function(editorEl, opts) {
+  if (!editorEl || !opts || !opts.saveFn) return;
+  // Detach handler lama supaya bisa re-attach saat render ulang
+  if (editorEl._autoSaveCleanup) editorEl._autoSaveCleanup();
+  var delay   = opts.delay || 1500;
+  var saveFn  = opts.saveFn;
+  var statusEl= opts.statusEl;
+  var timer   = null;
+  var saving  = false;
+  var lastSavedHtml = editorEl.innerHTML;
+
+  function setStatus(text, cls) {
+    if (!statusEl) return;
+    statusEl.textContent = text;
+    statusEl.className = 'autosave-status ' + (cls || '');
+  }
+  async function doSave() {
+    if (saving) return;
+    var cur = editorEl.innerHTML;
+    if (cur === lastSavedHtml) {
+      setStatus('✓ Tersimpan', 'saved');
+      return;
+    }
+    saving = true;
+    setStatus('Menyimpan…', 'saving');
+    try {
+      var md = window.htmlElementToMarkdown(editorEl) || '';
+      await saveFn(md);
+      lastSavedHtml = cur;
+      var t = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      setStatus('✓ Auto-saved ' + t, 'saved');
+    } catch(e) {
+      console.error('Auto-save error:', e);
+      setStatus('⚠️ Gagal auto-save', 'error');
+    } finally {
+      saving = false;
+    }
+  }
+  function onInput() {
+    clearTimeout(timer);
+    if (!saving) setStatus('Mengetik… (auto-save segera)', 'dirty');
+    timer = setTimeout(doSave, delay);
+  }
+  editorEl.addEventListener('input', onInput);
+  setStatus('✓ Tersimpan', 'saved');
+
+  // Expose:
+  //   _forceAutoSave: jalankan save sekarang (dipakai sebelum keluar form)
+  //   _resetAutoSaveBaseline: sinkronkan baseline setelah save manual
+  //   _autoSaveCleanup: lepas listener
+  editorEl._forceAutoSave = doSave;
+  editorEl._resetAutoSaveBaseline = function() {
+    lastSavedHtml = editorEl.innerHTML;
+    setStatus('✓ Tersimpan', 'saved');
+  };
+  editorEl._autoSaveCleanup = function() {
+    clearTimeout(timer);
+    editorEl.removeEventListener('input', onInput);
+    delete editorEl._autoSaveCleanup;
+  };
+};
 
 // ── HELPER TOOLBAR — sisipkan markdown ke textarea ──
 
@@ -2678,7 +4079,7 @@ window.insertLinkToDesc = function(textareaId){
 (function setupGlobalDescPreview(){
   if(window._descPreviewSetup) return;
   window._descPreviewSetup = true;
-  var DESC_IDS = ['acDeskripsi','prjDeskripsi','amDeskripsi','mswHasil','taskModalDesc','acTaskDesc'];
+  var DESC_IDS = ['taskModalDesc','acTaskDesc'];
   function updatePreview(ta){
     var preview = document.getElementById(ta.id + '_preview');
     if(!preview) return;
@@ -2965,7 +4366,7 @@ window.saveSupabaseWithDivisiFallback = async function(qb, payload, tableName){
 (function setupGlobalDescPaste(){
   if(window._descPasteSetup) return;
   window._descPasteSetup = true;
-  var DESC_IDS = ['acDeskripsi','prjDeskripsi','amDeskripsi','mswHasil','taskModalDesc','acTaskDesc'];
+  var DESC_IDS = ['taskModalDesc','acTaskDesc'];
   document.addEventListener('paste', function(e){
     var ta = e.target;
     if(!ta || ta.tagName !== 'TEXTAREA') return;
@@ -3199,6 +4600,8 @@ function openSection(name) {
   window.scrollTo(0, 0);
   // Catat ke history browser → tombol Back fisik/gesture HP bisa kembali ke menu
   history.pushState({ section: name }, '');
+  // Pasang fitur collapsible di kartu-kartu section ini (sekali saja per section)
+  if (window.setupCollapsibleSection) window.setupCollapsibleSection(name);
   const loaders = {
     saldo: loadDashboard, kasmasuk: () => { loadKasMasuk(); loadKasBulanSection(); }, pengeluaran: loadPengeluaran,
     qurban: loadQurban, anggota: loadAnggota, absensi: loadAbsensi, musyawarah: loadMusyawarah, acara: () => {
@@ -3210,9 +4613,102 @@ function openSection(name) {
     riwayat: loadRiwayat,
     akses: loadKelolAkses,
     recycle: loadRecycle,
+    kalender: loadKalender,
   };
   if (loaders[name]) loaders[name]();
 }
+
+// ─── COLLAPSIBLE CARDS — klik H2 untuk sembunyikan/tampilkan isi ───
+// Default: SEMUA KARTU TERTUTUP. localStorage menyimpan kartu yang DIBUKA (opt-in).
+// Berlaku untuk section yang banyak kartu (Saldo, Kas Masuk, Pengeluaran, Qurban).
+(function setupCollapsibleSystem() {
+  const COLLAPSIBLE_SECTIONS = ['saldo', 'kasmasuk', 'pengeluaran', 'qurban'];
+  const LS_KEY = 'expandedCards_v1';
+  let expandedSet;
+  try {
+    expandedSet = new Set(JSON.parse(localStorage.getItem(LS_KEY) || '[]'));
+  } catch(e) { expandedSet = new Set(); }
+
+  function saveState() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify([...expandedSet])); } catch(e) {}
+  }
+  function cardKey(card) {
+    // Pakai gabungan id section + teks h2 sebagai kunci unik
+    const sec = card.closest('.section');
+    const secId = sec ? sec.id : 'global';
+    const h2 = card.querySelector(':scope > h2');
+    if (!h2) return null;
+    return secId + '::' + h2.textContent.trim().slice(0, 80);
+  }
+  function applyState(card) {
+    const key = cardKey(card);
+    if (!key) return;
+    // Default: collapsed. Hanya buka kalau ada di expandedSet.
+    if (expandedSet.has(key)) card.classList.remove('card-collapsed');
+    else card.classList.add('card-collapsed');
+  }
+  function toggleCard(card) {
+    const key = cardKey(card);
+    if (!key) return;
+    if (expandedSet.has(key)) expandedSet.delete(key);
+    else expandedSet.add(key);
+    saveState();
+    applyState(card);
+  }
+
+  window.setupCollapsibleSection = function(name) {
+    if (COLLAPSIBLE_SECTIONS.indexOf(name) < 0) return;
+    const sec = document.getElementById('sec-' + name);
+    if (!sec) return;
+    if (sec._collapseSetup) {
+      // Sudah pernah di-setup — refresh state (penting setelah re-render dinamis)
+      sec.querySelectorAll(':scope > .card').forEach(applyState);
+      return;
+    }
+    sec._collapseSetup = true;
+
+    // Pasang bar "Buka Semua / Tutup Semua" di atas
+    const bar = document.createElement('div');
+    bar.className = 'collapse-bar';
+    bar.innerHTML =
+      '<button data-act="expand">⊞ Buka Semua</button>' +
+      '<button data-act="collapse">⊟ Tutup Semua</button>';
+    const firstCard = sec.querySelector(':scope > .card');
+    if (firstCard) sec.insertBefore(bar, firstCard);
+    bar.addEventListener('click', function(e) {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const act = btn.dataset.act;
+      sec.querySelectorAll(':scope > .card.collapsible-card').forEach(function(card) {
+        const key = cardKey(card);
+        if (!key) return;
+        if (act === 'expand') expandedSet.add(key);
+        else expandedSet.delete(key);
+        applyState(card);
+      });
+      saveState();
+    });
+
+    // Mark semua direct .card child sebagai collapsible — default tertutup
+    sec.querySelectorAll(':scope > .card').forEach(function(card) {
+      const h2 = card.querySelector(':scope > h2');
+      if (!h2) return;
+      card.classList.add('collapsible-card');
+      applyState(card);
+    });
+
+    // Delegated click handler — toggle saat klik h2 (tapi bukan tombol/input di dalamnya)
+    sec.addEventListener('click', function(e) {
+      const h2 = e.target.closest('.card.collapsible-card > h2');
+      if (!h2) return;
+      // Hindari toggle saat klik tombol/input di dalam h2
+      if (e.target.closest('button, input, select, textarea, a')) return;
+      const card = h2.parentElement;
+      toggleCard(card);
+    });
+  };
+})();
+
 // Tombol "← Menu" di layar — lewat history supaya sinkron dgn tombol Back HP
 function goBack() { history.back(); }
 // Tombol Back fisik / gesture Android → kembali ke menu, bukan keluar app
@@ -3220,6 +4716,239 @@ window.addEventListener('popstate', () => {
   if ($('appView').style.display === 'none') return; // belum login → abaikan
   showMenu();
 });
+
+// ─────────────── KALENDER KEGIATAN ───────────────
+const KAL_NAMA_BULAN = ['Januari','Februari','Maret','April','Mei','Juni',
+                        'Juli','Agustus','September','Oktober','November','Desember'];
+const KAL_HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+
+async function loadKalender() {
+  if (!window._kalenderState) {
+    const now = new Date();
+    window._kalenderState = { year: now.getFullYear(), month: now.getMonth(), selected: null };
+  }
+  document.getElementById('kalenderContent').innerHTML = '<p class="muted">Memuat data kegiatan...</p>';
+  await _kalenderFetchData();
+  _kalenderRender();
+}
+
+async function _kalenderFetchData() {
+  try {
+    const [acaraRes, mswRes] = await Promise.all([
+      db.from('acara').select('id, nama, tanggal, status, penanggung_jawab').not('tanggal','is',null),
+      db.from('musyawarah').select('id, judul, tanggal, jam, status, tempat').not('tanggal','is',null),
+    ]);
+    let projects = [];
+    try {
+      // Coba ambil dari localStorage dulu (cache utama)
+      const raw = localStorage.getItem('mumi_projects_v1') || localStorage.getItem('projects_v1') || '[]';
+      projects = JSON.parse(raw) || [];
+      // Fallback: kalau kosong, coba dari Supabase
+      if (!projects.length) {
+        const { data } = await db.from('projects').select('data').eq('key','main').maybeSingle();
+        projects = (data && data.data) || [];
+      }
+    } catch(e) { projects = []; }
+    window._kalenderData = {
+      acara: acaraRes.data || [],
+      musyawarah: mswRes.data || [],
+      project: projects,
+    };
+  } catch(e) {
+    window._kalenderData = { acara: [], musyawarah: [], project: [] };
+    console.error('Kalender fetch error:', e);
+  }
+}
+
+function _kalenderBuildIndex() {
+  const data = window._kalenderData || { acara:[], musyawarah:[], project:[] };
+  const idx = {};
+  function push(d, type, item) {
+    if (!d) return;
+    const k = String(d).slice(0,10);
+    if (!idx[k]) idx[k] = { acara:[], musyawarah:[], project:[] };
+    idx[k][type].push(item);
+  }
+  data.acara.forEach(a => push(a.tanggal, 'acara', a));
+  data.musyawarah.forEach(m => push(m.tanggal, 'musyawarah', m));
+  // Project: range — add ke setiap tanggal mulai → selesai
+  data.project.forEach(p => {
+    const s = p.tanggal_mulai, e = p.tanggal_selesai;
+    if (!s && !e) return;
+    const start = new Date((s || e) + 'T00:00:00');
+    const end   = new Date((e || s) + 'T00:00:00');
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return;
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+      const ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      push(ds, 'project', p);
+    }
+  });
+  return idx;
+}
+
+function _kalenderRender() {
+  const state = window._kalenderState;
+  const idx   = _kalenderBuildIndex();
+  const today = new Date();
+  const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+
+  const firstDow = new Date(state.year, state.month, 1).getDay();
+  const lastDate = new Date(state.year, state.month + 1, 0).getDate();
+
+  let html = '<div class="kal-header">' +
+    '<button class="kal-nav" onclick="kalPrev()" title="Bulan sebelumnya">‹</button>' +
+    '<h2>' + KAL_NAMA_BULAN[state.month] + ' ' + state.year + '</h2>' +
+    '<button class="kal-nav" onclick="kalNext()" title="Bulan berikutnya">›</button>' +
+    '<button class="kal-today-btn" onclick="kalToday()">📍 Hari Ini</button>' +
+    '</div>';
+
+  html += '<div class="kal-grid">';
+  ['Min','Sen','Sel','Rab','Kam','Jum','Sab'].forEach((d, i) => {
+    html += '<div class="kal-dow' + (i===0?' dow-sun':'') + '">' + d + '</div>';
+  });
+  for (let i = 0; i < firstDow; i++) html += '<div class="kal-cell kal-empty"></div>';
+
+  for (let d = 1; d <= lastDate; d++) {
+    const ds = state.year + '-' + String(state.month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const acts = idx[ds];
+    const total = acts ? (acts.acara.length + acts.musyawarah.length + acts.project.length) : 0;
+    const isToday = ds === todayStr;
+    const isSelected = ds === state.selected;
+    const dow = new Date(state.year, state.month, d).getDay();
+    const cls = ['kal-cell'];
+    if (isToday) cls.push('kal-today');
+    if (isSelected) cls.push('kal-selected');
+    if (total === 0) cls.push('kal-free');
+    else cls.push('kal-busy');
+    if (dow === 0) cls.push('kal-sun');
+
+    let dots = '';
+    if (acts) {
+      if (acts.acara.length) dots += '<span class="kal-dot dot-acara" title="' + acts.acara.length + ' acara"></span>';
+      if (acts.musyawarah.length) dots += '<span class="kal-dot dot-msw" title="' + acts.musyawarah.length + ' musyawarah"></span>';
+      if (acts.project.length) dots += '<span class="kal-dot dot-prj" title="' + acts.project.length + ' project"></span>';
+    }
+    html += '<div class="' + cls.join(' ') + '" onclick="kalSelect(\'' + ds + '\')">' +
+      '<div class="kal-num">' + d + '</div>' +
+      '<div class="kal-dots">' + dots + '</div>' +
+      '</div>';
+  }
+  html += '</div>';
+
+  // Legend
+  html += '<div class="kal-legend">' +
+    '<span class="kal-legend-item"><span class="kal-dot dot-acara"></span> Acara</span>' +
+    '<span class="kal-legend-item"><span class="kal-dot dot-msw"></span> Musyawarah</span>' +
+    '<span class="kal-legend-item"><span class="kal-dot dot-prj"></span> Project</span>' +
+    '<span class="kal-legend-item" style="color:#16a34a;"><b>Hijau</b> = tanggal kosong</span>' +
+    '<span class="kal-legend-item" style="color:#f59e0b;"><b>Kuning</b> = hari ini</span>' +
+    '</div>';
+
+  html += '<div id="kalDetail" style="margin-top:14px;">' +
+    (state.selected ? _kalenderRenderDetail(state.selected, idx) :
+      '<p class="muted" style="text-align:center;margin-top:14px;font-size:12px;">👆 Klik tanggal untuk melihat detailnya</p>') +
+    '</div>';
+
+  document.getElementById('kalenderContent').innerHTML = html;
+}
+
+function _kalenderRenderDetail(dateStr, idx) {
+  if (!idx) idx = _kalenderBuildIndex();
+  const acts = idx[dateStr] || { acara:[], musyawarah:[], project:[] };
+  const total = acts.acara.length + acts.musyawarah.length + acts.project.length;
+  let dateLabel;
+  try {
+    dateLabel = new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID',
+      { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  } catch(e) { dateLabel = dateStr; }
+
+  let html = '<div class="kal-detail">';
+  html += '<h3 class="kal-detail-title">📅 ' + escapeHtml(dateLabel) + '</h3>';
+
+  if (total === 0) {
+    html += '<div class="kal-detail-empty">' +
+      '<div class="ic">🆓</div>' +
+      '<div class="lb">TANGGAL INI MASIH KOSONG</div>' +
+      '<div class="sub">Cocok untuk acara/musyawarah/project baru!</div>' +
+      '</div>';
+  } else {
+    if (acts.acara.length) {
+      html += '<div class="kal-act-group">' +
+        '<div class="kal-act-group-header" style="color:#16a34a;">📅 Acara <span class="pill">' + acts.acara.length + '</span></div>';
+      acts.acara.forEach(a => {
+        const stMap = { not_started:['⬜ Belum Mulai','st-not'], on_progress:['🔄 Berjalan','st-on'], done:['✅ Selesai','st-done'], cancelled:['❌ Dibatalkan','st-cancel'] };
+        const st = stMap[a.status] || ['—','st-not'];
+        html += '<div class="kal-act-item act-acara">' +
+          '<div class="nama">' + escapeHtml(a.nama || '(tanpa nama)') + '</div>' +
+          '<div class="meta"><span class="' + st[1] + '">' + st[0] + '</span>' +
+          (a.penanggung_jawab ? ' &nbsp;·&nbsp; 👤 ' + escapeHtml(a.penanggung_jawab) : '') +
+          '</div></div>';
+      });
+      html += '</div>';
+    }
+    if (acts.musyawarah.length) {
+      html += '<div class="kal-act-group">' +
+        '<div class="kal-act-group-header" style="color:#7c3aed;">🗣️ Musyawarah <span class="pill">' + acts.musyawarah.length + '</span></div>';
+      acts.musyawarah.forEach(m => {
+        const jam = m.jam ? String(m.jam).slice(0,5) : '';
+        html += '<div class="kal-act-item act-msw">' +
+          '<div class="nama">' + escapeHtml(m.judul || '(tanpa judul)') + '</div>' +
+          '<div class="meta">' + (jam ? '🕐 ' + escapeHtml(jam) : '') +
+          (m.tempat ? (jam ? ' &nbsp;·&nbsp; ' : '') + '📍 ' + escapeHtml(m.tempat) : '') +
+          '</div></div>';
+      });
+      html += '</div>';
+    }
+    if (acts.project.length) {
+      html += '<div class="kal-act-group">' +
+        '<div class="kal-act-group-header" style="color:#f59e0b;">🗂️ Project <span class="pill">' + acts.project.length + '</span></div>';
+      acts.project.forEach(p => {
+        const rng = (p.tanggal_mulai && p.tanggal_selesai) ?
+          (p.tanggal_mulai + ' → ' + p.tanggal_selesai) :
+          (p.tanggal_mulai || p.tanggal_selesai || '');
+        html += '<div class="kal-act-item act-prj">' +
+          '<div class="nama">' + escapeHtml(p.nama || '(tanpa nama)') + '</div>' +
+          (rng ? '<div class="meta">📅 ' + escapeHtml(rng) + '</div>' : '') +
+          '</div>';
+      });
+      html += '</div>';
+    }
+  }
+  html += '</div>';
+  return html;
+}
+
+function kalPrev() {
+  const s = window._kalenderState;
+  s.month--;
+  if (s.month < 0) { s.month = 11; s.year--; }
+  s.selected = null;
+  _kalenderRender();
+}
+function kalNext() {
+  const s = window._kalenderState;
+  s.month++;
+  if (s.month > 11) { s.month = 0; s.year++; }
+  s.selected = null;
+  _kalenderRender();
+}
+function kalToday() {
+  const now = new Date();
+  const s = window._kalenderState;
+  s.year = now.getFullYear();
+  s.month = now.getMonth();
+  s.selected = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+  _kalenderRender();
+}
+function kalSelect(dateStr) {
+  window._kalenderState.selected = dateStr;
+  _kalenderRender();
+  // Scroll ke detail
+  setTimeout(() => {
+    const det = document.getElementById('kalDetail');
+    if (det) det.scrollIntoView({ behavior:'smooth', block:'center' });
+  }, 100);
+}
 
 // ─────────────── DASHBOARD ───────────────
 async function loadDashboard() {
@@ -3441,6 +5170,8 @@ async function loadAnggota() {
   const { data } = await db.from('anggota').select('*, kategori_anggota(nama)').order('nama');
   const list = data || [];
   anggotaFull = list;
+  // Expose ke window — dipakai mention dropdown @ di notulensi musyawarah
+  window.anggotaCache = list;
   const el = $('listAnggota');
   el.innerHTML = list.length ? list.map(a => {
     const kat = a.kategori_anggota ? ' · ' + escapeHtml(a.kategori_anggota.nama) : '';
@@ -3894,10 +5625,47 @@ function renderSesiList() {
 
   const wrapRiwayat = $('sesiRiwayatWrap');
   const listRiwayat = $('sesiRiwayatList');
+  const filterEl    = $('sesiRiwayatFilter');
   if (wrapRiwayat && listRiwayat) {
     if (sesiRiwayat.length) {
       wrapRiwayat.style.display = 'block';
-      listRiwayat.innerHTML = sesiRiwayat.map(s => renderItem(s, true)).join('');
+
+      // Kelompokkan sesi per bulan (YYYY-MM)
+      const NAMA_BULAN = ['Januari','Februari','Maret','April','Mei','Juni',
+                          'Juli','Agustus','September','Oktober','November','Desember'];
+      const labelBulan = ym => {
+        const [y, m] = ym.split('-');
+        return NAMA_BULAN[parseInt(m, 10) - 1] + ' ' + y;
+      };
+      const grup = {};
+      sesiRiwayat.forEach(s => {
+        const ym = s.tanggal.slice(0, 7); // YYYY-MM
+        (grup[ym] = grup[ym] || []).push(s);
+      });
+      const semuaBulan = Object.keys(grup).sort().reverse(); // terbaru di atas
+
+      // Bangun ulang dropdown filter (pertahankan pilihan sebelumnya bila masih valid)
+      if (filterEl) {
+        const prev = filterEl.value;
+        const opts = ['<option value="semua">📅 Semua Bulan (' + sesiRiwayat.length + ' sesi)</option>']
+          .concat(semuaBulan.map(ym =>
+            `<option value="${ym}">${labelBulan(ym)} (${grup[ym].length} sesi)</option>`
+          ));
+        filterEl.innerHTML = opts.join('');
+        filterEl.value = semuaBulan.includes(prev) || prev === 'semua' ? prev : 'semua';
+      }
+
+      const pilih = filterEl ? filterEl.value : 'semua';
+      const bulanRender = pilih === 'semua' ? semuaBulan : [pilih];
+
+      listRiwayat.innerHTML = bulanRender.map(ym => {
+        const items = grup[ym].map(s => renderItem(s, true)).join('');
+        const header = `<div style="margin:14px 0 6px 0;padding:7px 12px;background:linear-gradient(90deg,#1a6644,#2a8866);color:#fff;border-radius:8px;font-size:13px;font-weight:700;display:flex;justify-content:space-between;align-items:center;">
+          <span>📅 ${labelBulan(ym)}</span>
+          <span style="font-size:11px;background:rgba(255,255,255,0.25);padding:2px 9px;border-radius:99px;">${grup[ym].length} sesi</span>
+        </div>`;
+        return header + items;
+      }).join('');
     } else {
       wrapRiwayat.style.display = 'none';
     }
@@ -3905,11 +5673,11 @@ function renderSesiList() {
 }
 
 function toggleSesiRiwayat() {
-  const list = $('sesiRiwayatList');
+  const body = $('sesiRiwayatBody');
   const lbl  = $('sesiRiwayatToggle');
-  if (!list) return;
-  const open = list.style.display !== 'none';
-  list.style.display = open ? 'none' : 'block';
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
   if (lbl) lbl.textContent = open ? '▶ Tampilkan' : '▲ Sembunyikan';
 }
 
@@ -5416,7 +7184,7 @@ async function addAcara() {
       ? collectSelectedAnggota('acAnggotaCheckboxes') : [];
     const payload = {
       nama,
-      deskripsi: $('acDeskripsi').value.trim() || null,
+      deskripsi: (function(){ var el = $('acDeskripsi'); return el ? (window.htmlElementToMarkdown(el).trim() || null) : null; })(),
       tanggal: $('acTanggal').value || null,
       status: $('acStatus').value,
       penanggung_jawab: $('acPIC').value.trim() || null,
@@ -5433,8 +7201,8 @@ async function addAcara() {
     );
     if (error) { setMsg('acMsg', 'Gagal: ' + error.message, true); return; }
     setMsg('acMsg', '✅ Acara tersimpan');
-    $('acNama').value = ''; $('acDeskripsi').value = ''; $('acPIC').value = ''; $('acAnggaran').value = '';
-    if(window.refreshDescPreview) refreshDescPreview('acDeskripsi');
+    $('acNama').value = ''; $('acPIC').value = ''; $('acAnggaran').value = '';
+    var acDescEl = $('acDeskripsi'); if (acDescEl) acDescEl.innerHTML = '<p><br></p>';
     if(window.renderAnggotaCheckboxes) renderAnggotaCheckboxes('acAnggotaCheckboxes', []);
     if(window.renderDivisiCheckboxes) renderDivisiCheckboxes('acDivisiCheckboxes', [], 'acAnggotaCheckboxes');
     await loadAcara();
@@ -5450,6 +7218,22 @@ async function loadAcara() {
   // Expose ke window agar modul Task Acara (IIFE terpisah) bisa baca cache.
   window.acaraCache = acaraCache;
   acRenderList();
+  // Pasang WYSIWYG + Action Items di form tambah acara (sekali saja)
+  var acDescEl = document.getElementById('acDeskripsi');
+  if (acDescEl && window.attachWysiwyg) {
+    window.attachWysiwyg(acDescEl);
+    var acAiPanel = document.getElementById('acActionItems');
+    if (acAiPanel && !acDescEl._aiAttached) {
+      acDescEl._aiAttached = true;
+      function refreshAcAI() {
+        var hasTodos = acDescEl.querySelectorAll('.md-todo').length > 0;
+        acAiPanel.style.display = hasTodos ? 'block' : 'none';
+        window.updateActionItemsPanel(acDescEl, acAiPanel);
+      }
+      acDescEl.addEventListener('input', refreshAcAI);
+      refreshAcAI();
+    }
+  }
 }
 
 function renderAcaraTpkInputs(tpk) {
@@ -5479,8 +7263,27 @@ async function openAcaraDetail(id) {
   $('amPIC').value       = a.penanggung_jawab || '';
   $('amAnggaran').value  = a.anggaran || 0;
   $('amBiaya').value     = a.biaya_per_siswa || 0;
-  $('amDeskripsi').value = a.deskripsi || '';
-  if(window.refreshDescPreview) refreshDescPreview('amDeskripsi');
+  var amDescEl = $('amDeskripsi');
+  if (amDescEl) {
+    amDescEl.innerHTML = window.markdownToEditableHtml(a.deskripsi || '');
+    if (window.attachWysiwyg) window.attachWysiwyg(amDescEl);
+    // Action Items panel
+    var amAiPanel = document.getElementById('amActionItems');
+    function refreshAmAI() { window.updateActionItemsPanel(amDescEl, amAiPanel); }
+    amDescEl.addEventListener('input', refreshAmAI);
+    refreshAmAI();
+    setTimeout(function(){ window.renderAllPollResults(amDescEl); }, 80);
+    // AUTO-SAVE
+    window.attachAutoSave(amDescEl, {
+      statusEl: document.getElementById('amAutoSaveStatus'),
+      saveFn: async function(md) {
+        var { error } = await db.from('acara')
+          .update({ deskripsi: md, updated_at: new Date().toISOString() })
+          .eq('id', currentAcaraId);
+        if (error) throw error;
+      }
+    });
+  }
   renderAcaraTpkInputs(a.target_per_kategori || {});
   // [REAL-TIME] Tarik data Struktur Org terbaru dari Supabase dulu (penting di HP
   // yang datanya bisa tertinggal dari laptop), baru render daftar divisi/anggota.
@@ -5526,7 +7329,7 @@ async function saveAcaraDetail() {
     anggaran:         parseUang($('amAnggaran').value),
     biaya_per_siswa:  parseUang($('amBiaya').value),
     target_per_kategori: tpk,
-    deskripsi:        $('amDeskripsi').value.trim() || null,
+    deskripsi:        (function(){ var el = $('amDeskripsi'); return el ? (window.htmlElementToMarkdown(el).trim() || null) : null; })(),
     divisis:          selectedDivisi,
     anggota_acara:    selectedAnggota,
     updated_at:       new Date().toISOString(),
@@ -5555,6 +7358,8 @@ async function saveAcaraDetail() {
     return;
   }
   setMsg('amMsg', '✅ Perubahan tersimpan');
+  var amDescEl0 = $('amDeskripsi');
+  if (amDescEl0 && amDescEl0._resetAutoSaveBaseline) amDescEl0._resetAutoSaveBaseline();
   await loadAcara();
   await renderAcaraBayar(currentAcaraId);
 }
@@ -10236,22 +12041,37 @@ function renderMswForm(msw, peserta=[], keuangan=[]) {
       <div id="mswDivisiCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:10px;background:#f0f7f3;border-radius:10px;min-height:44px;">
         <span class="muted" style="font-size:12px;">Memuat divisi dari Struktur Org...</span>
       </div>
-      <label>Hasil / Notulensi Musyawarah <span class="muted" style="font-size:11px;font-weight:400;">(format Notion: judul, sub, bold, link)</span></label>
+      <label>Hasil / Notulensi Musyawarah <span class="muted" style="font-size:11px;font-weight:400;">(pilih kata, klik tombol / klik kanan)</span></label>
       <div class="desc-toolbar">
-        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('mswHasil',1)" title="Judul Besar">H1</button>
-        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('mswHasil',2)" title="Sub Judul">H2</button>
-        <button type="button" class="desc-toolbar-btn" onclick="insertHeading('mswHasil',3)" title="Sub-Sub Judul">H3</button>
-        <button type="button" class="desc-toolbar-btn" onclick="insertBold('mswHasil')" title="Tebal"><b>B</b></button>
-        <button type="button" class="desc-toolbar-btn" onclick="insertLinkToDesc('mswHasil')" title="Sisipkan Link">🔗 Link</button>
-        <span class="desc-toolbar-hint">Paste URL → auto tanya nama</span>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('h1')" title="Judul Besar">H1</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('h2')" title="Sub Judul">H2</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('h3')" title="Sub-Sub Judul">H3</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('p')" title="Teks biasa">¶</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('bold')" title="Tebal (Ctrl+B)"><b>B</b></button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('italic')" title="Miring (Ctrl+I)"><i>I</i></button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('underline')" title="Garis Bawah (Ctrl+U)" style="text-decoration:underline;">U</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('highlight')" title="Highlight" style="background:#fef08a;color:#422006;">🖍</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('link')" title="Sisipkan Link (Ctrl+K)">🔗 Link</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('ul')" title="Bullet List">• List</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('ol')" title="Numbered List">1. List</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('outdent')" title="Kurangi indent">⇤</button>
+        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('indent')" title="Tambah indent">⇥</button>
+        <button type="button" class="desc-toolbar-btn" data-style-btn onclick="window.showStylePicker(document.getElementById('mswHasil'), this)" title="Font, Ukuran, Spasi, Align" style="background:#dbeafe;color:#1e3a8a;">Aa Style ▾</button>
+        <button type="button" class="desc-toolbar-btn" onclick="window.insertTodoToEditor(document.getElementById('mswHasil'))" title="Tambah tugas (checkbox)" style="background:#dcfce7;color:#14532d;">☑️ Tugas</button>
+        <button type="button" class="desc-toolbar-btn" onclick="window.showMentionPopup(document.getElementById('mswHasil'),'@')" title="Tag anggota (atau ketik @ di editor)" style="background:#ede9fe;color:#5b21b6;">@ Mention</button>
+        <button type="button" class="desc-toolbar-btn" onclick="window.insertPollToEditor(document.getElementById('mswHasil'))" title="Buat polling" style="background:#fef3c7;color:#78350f;">🗳️ Poll</button>
+        <span id="mswAutoSaveStatus" class="autosave-status saved" style="margin:0 0 0 auto;">✓ Tersimpan</span>
+        <button type="button" onclick="bukaNotulensiTabBaru()"
+           style="background:#1a6644;color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;width:auto;margin:0;text-transform:none;letter-spacing:0;display:inline-flex;align-items:center;gap:4px;line-height:1;"
+           title="Buka editor di tab baru — tampilan lebih lebar">
+          📖 Tab Baru
+        </button>
       </div>
-      <textarea id="mswHasil" rows="6" placeholder="# Keputusan Utama&#10;## Tindak Lanjut&#10;## Catatan Penting&#10;Tulis di sini...">${escapeHtml(msw?.hasil||'')}</textarea>
-      <div class="desc-preview-wrap">
-        <div class="desc-preview-header">
-          <span>👁 Preview Tampilan</span>
-          <span class="preview-status" id="mswHasil_preview_status">0 karakter</span>
-        </div>
-        <div class="desc-preview-box" id="mswHasil_preview">${descToHTML(msw?.hasil||'')}</div>
+      <div id="mswHasil" class="wysiwyg-editor" contenteditable="true" spellcheck="true"
+           data-placeholder="Tulis notulensi... Ketik @ untuk tag anggota, klik ☑️ untuk tambah tugas, 🗳️ untuk polling..."></div>
+      <!-- Action Items panel — auto-list tugas dari notulensi -->
+      <div id="mswActionItems" class="action-items-panel" style="margin-top:10px;">
+        <div class="ai-empty">📝 Belum ada tugas. Klik tombol ☑️ Tugas di toolbar untuk tambah.</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button onclick="simpanMsw()" style="flex:1;">💾 ${isEdit ? 'Simpan Perubahan' : 'Buat Musyawarah'}</button>
@@ -10332,6 +12152,712 @@ function renderMswForm(msw, peserta=[], keuangan=[]) {
   }
   // Render checkbox divisi (dipanggil setelah innerHTML di-set)
   if(window.renderDivisiCheckboxes) renderDivisiCheckboxes('mswDivisiCheckboxes', msw?.divisis || []);
+  // Inject isi notulensi sebagai HTML (bukan markdown literal) + pasang mode WYSIWYG
+  var mswHasilEl = document.getElementById('mswHasil');
+  if (mswHasilEl) {
+    mswHasilEl.innerHTML = window.markdownToEditableHtml(msw?.hasil || '');
+    if (window.attachWysiwyg) window.attachWysiwyg(mswHasilEl);
+    // Action Items panel: update setiap kali isi editor berubah
+    var aiPanel = document.getElementById('mswActionItems');
+    function refreshAI() { window.updateActionItemsPanel(mswHasilEl, aiPanel); }
+    mswHasilEl.addEventListener('input', refreshAI);
+    refreshAI(); // initial
+    setTimeout(function(){ window.renderAllPollResults(mswHasilEl); }, 80);
+    // AUTO-SAVE (hanya kalau musyawarah sudah disimpan / ada ID)
+    if (msw && msw.id) {
+      var statusEl = document.getElementById('mswAutoSaveStatus');
+      window.attachAutoSave(mswHasilEl, {
+        statusEl: statusEl,
+        saveFn: async function(md) {
+          var { error } = await db.from('musyawarah')
+            .update({ hasil: md, updated_at: new Date().toISOString() })
+            .eq('id', msw.id);
+          if (error) throw error;
+        }
+      });
+    } else {
+      var statusEl2 = document.getElementById('mswAutoSaveStatus');
+      if (statusEl2) { statusEl2.textContent = '💡 Simpan dulu untuk aktifkan auto-save'; statusEl2.className = 'autosave-status'; }
+    }
+  }
+  // Pastikan anggotaCache termuat (dipakai untuk dropdown @ mention)
+  if (window.loadAnggota && (!window.anggotaCache || !window.anggotaCache.length)) {
+    try { window.loadAnggota(); } catch(_){}
+  }
+}
+
+// ─── Wrapper khusus tiap section (panggil _bukaWysiwygTabBaru di bawah) ───
+function bukaNotulensiTabBaru() {
+  const judul = ($('mswJudul')?.value || '').trim() || 'Notulensi Musyawarah';
+  const metaParts = [];
+  const t = $('mswTanggal')?.value, j = $('mswJam')?.value, p = ($('mswTempat')?.value || '').trim();
+  if (t) { try { metaParts.push('📅 ' + new Date(t+'T00:00:00').toLocaleDateString('id-ID', {weekday:'long',day:'numeric',month:'long',year:'numeric'})); } catch(e) { metaParts.push('📅 ' + t); } }
+  if (j) metaParts.push('🕐 ' + j);
+  if (p) metaParts.push('📍 ' + p);
+  _bukaWysiwygTabBaru({ editorId: 'mswHasil', judul, metaParts, tabName: 'Notulensi' });
+}
+function bukaAcaraTabBaru() {
+  const judul = ($('amNama')?.value || '').trim() || 'Detail Acara';
+  const metaParts = [];
+  const t = $('amTanggal')?.value, pic = ($('amPIC')?.value || '').trim();
+  if (t) { try { metaParts.push('📅 ' + new Date(t+'T00:00:00').toLocaleDateString('id-ID', {weekday:'long',day:'numeric',month:'long',year:'numeric'})); } catch(e) { metaParts.push('📅 ' + t); } }
+  if (pic) metaParts.push('👤 ' + pic);
+  _bukaWysiwygTabBaru({ editorId: 'amDeskripsi', judul, metaParts, tabName: 'Detail Acara' });
+}
+function bukaProjectTabBaru() {
+  const judul = ($('prjNama')?.value || '').trim() || 'Detail Project';
+  const metaParts = [];
+  const s = $('prjTanggalMulai')?.value, e = $('prjTanggalSelesai')?.value;
+  if (s && e) metaParts.push('📅 ' + s + ' → ' + e);
+  else if (s) metaParts.push('📅 Mulai: ' + s);
+  _bukaWysiwygTabBaru({ editorId: 'prjDeskripsi', judul, metaParts, tabName: 'Detail Project' });
+}
+
+// ─── Buka editor di tab baru (WYSIWYG, sinkron balik ke form utama) ───
+function _bukaWysiwygTabBaru(opts) {
+  const editorId = opts.editorId;
+  const judul    = opts.judul || 'Editor';
+  const metaParts = opts.metaParts || [];
+  const tabName  = opts.tabName || 'Editor';
+  // Editor di parent sekarang contenteditable div — baca markdown via helper
+  const editorElParent = $(editorId);
+  const hasil = editorElParent ? (window.htmlElementToMarkdown(editorElParent) || '') : '';
+
+  // Convert markdown awal → HTML, lalu normalisasi class jadi tag native
+  // supaya execCommand bold/italic/underline bisa toggle dengan benar
+  let initHtml = descToHTML(hasil)
+    .replace(/<div class="desc-h1">([\s\S]*?)<\/div>/g, '<h1>$1</h1>')
+    .replace(/<div class="desc-h2">([\s\S]*?)<\/div>/g, '<h2>$1</h2>')
+    .replace(/<div class="desc-h3">([\s\S]*?)<\/div>/g, '<h3>$1</h3>')
+    .replace(/<span class="desc-bold">([\s\S]*?)<\/span>/g, '<b>$1</b>')
+    .replace(/<span class="desc-italic">([\s\S]*?)<\/span>/g, '<i>$1</i>')
+    .replace(/<span class="desc-underline">([\s\S]*?)<\/span>/g, '<u>$1</u>')
+    .replace(/<span class="desc-highlight">([\s\S]*?)<\/span>/g, '<mark>$1</mark>');
+  if (!initHtml.trim()) initHtml = '<p><br></p>';
+
+  const metaHtml = metaParts.map(s => escapeHtml(s)).join('<span style="margin:0 10px;color:#cbd5d0;">·</span>');
+  const judulEsc = escapeHtml(judul);
+  const tabNameEsc = escapeHtml(tabName);
+
+  // Inject data awal + target editor id ke tab baru
+  const initJson = JSON.stringify({ html: initHtml, targetId: editorId })
+    .replace(/<\/script/gi, '<\\/script'); // amankan tag penutup script di isi
+
+  const fullHtml = `<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>${judulEsc} — ${tabNameEsc}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #f4f7f5; color: #1a2a23; line-height: 1.7;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .toolbar {
+    background: linear-gradient(135deg,#1a6644,#2d9e6b);
+    color: #fff; padding: 12px 22px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap; flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+  .toolbar h1 {
+    margin: 0; font-size: 17px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .mode-tabs { display: flex; background: rgba(0,0,0,0.18); border-radius: 8px; padding: 3px; }
+  .mode-tabs button {
+    background: transparent; color: rgba(255,255,255,0.75); border: none;
+    padding: 6px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
+    border-radius: 6px; transition: all 0.15s;
+  }
+  .mode-tabs button.active { background: #fff; color: #1a6644; }
+  .toolbar .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .toolbar .btns button {
+    background: rgba(255,255,255,0.18); color: #fff;
+    border: 1px solid rgba(255,255,255,0.35);
+    padding: 7px 13px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .toolbar .btns button:hover { background: rgba(255,255,255,0.32); }
+  .toolbar .btns button.save-btn { background: #facc15; color: #422006; border-color: #facc15; }
+  .toolbar .btns button.save-btn:hover { background: #fde047; }
+  .toolbar .btns button.close-btn { background: rgba(220,38,38,0.7); border-color: rgba(255,255,255,0.4); }
+  .toolbar .btns button.close-btn:hover { background: rgba(220,38,38,0.9); }
+
+  .doc-header {
+    background: #fff; padding: 16px 32px;
+    border-bottom: 3px solid #1a6644; flex-shrink: 0;
+  }
+  .doc-header h2 {
+    margin: 0 0 6px; font-size: 22px; font-weight: 800;
+    color: #0a3d22; line-height: 1.25;
+  }
+  .doc-header .meta { font-size: 13px; color: #4a6056; }
+
+  .format-bar {
+    background: #eef5f0; padding: 8px 32px; flex-shrink: 0;
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+    border-bottom: 1px solid #d4e8dc;
+  }
+  .format-bar button {
+    background: #fff; color: #1a6644;
+    border: 1px solid #d4e8dc; padding: 6px 12px;
+    border-radius: 6px; font-size: 12px; font-weight: 700;
+    cursor: pointer;
+  }
+  .format-bar button:hover { background: #d4edd9; }
+  .format-bar .sep { width: 1px; height: 18px; background: #c8e0d4; margin: 0 4px; }
+  .format-bar .hint { font-size: 11px; color: #7a9585; margin-left: auto; }
+
+  .workspace {
+    flex: 1; min-height: 0;
+    overflow-y: auto;
+    background: #fff;
+  }
+
+  #editor {
+    width: 100%;
+    min-height: 100%;
+    padding: 28px 36px 100px;
+    outline: none;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px; line-height: 1.7;
+    color: #1a2a23;
+  }
+  #editor:empty::before {
+    content: 'Tulis notulensi di sini... Pilih teks, klik kanan untuk format.';
+    color: #9fb5a7; font-style: italic;
+  }
+  #editor > :first-child { margin-top: 0; }
+  #editor h1, #editor h2, #editor h3 { line-height: 1.3; }
+  #editor h1 {
+    font-weight: 800; font-size: 1.7em;
+    color: #0a3d22; margin: 22px 0 10px;
+    border-bottom: 2px solid #d4e8dc; padding-bottom: 6px;
+  }
+  #editor h2 {
+    font-weight: 700; font-size: 1.35em;
+    color: #1a6644; margin: 18px 0 8px;
+  }
+  #editor h3 {
+    font-weight: 700; font-size: 1.15em;
+    color: #2d9e6b; margin: 14px 0 6px;
+  }
+  #editor b, #editor strong { font-weight: 800; color: #0a3d22; }
+  #editor i, #editor em { font-style: italic; }
+  #editor u { text-decoration: underline; text-underline-offset: 3px; }
+  #editor mark {
+    background: #fef08a; color: #422006;
+    padding: 0 4px; border-radius: 3px;
+    box-decoration-break: clone; -webkit-box-decoration-break: clone;
+  }
+  #editor a {
+    color: #1a6644; text-decoration: underline;
+  }
+  #editor a:hover { color: #2d9e6b; }
+  #editor p { margin: 6px 0; }
+  #editor div { min-height: 1em; }
+  #editor ul, #editor ol { margin: 8px 0 8px 8px; padding-left: 28px; }
+  #editor ul li, #editor ol li { margin: 4px 0; line-height: 1.7; }
+  #editor ul { list-style-type: disc; }
+  #editor ol { list-style-type: decimal; }
+  #editor ul ul { list-style-type: circle; }
+  #editor ul ul ul { list-style-type: square; }
+  #editor ol ol { list-style-type: lower-alpha; }
+  #editor ol ol ol { list-style-type: lower-roman; }
+
+  /* ─── Context Menu (right-click pop-up) ─── */
+  .ctx-menu {
+    position: fixed; z-index: 1000;
+    background: #fff;
+    border: 1px solid #d4e8dc;
+    border-radius: 10px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+    padding: 6px;
+    min-width: 240px;
+    font-family: inherit;
+    user-select: none;
+    animation: ctxIn 0.12s ease-out;
+  }
+  @keyframes ctxIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+  .ctx-menu button {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; text-align: left;
+    background: none; color: #1a2a23;
+    border: none; padding: 8px 12px;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; border-radius: 6px;
+    transition: background 0.1s;
+  }
+  .ctx-menu button:hover:not(:disabled) { background: #f0f7f3; color: #1a6644; }
+  .ctx-menu button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .ctx-menu button .ic { width: 20px; text-align: center; font-weight: 700; flex-shrink: 0; }
+  .ctx-menu button .label { flex: 1; }
+  .ctx-menu button .shortcut {
+    margin-left: auto; font-size: 11px;
+    color: #9ca3af; font-family: ui-monospace, monospace;
+  }
+  .ctx-menu hr { border: none; border-top: 1px solid #e5e7eb; margin: 4px 6px; }
+  .ctx-menu .group-label {
+    font-size: 10px; color: #7a9585; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    padding: 6px 12px 2px;
+  }
+
+  .status-bar {
+    background: #1a2a23; color: #d4e8dc;
+    padding: 7px 22px; font-size: 12px; flex-shrink: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: ui-monospace, monospace;
+  }
+  #status-text.dirty { color: #fbbf24; }
+  #status-text.saved { color: #4ade80; }
+
+  @media print {
+    .toolbar, .format-bar, .status-bar, .ed-pane { display: none !important; }
+    body { background: #fff; height: auto; overflow: visible; }
+    .workspace { display: block; height: auto; }
+    .pv-pane { display: block !important; padding: 20px; height: auto; overflow: visible; }
+    .doc-header { padding: 0 20px 16px; }
+  }
+  @media (max-width: 800px) {
+    .workspace { flex-direction: column; }
+    .ed-pane, .pv-pane { border-right: none; border-bottom: 1px solid #e5e7eb; padding: 16px; }
+    .doc-header { padding: 12px 18px; }
+    .format-bar { padding: 6px 18px; }
+    .format-bar .hint { display: none; }
+    .toolbar { padding: 10px 14px; }
+    .toolbar h1 { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <h1>📝 Edit ${tabNameEsc}</h1>
+  <div class="btns">
+    <button class="save-btn" onclick="simpanKeForm()">💾 Simpan ke Form</button>
+    <button onclick="window.print()">🖨 Cetak</button>
+    <button class="close-btn" onclick="tutupTab()">✕ Tutup</button>
+  </div>
+</div>
+
+<div class="doc-header">
+  <h2>${judulEsc}</h2>
+  <div class="meta">${metaHtml || '<span style="color:#9fb5a7;font-style:italic;">Tanggal/lokasi belum diisi</span>'}</div>
+</div>
+
+<div class="format-bar">
+  <button onclick="fmt('h1')" title="Judul Besar">H1</button>
+  <button onclick="fmt('h2')" title="Sub Judul">H2</button>
+  <button onclick="fmt('h3')" title="Sub-Sub Judul">H3</button>
+  <button onclick="fmt('p')" title="Teks biasa">¶</button>
+  <span class="sep"></span>
+  <button onclick="fmt('bold')" title="Tebal (Ctrl+B)"><b>B</b></button>
+  <button onclick="fmt('italic')" title="Miring (Ctrl+I)"><i>I</i></button>
+  <button onclick="fmt('underline')" title="Garis Bawah (Ctrl+U)" style="text-decoration:underline;">U</button>
+  <button onclick="fmt('highlight')" title="Highlight (Ctrl+Shift+H)" style="background:#fef08a;color:#422006;">🖍</button>
+  <button onclick="fmt('link')" title="Sisipkan Link (Ctrl+K)">🔗 Link</button>
+  <span class="sep"></span>
+  <button onclick="fmt('ul')" title="Bullet List">• List</button>
+  <button onclick="fmt('ol')" title="Numbered List">1. List</button>
+  <button onclick="fmt('outdent')" title="Kurangi indent">⇤</button>
+  <button onclick="fmt('indent')" title="Tambah indent">⇥</button>
+  <span class="sep"></span>
+  <button onclick="toggleStylePopup(this)" title="Font, Ukuran, Spasi, Align" style="background:#dbeafe;color:#1e3a8a;">Aa Style ▾</button>
+  <button onclick="fmt('clear')" title="Hapus semua format" style="color:#dc2626;">⨯ Format</button>
+  <span class="hint">💡 Klik kanan untuk menu lengkap · Ctrl+S simpan</span>
+</div>
+
+<!-- Style picker popup -->
+<div id="stylePopup" style="display:none;position:fixed;background:#fff;border:1.5px solid #d4e8dc;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.18);padding:12px 14px;min-width:280px;max-width:360px;z-index:1100;">
+  <div style="margin-bottom:10px;">
+    <div style="font-size:11px;font-weight:800;color:#4a6056;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px;">🔤 Font</div>
+    <select id="spFont" style="width:100%;padding:6px 8px;border:1px solid #d4e8dc;border-radius:6px;font-size:12px;background:#f7faf8;">
+      <option value="">Default</option>
+      <option value="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif">Sans-serif</option>
+      <option value="Georgia, 'Times New Roman', Times, serif">Serif</option>
+      <option value="ui-monospace, 'Cascadia Code', 'Consolas', monospace">Monospace</option>
+      <option value="Arial, sans-serif">Arial</option>
+      <option value="Calibri, sans-serif">Calibri</option>
+      <option value="'Times New Roman', serif">Times New Roman</option>
+      <option value="Verdana, sans-serif">Verdana</option>
+      <option value="Tahoma, sans-serif">Tahoma</option>
+      <option value="Georgia, serif">Georgia</option>
+    </select>
+  </div>
+  <div style="margin-bottom:10px;">
+    <div style="font-size:11px;font-weight:800;color:#4a6056;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px;">📏 Ukuran Teks</div>
+    <div id="spSizes" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+  </div>
+  <div style="margin-bottom:10px;">
+    <div style="font-size:11px;font-weight:800;color:#4a6056;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px;">📐 Spasi Baris</div>
+    <div id="spLh" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+  </div>
+  <div style="margin-bottom:10px;">
+    <div style="font-size:11px;font-weight:800;color:#4a6056;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px;">↔ Perataan</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;">
+      <button onclick="fmt('align-left');" class="sp-c-btn">⬅ Kiri</button>
+      <button onclick="fmt('align-center');" class="sp-c-btn">↔ Tengah</button>
+      <button onclick="fmt('align-right');" class="sp-c-btn">➡ Kanan</button>
+      <button onclick="fmt('align-justify');" class="sp-c-btn">≡ Justify</button>
+    </div>
+  </div>
+  <div style="border-top:1px dashed #d4e8dc;padding-top:8px;">
+    <button onclick="resetStyles()" style="width:100%;background:#fff0f0;color:#b91c1c;border:1px solid #fca5a5;padding:6px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">↺ Reset ke Default</button>
+  </div>
+</div>
+<style>
+  .sp-c-btn { background:#fff;color:#1a6644;border:1px solid #d4e8dc;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer; }
+  .sp-c-btn:hover { background:#f0f7f3;border-color:#1a6644; }
+  .sp-c-btn.active { background:#1a6644;color:#fff;border-color:#1a6644; }
+</style>
+
+<div class="workspace" id="ws">
+  <div id="editor" contenteditable="true" spellcheck="true"></div>
+</div>
+
+<!-- Context menu (right-click) — Notion-style -->
+<div class="ctx-menu" id="ctxMenu" style="display:none;">
+  <div class="group-label">Gaya Teks</div>
+  <button data-act="h1"><span class="ic">H1</span><span class="label">Judul Besar</span></button>
+  <button data-act="h2"><span class="ic">H2</span><span class="label">Sub Judul</span></button>
+  <button data-act="h3"><span class="ic">H3</span><span class="label">Sub-Sub Judul</span></button>
+  <hr>
+  <div class="group-label">Format Inline</div>
+  <button data-act="bold"><span class="ic"><b>B</b></span><span class="label">Tebal</span><span class="shortcut">Ctrl+B</span></button>
+  <button data-act="italic"><span class="ic"><i>I</i></span><span class="label">Miring</span><span class="shortcut">Ctrl+I</span></button>
+  <button data-act="underline"><span class="ic" style="text-decoration:underline;">U</span><span class="label">Garis Bawah</span><span class="shortcut">Ctrl+U</span></button>
+  <button data-act="highlight"><span class="ic">🖍</span><span class="label">Highlight Kuning</span><span class="shortcut">Ctrl+Shift+H</span></button>
+  <button data-act="link"><span class="ic">🔗</span><span class="label">Sisipkan Link</span><span class="shortcut">Ctrl+K</span></button>
+  <hr>
+  <div class="group-label">Edit</div>
+  <button data-act="cut"><span class="ic">✂</span><span class="label">Potong</span><span class="shortcut">Ctrl+X</span></button>
+  <button data-act="copy"><span class="ic">📋</span><span class="label">Salin</span><span class="shortcut">Ctrl+C</span></button>
+  <button data-act="paste"><span class="ic">📥</span><span class="label">Tempel</span><span class="shortcut">Ctrl+V</span></button>
+  <button data-act="delete"><span class="ic">🗑</span><span class="label">Hapus Pilihan</span><span class="shortcut">Del</span></button>
+  <hr>
+  <button data-act="selectall"><span class="ic">⬚</span><span class="label">Pilih Semua</span><span class="shortcut">Ctrl+A</span></button>
+</div>
+
+<div class="status-bar">
+  <span id="status-text" class="saved">Sudah sinkron</span>
+  <span id="char-count">0 karakter</span>
+</div>
+
+<script id="initData" type="application/json">${initJson}<\/script>
+<script>
+(function(){
+  var data = JSON.parse(document.getElementById('initData').textContent);
+  var editor   = document.getElementById('editor');
+  var statusEl = document.getElementById('status-text');
+  var countEl  = document.getElementById('char-count');
+  var saveBtn  = document.querySelector('.save-btn');
+  var ctxMenu  = document.getElementById('ctxMenu');
+
+  // Inject HTML awal (sudah dinormalisasi dari markdown di parent)
+  editor.innerHTML = data.html || '<p><br></p>';
+  var lastSavedHtml = editor.innerHTML;
+
+  // ─── HTML → Markdown converter (untuk simpan ke parent textarea) ───
+  function htmlToMd(node) {
+    var out = '';
+    for (var i = 0; i < node.childNodes.length; i++) {
+      var c = node.childNodes[i];
+      if (c.nodeType === 3) { // text
+        out += c.textContent;
+      } else if (c.nodeType === 1) { // element
+        var tag = c.tagName.toLowerCase();
+        var cls = c.className || '';
+        var inner = htmlToMd(c);
+        if (tag === 'h1' || cls.indexOf('desc-h1') >= 0)
+          out += '\\n# ' + inner.replace(/^\\s+|\\s+$/g,'') + '\\n';
+        else if (tag === 'h2' || cls.indexOf('desc-h2') >= 0)
+          out += '\\n## ' + inner.replace(/^\\s+|\\s+$/g,'') + '\\n';
+        else if (tag === 'h3' || cls.indexOf('desc-h3') >= 0)
+          out += '\\n### ' + inner.replace(/^\\s+|\\s+$/g,'') + '\\n';
+        else if (tag === 'b' || tag === 'strong' || cls.indexOf('desc-bold') >= 0)
+          out += inner ? '**' + inner + '**' : '';
+        else if (tag === 'i' || tag === 'em' || cls.indexOf('desc-italic') >= 0)
+          out += inner ? '*' + inner + '*' : '';
+        else if (tag === 'u' || cls.indexOf('desc-underline') >= 0)
+          out += inner ? '__' + inner + '__' : '';
+        else if (tag === 'mark' || cls.indexOf('desc-highlight') >= 0)
+          out += inner ? '==' + inner + '==' : '';
+        else if (tag === 'a') {
+          var href = c.getAttribute('href') || '';
+          out += '[' + inner + '](' + href + ')';
+        }
+        else if (tag === 'br') out += '\\n';
+        else if (tag === 'div' || tag === 'p') {
+          if (!out.endsWith('\\n') && out.length > 0) out += '\\n';
+          out += inner;
+          if (!inner.endsWith('\\n')) out += '\\n';
+        }
+        else out += inner;
+      }
+    }
+    return out;
+  }
+  function cleanMd(md) {
+    return md
+      .replace(/\\n{3,}/g, '\\n\\n')
+      .replace(/[ \\t]+\\n/g, '\\n')
+      .replace(/^\\s+|\\s+$/g, '');
+  }
+  function getMarkdown() { return cleanMd(htmlToMd(editor)); }
+
+  // ─── Status / counter ───
+  function updateStatus() {
+    var text = editor.innerText || '';
+    countEl.textContent = text.length + ' karakter';
+    if (editor.innerHTML === lastSavedHtml) {
+      statusEl.textContent = '✓ Sinkron dengan form';
+      statusEl.className = 'saved';
+    } else {
+      statusEl.textContent = '● Belum disimpan ke form (Ctrl+S)';
+      statusEl.className = 'dirty';
+    }
+  }
+  editor.addEventListener('input', updateStatus);
+  updateStatus();
+
+  // ─── Toggle <mark> highlight (no execCommand for this) ───
+  function toggleHighlight() {
+    var sel = window.getSelection();
+    if (!sel.rangeCount) return;
+    var range = sel.getRangeAt(0);
+    if (sel.isCollapsed) return;
+    // Cek kalau sudah di dalam <mark> → unwrap
+    var p = sel.anchorNode;
+    while (p && p !== editor) {
+      if (p.nodeType === 1 && p.tagName === 'MARK') {
+        var parent = p.parentNode;
+        while (p.firstChild) parent.insertBefore(p.firstChild, p);
+        parent.removeChild(p);
+        return;
+      }
+      p = p.parentNode;
+    }
+    // Wrap baru
+    var m = document.createElement('mark');
+    try { range.surroundContents(m); }
+    catch(e) {
+      m.appendChild(range.extractContents());
+      range.insertNode(m);
+    }
+    sel.removeAllRanges();
+  }
+
+  // ─── Toolbar / context menu action handler ───
+  window.fmt = function(act, val) {
+    editor.focus();
+    try {
+      switch(act) {
+        case 'h1': document.execCommand('formatBlock', false, 'h1'); break;
+        case 'h2': document.execCommand('formatBlock', false, 'h2'); break;
+        case 'h3': document.execCommand('formatBlock', false, 'h3'); break;
+        case 'p':  document.execCommand('formatBlock', false, 'p'); break;
+        case 'bold': document.execCommand('bold'); break;
+        case 'italic': document.execCommand('italic'); break;
+        case 'underline': document.execCommand('underline'); break;
+        case 'highlight': toggleHighlight(); break;
+        case 'ul': document.execCommand('insertUnorderedList'); break;
+        case 'ol': document.execCommand('insertOrderedList'); break;
+        case 'indent': document.execCommand('indent'); break;
+        case 'outdent': document.execCommand('outdent'); break;
+        case 'align-left': document.execCommand('justifyLeft'); break;
+        case 'align-center': document.execCommand('justifyCenter'); break;
+        case 'align-right': document.execCommand('justifyRight'); break;
+        case 'align-justify': document.execCommand('justifyFull'); break;
+        case 'fontFamily': editor.style.fontFamily = val || ''; localStorage.setItem('tabFont', val||''); break;
+        case 'fontSize': editor.style.fontSize = val || ''; localStorage.setItem('tabSize', val||''); break;
+        case 'lineHeight': editor.style.lineHeight = val || ''; localStorage.setItem('tabLh', val||''); break;
+        case 'link': {
+          var url = prompt('Tempelkan URL:');
+          if (!url) break;
+          if (!/^https?:\\/\\//i.test(url)) url = 'https://' + url;
+          document.execCommand('createLink', false, url);
+          break;
+        }
+        case 'clear': document.execCommand('removeFormat'); break;
+        case 'cut': document.execCommand('cut'); break;
+        case 'copy': document.execCommand('copy'); break;
+        case 'paste': document.execCommand('paste'); break;
+        case 'delete': document.execCommand('delete'); break;
+        case 'selectall': document.execCommand('selectAll'); break;
+      }
+    } catch(e) { console.error('fmt error:', e); }
+    updateStatus();
+  };
+
+  // ─── Style popup (Font / Size / Line Spacing / Align) ───
+  var sp = document.getElementById('stylePopup');
+  var SIZES = ['12px','13px','14px','15px','16px','17px','18px','20px','22px','24px'];
+  var LHS   = ['1.0','1.15','1.5','1.7','2.0','2.5','3.0'];
+  function buildChips(container, vals, act) {
+    container.innerHTML = vals.map(function(v){
+      return '<button class="sp-c-btn" data-v="' + v + '">' + v + '</button>';
+    }).join('');
+    container.querySelectorAll('button').forEach(function(b){
+      b.onclick = function(e) {
+        e.stopPropagation();
+        window.fmt(act, b.dataset.v);
+        container.querySelectorAll('button').forEach(function(x){x.classList.remove('active');});
+        b.classList.add('active');
+      };
+    });
+  }
+  buildChips(document.getElementById('spSizes'), SIZES, 'fontSize');
+  buildChips(document.getElementById('spLh'), LHS, 'lineHeight');
+  document.getElementById('spFont').onchange = function() { window.fmt('fontFamily', this.value); };
+
+  window.toggleStylePopup = function(btn) {
+    if (sp.style.display === 'block') { sp.style.display = 'none'; return; }
+    var r = btn.getBoundingClientRect();
+    sp.style.left = Math.min(r.left, window.innerWidth - 380) + 'px';
+    sp.style.top  = (r.bottom + 6) + 'px';
+    sp.style.display = 'block';
+  };
+  window.resetStyles = function() {
+    editor.style.fontFamily = ''; editor.style.fontSize = ''; editor.style.lineHeight = '';
+    localStorage.removeItem('tabFont'); localStorage.removeItem('tabSize'); localStorage.removeItem('tabLh');
+    sp.style.display = 'none';
+  };
+  // Tutup popup saat klik di luar
+  document.addEventListener('click', function(e) {
+    if (sp.style.display === 'block' && !sp.contains(e.target) && !e.target.closest('button[onclick*="toggleStylePopup"]')) {
+      sp.style.display = 'none';
+    }
+  });
+  // Restore styles dari localStorage
+  try {
+    var savedFont = localStorage.getItem('tabFont');
+    var savedSize = localStorage.getItem('tabSize');
+    var savedLh   = localStorage.getItem('tabLh');
+    if (savedFont) editor.style.fontFamily = savedFont;
+    if (savedSize) editor.style.fontSize = savedSize;
+    if (savedLh)   editor.style.lineHeight = savedLh;
+  } catch(_){}
+
+  // ─── Simpan ke form utama ───
+  window.simpanKeForm = function() {
+    if (!window.opener || window.opener.closed) {
+      alert('❌ Tab utama sudah ditutup. Tidak bisa sinkron — perubahan akan hilang saat tutup.');
+      return;
+    }
+    var targetId = data.targetId || 'mswHasil';
+    var ta = window.opener.document.getElementById(targetId);
+    if (!ta) {
+      alert('❌ Form tidak ditemukan di tab utama. Mungkin Anda sudah pindah halaman.');
+      return;
+    }
+    var md = getMarkdown();
+    // Editor di tab utama bisa contenteditable div atau textarea legacy
+    if (ta.tagName === 'TEXTAREA') {
+      ta.value = md;
+      if (window.opener.refreshDescPreview) {
+        try { window.opener.refreshDescPreview(targetId); } catch(e) {}
+      }
+    } else {
+      ta.innerHTML = window.opener.markdownToEditableHtml(md);
+    }
+    lastSavedHtml = editor.innerHTML;
+    updateStatus();
+    if (saveBtn) {
+      var orig = saveBtn.innerHTML;
+      saveBtn.innerHTML = '✅ Tersimpan!';
+      setTimeout(function(){ saveBtn.innerHTML = orig; }, 1800);
+    }
+  };
+
+  window.tutupTab = function() {
+    if (editor.innerHTML !== lastSavedHtml) {
+      if (!confirm('Ada perubahan yang belum disimpan ke form utama.\\n\\nTutup tab tetap?')) return;
+    }
+    window.close();
+  };
+
+  // ─── Context menu (right-click) ───
+  editor.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    var sel = window.getSelection();
+    var hasSelection = sel.rangeCount > 0 && !sel.isCollapsed;
+    ctxMenu.querySelectorAll('button').forEach(function(b) {
+      var a = b.dataset.act;
+      var needSel = ['bold','italic','underline','highlight','cut','copy','delete'].indexOf(a) >= 0;
+      b.disabled = needSel && !hasSelection;
+    });
+    ctxMenu.style.display = 'block';
+    var mw = ctxMenu.offsetWidth, mh = ctxMenu.offsetHeight;
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var x = e.clientX, y = e.clientY;
+    if (x + mw > vw - 8) x = vw - mw - 8;
+    if (y + mh > vh - 8) y = vh - mh - 8;
+    ctxMenu.style.left = x + 'px';
+    ctxMenu.style.top  = y + 'px';
+  });
+  document.addEventListener('click', function(e) {
+    if (!ctxMenu.contains(e.target)) ctxMenu.style.display = 'none';
+  });
+  document.addEventListener('scroll', function() { ctxMenu.style.display = 'none'; }, true);
+  window.addEventListener('blur', function() { ctxMenu.style.display = 'none'; });
+
+  ctxMenu.querySelectorAll('button').forEach(function(b) {
+    b.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (b.disabled) return;
+      window.fmt(b.dataset.act);
+      ctxMenu.style.display = 'none';
+    });
+  });
+
+  // ─── Shortcut keyboard ───
+  document.addEventListener('keydown', function(e) {
+    var ctrl = e.ctrlKey || e.metaKey;
+    if (!ctrl) return;
+    var k = (e.key || '').toLowerCase();
+    if (k === 's')      { e.preventDefault(); window.simpanKeForm(); }
+    else if (e.shiftKey && k === 'h') { e.preventDefault(); window.fmt('highlight'); }
+    // Ctrl+B/I/U/K akan di-handle native execCommand otomatis di contenteditable
+    else if (k === 'k') { e.preventDefault(); window.fmt('link'); }
+  });
+
+  // ─── Warning kalau tutup tab tanpa simpan ───
+  window.addEventListener('beforeunload', function(e) {
+    if (editor.innerHTML !== lastSavedHtml) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  editor.focus();
+})();
+<\/script>
+</body>
+</html>`;
+
+  // Buka tab kosong dulu, baru tulis isinya — lebih reliable daripada Blob URL
+  const win = window.open('', '_blank');
+  if (!win) {
+    alert('Browser memblokir tab baru. Izinkan pop-up untuk halaman ini lalu coba lagi.');
+    return;
+  }
+  try {
+    win.document.open();
+    win.document.write(fullHtml);
+    win.document.close();
+    win.document.title = judulEsc + ' — Edit Notulensi';
+  } catch (e) {
+    const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    win.location.href = url;
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
 }
 
 // ─── Simpan musyawarah (create / update) ───
@@ -10349,7 +12875,7 @@ async function simpanMsw() {
     tanggal,
     jam: $('mswJam')?.value || null,
     tempat: $('mswTempat')?.value?.trim() || null,
-    hasil: $('mswHasil')?.value?.trim() || null,
+    hasil: (function(){ var el = $('mswHasil'); return el ? (window.htmlElementToMarkdown(el).trim() || null) : null; })(),
     divisis: selectedDivisi,
     updated_at: new Date().toISOString(),
     dibuat_oleh: currentProf?.id || null,
@@ -10365,6 +12891,9 @@ async function simpanMsw() {
     if (error) { setMsg('mswInfoMsg', 'Gagal: ' + error.message, true); return; }
     setMsg('mswInfoMsg', '✅ Perubahan tersimpan');
     _auditLog && _auditLog('musyawarah', 'UPDATE', {id: currentMswId}, payload);
+    // Reset baseline auto-save supaya tidak double-save
+    var mswHasilEl0 = $('mswHasil');
+    if (mswHasilEl0 && mswHasilEl0._resetAutoSaveBaseline) mswHasilEl0._resetAutoSaveBaseline();
     // Reload detail
     bukaMswDetail(currentMswId);
   } else {
@@ -13347,8 +15876,34 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     var p = id ? (loadProjects().find(function(x){ return x.id === id; }) || {}) : {};
     $id('prjEditId').value          = id || '';
     $id('prjNama').value            = p.nama || '';
-    $id('prjDeskripsi').value       = p.deskripsi || '';
-    if(window.refreshDescPreview) refreshDescPreview('prjDeskripsi');
+    var prjDescEl = $id('prjDeskripsi');
+    if (prjDescEl) {
+      prjDescEl.innerHTML = window.markdownToEditableHtml(p.deskripsi || '');
+      if (window.attachWysiwyg) window.attachWysiwyg(prjDescEl);
+      var prjAiPanel = document.getElementById('prjActionItems');
+      function refreshPrjAI() { window.updateActionItemsPanel(prjDescEl, prjAiPanel); }
+      prjDescEl.addEventListener('input', refreshPrjAI);
+      refreshPrjAI();
+      setTimeout(function(){ window.renderAllPollResults(prjDescEl); }, 80);
+      // AUTO-SAVE (hanya kalau project sudah punya ID — saat edit project existing)
+      if (id) {
+        window.attachAutoSave(prjDescEl, {
+          statusEl: document.getElementById('prjAutoSaveStatus'),
+          saveFn: async function(md) {
+            var arr = loadProjects();
+            var i = arr.findIndex(function(x){ return x.id === id; });
+            if (i >= 0) {
+              arr[i].deskripsi = md;
+              arr[i].updated_at = new Date().toISOString();
+              saveProjects(arr);
+            }
+          }
+        });
+      } else {
+        var statusEl3 = document.getElementById('prjAutoSaveStatus');
+        if (statusEl3) { statusEl3.textContent = '💡 Simpan dulu untuk aktifkan auto-save'; statusEl3.className = 'autosave-status'; }
+      }
+    }
     $id('prjTanggalMulai').value    = p.tanggal_mulai || '';
     $id('prjTanggalSelesai').value  = p.tanggal_selesai || '';
     $id('prjStatus').value          = p.status || 'not_started';
@@ -13419,7 +15974,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       var idx=projects.findIndex(function(p){return p.id===id;});
       if(idx>=0){
         projects[idx]=Object.assign(projects[idx],{
-          nama:nama, deskripsi:$id('prjDeskripsi').value.trim(),
+          nama:nama, deskripsi:(function(){ var el = $id('prjDeskripsi'); return el ? window.htmlElementToMarkdown(el).trim() : ''; })(),
           tanggal_mulai:$id('prjTanggalMulai').value,
           tanggal_selesai:$id('prjTanggalSelesai').value,
           status:$id('prjStatus').value,
@@ -13431,7 +15986,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       }
     } else {
       projects.push({
-        id:uuid(), nama:nama, deskripsi:$id('prjDeskripsi').value.trim(),
+        id:uuid(), nama:nama, deskripsi:(function(){ var el = $id('prjDeskripsi'); return el ? window.htmlElementToMarkdown(el).trim() : ''; })(),
         tanggal_mulai:$id('prjTanggalMulai').value,
         tanggal_selesai:$id('prjTanggalSelesai').value,
         status:$id('prjStatus').value,
@@ -13442,6 +15997,8 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       });
     }
     saveProjects(projects);
+    var prjDescEl0 = $id('prjDeskripsi');
+    if (prjDescEl0 && prjDescEl0._resetAutoSaveBaseline) prjDescEl0._resetAutoSaveBaseline();
     showToast(id?'✅ Project diperbarui!':'🎉 Project baru ditambahkan!','success');
     prjBackToList();
   };
