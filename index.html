@@ -1952,7 +1952,17 @@
           </div>
         </div>
         <label>Kategori / Status Siswa</label>
-        <select id="agKategori"></select>
+        <select id="agKategori" onchange="toggleSekolahFields('agKategori','agSekolahBox')"></select>
+        <div id="agSekolahBox" style="display:none;margin:-4px 0 14px;padding:12px;background:#f0f7f3;border-radius:10px;border:1.5px solid #d4e8dc;">
+          <label style="font-size:12px;">Jenjang Sekolah</label>
+          <select id="agJenjang">
+            <option value="SD">SD</option>
+            <option value="SMP">SMP</option>
+            <option value="SMA/SMK">SMA/SMK</option>
+          </select>
+          <label style="font-size:12px;">Nama Sekolah</label>
+          <input type="text" id="agNamaSekolah" placeholder="Cth: SDN 01 Menteng">
+        </div>
         <div class="row">
           <div>
             <label>Tempat Lahir</label>
@@ -2044,8 +2054,44 @@
 
       <!-- ═══ STATISTIK ANGGOTA ═══ -->
       <div class="card" id="anggotaStatCard" style="display:none;">
-        <h2>📊 Statistik Anggota</h2>
-        <div id="anggotaStatBody"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+          <h2 style="margin-bottom:0;">📊 Statistik Anggota</h2>
+          <button id="anggotaStatToggleBtn" class="small secondary" onclick="toggleAnggotaStat()" style="width:auto;padding:8px 12px;font-size:12px;">
+            👁️ Tampilkan
+          </button>
+        </div>
+        <p id="anggotaStatHiddenHint" class="muted" style="font-size:12px;padding:14px;text-align:center;background:#f7faf8;border-radius:8px;">
+          📋 Statistik disembunyikan. Klik tombol <b>👁️ Tampilkan</b> di atas untuk melihat.
+        </p>
+        <div id="anggotaStatWrap" style="display:none;">
+          <div id="anggotaStatBody"></div>
+
+          <!-- ═══ SUB: USIA NIKAH ═══ -->
+          <div style="margin-top:18px;padding-top:16px;border-top:1px dashed #d8e6dd;">
+            <h3 style="font-size:14px;margin-bottom:8px;">💍 Usia Siap Nikah</h3>
+            <p class="muted" style="font-size:12px;margin-bottom:10px;">
+              Atur batas usia minimal. Anggota dengan usia (dihitung dari tanggal lahir) sama atau
+              di atas batas ini otomatis masuk daftar "siap nikah".
+            </p>
+            <div class="row" style="align-items:flex-end;gap:8px;">
+              <div style="flex:1;min-width:120px;">
+                <label style="font-size:12px;">Batas Usia Nikah (tahun)</label>
+                <input type="number" id="usiaNikahInput" min="1" max="100" value="25">
+              </div>
+              <button class="small secondary" onclick="saveUsiaNikahThreshold()" style="width:auto;padding:10px 16px;font-size:12px;">💾 Simpan</button>
+            </div>
+            <div id="usiaNikahMsg" style="font-size:12px;margin-top:4px;"></div>
+
+            <div id="usiaNikahSummary" style="margin:12px 0 8px;"></div>
+
+            <button id="usiaNikahToggleBtn" class="small secondary" onclick="toggleUsiaNikahList()" style="width:auto;padding:8px 12px;font-size:12px;">
+              👁️ Tampilkan Daftar
+            </button>
+            <div id="usiaNikahListWrap" style="display:none;margin-top:10px;">
+              <div id="usiaNikahList"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -3194,7 +3240,17 @@
         </div>
       </div>
       <label>Kategori / Status Siswa</label>
-      <select id="edKategori"></select>
+      <select id="edKategori" onchange="toggleSekolahFields('edKategori','edSekolahBox')"></select>
+      <div id="edSekolahBox" style="display:none;margin:-4px 0 14px;padding:12px;background:#f0f7f3;border-radius:10px;border:1.5px solid #d4e8dc;">
+        <label style="font-size:12px;">Jenjang Sekolah</label>
+        <select id="edJenjang">
+          <option value="SD">SD</option>
+          <option value="SMP">SMP</option>
+          <option value="SMA/SMK">SMA/SMK</option>
+        </select>
+        <label style="font-size:12px;">Nama Sekolah</label>
+        <input type="text" id="edNamaSekolah" placeholder="Cth: SDN 01 Menteng">
+      </div>
       <div class="row">
         <div>
           <label>Tempat Lahir</label>
@@ -5795,21 +5851,58 @@ async function simpanCatatan() {
 
 async function hapusCatatan() {
   if (!currentCatatanId) return;
-  if (!confirm('Hapus catatan ini secara permanen?')) return;
-  try {
-    if (typeof currentCatatanId === 'string' && currentCatatanId.startsWith('l')) {
-      // localStorage
-      const arr = _loadCatatanLocal().filter(x => x.id !== currentCatatanId);
-      _saveCatatanLocal(arr);
-    } else {
-      await db.from('catatan').delete().eq('id', currentCatatanId);
-    }
-    setMsg('catMsg', '✅ Catatan dihapus', false);
-    await loadCatatan();
-    setTimeout(tutupFormCatatan, 600);
-  } catch (e) {
-    setMsg('catMsg', 'Gagal hapus: ' + e.message, true);
+  const judulCatatan = ($('catJudul') && $('catJudul').value) || 'Catatan ini';
+
+  const idToDelete = currentCatatanId;
+  const isLocal = typeof idToDelete === 'string' && idToDelete.startsWith('l');
+
+  // Simpan data lengkap untuk undo sebelum apapun diubah
+  let savedRow = null;
+  if (!isLocal) {
+    const { data } = await db.from('catatan').select('*').eq('id', idToDelete).single();
+    savedRow = data;
+  } else {
+    savedRow = (_loadCatatanLocal() || []).find(x => x.id === idToDelete) || null;
   }
+
+  // Optimistik: hapus dari cache lokal & tutup form TANPA reload dari DB
+  // (kalau reload dari DB, item muncul lagi karena belum benar-benar dihapus)
+  catatanCache = (catatanCache || []).filter(x => x.id !== idToDelete);
+  tutupFormCatatan();   // sembunyikan form, kembali ke list
+  renderCatatanList();  // render dari cache yang sudah dikurangi — item langsung hilang
+
+  showUndoToast(
+    judulCatatan,
+    async function() {
+      // ── UNDO: kembalikan ke cache & tampilan ──
+      if (savedRow) {
+        catatanCache = [savedRow, ...(catatanCache || [])];
+        if (isLocal) {
+          const arr = _loadCatatanLocal() || [];
+          arr.unshift(savedRow);
+          _saveCatatanLocal(arr);
+        }
+        renderCatatanList();
+      }
+      showToast('↩ Catatan dipulihkan', 'success');
+    },
+    async function() {
+      // ── KONFIRMASI: hapus dari DB — patch recycle_bin otomatis snapshot ──
+      try {
+        if (isLocal) {
+          const arr = (_loadCatatanLocal() || []).filter(x => x.id !== idToDelete);
+          _saveCatatanLocal(arr);
+        } else {
+          await db.from('catatan').delete().eq('id', idToDelete);
+        }
+      } catch(e) {
+        showToast('Gagal hapus: ' + e.message, 'error');
+        // Rollback cache kalau gagal
+        if (savedRow) { catatanCache = [savedRow, ...(catatanCache || [])]; renderCatatanList(); }
+      }
+    },
+    '📝'
+  );
 }
 
 // ─────────────── DASHBOARD ───────────────
@@ -6025,6 +6118,40 @@ function updateUmurPreview() {
   if ($('edUmurPreview')) $('edUmurPreview').textContent = u !== null ? '🎂 Umur saat ini: ' + u + ' tahun' : '';
 }
 
+// ─── Kategori "Sekolah" — deteksi & toggle field Jenjang/Nama Sekolah ───
+function isKategoriSekolah(katId) {
+  if (!katId) return false;
+  const k = (kategoriCache || []).find(x => String(x.id) === String(katId));
+  return !!(k && String(k.nama || '').trim().toLowerCase() === 'sekolah');
+}
+
+function toggleSekolahFields(selectId, boxId) {
+  const sel = $(selectId);
+  const box = $(boxId);
+  if (!sel || !box) return;
+  box.style.display = isKategoriSekolah(sel.value) ? 'block' : 'none';
+}
+
+// ─── Notice sekali kalau kolom jenjang_sekolah/nama_sekolah belum ada di Supabase ───
+var _sekolahSqlShown = false;
+function showSekolahSqlNotice() {
+  if (_sekolahSqlShown) return;
+  _sekolahSqlShown = true;
+  alert(
+    '⚠️ Fitur "Jenjang & Nama Sekolah" butuh 2 kolom baru di tabel "anggota".\n\n' +
+    'Jalankan SQL ini di Supabase → SQL Editor (sekali aja):\n\n' +
+    'ALTER TABLE anggota ADD COLUMN IF NOT EXISTS jenjang_sekolah TEXT;\n' +
+    'ALTER TABLE anggota ADD COLUMN IF NOT EXISTS nama_sekolah TEXT;\n\n' +
+    'Setelah itu reload halaman & coba simpan lagi.\n' +
+    '(Data lain tetap tersimpan untuk sekarang.)'
+  );
+}
+function _isMissingColErr(error) {
+  if (!error) return false;
+  const msg = String(error.message || '').toLowerCase();
+  return error.code === '42703' || (msg.includes('column') && msg.includes('does not exist')) || msg.includes('could not find');
+}
+
 async function addAnggota() {
   const btn = document.querySelector('#sec-anggota .card button[onclick="addAnggota()"]');
   if (!_lockBtn('addAnggota', btn)) return;
@@ -6033,23 +6160,36 @@ async function addAnggota() {
     if (!nama) { setMsg('agMsg', 'Nama wajib diisi', true); return; }
     const agJK = document.querySelector('input[name="agJK"]:checked');
     const agPeranChecked = [...document.querySelectorAll('input[name="agPeran"]:checked')].map(c => c.value);
-    const { error } = await db.from('anggota').insert({
+    const katId = $('agKategori').value;
+    const isSekolah = isKategoriSekolah(katId);
+    const payload = {
       nama,
       kontak:  $('agKontak').value.trim() || null,
       alamat:  $('agAlamat').value.trim() || null,
       status:  $('agStatus').value,
       catatan: $('agCatatan').value.trim() || null,
-      kategori_id: $('agKategori').value ? parseInt($('agKategori').value) : null,
+      kategori_id: katId ? parseInt(katId) : null,
       jenis_kelamin: agJK ? agJK.value : null,
       peran: agPeranChecked.length ? JSON.stringify(agPeranChecked) : null,
       tempat_lahir: $('agTempatLahir').value.trim() || null,
       tanggal_lahir: $('agTglLahir').value || null,
+      jenjang_sekolah: isSekolah ? (($('agJenjang') && $('agJenjang').value) || null) : null,
+      nama_sekolah: isSekolah ? (($('agNamaSekolah') && $('agNamaSekolah').value.trim()) || null) : null,
       dicatat_oleh: currentProf.id,
-    });
+    };
+    let { error } = await db.from('anggota').insert(payload);
+    if (error && _isMissingColErr(error)) {
+      showSekolahSqlNotice();
+      delete payload.jenjang_sekolah; delete payload.nama_sekolah;
+      ({ error } = await db.from('anggota').insert(payload));
+    }
     if (error) { setMsg('agMsg', 'Gagal: ' + error.message, true); return; }
     setMsg('agMsg', '✅ Anggota tersimpan');
     $('agNama').value = ''; $('agKontak').value = ''; $('agAlamat').value = ''; $('agCatatan').value = '';
     $('agTempatLahir').value = ''; $('agTglLahir').value = '';
+    if ($('agNamaSekolah')) $('agNamaSekolah').value = '';
+    if ($('agJenjang')) $('agJenjang').selectedIndex = 0;
+    if ($('agSekolahBox')) $('agSekolahBox').style.display = 'none';
     document.querySelectorAll('input[name="agJK"]').forEach(r => r.checked = false);
     document.querySelectorAll('input[name="agPeran"]').forEach(c => c.checked = false);
     loadAnggota();
@@ -6152,6 +6292,35 @@ function filterListAnggota() {
   renderListAnggotaFiltered();
 }
 
+// Toggle Tampilkan/Sembunyikan statistik anggota — default tersembunyi
+function toggleAnggotaStat() {
+  const wrap = $('anggotaStatWrap');
+  const hint = $('anggotaStatHiddenHint');
+  const btn  = $('anggotaStatToggleBtn');
+  if (!wrap || !btn) return;
+  const isShown = wrap.style.display !== 'none';
+  if (isShown) {
+    wrap.style.display = 'none';
+    if (hint) hint.style.display = 'block';
+    btn.innerHTML = '👁️ Tampilkan';
+  } else {
+    wrap.style.display = 'block';
+    if (hint) hint.style.display = 'none';
+    btn.innerHTML = '🙈 Sembunyikan';
+  }
+}
+
+// Toggle generik buat detail/breakdown di dalam Statistik Anggota (kategori, jenjang sekolah, dst)
+// Default semua tersembunyi — baru muncul saat di-tap.
+function toggleStatDetail(id) {
+  const el = document.getElementById(id);
+  const arrow = document.getElementById(id + '_arrow');
+  if (!el) return;
+  const isShown = el.style.display !== 'none';
+  el.style.display = isShown ? 'none' : 'block';
+  if (arrow) arrow.textContent = isShown ? '▸' : '▾';
+}
+
 // ─────────── STATISTIK ANGGOTA ───────────
 function renderAnggotaStat() {
   const card = $('anggotaStatCard');
@@ -6169,84 +6338,303 @@ function renderAnggotaStat() {
   const getPeran = (a) => { try { return JSON.parse(a.peran||'[]'); } catch(e){ return a.peran?[a.peran]:[]; } };
   const countPeran = (arr, val) => arr.filter(a => getPeran(a).includes(val)).length;
 
-  // Helper row & divider
-  const statRow = (icon, label, val, color, indent) =>
-    `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;background:${indent?'#f7faf8':'#f0f7f3'};border-radius:8px;margin-bottom:5px;${indent?'margin-left:10px;':''}">
+  const memberLine = (a) => {
+    const jkIcon = a.jenis_kelamin === 'laki-laki' ? '♂' : a.jenis_kelamin === 'perempuan' ? '♀' : '•';
+    const statusTxt = a.status !== 'aktif' ? ' <span style="color:#dc2626;">(Tidak Aktif)</span>' : '';
+    return `<div style="font-size:12px;color:#33493d;padding:4px 0 4px 8px;border-bottom:1px solid rgba(0,0,0,0.05);">${jkIcon} ${escapeHtml(a.nama)}${statusTxt}</div>`;
+  };
+
+  let _statDetailIdx = 0;
+
+  // Helper row & divider — kalau `members` dikasih, baris jadi bisa di-tap buat lihat nama (kayak Jumlah per Kategori)
+  const statRow = (icon, label, val, color, indent, members) => {
+    if (members && members.length) {
+      const rowDetailId = 'statRowDetail_' + (_statDetailIdx++);
+      return `<div style="background:${indent?'#f7faf8':'#f0f7f3'};border-radius:8px;margin-bottom:5px;${indent?'margin-left:10px;':''}">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;cursor:pointer;" onclick="toggleStatDetail('${rowDetailId}')">
+          <span style="font-size:13px;${indent?'color:#4a6056;':''}"><span id="${rowDetailId}_arrow" style="display:inline-block;width:12px;">▸</span> ${icon} ${label}</span>
+          <span style="font-weight:800;font-size:14px;color:${color||'#1a6644'};">${val}</span>
+        </div>
+        <div id="${rowDetailId}" style="display:none;padding:0 12px 6px;">
+          ${members.map(memberLine).join('')}
+        </div>
+      </div>`;
+    }
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;background:${indent?'#f7faf8':'#f0f7f3'};border-radius:8px;margin-bottom:5px;${indent?'margin-left:10px;':''}">
       <span style="font-size:13px;${indent?'color:#4a6056;':''}">${icon} ${label}</span>
       <span style="font-weight:800;font-size:14px;color:${color||'#1a6644'};">${val}</span>
     </div>`;
+  };
 
   const divider = (label, color) =>
     `<div style="font-size:10px;font-weight:800;color:${color||'#7a9585'};text-transform:uppercase;letter-spacing:.6px;margin:14px 0 6px;">${label}</div>`;
 
-  const sectionHeader = (label, jumlah, color, bg) =>
-    `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:${bg};border-radius:8px;margin-bottom:6px;">
-      <span style="font-size:13px;font-weight:700;color:${color};">${label}</span>
+  const sectionHeader = (label, jumlah, color, bg, detailId) =>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:${bg};border-radius:8px;margin-bottom:6px;cursor:pointer;" onclick="toggleStatDetail('${detailId}')">
+      <span style="font-size:13px;font-weight:700;color:${color};"><span id="${detailId}_arrow" style="display:inline-block;width:12px;">▸</span> ${label}</span>
       <span style="font-weight:800;font-size:15px;color:${color};">${jumlah} orang</span>
     </div>`;
 
   // Fungsi buat blok JK + Peran untuk satu kelompok anggota
   const buildBlock = (arr) => {
-    const tL  = count(arr, 'jenis_kelamin', 'laki-laki');
-    const tP  = count(arr, 'jenis_kelamin', 'perempuan');
-    const tJKkosong = arr.filter(a => !a.jenis_kelamin).length;
-    const tMhs   = countPeran(arr, 'mahasiswa');
-    const tKM    = countPeran(arr, 'karyawan_mahasiswa');
-    const tMbl   = countPeran(arr, 'mubaligh');
-    const tMblt  = countPeran(arr, 'mubalighot');
-    const tBkn   = countPeran(arr, 'bukan_mt');
-    const tPrKosong = arr.filter(a => getPeran(a).length === 0).length;
+    const arrL    = arr.filter(a => a.jenis_kelamin === 'laki-laki');
+    const arrP    = arr.filter(a => a.jenis_kelamin === 'perempuan');
+    const arrJKk  = arr.filter(a => !a.jenis_kelamin);
+    const arrMhs  = arr.filter(a => getPeran(a).includes('mahasiswa'));
+    const arrKM   = arr.filter(a => getPeran(a).includes('karyawan_mahasiswa'));
+    const arrMbl  = arr.filter(a => getPeran(a).includes('mubaligh'));
+    const arrMblt = arr.filter(a => getPeran(a).includes('mubalighot'));
+    const arrBkn  = arr.filter(a => getPeran(a).includes('bukan_mt'));
+    const arrPrK  = arr.filter(a => getPeran(a).length === 0);
     return (
       divider('Jenis Kelamin') +
-      statRow('♂', 'Laki-laki', tL, '#1d4ed8', true) +
-      statRow('♀', 'Perempuan', tP, '#be185d', true) +
-      (tJKkosong ? statRow('❓', 'Belum diisi', tJKkosong, '#9ca3af', true) : '') +
+      statRow('♂', 'Laki-laki', arrL.length, '#1d4ed8', true, arrL) +
+      statRow('♀', 'Perempuan', arrP.length, '#be185d', true, arrP) +
+      (arrJKk.length ? statRow('❓', 'Belum diisi', arrJKk.length, '#9ca3af', true, arrJKk) : '') +
       divider('Peran / Jabatan MT') +
-      statRow('🎓', 'Mahasiswa', tMhs, '#1a6644', true) +
-      statRow('💼', 'Karyawan Mahasiswa', tKM, '#1a6644', true) +
-      statRow('🕌', 'Mubaligh', tMbl, '#1a6644', true) +
-      statRow('🕌', 'Mubalighot', tMblt, '#1a6644', true) +
-      statRow('👤', 'Bukan MT', tBkn, '#6b7280', true) +
-      (tPrKosong ? statRow('❓', 'Belum diisi', tPrKosong, '#9ca3af', true) : '')
+      statRow('🎓', 'Mahasiswa', arrMhs.length, '#1a6644', true, arrMhs) +
+      statRow('💼', 'Karyawan Mahasiswa', arrKM.length, '#1a6644', true, arrKM) +
+      statRow('🕌', 'Mubaligh', arrMbl.length, '#1a6644', true, arrMbl) +
+      statRow('🕌', 'Mubalighot', arrMblt.length, '#1a6644', true, arrMblt) +
+      statRow('👤', 'Bukan MT', arrBkn.length, '#6b7280', true, arrBkn) +
+      (arrPrK.length ? statRow('❓', 'Belum diisi', arrPrK.length, '#9ca3af', true, arrPrK) : '')
     );
   };
 
+  // Hitung jumlah & daftar nama anggota per kategori (khusus "Sekolah" di-breakdown per jenjang)
+  // Dibikin fungsi supaya bisa dipanggil terpisah untuk grup Aktif & Tidak Aktif.
+  const jenjangOrder = ['SD', 'SMP', 'SMA/SMK'];
+  let _katDetailIdx = 0;
+
+  const buildKatSection = (arr, title, accentColor, bgColor, headerColor, dark) => {
+    const katGroups = {};
+    arr.forEach(a => {
+      const knm = a.kategori_anggota ? a.kategori_anggota.nama : 'Tanpa Kategori';
+      if (!katGroups[knm]) katGroups[knm] = { members: [], isSekolah: knm.trim().toLowerCase() === 'sekolah' };
+      katGroups[knm].members.push(a);
+    });
+    const katEntries = Object.entries(katGroups).sort((x, y) => y[1].members.length - x[1].members.length);
+
+    const rowBorder = dark ? 'rgba(255,255,255,0.12)' : 'rgba(29,78,216,0.1)';
+    const memberLineFn = dark
+      ? (a) => {
+          const jkIcon = a.jenis_kelamin === 'laki-laki' ? '♂' : a.jenis_kelamin === 'perempuan' ? '♀' : '•';
+          const statusTxt = a.status !== 'aktif' ? ' <span style="color:#fca5a5;">(Tidak Aktif)</span>' : '';
+          return `<div style="font-size:12px;color:#d1fae5;padding:4px 0 4px 8px;border-bottom:1px solid rgba(255,255,255,0.08);">${jkIcon} ${escapeHtml(a.nama)}${statusTxt}</div>`;
+        }
+      : memberLine;
+
+    const katRowsHtml = katEntries.map(([nama, grp]) => {
+      const detailId = 'katDetail_' + (_katDetailIdx++);
+      const headerRow = `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid ${rowBorder};cursor:pointer;" onclick="toggleStatDetail('${detailId}')">
+          <span style="font-size:12px;color:${headerColor};"><span id="${detailId}_arrow" style="display:inline-block;width:12px;">▸</span> ${nama === 'Tanpa Kategori' ? '❓' : '🏷️'} ${escapeHtml(nama)}</span>
+          <span style="font-weight:800;font-size:13px;color:${accentColor};">${grp.members.length}</span>
+        </div>`;
+
+      let detailInner;
+      if (grp.isSekolah) {
+        // Khusus kategori "Sekolah" — breakdown per jenjang (SD/SMP/SMA-SMK), masing-masing bisa di-tap juga
+        const byJenjang = {};
+        grp.members.forEach(a => {
+          const j = a.jenjang_sekolah || 'Belum diisi jenjang';
+          (byJenjang[j] = byJenjang[j] || []).push(a);
+        });
+        const orderedKeys = [...jenjangOrder.filter(j => byJenjang[j]), ...Object.keys(byJenjang).filter(j => !jenjangOrder.includes(j))];
+        detailInner = orderedKeys.map(j => {
+          const jDetailId = 'katDetail_' + (_katDetailIdx++);
+          const arrJ = byJenjang[j];
+          return `
+            <div style="margin-left:14px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;cursor:pointer;" onclick="toggleStatDetail('${jDetailId}')">
+                <span style="font-size:11px;color:${dark?'#a7f3d0':'#1e40af'};"><span id="${jDetailId}_arrow" style="display:inline-block;width:12px;">▸</span> 🎒 ${escapeHtml(j)}</span>
+                <span style="font-weight:700;font-size:12px;color:${accentColor};">${arrJ.length}</span>
+              </div>
+              <div id="${jDetailId}" style="display:none;margin-left:14px;">
+                ${arrJ.map(memberLineFn).join('')}
+              </div>
+            </div>`;
+        }).join('');
+      } else {
+        detailInner = grp.members.map(memberLineFn).join('');
+      }
+
+      return headerRow + `<div id="${detailId}" style="display:none;margin-left:14px;">${detailInner}</div>`;
+    }).join('');
+
+    if (!katEntries.length) {
+      return `<div style="padding:10px 12px;background:${bgColor};border-radius:10px;margin-bottom:10px;">
+        <div style="font-size:11px;font-weight:800;color:${accentColor};text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;">${title}</div>
+        <div style="font-size:12px;color:${dark?'#a7f3d0':'#9ca3af'};padding:4px 0;">Tidak ada anggota</div>
+      </div>`;
+    }
+
+    var blockId = 'katBlock_' + Math.random().toString(36).slice(2,8);
+    return `<div style="border-radius:10px;margin-bottom:10px;overflow:hidden;">
+      <div style="padding:10px 12px;background:${bgColor};cursor:pointer;display:flex;justify-content:space-between;align-items:center;"
+           onclick="(function(){var b=document.getElementById('${blockId}');var a=document.getElementById('${blockId}_arr');var open=b.style.display==='block';b.style.display=open?'none':'block';a.textContent=open?'▸':'▾';})()">
+        <div style="font-size:11px;font-weight:800;color:${accentColor};text-transform:uppercase;letter-spacing:.6px;">
+          <span id="${blockId}_arr" style="display:inline-block;width:12px;margin-right:2px;">▸</span>${title}
+          <span style="font-weight:400;text-transform:none;letter-spacing:0;color:${headerColor};"> (tap buat lihat nama)</span>
+        </div>
+        <span style="font-size:10px;font-weight:600;color:${headerColor};opacity:.7;">tap untuk buka/tutup</span>
+      </div>
+      <div id="${blockId}" style="display:none;background:${bgColor};padding:0 12px 10px;">` +
+        katRowsHtml +
+      `</div>
+    </div>`;
+  };
+
+  const katSectionHtml =
+    buildKatSection(aktif,  '✅ Kategori — Anggota Aktif',       '#16a34a', '#ecfdf5', '#15803d') +
+    buildKatSection(nonAkt, '❌ Kategori — Anggota Tidak Aktif', '#dc2626', '#fef2f2', '#b91c1c') +
+    buildKatSection(all,    '📊 Kategori — Total Keseluruhan',   '#a7f3d0', 'linear-gradient(135deg,#0f3d2b,#1a6644)', '#a7f3d0', true);
+
+
   body.innerHTML =
+    // ── JUMLAH ANGGOTA PER KATEGORI ──
+    katSectionHtml +
+
     // ── AKTIF ──
-    sectionHeader('✅ Anggota Aktif', aktif.length, '#16a34a', '#dcfce7') +
-    buildBlock(aktif) +
+    sectionHeader('✅ Anggota Aktif', aktif.length, '#16a34a', '#dcfce7', 'statBlockAktif') +
+    `<div id="statBlockAktif" style="display:none;">${buildBlock(aktif)}</div>` +
 
     // ── TIDAK AKTIF ──
     `<div style="height:6px;"></div>` +
-    sectionHeader('❌ Anggota Tidak Aktif', nonAkt.length, '#dc2626', '#fee2e2') +
-    buildBlock(nonAkt) +
+    sectionHeader('❌ Anggota Tidak Aktif', nonAkt.length, '#dc2626', '#fee2e2', 'statBlockNonAktif') +
+    `<div id="statBlockNonAktif" style="display:none;">${buildBlock(nonAkt)}</div>` +
 
     // ── TOTAL KESELURUHAN ──
     `<div style="height:6px;"></div>` +
-    `<div style="padding:10px 12px;background:linear-gradient(135deg,#0f3d2b,#1a6644);border-radius:10px;margin-bottom:6px;">
-      <div style="font-size:11px;font-weight:800;color:#a7f3d0;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">📊 Total Keseluruhan</div>` +
+    `<div style="padding:8px 12px;background:linear-gradient(135deg,#0f3d2b,#1a6644);border-radius:10px;margin-bottom:6px;cursor:pointer;" onclick="toggleStatDetail('statBlockTotal')">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:11px;font-weight:800;color:#a7f3d0;text-transform:uppercase;letter-spacing:.6px;"><span id="statBlockTotal_arrow" style="display:inline-block;width:12px;">▸</span> 📊 Total Keseluruhan</span>
+        <span style="font-weight:800;font-size:13px;color:#fff;">${total} orang</span>
+      </div>
+    </div>` +
+    `<div id="statBlockTotal" style="display:none;padding:10px 12px;background:linear-gradient(135deg,#0f3d2b,#1a6644);border-radius:10px;margin-bottom:6px;margin-top:-6px;">` +
     (() => {
-      const tL  = count(all, 'jenis_kelamin', 'laki-laki');
-      const tP  = count(all, 'jenis_kelamin', 'perempuan');
-      const tJKk= all.filter(a=>!a.jenis_kelamin).length;
-      const totRow = (icon, label, val) =>
-        `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.1);">
+      const arrL  = all.filter(a => a.jenis_kelamin === 'laki-laki');
+      const arrP  = all.filter(a => a.jenis_kelamin === 'perempuan');
+      const arrJKk= all.filter(a => !a.jenis_kelamin);
+      const arrMhs  = all.filter(a => getPeran(a).includes('mahasiswa'));
+      const arrKM   = all.filter(a => getPeran(a).includes('karyawan_mahasiswa'));
+      const arrMbl  = all.filter(a => getPeran(a).includes('mubaligh'));
+      const arrMblt = all.filter(a => getPeran(a).includes('mubalighot'));
+      const arrBkn  = all.filter(a => getPeran(a).includes('bukan_mt'));
+      const totRow = (icon, label, val, members) => {
+        if (members && members.length) {
+          const rowDetailId = 'statRowDetail_' + (_statDetailIdx++);
+          return `<div>
+            <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.1);cursor:pointer;" onclick="toggleStatDetail('${rowDetailId}')">
+              <span style="font-size:12px;color:#d1fae5;"><span id="${rowDetailId}_arrow" style="display:inline-block;width:12px;">▸</span> ${icon} ${label}</span>
+              <span style="font-weight:800;font-size:13px;color:#fff;">${val}</span>
+            </div>
+            <div id="${rowDetailId}" style="display:none;padding:2px 0 6px 16px;">
+              ${members.map(a => {
+                const jkIcon = a.jenis_kelamin === 'laki-laki' ? '♂' : a.jenis_kelamin === 'perempuan' ? '♀' : '•';
+                const statusTxt = a.status !== 'aktif' ? ' <span style="color:#fca5a5;">(Tidak Aktif)</span>' : '';
+                return `<div style="font-size:12px;color:#d1fae5;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.08);">${jkIcon} ${escapeHtml(a.nama)}${statusTxt}</div>`;
+              }).join('')}
+            </div>
+          </div>`;
+        }
+        return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.1);">
           <span style="font-size:12px;color:#d1fae5;">${icon} ${label}</span>
           <span style="font-weight:800;font-size:13px;color:#fff;">${val}</span>
         </div>`;
+      };
       return totRow('👥','Total Anggota', total) +
-        totRow('♂','Laki-laki', tL) +
-        totRow('♀','Perempuan', tP) +
-        (tJKk ? totRow('❓','JK Belum Diisi', tJKk) : '') +
-        totRow('🎓','Mahasiswa', countPeran(all,'mahasiswa')) +
-        totRow('💼','Karyawan Mahasiswa', countPeran(all,'karyawan_mahasiswa')) +
-        totRow('🕌','Mubaligh', countPeran(all,'mubaligh')) +
-        totRow('🕌','Mubalighot', countPeran(all,'mubalighot')) +
-        totRow('👤','Bukan MT', countPeran(all,'bukan_mt'));
+        totRow('♂','Laki-laki', arrL.length, arrL) +
+        totRow('♀','Perempuan', arrP.length, arrP) +
+        (arrJKk.length ? totRow('❓','JK Belum Diisi', arrJKk.length, arrJKk) : '') +
+        totRow('🎓','Mahasiswa', arrMhs.length, arrMhs) +
+        totRow('💼','Karyawan Mahasiswa', arrKM.length, arrKM) +
+        totRow('🕌','Mubaligh', arrMbl.length, arrMbl) +
+        totRow('🕌','Mubalighot', arrMblt.length, arrMblt) +
+        totRow('👤','Bukan MT', arrBkn.length, arrBkn);
     })() +
     `</div>`;
 
   card.style.display = 'block';
+  renderUsiaNikahStat();
+}
+
+// ─────────── USIA NIKAH (SUB DARI STATISTIK ANGGOTA) ───────────
+// Batas usia tersimpan di localStorage, daftar default TERSEMBUNYI tiap kali menu dibuka.
+function getUsiaNikahThreshold() {
+  const v = parseInt(localStorage.getItem('mb3_usiaNikahThreshold'), 10);
+  return (!isNaN(v) && v > 0) ? v : 25;
+}
+
+function saveUsiaNikahThreshold() {
+  const input = $('usiaNikahInput');
+  const msg   = $('usiaNikahMsg');
+  const v = parseInt(input ? input.value : '', 10);
+  if (isNaN(v) || v <= 0) {
+    if (msg) { msg.style.color = '#dc2626'; msg.textContent = '⚠️ Masukkan angka usia yang valid.'; }
+    return;
+  }
+  localStorage.setItem('mb3_usiaNikahThreshold', String(v));
+  if (msg) {
+    msg.style.color = '#16a34a';
+    msg.textContent = '✅ Batas usia nikah disimpan: ' + v + ' tahun.';
+    setTimeout(() => { const m = $('usiaNikahMsg'); if (m) m.textContent = ''; }, 2500);
+  }
+  renderUsiaNikahStat();
+}
+
+function toggleUsiaNikahList() {
+  const wrap = $('usiaNikahListWrap');
+  const btn  = $('usiaNikahToggleBtn');
+  if (!wrap || !btn) return;
+  const isShown = wrap.style.display !== 'none';
+  if (isShown) {
+    wrap.style.display = 'none';
+    btn.innerHTML = '👁️ Tampilkan Daftar';
+  } else {
+    renderUsiaNikahStat();
+    wrap.style.display = 'block';
+    btn.innerHTML = '🙈 Sembunyikan Daftar';
+  }
+}
+
+function renderUsiaNikahStat() {
+  const inputEl   = $('usiaNikahInput');
+  const summaryEl = $('usiaNikahSummary');
+  const listEl    = $('usiaNikahList');
+  if (!summaryEl) return;
+
+  const threshold = getUsiaNikahThreshold();
+  if (inputEl && document.activeElement !== inputEl) inputEl.value = threshold;
+
+  const all = anggotaFull || [];
+  const siapNikah = all
+    .map(a => ({ a, u: hitungUmur(a.tanggal_lahir) }))
+    .filter(x => x.u !== null && x.u >= threshold)
+    .sort((x, y) => y.u - x.u);
+
+  summaryEl.innerHTML =
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#fdf2f8;border-radius:8px;">
+      <span style="font-size:13px;font-weight:700;color:#be185d;">💍 Usia ≥ ${threshold} tahun</span>
+      <span style="font-weight:800;font-size:15px;color:#be185d;">${siapNikah.length} orang</span>
+    </div>`;
+
+  if (!listEl) return;
+  listEl.innerHTML = siapNikah.length ? siapNikah.map(({a, u}) => {
+    const jkBadge = a.jenis_kelamin
+      ? `<span style="font-size:10px;padding:2px 7px;border-radius:99px;background:${a.jenis_kelamin==='laki-laki'?'#dbeafe':'#fce7f3'};color:${a.jenis_kelamin==='laki-laki'?'#1d4ed8':'#be185d'};font-weight:700;margin-left:4px;">${a.jenis_kelamin==='laki-laki'?'♂ L':'♀ P'}</span>`
+      : '';
+    const statusBadge = a.status !== 'aktif'
+      ? `<span style="font-size:10px;padding:2px 7px;border-radius:99px;background:#fee2e2;color:#dc2626;font-weight:700;margin-left:4px;">Tidak Aktif</span>`
+      : '';
+    return `<div class="list-item">
+      <div class="left">
+        <div class="name">${escapeHtml(a.nama)}${jkBadge}${statusBadge}</div>
+        <div class="meta">🎂 ${u} tahun${a.kontak ? ' · ' + a.kontak : ''}</div>
+      </div>
+    </div>`;
+  }).join('') : '<p class="muted" style="text-align:center;padding:14px;">Belum ada anggota yang memenuhi batas usia ini.</p>';
 }
 
 // ─────────── EXPORT ANGGOTA PDF ───────────
@@ -6478,6 +6866,82 @@ async function exportAnggotaPDF() {
     y += 7;
   }
 
+  // ── BLOK "JUMLAH ANGGOTA PER KATEGORI" (dipisah Aktif & Tidak Aktif) ──
+  function buildKatBlockPdf(arr, titleColor) {
+    const katGroups = {};
+    arr.forEach(a => {
+      const knm = a.kategori_anggota ? a.kategori_anggota.nama : 'Tanpa Kategori';
+      if (!katGroups[knm]) katGroups[knm] = [];
+      katGroups[knm].push(a);
+    });
+    const katEntries = Object.entries(katGroups).sort((x,y) => y[1].length - x[1].length);
+    if (!katEntries.length) {
+      statRow('Tidak ada anggota', 0, true, T_MUTED);
+      return;
+    }
+    katEntries.forEach(([nama, members]) => {
+      statRow(pdfSafe(nama), members.length, true, titleColor);
+    });
+  }
+
+  // ── Judul section kategori ──
+  checkPage(10);
+  doc.setFillColor(...G_MED);
+  doc.roundedRect(margin, y, cW, 8, 2, 2, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...WHITE);
+  doc.text('JUMLAH ANGGOTA PER KATEGORI', pageW/2, y+5.4, {align:'center'});
+  y += 11;
+
+  statSection('Kategori - Anggota Aktif', aktif.length, GREEN, [220,252,231]);
+  buildKatBlockPdf(aktif, GREEN);
+  y += 4;
+
+  checkPage(14);
+  statSection('Kategori - Anggota Tidak Aktif', nonAkt.length, RED, [254,226,226]);
+  buildKatBlockPdf(nonAkt, RED);
+  y += 4;
+
+  // ── Kategori - Total Keseluruhan (box hijau gelap, selaras dgn web) ──
+  checkPage(18);
+  doc.setFillColor(...G_DARK);
+  doc.roundedRect(margin, y, cW, 9, 2, 2, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...WHITE);
+  doc.text('Kategori - Total Keseluruhan', margin+4, y+6);
+  doc.text(String(all.length)+' orang', pageW-margin-2, y+6, {align:'right'});
+  y += 12;
+  buildKatBlockPdfDark(all);
+  y += 6;
+
+  function buildKatBlockPdfDark(arr) {
+    const katGroups = {};
+    arr.forEach(a => {
+      const knm = a.kategori_anggota ? a.kategori_anggota.nama : 'Tanpa Kategori';
+      if (!katGroups[knm]) katGroups[knm] = [];
+      katGroups[knm].push(a);
+    });
+    const katEntries = Object.entries(katGroups).sort((x,y) => y[1].length - x[1].length);
+    if (!katEntries.length) {
+      totRowDarkLocal('Tidak ada anggota', 0, WHITE);
+      return;
+    }
+    katEntries.forEach(([nama, members]) => {
+      totRowDarkLocal(pdfSafe(nama), members.length, [167,243,208]);
+    });
+  }
+
+  // totRowDark dipakai juga di bagian Total Keseluruhan demografi (didefinisikan di bawah),
+  // tapi karena dibutuhkan lebih awal di sini, kita pakai versi lokal yang sama persis.
+  function totRowDarkLocal(label, val, vc) {
+    checkPage(8);
+    doc.setFillColor(15,61,43);
+    doc.roundedRect(margin, y, cW, 7, 1.5, 1.5, 'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(209,250,229);
+    doc.text(label, margin+3, y+4.8);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...(vc||WHITE));
+    doc.text(String(val), pageW-margin-2, y+5, {align:'right'});
+    y += 8.5;
+  }
+
   function buildStatBlock(arr) {
     const tL   = cntKey(arr,'jenis_kelamin','laki-laki');
     const tP   = cntKey(arr,'jenis_kelamin','perempuan');
@@ -6502,6 +6966,14 @@ async function exportAnggotaPDF() {
     statRow('Bukan MT',           tBkn,  true, [107,114,128]);
     if (tPk) statRow('Belum diisi (Peran)', tPk, true, T_MUTED);
   }
+
+  // ── Judul section demografi ──
+  checkPage(10);
+  doc.setFillColor(...G_MED);
+  doc.roundedRect(margin, y, cW, 8, 2, 2, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...WHITE);
+  doc.text('RINGKASAN STATUS & DEMOGRAFI', pageW/2, y+5.4, {align:'center'});
+  y += 11;
 
   // ── BLOK AKTIF ──
   statSection('Anggota Aktif', aktif.length, GREEN, [220,252,231]);
@@ -6634,6 +7106,9 @@ function openAnggotaEdit(id) {
   $('edKategori').innerHTML = '<option value="">— Tanpa kategori —</option>' +
     kategoriCache.map(k => `<option value="${k.id}">${escapeHtml(k.nama)}</option>`).join('');
   $('edKategori').value = a.kategori_id || '';
+  toggleSekolahFields('edKategori', 'edSekolahBox');
+  if ($('edJenjang')) $('edJenjang').value = a.jenjang_sekolah || 'SD';
+  if ($('edNamaSekolah')) $('edNamaSekolah').value = a.nama_sekolah || '';
   $('edAlamat').value  = a.alamat || '';
   $('edCatatan').value = a.catatan || '';
   $('edTempatLahir').value = a.tempat_lahir || '';
@@ -6660,7 +7135,8 @@ async function saveAnggotaEdit() {
   if (!currentAnggotaId) return;
   const nama = $('edNama').value.trim();
   if (!nama) { setMsg('edMsg', 'Nama wajib diisi', true); return; }
-  const { error } = await db.from('anggota').update({
+  const isSekolah = isKategoriSekolah($('edKategori').value);
+  const payload = {
     nama,
     kontak:           $('edKontak').value.trim() || null,
     status:           $('edStatus').value,
@@ -6672,7 +7148,15 @@ async function saveAnggotaEdit() {
     peran:            (() => { const p = [...document.querySelectorAll('input[name="edPeran"]:checked')].map(c=>c.value); return p.length ? JSON.stringify(p) : null; })(),
     tempat_lahir:     $('edTempatLahir').value.trim() || null,
     tanggal_lahir:    $('edTglLahir').value || null,
-  }).eq('id', currentAnggotaId);
+    jenjang_sekolah:  isSekolah ? (($('edJenjang') && $('edJenjang').value) || null) : null,
+    nama_sekolah:     isSekolah ? (($('edNamaSekolah') && $('edNamaSekolah').value.trim()) || null) : null,
+  };
+  let { error } = await db.from('anggota').update(payload).eq('id', currentAnggotaId);
+  if (error && _isMissingColErr(error)) {
+    showSekolahSqlNotice();
+    delete payload.jenjang_sekolah; delete payload.nama_sekolah;
+    ({ error } = await db.from('anggota').update(payload).eq('id', currentAnggotaId));
+  }
   if (error) { setMsg('edMsg', 'Gagal: ' + error.message, true); return; }
   setMsg('edMsg', '✅ Perubahan tersimpan');
   await loadAnggota();
@@ -9660,6 +10144,7 @@ async function loadKategori() {
     $('agKategori').innerHTML = kategoriCache.length
       ? kategoriCache.map(k => `<option value="${k.id}">${escapeHtml(k.nama)}</option>`).join('')
       : '<option value="">— Belum ada kategori —</option>';
+    toggleSekolahFields('agKategori', 'agSekolahBox');
   }
   // Versi LENGKAP (dengan input target kas/bulan) — untuk menu Kas Masuk
   const katHtmlFull = kategoriCache.length ? kategoriCache.map(k => `
@@ -10817,12 +11302,51 @@ function _fmtWaktu(iso) {
   try { return new Date(iso).toLocaleString('id-ID'); } catch (e) { return iso; }
 }
 
+// Field yang sengaja DISEMBUNYIKAN dari ringkasan otomatis (terlalu teknis / tidak relevan utk dibandingkan)
+const _AUDIT_SKIP_FIELD = new Set(['id', 'created_at', 'updated_at', 'kategori_id', 'sesi_id', 'user_id']);
+
+// Label field manusiawi — supaya ringkasan riwayat gampang dibaca tanpa perlu buka detail
+const _AUDIT_FIELD_LABEL = {
+  nama: 'Nama', kontak: 'Kontak', status: 'Status', alamat: 'Alamat', catatan: 'Catatan',
+  jenis_kelamin: 'Jenis Kelamin', peran: 'Peran/Jabatan', kategori: 'Kategori',
+  jenjang_sekolah: 'Jenjang Sekolah', jumlah: 'Jumlah', keterangan: 'Keterangan',
+  tanggal: 'Tanggal', jam_mulai: 'Jam Mulai', jam_selesai: 'Jam Selesai',
+  target_dana: 'Target Dana', email: 'Email', role: 'Peran Akses',
+};
+
+function _auditFieldLabel(k) {
+  return _AUDIT_FIELD_LABEL[k] || k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function _auditFmtVal(k, v) {
+  if (v === null || v === undefined || v === '') return '(kosong)';
+  if (k === 'jumlah' || k === 'target_dana') return IDR(v);
+  if (typeof v === 'object') {
+    try { return JSON.stringify(v); } catch (e) { return String(v); }
+  }
+  return String(v);
+}
+
 function _auditSummary(e) {
   const lama = e.data_lama || {}, baru = e.data_baru || {};
-  if (e.aksi === 'UPDATE' && lama.jumlah != null && baru.jumlah != null
-      && Number(lama.jumlah) !== Number(baru.jumlah)) {
-    return 'Jumlah diubah: ' + IDR(lama.jumlah) + ' → ' + IDR(baru.jumlah);
+
+  if (e.aksi === 'UPDATE') {
+    // Cari SEMUA field yang benar-benar berubah nilainya, supaya langsung kelihatan
+    // di daftar riwayat — tidak perlu klik dulu buat tahu "ganti apa jadi apa".
+    const semuaKey = [...new Set([...Object.keys(lama), ...Object.keys(baru)])]
+      .filter(k => !_AUDIT_SKIP_FIELD.has(k) && !k.startsWith('_'));
+    const berubah = semuaKey.filter(k => JSON.stringify(lama[k]) !== JSON.stringify(baru[k]));
+    if (berubah.length) {
+      const parts = berubah.slice(0, 3).map(k =>
+        _auditFieldLabel(k) + ': ' + _auditFmtVal(k, lama[k]) + ' → ' + _auditFmtVal(k, baru[k])
+      );
+      let txt = parts.join(' · ');
+      if (berubah.length > 3) txt += ' · +' + (berubah.length - 3) + ' field lain';
+      return txt;
+    }
+    return 'Disimpan ulang (tidak ada perubahan nilai terdeteksi)';
   }
+
   const row = e.aksi === 'DELETE' ? lama : baru;
   const bits = [];
   if (row.jumlah != null)      bits.push(IDR(row.jumlah));
@@ -10849,6 +11373,17 @@ async function _catatLog(tabel, aksi, data_lama, data_baru) {
 }
 
 let rwData = [], rwFilter = 'semua';
+
+// Field "identitas" yang kalau berubah patut dicurigai / perlu perhatian ekstra
+// (status, nama, jenis kelamin, peran, kategori, jumlah uang) — dipakai utk badge ⚠️
+const _AUDIT_SENSITIVE_FIELD = new Set(['nama', 'status', 'jenis_kelamin', 'peran', 'kategori', 'kategori_id', 'jumlah', 'target_dana', 'role']);
+
+function _auditIsSensitive(e) {
+  if (e.aksi !== 'UPDATE') return false;
+  const lama = e.data_lama || {}, baru = e.data_baru || {};
+  const semuaKey = [...new Set([...Object.keys(lama), ...Object.keys(baru)])];
+  return semuaKey.some(k => _AUDIT_SENSITIVE_FIELD.has(k) && JSON.stringify(lama[k]) !== JSON.stringify(baru[k]));
+}
 
 async function loadRiwayat(filter) {
   if (filter) rwFilter = filter;
@@ -10887,15 +11422,17 @@ function _renderRiwayat() {
   const badge = a => a === 'INSERT' ? '<span class="st-badge st-done">Tambah</span>'
     : a === 'UPDATE' ? '<span class="st-badge st-in_progress">Ubah</span>'
     : '<span class="st-badge st-cancelled">Hapus</span>';
-  $('riwayatList').innerHTML = rwData.map((e, i) => `
-    <div style="padding:10px 12px;background:#f0f7f3;border-radius:8px;margin-bottom:6px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;"
+  $('riwayatList').innerHTML = rwData.map((e, i) => {
+    const sensitif = _auditIsSensitive(e);
+    return `
+    <div style="padding:10px 12px;background:${sensitif?'#fffbeb':'#f0f7f3'};border-radius:8px;margin-bottom:6px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;${sensitif?'border:1.5px solid #f59e0b;':''}"
          onclick="bukaDetailLog(${i})" title="Klik untuk lihat detail lengkap">
       <input type="checkbox" id="rwchk_${i}" style="width:16px;height:16px;margin-top:3px;flex-shrink:0;"
              onclick="event.stopPropagation()">
       <div style="flex:1;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
           <div>
-            <div style="font-weight:700;font-size:13px;">${escapeHtml(TABEL_LABEL[e.tabel] || e.tabel)}</div>
+            <div style="font-weight:700;font-size:13px;">${sensitif?'⚠️ ':''}${escapeHtml(TABEL_LABEL[e.tabel] || e.tabel)}</div>
             <div class="muted" style="font-size:11px;">${_fmtWaktu(e.waktu)} · oleh ${escapeHtml(e.oleh_nama || '(tidak diketahui)')}</div>
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
@@ -10905,7 +11442,8 @@ function _renderRiwayat() {
         </div>
         <div style="font-size:12px;margin-top:4px;color:#374151;">${escapeHtml(_auditSummary(e))}</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ─────────────── MODAL DETAIL LOG ───────────────
@@ -11061,10 +11599,12 @@ function tutupDetailLog() {
 }
 
 function rwPilihSemua() {
-  rwData.forEach((_, i) => { const c = $('rwchk_' + i); if (c) c.checked = true; });
+  // Hanya centang checkbox yang BENAR-BENAR sedang tampil di layar
+  // (kalau ada filter/pencarian aktif, yang tersembunyi tidak ikut tercentang)
+  document.querySelectorAll('#riwayatList input[type="checkbox"][id^="rwchk_"]').forEach(c => { c.checked = true; });
 }
 function rwBatalPilih() {
-  rwData.forEach((_, i) => { const c = $('rwchk_' + i); if (c) c.checked = false; });
+  document.querySelectorAll('#riwayatList input[type="checkbox"][id^="rwchk_"]').forEach(c => { c.checked = false; });
 }
 
 async function _rwHapusIds(ids) {
@@ -13137,13 +13677,25 @@ async function _auditLog(tabel, aksi, data_lama, data_baru, keterangan) {
 (function() {
   const _orig = addAnggota;
   addAnggota = async function() {
-    // Ambil snapshot sebelum (dari form)
+    const namaKategoriDari = (kid) => {
+      if (!kid) return null;
+      const k = (kategoriCache || []).find(kk => String(kk.id) === String(kid));
+      return k ? k.nama : ('#' + kid);
+    };
+    // Ambil snapshot sebelum (dari form) — dilengkapi semua field penting
+    // supaya data yang ditambahkan tercatat utuh di Riwayat.
     const snap = {
       nama: $('agNama')?.value?.trim(),
       kontak: $('agKontak')?.value?.trim(),
       status: $('agStatus')?.value,
       alamat: $('agAlamat')?.value?.trim(),
       catatan: $('agCatatan')?.value?.trim(),
+      jenis_kelamin: (document.querySelector('input[name="agJK"]:checked') || {}).value || null,
+      peran: [...document.querySelectorAll('input[name="agPeran"]:checked')].map(c => c.value).join(', ') || null,
+      kategori: namaKategoriDari($('agKategori')?.value),
+      jenjang_sekolah: $('agJenjang')?.value || null,
+      tempat_lahir: $('agTempatLahir')?.value?.trim() || null,
+      tanggal_lahir: $('agTglLahir')?.value || null,
     };
     await _orig();
     // Cek apakah berhasil (form terkosongkan = berhasil)
@@ -13154,22 +13706,48 @@ async function _auditLog(tabel, aksi, data_lama, data_baru, keterangan) {
 })();
 
 // ─── 3. SIMPAN EDIT ANGGOTA ───
+// Snapshot dibikin LENGKAP (bukan cuma 5 field) supaya perubahan jenis kelamin,
+// peran/jabatan, kategori, dll juga kelihatan jelas di Riwayat — termasuk
+// kalau ada yang sengaja diubah diam-diam untuk menutupi sesuatu.
 (function() {
   const _orig = saveAnggotaEdit;
   saveAnggotaEdit = async function() {
     const id = currentAnggotaId;
     const lamanya = anggotaCache.find(a => a.id === id);
+    const namaKategoriDari = (kid) => {
+      if (!kid) return null;
+      const k = (kategoriCache || []).find(kk => String(kk.id) === String(kid));
+      return k ? k.nama : ('#' + kid);
+    };
+    const getPeranLama = (a) => { try { return JSON.parse(a?.peran || '[]'); } catch(e) { return a?.peran ? [a.peran] : []; } };
     const snapLama = lamanya ? {
-      id: lamanya.id, nama: lamanya.nama, kontak: lamanya.kontak,
-      status: lamanya.status, alamat: lamanya.alamat,
+      id: lamanya.id,
+      nama: lamanya.nama,
+      kontak: lamanya.kontak,
+      status: lamanya.status,
+      alamat: lamanya.alamat,
+      catatan: lamanya.catatan,
+      jenis_kelamin: lamanya.jenis_kelamin || null,
+      peran: getPeranLama(lamanya).join(', ') || null,
+      kategori: namaKategoriDari(lamanya.kategori_id),
+      jenjang_sekolah: lamanya.jenjang_sekolah || null,
+      tempat_lahir: lamanya.tempat_lahir || null,
+      tanggal_lahir: lamanya.tanggal_lahir || null,
     } : null;
+    const peranBaruArr = [...document.querySelectorAll('input[name="edPeran"]:checked')].map(c => c.value);
     const snapBaru = {
       id,
       nama: $('edNama')?.value?.trim(),
-      kontak: $('edKontak')?.value?.trim(),
+      kontak: $('edKontak')?.value?.trim() || null,
       status: $('edStatus')?.value,
-      alamat: $('edAlamat')?.value?.trim(),
-      catatan: $('edCatatan')?.value?.trim(),
+      alamat: $('edAlamat')?.value?.trim() || null,
+      catatan: $('edCatatan')?.value?.trim() || null,
+      jenis_kelamin: (document.querySelector('input[name="edJK"]:checked') || {}).value || null,
+      peran: peranBaruArr.join(', ') || null,
+      kategori: namaKategoriDari($('edKategori')?.value),
+      jenjang_sekolah: $('edJenjang')?.value || null,
+      tempat_lahir: $('edTempatLahir')?.value?.trim() || null,
+      tanggal_lahir: $('edTglLahir')?.value || null,
     };
     await _orig();
     _auditLog('anggota', 'UPDATE', snapLama, snapBaru);
@@ -13604,7 +14182,11 @@ window._auditHapusAnggota = function(id, nama) {
         style="padding:8px 10px;border:2px solid #d4e8dc;border-radius:10px;font-size:12px;"
         onchange="rwApplyFilter()">
         <option value="">Semua User</option>
-      </select>`;
+      </select>
+      <label style="display:flex;align-items:center;gap:5px;padding:8px 10px;border:2px solid #fde68a;background:#fffbeb;border-radius:10px;font-size:12px;font-weight:700;color:#92400e;cursor:pointer;white-space:nowrap;">
+        <input type="checkbox" id="rwOnlySensitif" onchange="rwApplyFilter()" style="width:15px;height:15px;accent-color:#d97706;">
+        ⚠️ Hanya Field Penting (Nama/Status/JK/Peran/Jumlah)
+      </label>`;
     listEl.parentNode.insertBefore(wrap, listEl);
 
     // Isi dropdown user
@@ -13620,9 +14202,11 @@ window._auditHapusAnggota = function(id, nama) {
   window.rwApplyFilter = function() {
     const q   = ($('rwSearch')?.value || '').toLowerCase();
     const usr = $('rwUserFilter')?.value || '';
+    const onlySensitif = $('rwOnlySensitif')?.checked || false;
     const filtered = rwData.filter(e => {
       const matchUser = !usr || (e.oleh_nama || '') === usr;
       if (!matchUser) return false;
+      if (onlySensitif && !_auditIsSensitive(e)) return false;
       if (!q) return true;
       const haystack = [
         e.oleh_nama, e.tabel, TABEL_LABEL[e.tabel] || '',
@@ -13636,13 +14220,18 @@ window._auditHapusAnggota = function(id, nama) {
       : a === 'UPDATE' ? '<span class="st-badge st-in_progress">Ubah</span>'
       : '<span class="st-badge st-cancelled">Hapus</span>';
     $('riwayatList').innerHTML = filtered.length
-      ? filtered.map((e, i) => `
-        <div style="padding:10px 12px;background:#f0f7f3;border-radius:8px;margin-bottom:6px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;"
-             onclick="bukaDetailLog(${rwData.indexOf(e)})" title="Klik untuk lihat detail lengkap">
+      ? filtered.map((e) => {
+        const idxAsli = rwData.indexOf(e);
+        const sensitif = _auditIsSensitive(e);
+        return `
+        <div style="padding:10px 12px;background:${sensitif?'#fffbeb':'#f0f7f3'};border-radius:8px;margin-bottom:6px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;${sensitif?'border:1.5px solid #f59e0b;':''}"
+             onclick="bukaDetailLog(${idxAsli})" title="Klik untuk lihat detail lengkap">
+          <input type="checkbox" id="rwchk_${idxAsli}" style="width:16px;height:16px;margin-top:3px;flex-shrink:0;"
+                 onclick="event.stopPropagation()">
           <div style="flex:1;">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
               <div>
-                <div style="font-weight:700;font-size:13px;">${escapeHtml(TABEL_LABEL[e.tabel] || e.tabel)}</div>
+                <div style="font-weight:700;font-size:13px;">${sensitif?'⚠️ ':''}${escapeHtml(TABEL_LABEL[e.tabel] || e.tabel)}</div>
                 <div class="muted" style="font-size:11px;">${_fmtWaktu(e.waktu)} · oleh <b>${escapeHtml(e.oleh_nama || '(tidak diketahui)')}</b></div>
               </div>
               <div style="display:flex;align-items:center;gap:6px;">
@@ -13652,7 +14241,8 @@ window._auditHapusAnggota = function(id, nama) {
             </div>
             <div style="font-size:12px;margin-top:4px;color:#374151;">${escapeHtml(_auditSummary(e))}</div>
           </div>
-        </div>`).join('')
+        </div>`;
+      }).join('')
       : '<p class="muted">Tidak ada hasil yang cocok.</p>';
   };
 })();
@@ -14988,20 +15578,18 @@ async function tambahPesertaNamaBebas(nama) {
 }
 
 async function hapusPesertaMsw(pesertaId) {
-  // Ambil data peserta dulu untuk label undo
-  const { data: row } = await db.from('musyawarah_peserta').select('nama').eq('id', pesertaId).maybeSingle();
+  // Ambil SEMUA field dulu — supaya patch recycle_bin bisa snapshot data lengkap
+  const { data: row } = await db.from('musyawarah_peserta').select('*').eq('id', pesertaId).maybeSingle();
   const namaPeserta = row?.nama || 'Peserta #' + pesertaId;
   const mswIdSaat = currentMswId;
 
-  // Optimistic: hapus dari tampilan (reload detail)
-  // Kita tidak bisa optimistic remove partial detail, jadi langsung reload setelah undo/confirm
   showUndoToast(
     namaPeserta,
-    // ── UNDO: peserta tetap ada (tidak ada yang berubah di DB) ──
+    // ── UNDO: peserta masih ada di DB (belum dihapus), reload tampilan ──
     async function() {
       await bukaMswDetail(mswIdSaat);
     },
-    // ── KONFIRMASI: hapus dari DB ──
+    // ── KONFIRMASI: hapus dari DB — patch recycle_bin otomatis menangkap ──
     async function() {
       const { error } = await db.from('musyawarah_peserta').delete().eq('id', pesertaId);
       if (error) { showToast('Gagal hapus peserta: '+error.message,'error'); bukaMswDetail(mswIdSaat); return; }
@@ -15009,7 +15597,7 @@ async function hapusPesertaMsw(pesertaId) {
     '👤'
   );
 
-  // Langsung reload agar tampil hilang dari list (sebelum undo timeout)
+  // Reload langsung agar item hilang dari tampilan (sebelum countdown habis)
   bukaMswDetail(mswIdSaat);
 }
 
@@ -15048,9 +15636,9 @@ async function tambahKeuanganMsw() {
 }
 
 async function hapusKeuanganMsw(id) {
-  // Ambil data sebelum hapus untuk label & rollback foto
+  // Ambil SEMUA field — supaya patch recycle_bin snapshot data lengkap
   const { data: row } = await db.from('musyawarah_keuangan')
-    .select('tipe, jumlah, keterangan, bukti_url').eq('id', id).maybeSingle();
+    .select('*').eq('id', id).maybeSingle();
   const label = row
     ? (row.tipe==='masuk'?'💰':'💸') + ' ' + IDR(row.jumlah) + (row.keterangan ? ' — '+row.keterangan : '')
     : 'Keuangan #' + id;
@@ -15058,11 +15646,11 @@ async function hapusKeuanganMsw(id) {
 
   showUndoToast(
     label,
-    // ── UNDO: keuangan tetap ada di DB, refresh tampilan ──
+    // ── UNDO: keuangan masih ada di DB, refresh tampilan ──
     async function() {
       await bukaMswDetail(mswIdSaat);
     },
-    // ── KONFIRMASI: hapus dari DB ──
+    // ── KONFIRMASI: hapus dari DB — patch recycle_bin otomatis menangkap ──
     async function() {
       const { error } = await db.from('musyawarah_keuangan').delete().eq('id', id);
       if (error) { showToast('Gagal hapus keuangan: '+error.message,'error'); bukaMswDetail(mswIdSaat); return; }
@@ -18452,12 +19040,35 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     document.getElementById('arsipSaldoModal').style.display = 'none';
   };
   window.hapusArsipSaldo = async function(tahun) {
-    if (!confirm('Hapus arsip tahun ' + tahun + ' secara permanen?')) return;
+    if (!(await askConfirm('Hapus arsip saldo tahun ' + tahun + '?\nData akan masuk Tempat Sampah dan bisa dipulihkan.'))) return;
+
+    // Ambil data dulu untuk recycle bin snapshot (patch akan menangkap via db.from().delete())
     const arsip = _loadArsip();
+    const savedLocal = arsip[tahun] ? JSON.parse(JSON.stringify(arsip[tahun])) : null;
+
+    // Hapus dari localStorage dulu (optimistic)
     delete arsip[tahun];
     _saveArsip(arsip);
-    try { await db.from('arsip_saldo').delete().eq('tahun', tahun); } catch(e) {}
     window.renderArsipSaldoList();
+
+    showUndoToast(
+      'Arsip Saldo Tahun ' + tahun,
+      // ── UNDO: kembalikan ke localStorage ──
+      async function() {
+        if (savedLocal) {
+          const a = _loadArsip();
+          a[tahun] = savedLocal;
+          _saveArsip(a);
+        }
+        window.renderArsipSaldoList();
+        showToast('↩ Arsip tahun ' + tahun + ' dikembalikan', 'success');
+      },
+      // ── KONFIRMASI: hapus dari Supabase — patch recycle_bin otomatis menangkap ──
+      async function() {
+        try { await db.from('arsip_saldo').delete().eq('tahun', tahun); } catch(e) {}
+      },
+      '🗄️'
+    );
   };
 
   /* ──────────────────────────────────────────────────────────────
@@ -18666,21 +19277,40 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   (function(){
     'use strict';
     // Tabel yang barisnya ditampung ke recycle bin saat dihapus.
-    // (recycle_bin, audit_log, projects, struktur_org SENGAJA tidak ditampung)
+    // (recycle_bin, audit_log, profiles, projects, struktur_org, kas_bulan, saldo_kas
+    //  SENGAJA tidak ditampung — tabel² itu tidak punya operasi hapus manual oleh user,
+    //  jadi tidak perlu tempat sampah. Kalau nanti ditambah fitur hapus baru,
+    //  tabelnya WAJIB didaftarkan di sini juga supaya tidak hilang permanen.)
     var CAPTURE = {
       transaksi:'💵 Kas / Transaksi', anggota:'👥 Anggota', sesi:'📅 Sesi Ngaji',
-      kehadiran:'📋 Kehadiran', catatan_sesi:'📝 Catatan Sesi',
+      kehadiran:'📋 Kehadiran', catatan_sesi:'📝 Catatan Sesi', catatan:'🗒️ Catatan',
       acara:'📅 Acara', acara_bayar:'🎪 Pembayaran/Pengeluaran Acara',
       qurban_periode:'🐐 Periode Qurban', qurban_bayar:'💰 Pemasukan Qurban',
       qurban_keluar:'💸 Pengeluaran Qurban', kategori_anggota:'🏷️ Kategori Anggota',
       musyawarah:'🗣️ Musyawarah', musyawarah_peserta:'👤 Peserta Musyawarah',
-      musyawarah_keuangan:'💵 Keuangan Musyawarah'
+      musyawarah_keuangan:'💵 Keuangan Musyawarah', arsip_saldo:'🗄️ Arsip Saldo Tahunan'
     };
     window._recycleTabelLabel = CAPTURE;
 
     function labelRow(tabel, r){
       if(!r) return '(data)';
+      // Label khusus per tabel agar di tempat sampah mudah dikenali
+      if(tabel === 'musyawarah_peserta') {
+        var l = r.nama || '';
+        if(r.jabatan) l += ' (' + r.jabatan + ')';
+        return l || ('Peserta ID ' + r.id);
+      }
+      if(tabel === 'musyawarah_keuangan') {
+        var tipe = r.tipe === 'masuk' ? '💰 Masuk' : '💸 Keluar';
+        var jml = r.jumlah ? ' — Rp ' + Number(r.jumlah).toLocaleString('id-ID') : '';
+        var ket = r.keterangan ? ' — ' + r.keterangan : '';
+        return tipe + jml + ket;
+      }
+      if(tabel === 'arsip_saldo') {
+        return 'Arsip Saldo Tahun ' + (r.tahun || r.id || '?');
+      }
       var n = r.nama || r.judul || r.keterangan || r.text || r.bulan || '';
+      if(!n && r.tahun != null) n = 'Arsip Tahun ' + r.tahun;
       var extra = [];
       if(r.jumlah != null) extra.push(IDR(r.jumlah));
       if(r.tanggal) extra.push(String(r.tanggal));
@@ -18693,6 +19323,22 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     var FILTER_METHODS = ['eq','neq','gt','gte','lt','lte','like','ilike','is','in','contains','match'];
 
     // Snapshot baris yang AKAN dihapus → simpan ke recycle_bin (tidak memblokir delete)
+    async function _siapaYangHapus(){
+      // Lapis 1: dari currentProf yang sudah di-set saat login (paling lengkap: nama asli)
+      if (window.currentProf && (currentProf.nama_lengkap || currentProf.nama)) {
+        return currentProf.nama_lengkap || currentProf.nama;
+      }
+      // Lapis 2 (cadangan): kalau currentProf entah kenapa belum/tidak terisi,
+      // tetap coba ambil identitas dari sesi Supabase yang aktif —
+      // supaya jarang sekali tersimpan sebagai "(tidak diketahui)".
+      try {
+        const { data } = await db.auth.getUser();
+        const u = data && data.user;
+        if (u) return u.email || ('User #' + String(u.id).slice(0,8));
+      } catch(_) { /* abaikan, lanjut ke fallback terakhir */ }
+      return '(tidak diketahui)';
+    }
+
     function snapshot(tabel, filters){
       if(!filters.length) return Promise.resolve(); // jangan snapshot delete tanpa filter (bahaya: 1 tabel penuh)
       var q = _origFrom(tabel).select('*');
@@ -18700,18 +19346,40 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       return q.then(function(res){
         var rows = (res && res.data) || [];
         if(!rows.length) return;
-        var oleh = (window.currentProf && (currentProf.nama_lengkap || currentProf.nama)) || '(tidak diketahui)';
-        var recs = rows.map(function(r){
-          return { tabel: tabel, label: labelRow(tabel, r), data: r, oleh_nama: oleh, deleted_at: new Date().toISOString() };
+        return _siapaYangHapus().then(function(oleh){
+          var recs = rows.map(function(r){
+            return { tabel: tabel, label: labelRow(tabel, r), data: r, oleh_nama: oleh, deleted_at: new Date().toISOString() };
+          });
+          return _origFrom('recycle_bin').insert(recs).then(function(){}, function(){});
         });
-        return _origFrom('recycle_bin').insert(recs).then(function(){}, function(){});
       }, function(){ /* snapshot gagal → diam, jangan ganggu delete */ });
     }
+
+    // Tabel yang SENGAJA tidak ditampung ke recycle bin (alasan jelas per-tabel):
+    var CAPTURE_SKIP_SENGAJA = {
+      recycle_bin: 'tempat sampah itu sendiri', audit_log: 'harus immutable historis',
+      profiles: 'akun user, bukan data operasional', projects: 'modul terpisah',
+      struktur_org: 'jarang dihapus, beresiko rendah', kas_bulan: 'tidak ada fitur hapus manual',
+      saldo_kas: 'tidak ada fitur hapus manual',
+    };
 
     // Patch db.from(): bungkus .delete() untuk tabel yang di-capture
     db.from = function(tabel){
       var qb = _origFrom(tabel);
-      if(!CAPTURE[tabel]) return qb;
+      if(!CAPTURE[tabel]) {
+        // Peringatan dini di console developer kalau ada tabel BARU yang di-delete
+        // tapi belum terdaftar di CAPTURE maupun whitelist "sengaja diabaikan" —
+        // supaya kalau ada fitur hapus baru ditambahkan ke aplikasi, developer
+        // langsung sadar perlu mendaftarkan tabelnya, bukan diam-diam kehilangan data.
+        if (!CAPTURE_SKIP_SENGAJA[tabel] && typeof qb.delete === 'function') {
+          var _unsafeDelete = qb.delete.bind(qb);
+          qb.delete = function(){
+            console.warn('[Tempat Sampah] Tabel "' + tabel + '" di-DELETE tapi BELUM didaftarkan di CAPTURE (recycle bin). Data akan hilang PERMANEN tanpa bisa dipulihkan. Tambahkan ke daftar CAPTURE kalau ini disengaja.');
+            return _unsafeDelete.apply(qb, arguments);
+          };
+        }
+        return qb;
+      }
       var _origDelete = qb.delete.bind(qb);
       qb.delete = function(){
         var fb = _origDelete.apply(qb, arguments);
@@ -18793,63 +19461,163 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     var LABELS = window._recycleTabelLabel || {};
     el.innerHTML = recycleData.map(function(e){
       var modul = LABELS[e.tabel] || e.tabel;
-      return '<div style="padding:12px;background:#f0f7f3;border-radius:10px;margin-bottom:8px;">'
+      var oleh  = e.oleh_nama ? e.oleh_nama : '(tidak diketahui)';
+      var waktu = _fmtWaktu(e.deleted_at);
+      return '<div style="padding:12px 14px;background:#f0f7f3;border-radius:10px;margin-bottom:8px;border-left:3px solid #2d9e6b;">'
         + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">'
         + '<div style="flex:1;min-width:0;">'
-        + '<div style="font-weight:700;font-size:13px;word-break:break-word;">' + escapeHtml(e.label || '(tanpa nama)') + '</div>'
-        + '<div class="muted" style="font-size:11px;margin-top:2px;">' + escapeHtml(modul) + ' · dihapus ' + _fmtWaktu(e.deleted_at) + (e.oleh_nama ? (' · oleh ' + escapeHtml(e.oleh_nama)) : '') + '</div>'
+        + '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">'
+        + '<span style="font-weight:700;font-size:13px;word-break:break-word;">' + escapeHtml(e.label || '(tanpa nama)') + '</span>'
+        + '<span style="font-size:10px;font-weight:700;background:#dbeafe;color:#1e40af;padding:1px 7px;border-radius:99px;white-space:nowrap;">' + escapeHtml(modul) + '</span>'
         + '</div>'
-        + '<div style="display:flex;gap:6px;flex-shrink:0;">'
-        + '<button class="small" onclick="restoreRecycle(' + e.id + ')" style="background:linear-gradient(135deg,#1a6644,#2d9e6b);">↩ Pulihkan</button>'
+        + '<div class="muted" style="font-size:11px;display:flex;flex-wrap:wrap;gap:8px;">'
+        + '<span>🕐 ' + escapeHtml(waktu) + '</span>'
+        + '<span>👤 Dihapus oleh: <b style="color:#0f2e1f;">' + escapeHtml(oleh) + '</b></span>'
+        + '</div>'
+        + '</div>'
+        + '<div style="display:flex;gap:6px;flex-shrink:0;margin-top:4px;">'
+        + '<button class="small" onclick="restoreRecycle(' + e.id + ')" style="background:linear-gradient(135deg,#1a6644,#2d9e6b);min-width:90px;">↩ Pulihkan</button>'
         + '<button class="small danger" onclick="hapusPermanenRecycle(' + e.id + ')">🗑️ Hapus Permanen</button>'
         + '</div></div></div>';
     }).join('');
   }
 
+  // Beberapa tabel tidak pakai 'id' sebagai conflict key saat upsert —
+  // didaftarkan di sini supaya restore tetap akurat (tidak bikin duplikat / gagal).
+  var CONFLICT_KEY = { arsip_saldo: 'tahun' };
+
   async function restoreRecycle(id){
     var e = recycleData.find(function(x){ return x.id === id; });
     if(!e){ showToast('Data tidak ditemukan','error'); return; }
     var row = e.data || {};
-    // Re-insert ke tabel asal — upsert by id biar aman kalau id-nya masih ada
-    var res = await db.from(e.tabel).upsert(row, { onConflict: 'id' }).select();
+    var conflictKey = CONFLICT_KEY[e.tabel] || 'id';
+
+    // ── Insert dulu ke tabel asal ──
+    var res = await db.from(e.tabel).upsert(row, { onConflict: conflictKey }).select();
     if(res.error){
-      // Fallback: insert tanpa id (biar di-generate ulang) kalau upsert gagal
       var tanpaId = Object.assign({}, row); delete tanpaId.id;
       res = await db.from(e.tabel).insert(tanpaId).select();
     }
     if(res.error){ showToast('Gagal memulihkan: ' + res.error.message, 'error', 6000); return; }
-    await db.from('recycle_bin').delete().eq('id', id);
+
+    // ID baru hasil insert (bisa beda kalau fallback insert tanpa id)
+    var restoredRow = (res.data && res.data[0]) || row;
+    var restoredId  = restoredRow.id || row.id;
+
+    // Optimistik: keluarkan dari tampilan tempat sampah dulu
     recycleData = recycleData.filter(function(x){ return x.id !== id; });
     renderRecycle();
-    showToast('✅ "' + (e.label || 'Data') + '" berhasil dipulihkan', 'success');
-    // Refresh menu terkait kalau sedang terbuka
-    try {
-      var map = { transaksi: loadKasMasuk, anggota: loadAnggota, sesi: loadSesi, acara: loadAcara,
-                  qurban_periode: loadQurban, kategori_anggota: loadKategori, musyawarah: loadMusyawarah };
-      if (map[e.tabel]) map[e.tabel]();
-    } catch(_) {}
+
+    // Refresh menu terkait
+    function _refreshMenu(tabel){
+      try {
+        var map = {
+          transaksi:        function(){ loadKasMasuk(); loadPengeluaran(); },
+          anggota:          loadAnggota,
+          sesi:             loadSesi,
+          kehadiran:        function(){ if(typeof loadAbsensi==='function') loadAbsensi(); },
+          catatan_sesi:     function(){ if(typeof loadSesi==='function') loadSesi(); },
+          catatan:          typeof loadCatatan==='function' ? loadCatatan : null,
+          acara:            loadAcara,
+          acara_bayar:      loadAcara,
+          qurban_periode:   loadQurban,
+          qurban_bayar:     loadQurban,
+          qurban_keluar:    loadQurban,
+          kategori_anggota: loadKategori,
+          musyawarah:       loadMusyawarah,
+          arsip_saldo:      typeof renderArsipSaldoList==='function' ? renderArsipSaldoList : (window.renderArsipSaldoList||null)
+        };
+        if(tabel === 'musyawarah_peserta' || tabel === 'musyawarah_keuangan'){
+          var mswId = row.musyawarah_id;
+          if(mswId && typeof bukaMswDetail === 'function') bukaMswDetail(mswId);
+        } else if(map[tabel]) {
+          map[tabel]();
+        }
+      } catch(_){}
+    }
+    _refreshMenu(e.tabel);
+
+    // Tampilkan undo toast — bisa dibatalkan dalam 10 detik
+    showUndoToast(
+      (e.label || 'Data') + ' dipulihkan',
+      // ── UNDO: hapus lagi dari tabel asal & kembalikan ke recycle_bin ──
+      async function(){
+        try {
+          await db.from(e.tabel).delete().eq('id', restoredId);
+          // Kembalikan ke recycle_bin
+          var reInsert = { tabel: e.tabel, label: e.label, data: row, oleh_nama: e.oleh_nama, deleted_at: e.deleted_at };
+          var ri = await db.from('recycle_bin').insert(reInsert).select();
+          if(ri.data && ri.data[0]) recycleData.unshift(ri.data[0]);
+          recycleData.sort(function(a,b){ return new Date(b.deleted_at)-new Date(a.deleted_at); });
+          renderRecycle();
+          _refreshMenu(e.tabel);
+          showToast('↩ Pemulihan dibatalkan', 'info');
+        } catch(err){ showToast('Gagal urungkan: '+err.message,'error'); }
+      },
+      // ── KONFIRMASI: hapus permanen dari recycle_bin ──
+      async function(){
+        await db.from('recycle_bin').delete().eq('id', id);
+      },
+      '↩️'
+    );
   }
 
   async function hapusPermanenRecycle(id){
     var e = recycleData.find(function(x){ return x.id === id; });
     if(!(await askConfirm('Hapus PERMANEN "' + (e ? e.label : 'data') + '"?\nData ini TIDAK bisa dikembalikan lagi.'))) return;
-    var res = await db.from('recycle_bin').delete().eq('id', id);
-    if(res.error){ showToast('Gagal: ' + res.error.message, 'error'); return; }
+
+    // Sembunyikan item dari tampilan dulu (optimistic)
+    var savedE = e;
     recycleData = recycleData.filter(function(x){ return x.id !== id; });
     renderRecycle();
-    showToast('Dihapus permanen', 'success');
+
+    showUndoToast(
+      (savedE ? savedE.label : 'Data') + ' (hapus permanen)',
+      function() {
+        // Undo: kembalikan ke tampilan
+        if (savedE) {
+          recycleData.unshift(savedE);
+          recycleData.sort(function(a,b){ return new Date(b.deleted_at) - new Date(a.deleted_at); });
+        }
+        renderRecycle();
+        showToast('↩ Dibatalkan, data masih ada di tempat sampah', 'success');
+      },
+      async function() {
+        // Konfirmasi: hapus dari DB
+        var res = await db.from('recycle_bin').delete().eq('id', id);
+        if(res.error){ showToast('Gagal: ' + res.error.message, 'error'); if(savedE){ recycleData.unshift(savedE); recycleData.sort(function(a,b){ return new Date(b.deleted_at)-new Date(a.deleted_at); }); } renderRecycle(); return; }
+        showToast('🗑️ Dihapus permanen', 'success');
+      },
+      '🗑️'
+    );
   }
 
   async function kosongkanRecycle(){
     if(!recycleData.length){ showToast('Tempat sampah sudah kosong','warn'); return; }
     if(!(await askConfirm('Kosongkan SEMUA ' + recycleData.length + ' item di tempat sampah?\nSemua data TIDAK bisa dikembalikan lagi.'))) return;
-    var ids = recycleData.map(function(x){ return x.id; });
-    for(var i=0;i<ids.length;i+=100){
-      await db.from('recycle_bin').delete().in('id', ids.slice(i, i+100));
-    }
+
+    var savedData = recycleData.slice();
+    var savedIds = savedData.map(function(x){ return x.id; });
     recycleData = [];
     renderRecycle();
-    showToast('🗑️ Tempat sampah dikosongkan', 'success');
+
+    showUndoToast(
+      'Kosongkan tempat sampah (' + savedIds.length + ' item)',
+      function() {
+        // Undo: kembalikan semua ke tampilan
+        recycleData = savedData;
+        renderRecycle();
+        showToast('↩ Dibatalkan, semua item dikembalikan ke tempat sampah', 'success');
+      },
+      async function() {
+        // Konfirmasi: hapus semua dari DB
+        for(var i=0;i<savedIds.length;i+=100){
+          await db.from('recycle_bin').delete().in('id', savedIds.slice(i, i+100));
+        }
+        showToast('🗑️ Tempat sampah dikosongkan', 'success');
+      },
+      '🗑️'
+    );
   }
   </script>
 
