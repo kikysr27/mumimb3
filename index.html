@@ -1953,6 +1953,51 @@
         </div>
         <label>Kategori / Status Siswa</label>
         <select id="agKategori"></select>
+        <div class="row">
+          <div>
+            <label>Tempat Lahir</label>
+            <input type="text" id="agTempatLahir" placeholder="Cth: Jakarta">
+          </div>
+          <div>
+            <label>Tanggal Lahir</label>
+            <input type="date" id="agTglLahir">
+          </div>
+        </div>
+        <div class="row" style="margin-bottom:10px;">
+          <div>
+            <label>Jenis Kelamin</label>
+            <div style="display:flex;gap:14px;margin-top:8px;">
+              <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer;font-size:14px;">
+                <input type="radio" name="agJK" id="agJKL" value="laki-laki" style="accent-color:#1a6644;width:16px;height:16px;"> ♂ Laki-laki
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer;font-size:14px;">
+                <input type="radio" name="agJK" id="agJKP" value="perempuan" style="accent-color:#1a6644;width:16px;height:16px;"> ♀ Perempuan
+              </label>
+            </div>
+          </div>
+          <div>
+            <label>Peran / Jabatan MT</label>
+<div id="agPeranBox">
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px;">
+              <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer;font-size:13px;padding:6px 10px;background:#f0f7f3;border-radius:8px;">
+                <input type="checkbox" name="agPeran" value="mahasiswa" style="accent-color:#1a6644;width:16px;height:16px;"> 🎓 Mahasiswa
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer;font-size:13px;padding:6px 10px;background:#f0f7f3;border-radius:8px;">
+                <input type="checkbox" name="agPeran" value="karyawan_mahasiswa" style="accent-color:#1a6644;width:16px;height:16px;"> 💼 Karyawan Mahasiswa
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer;font-size:13px;padding:6px 10px;background:#f0f7f3;border-radius:8px;">
+                <input type="checkbox" name="agPeran" value="mubaligh" style="accent-color:#1a6644;width:16px;height:16px;"> 🕌 Mubaligh
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer;font-size:13px;padding:6px 10px;background:#f0f7f3;border-radius:8px;">
+                <input type="checkbox" name="agPeran" value="mubalighot" style="accent-color:#1a6644;width:16px;height:16px;"> 🕌 Mubalighot
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer;font-size:13px;padding:6px 10px;background:#f0f7f3;border-radius:8px;">
+                <input type="checkbox" name="agPeran" value="bukan_mt" style="accent-color:#1a6644;width:16px;height:16px;"> 👤 Bukan MT
+              </label>
+            </div>
+            </div>
+          </div>
+        </div>
         <label>Alamat</label>
         <textarea id="agAlamat" rows="2" placeholder="Alamat lengkap..."></textarea>
         <label>Catatan (opsional)</label>
@@ -1995,6 +2040,12 @@
         <button onclick="addKategoriFromAnggota()">➕ Tambah Kategori</button>
         <div id="agKatMsg"></div>
         <div id="agKatList" style="margin-top:12px;"></div>
+      </div>
+
+      <!-- ═══ STATISTIK ANGGOTA ═══ -->
+      <div class="card" id="anggotaStatCard" style="display:none;">
+        <h2>📊 Statistik Anggota</h2>
+        <div id="anggotaStatBody"></div>
       </div>
     </div>
 
@@ -3144,6 +3195,52 @@
       </div>
       <label>Kategori / Status Siswa</label>
       <select id="edKategori"></select>
+      <div class="row">
+        <div>
+          <label>Tempat Lahir</label>
+          <input type="text" id="edTempatLahir" placeholder="Cth: Jakarta">
+        </div>
+        <div>
+          <label>Tanggal Lahir</label>
+          <input type="date" id="edTglLahir" onchange="updateUmurPreview()">
+        </div>
+      </div>
+      <div id="edUmurPreview" class="muted" style="font-size:12px;margin:-6px 0 10px;"></div>
+      <div class="row" style="margin-bottom:10px;">
+        <div>
+          <label>Jenis Kelamin</label>
+          <div style="display:flex;gap:14px;margin-top:8px;">
+            <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer;font-size:14px;">
+              <input type="radio" name="edJK" id="edJKL" value="laki-laki" style="accent-color:#1a6644;width:16px;height:16px;"> ♂ Laki-laki
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer;font-size:14px;">
+              <input type="radio" name="edJK" id="edJKP" value="perempuan" style="accent-color:#1a6644;width:16px;height:16px;"> ♀ Perempuan
+            </label>
+          </div>
+        </div>
+        <div>
+          <label>Peran / Jabatan MT</label>
+<div id="edPeranBox">
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px;">
+            <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer;font-size:13px;padding:6px 10px;background:#f0f7f3;border-radius:8px;">
+              <input type="checkbox" name="edPeran" value="mahasiswa" style="accent-color:#1a6644;width:16px;height:16px;"> 🎓 Mahasiswa
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer;font-size:13px;padding:6px 10px;background:#f0f7f3;border-radius:8px;">
+              <input type="checkbox" name="edPeran" value="karyawan_mahasiswa" style="accent-color:#1a6644;width:16px;height:16px;"> 💼 Karyawan Mahasiswa
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer;font-size:13px;padding:6px 10px;background:#f0f7f3;border-radius:8px;">
+              <input type="checkbox" name="edPeran" value="mubaligh" style="accent-color:#1a6644;width:16px;height:16px;"> 🕌 Mubaligh
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer;font-size:13px;padding:6px 10px;background:#f0f7f3;border-radius:8px;">
+              <input type="checkbox" name="edPeran" value="mubalighot" style="accent-color:#1a6644;width:16px;height:16px;"> 🕌 Mubalighot
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer;font-size:13px;padding:6px 10px;background:#f0f7f3;border-radius:8px;">
+              <input type="checkbox" name="edPeran" value="bukan_mt" style="accent-color:#1a6644;width:16px;height:16px;"> 👤 Bukan MT
+            </label>
+          </div>
+          </div>
+        </div>
+      </div>
       <label>Alamat</label>
       <textarea id="edAlamat" rows="2"></textarea>
       <label>Catatan</label>
@@ -5061,7 +5158,7 @@ const TABEL_LABEL = {
   acara: 'Acara', acara_bayar: 'Pembayaran Acara',
   foto_bukti: '🖼️ Foto Bukti Dihapus',
 };
-let rekapRows = [], rekapMeta = {};
+let rekapRows = [], rekapMeta = {}, rekapSesiStats = [], rekapSemuaAnggota = [];
 let iuranRows = [], iuranMeta = {}, kategoriCache = [], currentIuranId = null;
 
 // ─────────────── AUTH ───────────────
@@ -5754,7 +5851,7 @@ async function loadDashboard() {
     const { data: keh } = await db.from('kehadiran').select('status')
       .gte('tanggal', `${ym}-01`).lte('tanggal', last);
     if (keh && keh.length) {
-      const h = keh.filter(k => k.status === 'hadir').length;
+      const h = keh.filter(k => k.status === 'hadir' || k.status === 'izin').length;
       $('statHadir').textContent = Math.round(h / keh.length * 100) + '%';
     } else {
       $('statHadir').textContent = '—';
@@ -5909,12 +6006,33 @@ function renderTx(target, list, withDelete) {
 }
 
 // ─────────────── ANGGOTA ───────────────
+// ─────────── HITUNG UMUR DARI TANGGAL LAHIR ───────────
+function hitungUmur(tglLahir) {
+  if (!tglLahir) return null;
+  const lahir = new Date(tglLahir);
+  if (isNaN(lahir.getTime())) return null;
+  const now = new Date();
+  let umur = now.getFullYear() - lahir.getFullYear();
+  const blmUlangTahun = (now.getMonth() < lahir.getMonth()) ||
+    (now.getMonth() === lahir.getMonth() && now.getDate() < lahir.getDate());
+  if (blmUlangTahun) umur--;
+  return umur >= 0 ? umur : null;
+}
+
+function updateUmurPreview() {
+  const v = $('edTglLahir') ? $('edTglLahir').value : '';
+  const u = hitungUmur(v);
+  if ($('edUmurPreview')) $('edUmurPreview').textContent = u !== null ? '🎂 Umur saat ini: ' + u + ' tahun' : '';
+}
+
 async function addAnggota() {
   const btn = document.querySelector('#sec-anggota .card button[onclick="addAnggota()"]');
   if (!_lockBtn('addAnggota', btn)) return;
   try {
     const nama = $('agNama').value.trim();
     if (!nama) { setMsg('agMsg', 'Nama wajib diisi', true); return; }
+    const agJK = document.querySelector('input[name="agJK"]:checked');
+    const agPeranChecked = [...document.querySelectorAll('input[name="agPeran"]:checked')].map(c => c.value);
     const { error } = await db.from('anggota').insert({
       nama,
       kontak:  $('agKontak').value.trim() || null,
@@ -5922,17 +6040,25 @@ async function addAnggota() {
       status:  $('agStatus').value,
       catatan: $('agCatatan').value.trim() || null,
       kategori_id: $('agKategori').value ? parseInt($('agKategori').value) : null,
+      jenis_kelamin: agJK ? agJK.value : null,
+      peran: agPeranChecked.length ? JSON.stringify(agPeranChecked) : null,
+      tempat_lahir: $('agTempatLahir').value.trim() || null,
+      tanggal_lahir: $('agTglLahir').value || null,
       dicatat_oleh: currentProf.id,
     });
     if (error) { setMsg('agMsg', 'Gagal: ' + error.message, true); return; }
     setMsg('agMsg', '✅ Anggota tersimpan');
     $('agNama').value = ''; $('agKontak').value = ''; $('agAlamat').value = ''; $('agCatatan').value = '';
+    $('agTempatLahir').value = ''; $('agTglLahir').value = '';
+    document.querySelectorAll('input[name="agJK"]').forEach(r => r.checked = false);
+    document.querySelectorAll('input[name="agPeran"]').forEach(c => c.checked = false);
     loadAnggota();
   } finally { _unlockBtn('addAnggota', btn); }
 }
 
 async function loadAnggota() {
   const { data } = await db.from('anggota').select('*, kategori_anggota(nama)').order('nama');
+  // jenis_kelamin dan peran akan ikut di-select karena pakai '*'
   const list = data || [];
   anggotaFull = list;
   // Expose ke window — dipakai mention dropdown @ di notulensi musyawarah
@@ -5942,6 +6068,8 @@ async function loadAnggota() {
   if (cnt) cnt.textContent = list.length ? '· ' + list.length + ' anggota' : '';
   // Render daftar (terfilter sesuai search saat ini)
   renderListAnggotaFiltered();
+  // Render statistik anggota
+  renderAnggotaStat();
   // dropdown anggota di Kas Masuk
   $('kmAnggota').innerHTML = '<option value="">— Tidak terkait anggota —</option>' +
     list.map(a => `<option value="${a.id}">${escapeHtml(a.nama)}</option>`).join('');
@@ -5964,10 +6092,18 @@ function renderListAnggotaFiltered() {
     const absenBadge = (a.tampil_absensi === false)
       ? `<span style="font-size:10px;padding:2px 7px;border-radius:99px;background:#fef3c7;color:#d97706;font-weight:700;margin-left:4px;">👁 Absensi Off</span>`
       : '';
+    const jkBadge = a.jenis_kelamin
+      ? `<span style="font-size:10px;padding:2px 7px;border-radius:99px;background:${a.jenis_kelamin==='laki-laki'?'#dbeafe':'#fce7f3'};color:${a.jenis_kelamin==='laki-laki'?'#1d4ed8':'#be185d'};font-weight:700;margin-left:4px;">${a.jenis_kelamin==='laki-laki'?'♂':'♀'} ${a.jenis_kelamin==='laki-laki'?'L':'P'}</span>`
+      : '';
+    const peranLabels = {mahasiswa:'🎓 Mahasiswa',karyawan_mahasiswa:'💼 Karya-Mhs',mubaligh:'🕌 Mubaligh',mubalighot:'🕌 Mubalighot',bukan_mt:'👤 Bukan MT'};
+    const peranArr2 = (() => { try { return JSON.parse(a.peran||'[]'); } catch(e){ return a.peran?[a.peran]:[]; } })();
+    const peranBadge = peranArr2.map(p =>
+      `<span style="font-size:10px;padding:2px 7px;border-radius:99px;background:#f0f7f3;color:#1a6644;font-weight:700;margin-left:4px;">${peranLabels[p]||p}</span>`
+    ).join('');
     return `<div class="list-item">
       <div class="left">
-        <div class="name">${escapeHtml(a.nama)}${absenBadge}</div>
-        <div class="meta">${a.kontak || '—'} · ${a.status}${kat}${a.alamat ? ' · ' + escapeHtml(a.alamat) : ''}</div>
+        <div class="name">${escapeHtml(a.nama)}${jkBadge}${peranBadge}${absenBadge}</div>
+        <div class="meta">${a.kontak || '—'} · ${a.status}${kat}${(() => { const u = hitungUmur(a.tanggal_lahir); return u !== null ? ' · ' + u + ' th' : ''; })()}${a.alamat ? ' · ' + escapeHtml(a.alamat) : ''}</div>
       </div>
       <div style="display:flex;gap:4px;">
         <button class="small secondary" onclick="openAnggotaEdit(${a.id})">Edit</button>
@@ -6016,243 +6152,416 @@ function filterListAnggota() {
   renderListAnggotaFiltered();
 }
 
+// ─────────── STATISTIK ANGGOTA ───────────
+function renderAnggotaStat() {
+  const card = $('anggotaStatCard');
+  const body = $('anggotaStatBody');
+  if (!card || !body || !anggotaFull || !anggotaFull.length) {
+    if (card) card.style.display = 'none';
+    return;
+  }
+  const all    = anggotaFull;
+  const aktif  = all.filter(a => a.status === 'aktif');
+  const nonAkt = all.filter(a => a.status !== 'aktif');
+  const total  = all.length;
+
+  const count = (arr, key, val) => arr.filter(a => a[key] === val).length;
+  const getPeran = (a) => { try { return JSON.parse(a.peran||'[]'); } catch(e){ return a.peran?[a.peran]:[]; } };
+  const countPeran = (arr, val) => arr.filter(a => getPeran(a).includes(val)).length;
+
+  // Helper row & divider
+  const statRow = (icon, label, val, color, indent) =>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;background:${indent?'#f7faf8':'#f0f7f3'};border-radius:8px;margin-bottom:5px;${indent?'margin-left:10px;':''}">
+      <span style="font-size:13px;${indent?'color:#4a6056;':''}">${icon} ${label}</span>
+      <span style="font-weight:800;font-size:14px;color:${color||'#1a6644'};">${val}</span>
+    </div>`;
+
+  const divider = (label, color) =>
+    `<div style="font-size:10px;font-weight:800;color:${color||'#7a9585'};text-transform:uppercase;letter-spacing:.6px;margin:14px 0 6px;">${label}</div>`;
+
+  const sectionHeader = (label, jumlah, color, bg) =>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:${bg};border-radius:8px;margin-bottom:6px;">
+      <span style="font-size:13px;font-weight:700;color:${color};">${label}</span>
+      <span style="font-weight:800;font-size:15px;color:${color};">${jumlah} orang</span>
+    </div>`;
+
+  // Fungsi buat blok JK + Peran untuk satu kelompok anggota
+  const buildBlock = (arr) => {
+    const tL  = count(arr, 'jenis_kelamin', 'laki-laki');
+    const tP  = count(arr, 'jenis_kelamin', 'perempuan');
+    const tJKkosong = arr.filter(a => !a.jenis_kelamin).length;
+    const tMhs   = countPeran(arr, 'mahasiswa');
+    const tKM    = countPeran(arr, 'karyawan_mahasiswa');
+    const tMbl   = countPeran(arr, 'mubaligh');
+    const tMblt  = countPeran(arr, 'mubalighot');
+    const tBkn   = countPeran(arr, 'bukan_mt');
+    const tPrKosong = arr.filter(a => getPeran(a).length === 0).length;
+    return (
+      divider('Jenis Kelamin') +
+      statRow('♂', 'Laki-laki', tL, '#1d4ed8', true) +
+      statRow('♀', 'Perempuan', tP, '#be185d', true) +
+      (tJKkosong ? statRow('❓', 'Belum diisi', tJKkosong, '#9ca3af', true) : '') +
+      divider('Peran / Jabatan MT') +
+      statRow('🎓', 'Mahasiswa', tMhs, '#1a6644', true) +
+      statRow('💼', 'Karyawan Mahasiswa', tKM, '#1a6644', true) +
+      statRow('🕌', 'Mubaligh', tMbl, '#1a6644', true) +
+      statRow('🕌', 'Mubalighot', tMblt, '#1a6644', true) +
+      statRow('👤', 'Bukan MT', tBkn, '#6b7280', true) +
+      (tPrKosong ? statRow('❓', 'Belum diisi', tPrKosong, '#9ca3af', true) : '')
+    );
+  };
+
+  body.innerHTML =
+    // ── AKTIF ──
+    sectionHeader('✅ Anggota Aktif', aktif.length, '#16a34a', '#dcfce7') +
+    buildBlock(aktif) +
+
+    // ── TIDAK AKTIF ──
+    `<div style="height:6px;"></div>` +
+    sectionHeader('❌ Anggota Tidak Aktif', nonAkt.length, '#dc2626', '#fee2e2') +
+    buildBlock(nonAkt) +
+
+    // ── TOTAL KESELURUHAN ──
+    `<div style="height:6px;"></div>` +
+    `<div style="padding:10px 12px;background:linear-gradient(135deg,#0f3d2b,#1a6644);border-radius:10px;margin-bottom:6px;">
+      <div style="font-size:11px;font-weight:800;color:#a7f3d0;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">📊 Total Keseluruhan</div>` +
+    (() => {
+      const tL  = count(all, 'jenis_kelamin', 'laki-laki');
+      const tP  = count(all, 'jenis_kelamin', 'perempuan');
+      const tJKk= all.filter(a=>!a.jenis_kelamin).length;
+      const totRow = (icon, label, val) =>
+        `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.1);">
+          <span style="font-size:12px;color:#d1fae5;">${icon} ${label}</span>
+          <span style="font-weight:800;font-size:13px;color:#fff;">${val}</span>
+        </div>`;
+      return totRow('👥','Total Anggota', total) +
+        totRow('♂','Laki-laki', tL) +
+        totRow('♀','Perempuan', tP) +
+        (tJKk ? totRow('❓','JK Belum Diisi', tJKk) : '') +
+        totRow('🎓','Mahasiswa', countPeran(all,'mahasiswa')) +
+        totRow('💼','Karyawan Mahasiswa', countPeran(all,'karyawan_mahasiswa')) +
+        totRow('🕌','Mubaligh', countPeran(all,'mubaligh')) +
+        totRow('🕌','Mubalighot', countPeran(all,'mubalighot')) +
+        totRow('👤','Bukan MT', countPeran(all,'bukan_mt'));
+    })() +
+    `</div>`;
+
+  card.style.display = 'block';
+}
+
 // ─────────── EXPORT ANGGOTA PDF ───────────
 async function exportAnggotaPDF() {
   if (!anggotaFull || anggotaFull.length === 0) {
-    showToast('Belum ada data anggota untuk diekspor', 'warn');
-    return;
+    showToast('Belum ada data anggota untuk diekspor', 'warn'); return;
   }
-
-  // Pastikan jsPDF sudah dimuat
-  if (typeof window.jspdf === 'undefined' && typeof jsPDF === 'undefined') {
-    showToast('Memuat library PDF, coba lagi sebentar...', 'info');
-    return;
+  if (typeof window.jspdf === 'undefined') {
+    showToast('Memuat library PDF, coba lagi sebentar...', 'info'); return;
   }
-
-  const { jsPDF } = window.jspdf || window;
+  const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-  const GREEN_DARK  = [26, 102, 68];
-  const GREEN_MED   = [45, 158, 107];
-  const GREEN_LIGHT = [232, 245, 239];
-  const WHITE       = [255, 255, 255];
-  const GRAY_LIGHT  = [247, 250, 248];
-  const TEXT_DARK   = [15, 46, 26];
-  const TEXT_MUTED  = [122, 149, 133];
+  const G_DARK  = [26, 102, 68];
+  const G_MED   = [45, 158, 107];
+  const G_LIGHT = [232, 245, 239];
+  const WHITE   = [255, 255, 255];
+  const GRAY_L  = [247, 250, 248];
+  const T_DARK  = [15, 46, 26];
+  const T_MUTED = [122, 149, 133];
+  const RED     = [220, 38, 38];
+  const GREEN   = [22, 163, 74];
+  const BLUE    = [29, 78, 216];
+  const PINK    = [190, 24, 93];
 
-  const pageW  = doc.internal.pageSize.getWidth();
-  const pageH  = doc.internal.pageSize.getHeight();
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
   const margin = 14;
-  const contentW = pageW - margin * 2;
+  const cW = pageW - margin * 2;
   let y = 0;
 
-  // ── HEADER HALAMAN ──────────────────────────────────────
-  doc.setFillColor(...GREEN_DARK);
-  doc.rect(0, 0, pageW, 36, 'F');
+  const pdfSafe   = (s) => String(s||'')
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'')
+    .replace(/[—–]/g,'-').replace(/[…]/g,'...').replace(/['']/g,"'").replace(/[""]/g,'"').trim();
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.setTextColor(...WHITE);
-  doc.text('LAPORAN DATA ANGGOTA', pageW / 2, 13, { align: 'center' });
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(200, 230, 215);
-
-  const orgName = (document.querySelector('.brand')?.textContent || 'Mumi MB3').trim();
-  const now = new Date();
+  const orgName  = pdfSafe((document.querySelector('.brand')?.textContent || 'Mumi MB3').trim());
+  const now      = new Date();
   const tglCetak = now.toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-  doc.text(orgName + '  |  Dicetak: ' + tglCetak, pageW / 2, 21, { align: 'center' });
 
-  // Statistik ringkas di header
-  const totalAng  = anggotaFull.length;
-  const aktifAng  = anggotaFull.filter(a => a.status === 'aktif').length;
-  const statLabels = [
-    { label: 'Total Anggota', val: totalAng },
-    { label: 'Aktif',         val: aktifAng },
-    { label: 'Tidak Aktif',   val: totalAng - aktifAng },
-  ];
-  const statW = contentW / statLabels.length;
-  doc.setFillColor(255, 255, 255, 30);
-  doc.setDrawColor(255, 255, 255, 50);
-  statLabels.forEach((s, i) => {
-    const sx = margin + i * statW;
-    doc.setFillColor(15, 61, 43);
-    doc.roundedRect(sx, 25, statW - 4, 9, 2, 2, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.setTextColor(...WHITE);
-    doc.text(String(s.val), sx + (statW - 4) / 2, 30.5, { align: 'center' });
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(6.5);
-    doc.setTextColor(160, 210, 185);
-    doc.text(s.label, sx + (statW - 4) / 2, 33.5, { align: 'center' });
-  });
+  const all    = anggotaFull;
+  const aktif  = all.filter(a => a.status === 'aktif');
+  const nonAkt = all.filter(a => a.status !== 'aktif');
 
-  y = 42;
+  const getPeran  = (a) => { try { return JSON.parse(a.peran||'[]'); } catch(e){ return a.peran?[a.peran]:[]; } };
+  const cntKey    = (arr, k, v) => arr.filter(a => a[k] === v).length;
+  const cntPeran  = (arr, v)    => arr.filter(a => getPeran(a).includes(v)).length;
 
-  // ── KELOMPOKKAN ANGGOTA PER KATEGORI ────────────────────
-  // Group: { id: kategori_id|null, nama: namaKategori, anggota: [] }
-  const groupMap = {};
-  anggotaFull.forEach(a => {
-    const katId   = a.kategori_id != null ? String(a.kategori_id) : '__none__';
-    const katNama = a.kategori_anggota ? a.kategori_anggota.nama : 'Tanpa Kategori';
-    if (!groupMap[katId]) groupMap[katId] = { nama: katNama, anggota: [] };
-    groupMap[katId].anggota.push(a);
-  });
-
-  // Urutkan: kategori berisi UMR duluan, lalu sisanya, terakhir "Tanpa Kategori"
-  const groupKeys = Object.keys(groupMap).sort((a, b) => {
-    if (a === '__none__') return 1;
-    if (b === '__none__') return -1;
-    const na = groupMap[a].nama.toLowerCase();
-    const nb = groupMap[b].nama.toLowerCase();
-    const aIsUmr = na.includes('umr');
-    const bIsUmr = nb.includes('umr');
-    if (aIsUmr && !bIsUmr) return -1;
-    if (!aIsUmr && bIsUmr) return 1;
-    return na.localeCompare(nb, 'id');
-  });
-
-  // ── RENDER TIAP GRUP ────────────────────────────────────
-  const colNama   = margin;
-  const colKontak = margin + contentW * 0.38;
-  const colStatus = margin + contentW * 0.64;
-  const colAlamat = margin + contentW * 0.78;
-  const rowH      = 7.2;
-
-  function checkPageBreak(needed) {
-    if (y + needed > pageH - 14) {
-      doc.addPage();
-      // Stripe header ulang di halaman baru
-      doc.setFillColor(...GREEN_DARK);
-      doc.rect(0, 0, pageW, 10, 'F');
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      doc.setTextColor(...WHITE);
+  // ── Fungsi page header ──
+  function pageHeader(isFirst) {
+    doc.setFillColor(...G_DARK);
+    doc.rect(0, 0, pageW, isFirst ? 38 : 10, 'F');
+    if (isFirst) {
+      doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(...WHITE);
+      doc.text('LAPORAN DATA ANGGOTA', pageW/2, 12, {align:'center'});
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(200,230,215);
+      doc.text(orgName + '  |  Dicetak: ' + tglCetak, pageW/2, 20, {align:'center'});
+      // 3 stat box
+      const boxes = [
+        {label:'Total Anggota', val: all.length},
+        {label:'Aktif',         val: aktif.length},
+        {label:'Tidak Aktif',   val: nonAkt.length},
+      ];
+      const bw = cW / 3;
+      boxes.forEach((b,i) => {
+        const sx = margin + i*bw;
+        doc.setFillColor(15,61,43);
+        doc.roundedRect(sx, 25, bw-3, 10, 2, 2, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...WHITE);
+        doc.text(String(b.val), sx+(bw-3)/2, 31, {align:'center'});
+        doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(160,210,185);
+        doc.text(b.label, sx+(bw-3)/2, 34.5, {align:'center'});
+      });
+      y = 43;
+    } else {
+      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...WHITE);
       doc.text('LAPORAN DATA ANGGOTA  |  ' + orgName, margin, 6.5);
-      doc.text('Hal. ' + doc.internal.getCurrentPageInfo().pageNumber, pageW - margin, 6.5, { align: 'right' });
+      doc.text('Hal. '+doc.internal.getCurrentPageInfo().pageNumber, pageW-margin, 6.5, {align:'right'});
       y = 16;
     }
   }
 
-  groupKeys.forEach((key, gi) => {
-    const grup = groupMap[key];
-    const members = grup.anggota;
-
-    checkPageBreak(26);
-
-    // ── Sub-header grup kategori ──
-    doc.setFillColor(...GREEN_MED);
-    doc.roundedRect(margin, y, contentW, 8, 2, 2, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.setTextColor(...WHITE);
-    doc.text('>> ' + grup.nama.toUpperCase(), margin + 4, y + 5.4);
-    doc.text(members.length + ' anggota', pageW - margin - 2, y + 5.4, { align: 'right' });
-    y += 10;
-
-    // ── Header kolom ──
-    doc.setFillColor(...GREEN_LIGHT);
-    doc.rect(margin, y, contentW, 6, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.2);
-    doc.setTextColor(...TEXT_DARK);
-    doc.text('Nama Lengkap',  colNama + 2,   y + 4);
-    doc.text('Kontak',        colKontak + 2, y + 4);
-    doc.text('Status',        colStatus + 2, y + 4);
-    doc.text('Alamat',        colAlamat + 2, y + 4);
-    y += 6;
-
-    // ── Baris tiap anggota ──
-    members.forEach((a, idx) => {
-      checkPageBreak(rowH + 2);
-
-      // Zebra stripe
-      if (idx % 2 === 1) {
-        doc.setFillColor(...GRAY_LIGHT);
-        doc.rect(margin, y, contentW, rowH, 'F');
-      }
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.setTextColor(...TEXT_DARK);
-
-      // Nama (bold, elipsis jika kepanjangan)
-      const maxNamaW = colKontak - colNama - 4;
-      let namaText = a.nama || '-';
-      while (doc.getTextWidth(namaText) > maxNamaW && namaText.length > 4) {
-        namaText = namaText.slice(0, -2) + '..';
-      }
-      doc.text(namaText, colNama + 2, y + 4.8);
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.5);
-      doc.setTextColor(...TEXT_MUTED);
-
-      // Kontak
-      doc.text(a.kontak || '-', colKontak + 2, y + 4.8);
-
-      // Status badge-style
-      const stColor = a.status === 'aktif' ? [22, 163, 74] : [220, 38, 38];
-      doc.setTextColor(...stColor);
-      doc.setFont('helvetica', 'bold');
-      doc.text(a.status === 'aktif' ? 'Aktif' : 'Tdk Aktif', colStatus + 2, y + 4.8);
-
-      // Alamat
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...TEXT_MUTED);
-      const maxAlamatW = pageW - margin - colAlamat - 2;
-      let alamatText = (a.alamat || '-').replace(/\n/g, ' ');
-      while (doc.getTextWidth(alamatText) > maxAlamatW && alamatText.length > 3) {
-        alamatText = alamatText.slice(0, -2) + '..';
-      }
-      doc.text(alamatText, colAlamat + 2, y + 4.8);
-
-      // Catatan kecil di bawah nama (jika ada)
-      if (a.catatan) {
-        doc.setFont('helvetica', 'italic');
-        doc.setFontSize(6.5);
-        doc.setTextColor(150, 170, 160);
-        let ctText = a.catatan;
-        while (doc.getTextWidth(ctText) > maxNamaW && ctText.length > 3) {
-          ctText = ctText.slice(0, -2) + '…';
-        }
-        // Tambahkan satu baris ekstra jika ada catatan — tapi hitung ulang rowH
-        // Untuk sederhana, kita tampilkan di baris yang sama setelah nama
-      }
-
-      // Garis bawah baris
-      doc.setDrawColor(220, 235, 228);
-      doc.setLineWidth(0.2);
-      doc.line(margin, y + rowH, margin + contentW, y + rowH);
-
-      y += rowH;
-    });
-
-    y += 6; // spasi antar grup
-  });
-
-  // ── FOOTER ──────────────────────────────────────────────
-  const totalPages = doc.internal.getNumberOfPages();
-  for (let p = 1; p <= totalPages; p++) {
-    doc.setPage(p);
-    doc.setFillColor(245, 249, 247);
-    doc.rect(0, pageH - 10, pageW, 10, 'F');
-    doc.setDrawColor(...GREEN_LIGHT);
-    doc.setLineWidth(0.4);
-    doc.line(margin, pageH - 10, pageW - margin, pageH - 10);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(...TEXT_MUTED);
-    doc.text('Dokumen ini digenerate otomatis oleh sistem ' + orgName, margin, pageH - 5);
-    doc.text('Halaman ' + p + ' / ' + totalPages, pageW - margin, pageH - 5, { align: 'right' });
+  function checkPage(needed) {
+    if (y + needed > pageH - 14) { doc.addPage(); pageHeader(false); }
   }
 
-  // ── SIMPAN FILE ─────────────────────────────────────────
-  const tglFile = now.toISOString().slice(0, 10);
-  doc.save('Laporan-Anggota-' + tglFile + '.pdf');
-  showToast('📄 PDF berhasil diekspor!', 'success');
+  // ══════════════════════════════════════════════
+  // HALAMAN 1+: DAFTAR ANGGOTA PER KATEGORI
+  // ══════════════════════════════════════════════
+  pageHeader(true);
+
+  const colNama   = margin;
+  const colJK     = margin + cW * 0.34;
+  const colPeran  = margin + cW * 0.44;
+  const colStatus = margin + cW * 0.72;
+  const colKontak = margin + cW * 0.83;
+  const rowH = 7.5;
+
+  const peranShort = {mahasiswa:'Mhs',karyawan_mahasiswa:'K.Mhs',mubaligh:'Mblgh',mubalighot:'Mblght',bukan_mt:'Bkn MT'};
+
+  // Group per kategori
+  const groupMap = {};
+  all.forEach(a => {
+    const kid  = a.kategori_id != null ? String(a.kategori_id) : '__none__';
+    const knm  = a.kategori_anggota ? a.kategori_anggota.nama : 'Tanpa Kategori';
+    if (!groupMap[kid]) groupMap[kid] = { nama: knm, anggota: [] };
+    groupMap[kid].anggota.push(a);
+  });
+  const groupKeys = Object.keys(groupMap).sort((a,b) => {
+    if (a==='__none__') return 1; if (b==='__none__') return -1;
+    return groupMap[a].nama.localeCompare(groupMap[b].nama,'id');
+  });
+
+  groupKeys.forEach(key => {
+    const grup = groupMap[key];
+    checkPage(26);
+
+    // Sub-header kategori
+    doc.setFillColor(...G_MED);
+    doc.roundedRect(margin, y, cW, 8, 2, 2, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...WHITE);
+    doc.text('>> ' + pdfSafe(grup.nama).toUpperCase(), margin+4, y+5.4);
+    doc.text(grup.anggota.length+' anggota', pageW-margin-2, y+5.4, {align:'right'});
+    y += 10;
+
+    // Header kolom
+    doc.setFillColor(...G_LIGHT);
+    doc.rect(margin, y, cW, 6, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...T_DARK);
+    doc.text('Nama Lengkap', colNama+2,   y+4);
+    doc.text('JK',           colJK+2,     y+4);
+    doc.text('Peran MT',     colPeran+2,  y+4);
+    doc.text('Status',       colStatus+2, y+4);
+    doc.text('Kontak',       colKontak+2, y+4);
+    y += 6;
+
+    grup.anggota.forEach((a, idx) => {
+      checkPage(rowH+2);
+      if (idx%2===1) { doc.setFillColor(...GRAY_L); doc.rect(margin,y,cW,rowH,'F'); }
+
+      // Nama
+      const maxNW = colJK - colNama - 3;
+      let nm = pdfSafe(a.nama||'-');
+      while (doc.getTextWidth(nm) > maxNW && nm.length>3) nm = nm.slice(0,-2)+'..';
+      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...T_DARK);
+      doc.text(nm, colNama+2, y+5);
+
+      // JK
+      const jkTxt = a.jenis_kelamin==='laki-laki'?'L':a.jenis_kelamin==='perempuan'?'P':'-';
+      const jkClr = a.jenis_kelamin==='laki-laki'?BLUE:a.jenis_kelamin==='perempuan'?PINK:T_MUTED;
+      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...jkClr);
+      doc.text(jkTxt, colJK+2, y+5);
+
+      // Peran (gabung singkatan)
+      const pArr = getPeran(a).map(p => peranShort[p]||p);
+      const pTxt = pArr.length ? pArr.join(', ') : '-';
+      const maxPW = colStatus - colPeran - 3;
+      let pShow = pTxt;
+      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...G_DARK);
+      while (doc.getTextWidth(pShow)>maxPW && pShow.length>2) pShow=pShow.slice(0,-2)+'..';
+      doc.text(pShow, colPeran+2, y+5);
+
+      // Status
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+      doc.setTextColor(...(a.status==='aktif'?GREEN:RED));
+      doc.text(a.status==='aktif'?'Aktif':'Tdk Aktif', colStatus+2, y+5);
+
+      // Kontak
+      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...T_MUTED);
+      const maxKW = pageW-margin-colKontak-2;
+      let kt = pdfSafe(a.kontak||'-');
+      while (doc.getTextWidth(kt)>maxKW && kt.length>2) kt=kt.slice(0,-2)+'..';
+      doc.text(kt, colKontak+2, y+5);
+
+      // Garis bawah
+      doc.setDrawColor(220,235,228); doc.setLineWidth(0.2);
+      doc.line(margin, y+rowH, margin+cW, y+rowH);
+      y += rowH;
+    });
+    y += 5;
+  });
+
+  // ══════════════════════════════════════════════
+  // HALAMAN STATISTIK
+  // ══════════════════════════════════════════════
+  doc.addPage();
+  pageHeader(false);
+
+  // Judul halaman statistik
+  doc.setFillColor(...G_DARK);
+  doc.roundedRect(margin, y, cW, 10, 3, 3, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...WHITE);
+  doc.text('STATISTIK ANGGOTA', pageW/2, y+6.8, {align:'center'});
+  y += 14;
+
+  // ── fungsi helper PDF stat ──
+  function statSection(title, jumlah, titleColor, bgColor) {
+    checkPage(12);
+    doc.setFillColor(...bgColor);
+    doc.roundedRect(margin, y, cW, 9, 2, 2, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...titleColor);
+    doc.text(title, margin+4, y+6);
+    doc.text(String(jumlah)+' orang', pageW-margin-2, y+6, {align:'right'});
+    y += 12;
+  }
+
+  function statRow(label, val, indented, valColor) {
+    checkPage(9);
+    const lx = indented ? margin+6 : margin;
+    const lw = indented ? cW-6 : cW;
+    doc.setFillColor(indented ? 247:240, indented ? 250:247, indented ? 248:243);
+    doc.roundedRect(lx, y, lw, 7.5, 1.5, 1.5, 'F');
+    doc.setFont('helvetica', indented?'normal':'bold');
+    doc.setFontSize(8.5); doc.setTextColor(...T_DARK);
+    doc.text(label, lx+3, y+5.2);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.setTextColor(...(valColor||G_DARK));
+    doc.text(String(val), pageW-margin-2, y+5.5, {align:'right'});
+    doc.setDrawColor(220,235,228); doc.setLineWidth(0.15);
+    doc.line(lx, y+7.5, lx+lw, y+7.5);
+    y += 9;
+  }
+
+  function subDivider(label) {
+    checkPage(8);
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...T_MUTED);
+    doc.text(label.toUpperCase(), margin+6, y+4);
+    doc.setDrawColor(...G_LIGHT); doc.setLineWidth(0.3);
+    doc.line(margin+6+doc.getTextWidth(label.toUpperCase())+2, y+2.5, margin+cW, y+2.5);
+    y += 7;
+  }
+
+  function buildStatBlock(arr) {
+    const tL   = cntKey(arr,'jenis_kelamin','laki-laki');
+    const tP   = cntKey(arr,'jenis_kelamin','perempuan');
+    const tJKk = arr.filter(a=>!a.jenis_kelamin).length;
+    const tMhs  = cntPeran(arr,'mahasiswa');
+    const tKM   = cntPeran(arr,'karyawan_mahasiswa');
+    const tMbl  = cntPeran(arr,'mubaligh');
+    const tMblt = cntPeran(arr,'mubalighot');
+    const tBkn  = cntPeran(arr,'bukan_mt');
+    const tPk   = arr.filter(a=>getPeran(a).length===0).length;
+
+    subDivider('Jenis Kelamin');
+    statRow('Laki-laki',   tL,   true, BLUE);
+    statRow('Perempuan',   tP,   true, PINK);
+    if (tJKk) statRow('Belum diisi (JK)', tJKk, true, T_MUTED);
+
+    subDivider('Peran / Jabatan MT');
+    statRow('Mahasiswa',          tMhs,  true, G_DARK);
+    statRow('Karyawan Mahasiswa', tKM,   true, G_DARK);
+    statRow('Mubaligh',           tMbl,  true, G_DARK);
+    statRow('Mubalighot',         tMblt, true, G_DARK);
+    statRow('Bukan MT',           tBkn,  true, [107,114,128]);
+    if (tPk) statRow('Belum diisi (Peran)', tPk, true, T_MUTED);
+  }
+
+  // ── BLOK AKTIF ──
+  statSection('Anggota Aktif', aktif.length, GREEN, [220,252,231]);
+  buildStatBlock(aktif);
+  y += 4;
+
+  // ── BLOK TIDAK AKTIF ──
+  checkPage(14);
+  statSection('Anggota Tidak Aktif', nonAkt.length, RED, [254,226,226]);
+  buildStatBlock(nonAkt);
+  y += 4;
+
+  // ── TOTAL KESELURUHAN (box hijau gelap) ──
+  checkPage(80);
+  doc.setFillColor(...G_DARK);
+  doc.roundedRect(margin, y, cW, 10, 3, 3, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...WHITE);
+  doc.text('TOTAL KESELURUHAN', pageW/2, y+6.8, {align:'center'});
+  y += 13;
+
+  const totRowDark = (label, val, vc) => {
+    checkPage(8);
+    doc.setFillColor(15,61,43);
+    doc.roundedRect(margin, y, cW, 7, 1.5, 1.5, 'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(209,250,229);
+    doc.text(label, margin+3, y+4.8);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...(vc||WHITE));
+    doc.text(String(val), pageW-margin-2, y+5, {align:'right'});
+    y += 8.5;
+  };
+
+  totRowDark('Total Seluruh Anggota', all.length, WHITE);
+  totRowDark('Aktif',                 aktif.length,  [134,239,172]);
+  totRowDark('Tidak Aktif',           nonAkt.length, [252,165,165]);
+  totRowDark('Laki-laki',             cntKey(all,'jenis_kelamin','laki-laki'),  [147,197,253]);
+  totRowDark('Perempuan',             cntKey(all,'jenis_kelamin','perempuan'),  [249,168,212]);
+  const tJKkAll = all.filter(a=>!a.jenis_kelamin).length;
+  if (tJKkAll) totRowDark('JK Belum Diisi', tJKkAll, [209,213,219]);
+  totRowDark('Mahasiswa',             cntPeran(all,'mahasiswa'),           [167,243,208]);
+  totRowDark('Karyawan Mahasiswa',    cntPeran(all,'karyawan_mahasiswa'),  [167,243,208]);
+  totRowDark('Mubaligh',              cntPeran(all,'mubaligh'),            [167,243,208]);
+  totRowDark('Mubalighot',            cntPeran(all,'mubalighot'),          [167,243,208]);
+  totRowDark('Bukan MT',              cntPeran(all,'bukan_mt'),            [209,213,219]);
+
+  // ── FOOTER semua halaman ──
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let p=1; p<=totalPages; p++) {
+    doc.setPage(p);
+    doc.setFillColor(245,249,247);
+    doc.rect(0, pageH-10, pageW, 10, 'F');
+    doc.setDrawColor(...G_LIGHT); doc.setLineWidth(0.4);
+    doc.line(margin, pageH-10, pageW-margin, pageH-10);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...T_MUTED);
+    doc.text('Dokumen digenerate otomatis oleh sistem '+orgName, margin, pageH-5);
+    doc.text('Halaman '+p+' / '+totalPages, pageW-margin, pageH-5, {align:'right'});
+  }
+
+  const tglFile = now.toISOString().slice(0,10);
+  doc.save('Laporan-Anggota-'+tglFile+'.pdf');
+  showToast('PDF berhasil diekspor!', 'success');
 }
 
 // ─────────── PENCARIAN SISWA (dipakai di Kas, Qurban, Acara) ───────────
@@ -6327,6 +6636,14 @@ function openAnggotaEdit(id) {
   $('edKategori').value = a.kategori_id || '';
   $('edAlamat').value  = a.alamat || '';
   $('edCatatan').value = a.catatan || '';
+  $('edTempatLahir').value = a.tempat_lahir || '';
+  $('edTglLahir').value    = a.tanggal_lahir || '';
+  updateUmurPreview();
+  // Jenis kelamin
+  document.querySelectorAll('input[name="edJK"]').forEach(r => { r.checked = (r.value === a.jenis_kelamin); });
+  // Peran (array JSON)
+  const peranArr = (() => { try { return JSON.parse(a.peran || '[]'); } catch(e) { return a.peran ? [a.peran] : []; } })();
+  document.querySelectorAll('input[name="edPeran"]').forEach(c => { c.checked = peranArr.includes(c.value); });
   // tampil_absensi: default true jika belum ada di DB
   $('edTampilAbsensi').checked = (a.tampil_absensi !== false);
   $('edMsg').textContent = '';
@@ -6351,6 +6668,10 @@ async function saveAnggotaEdit() {
     alamat:           $('edAlamat').value.trim() || null,
     catatan:          $('edCatatan').value.trim() || null,
     tampil_absensi:   $('edTampilAbsensi').checked,
+    jenis_kelamin:    (document.querySelector('input[name="edJK"]:checked') || {}).value || null,
+    peran:            (() => { const p = [...document.querySelectorAll('input[name="edPeran"]:checked')].map(c=>c.value); return p.length ? JSON.stringify(p) : null; })(),
+    tempat_lahir:     $('edTempatLahir').value.trim() || null,
+    tanggal_lahir:    $('edTglLahir').value || null,
   }).eq('id', currentAnggotaId);
   if (error) { setMsg('edMsg', 'Gagal: ' + error.message, true); return; }
   setMsg('edMsg', '✅ Perubahan tersimpan');
@@ -6730,7 +7051,7 @@ async function bukaSesiDetail(sesiId) {
     </div>
     <div class="stat-grid" style="margin-bottom:16px;">
       <div class="stat"><div class="sv">${tanggalSet.length}</div><div class="sl">Total Pertemuan</div></div>
-      <div class="stat"><div class="sv">${total > 0 ? Math.round(nHadir/total*100) : 0}%</div><div class="sl">Tingkat Kehadiran</div></div>
+      <div class="stat"><div class="sv">${total > 0 ? Math.round((nHadir+nIzin)/total*100) : 0}%</div><div class="sl">Tingkat Kehadiran*</div></div>
     </div>
 
     <!-- Pertemuan + catatan pengajar & materi -->
@@ -6748,16 +7069,21 @@ async function bukaSesiDetail(sesiId) {
       <div style="font-weight:700;font-size:13px;color:#1a6644;margin-bottom:6px;">👥 Rekap Per Siswa (${siswaArr.length} siswa)</div>
       <div style="overflow-x:auto;">
         <table class="rekap">
-          <thead><tr><th style="text-align:left">Nama</th><th>✅ Hadir</th><th>🟡 Izin</th><th>🟣 Sakit</th><th>❌ Tdk Hadir</th></tr></thead>
-          <tbody>${siswaArr.map(r => `<tr>
+          <thead><tr><th style="text-align:left">Nama</th><th>✅ Hadir</th><th>🟡 Izin</th><th>🟣 Sakit</th><th>❌ Tdk Hadir</th><th>% Kehadiran*</th></tr></thead>
+          <tbody>${siswaArr.slice().sort((a,b)=>(b.hadir+b.izin)-(a.hadir+a.izin)).map(r => {
+            const tot = r.hadir + (r.izin||0) + (r.sakit||0) + (r.tidak||0);
+            const pct = tot > 0 ? Math.round((r.hadir + (r.izin||0)) / tot * 100) : 0;
+            return `<tr>
             <td class="nm" style="font-size:12px;">${escapeHtml(r.nama)}</td>
             <td style="text-align:center;color:#16a34a;font-weight:700;">${r.hadir}</td>
             <td style="text-align:center;color:#d97706;">${r.izin||0}</td>
             <td style="text-align:center;color:#7c3aed;">${r.sakit||0}</td>
             <td style="text-align:center;color:#dc2626;">${r.tidak||0}</td>
-          </tr>`).join('')}</tbody>
+            <td style="text-align:center;font-weight:700;color:${pct>=80?'#16a34a':pct>=60?'#d97706':'#dc2626'}">${pct}%</td>
+          </tr>`;}).join('')}</tbody>
         </table>
       </div>
+      <p style="font-size:11px;color:#7a9585;margin-top:4px;">*) % Kehadiran = (Hadir + Izin) / Total Pertemuan × 100%</p>
     </div>`;
 }
 
@@ -7167,20 +7493,50 @@ async function loadRekap() {
   // Ambil daftar anggota yang wajib ditampilkan (tampil_absensi != false)
   const { data: angAktif } = await db.from('anggota').select('id, tampil_absensi, status');
   const tampilSet = new Set((angAktif || []).filter(a => a.status !== 'tidak_aktif' && a.tampil_absensi !== false).map(a => String(a.id)));
-  const { data, error } = await db.from('kehadiran')
-    .select('anggota_id, status, tanggal, sesi_id, anggota(nama)')
-    .gte('tanggal', first).lte('tanggal', last).limit(100000);
+  const [{ data, error }, { data: sesiData }, catRes] = await Promise.all([
+    db.from('kehadiran')
+      .select('anggota_id, status, tanggal, sesi_id, anggota(nama)')
+      .gte('tanggal', first).lte('tanggal', last).limit(100000),
+    db.from('sesi').select('id, nama, jam_mulai, jam_selesai').order('urutan').order('id'),
+    db.from('catatan_sesi').select('sesi_id, tanggal, materi, pengajar')
+      .gte('tanggal', first).lte('tanggal', last).limit(5000),
+  ]);
   if (error) { $('rekapResult').innerHTML = '<p class="err">Gagal: ' + error.message + '</p>'; return; }
   if (!data || !data.length) { $('rekapResult').innerHTML = '<p class="muted">Belum ada data absensi pada periode ini.</p>'; return; }
-  const agg = {}, sesiSet = new Set();
+  const sesiNamaMap = {}, sesiJamMap = {};
+  (sesiData || []).forEach(s => {
+    sesiNamaMap[s.id] = s.nama;
+    sesiJamMap[s.id] = s.jam_mulai ? (s.jam_mulai.slice(0,5) + (s.jam_selesai ? '–' + s.jam_selesai.slice(0,5) : '')) : '';
+  });
+  // Materi/kegiatan & pengajar per pertemuan (tabel catatan_sesi mungkin belum ada — abaikan kalau error)
+  const materiMap = {};
+  (catRes.error ? [] : (catRes.data || [])).forEach(c => {
+    materiMap[c.tanggal + '#' + c.sesi_id] = { materi: c.materi || '', pengajar: c.pengajar || '' };
+  });
+  const agg = {}, sesiSet = new Set(), sesiAgg = {};
   data.forEach(k => {
     // Skip anggota yang tidak dicentang tampil_absensi
     if (!tampilSet.has(String(k.anggota_id))) return;
-    sesiSet.add(k.tanggal + '#' + k.sesi_id);
+    const sesiKey = k.tanggal + '#' + k.sesi_id;
+    sesiSet.add(sesiKey);
     if (!agg[k.anggota_id]) agg[k.anggota_id] = { nama: k.anggota?.nama || '(?)', hadir:0, izin:0, sakit:0, tidak_hadir:0 };
     agg[k.anggota_id][k.status] = (agg[k.anggota_id][k.status]||0) + 1;
+    // Agregasi per sesi
+    if (!sesiAgg[sesiKey]) sesiAgg[sesiKey] = {
+      tanggal: k.tanggal, sesi_id: k.sesi_id, namaSesi: sesiNamaMap[k.sesi_id] || '—',
+      jam: sesiJamMap[k.sesi_id] || '',
+      materi: materiMap[sesiKey]?.materi || '',
+      pengajar: materiMap[sesiKey]?.pengajar || '',
+      hadir:0, izin:0, sakit:0, tidak_hadir:0
+    };
+    sesiAgg[sesiKey][k.status] = (sesiAgg[sesiKey][k.status]||0) + 1;
   });
   rekapRows = Object.values(agg);
+  rekapSesiStats = Object.values(sesiAgg).sort((a,b) => a.tanggal.localeCompare(b.tanggal));
+  // Simpan semua anggota yang wajib tampil (termasuk yang tidak pernah hadir di periode ini)
+  const { data: semuaAng } = await db.from('anggota').select('id, nama, tampil_absensi, status')
+    .neq('status', 'tidak_aktif');
+  rekapSemuaAnggota = (semuaAng || []).filter(a => a.tampil_absensi !== false);
   rekapMeta = { label, sesi: sesiSet.size, siswa: rekapRows.length };
 
   $('rekapResult').innerHTML = `
@@ -7205,11 +7561,15 @@ async function loadRekap() {
         <div style="font-size:16px;font-weight:800;color:#1a6644;">REKAP KEHADIRAN — MUMI MB3</div>
         <div class="muted">Periode ${rekapMeta.label} · ${rekapMeta.sesi} sesi · ${rekapMeta.siswa} siswa</div>
       </div>
+      <div id="rekapRingkasanWrap"></div>
       <div id="rekapTableWrap"></div>
+      <p style="font-size:11px;color:#7a9585;margin-top:4px;">*) % Kehadiran = (Hadir + Izin) / Total Pertemuan × 100%</p>
       <h2 style="font-size:13px;margin-top:16px;">Grafik Kehadiran vs Ketidakhadiran per Siswa</h2>
       <div id="rekapChartBox" style="position:relative;height:240px;">
         <canvas id="chartRekap"></canvas>
       </div>
+      <div id="rekapSesiStatsWrap"></div>
+      <div id="rekapAnalisaWrap"></div>
     </div>`;
   renderRekapTable();
 }
@@ -7220,7 +7580,7 @@ function sortedRekapRows() {
   // Compute pct for each row
   const withPct = rekapRows.map(r => {
     const total = r.hadir + r.izin + r.sakit + r.tidak_hadir;
-    return { ...r, pct: total > 0 ? Math.round(r.hadir / total * 100) : 0, total };
+    return { ...r, pct: total > 0 ? Math.round((r.hadir + r.izin) / total * 100) : 0, total };
   });
   const cmp = {
     nama:             byName,
@@ -7243,10 +7603,24 @@ function renderRekapTable() {
     sakit: a.sakit + r.sakit, th: a.th + r.tidak_hadir,
   }), { hadir: 0, izin: 0, sakit: 0, th: 0 });
   const totTotal = tot.hadir + tot.izin + tot.sakit + tot.th;
-  const totPct = totTotal > 0 ? Math.round(tot.hadir / totTotal * 100) : 0;
+  const totPct = totTotal > 0 ? Math.round((tot.hadir + tot.izin) / totTotal * 100) : 0;
+  const pctHadirAll    = totTotal > 0 ? Math.round(tot.hadir / totTotal * 100) : 0;
+  const pctIzinAll     = totTotal > 0 ? Math.round(tot.izin  / totTotal * 100) : 0;
+  const pctSakitAll    = totTotal > 0 ? Math.round(tot.sakit / totTotal * 100) : 0;
+  const pctTanpaKetAll = totTotal > 0 ? Math.round(tot.th    / totTotal * 100) : 0;
+  if ($('rekapRingkasanWrap')) {
+    $('rekapRingkasanWrap').innerHTML = `
+      <div class="stat-grid" style="margin-bottom:4px;">
+        <div class="stat"><div class="sv" style="color:#16a34a;">${pctHadirAll}%</div><div class="sl">Hadir</div></div>
+        <div class="stat"><div class="sv" style="color:#d97706;">${pctIzinAll}%</div><div class="sl">Izin</div></div>
+        <div class="stat"><div class="sv" style="color:#7c3aed;">${pctSakitAll}%</div><div class="sl">Sakit</div></div>
+        <div class="stat"><div class="sv" style="color:#dc2626;">${pctTanpaKetAll}%</div><div class="sl">Tanpa Keterangan</div></div>
+      </div>
+      <p style="font-size:11px;color:#7a9585;margin:0 0 12px;">Hadir + Izin = ${tot.hadir + tot.izin} dari total ${totTotal} catatan kehadiran (${rekapMeta.siswa} siswa × ${rekapMeta.sesi} sesi) — (${totPct}%)</p>`;
+  }
   $('rekapTableWrap').innerHTML = `
     <div style="overflow-x:auto;"><table class="rekap">
-      <thead><tr><th style="text-align:left">Nama</th><th>Hadir</th><th>Izin</th><th>Sakit</th><th>Tdk Hadir</th><th>% Hadir</th></tr></thead>
+      <thead><tr><th style="text-align:left">Nama</th><th>Hadir</th><th>Izin</th><th>Sakit</th><th>Tdk Hadir</th><th>% Kehadiran*</th></tr></thead>
       <tbody>${rows.map((r, i) => `<tr>
         <td class="nm">${escapeHtml(r.nama)}</td>
         <td style="color:#16a34a;font-weight:700">${r.hadir}</td>
@@ -7264,7 +7638,155 @@ function renderRekapTable() {
       </tr></tfoot>
     </table></div>`;
   renderRekapChart(rows);
+  renderSesiStatsBoard();
+  renderAnalisaKehadiran();
 }
+
+function renderSesiStatsBoard() {
+  const wrap = $('rekapSesiStatsWrap');
+  if (!wrap || !rekapSesiStats.length) return;
+
+  const totAll = { hadir:0, izin:0, sakit:0, tidak_hadir:0 };
+  const baris = rekapSesiStats.map((s, i) => {
+    const total = s.hadir + s.izin + s.sakit + s.tidak_hadir;
+    const hadirIzin = s.hadir + s.izin;
+    const pct = total > 0 ? Math.round(hadirIzin / total * 100) : 0;
+    const pctTdk = total > 0 ? Math.round((s.sakit + s.tidak_hadir) / total * 100) : 0;
+    const pctHadir = total > 0 ? Math.round(s.hadir / total * 100) : 0;
+    const pctIzin = total > 0 ? Math.round(s.izin / total * 100) : 0;
+    totAll.hadir       += s.hadir;
+    totAll.izin        += s.izin;
+    totAll.sakit       += s.sakit;
+    totAll.tidak_hadir += s.tidak_hadir;
+    const tglFmt = new Date(s.tanggal).toLocaleDateString('id-ID', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
+    const col = pct>=80?'#16a34a':pct>=60?'#d97706':'#dc2626';
+    const materiTxt = s.materi ? escapeHtml(s.materi) : '<span style="color:#b9c6bf;">—</span>';
+    const pengajarTxt = s.pengajar ? `<div style="font-size:10px;color:#7a9585;margin-top:2px;">👨‍🏫 ${escapeHtml(s.pengajar)}</div>` : '';
+    return `<tr>
+      <td style="font-size:12px;padding:8px 6px;">
+        <div style="font-weight:700;color:#1a6644;">${escapeHtml(s.namaSesi||'—')}</div>
+        <div style="font-size:10px;color:#7a9585;margin-top:2px;">${tglFmt}${s.jam ? ' · 🕐 ' + s.jam : ''}</div>
+      </td>
+      <td style="font-size:12px;padding:8px 8px;max-width:220px;">
+        ${materiTxt}
+        ${pengajarTxt}
+      </td>
+      <td style="text-align:center;color:#16a34a;font-weight:700;">${s.hadir}</td>
+      <td style="text-align:center;color:#d97706;">${s.izin}</td>
+      <td style="text-align:center;color:#7c3aed;">${s.sakit}</td>
+      <td style="text-align:center;color:#dc2626;">${s.tidak_hadir}</td>
+      <td style="text-align:center;color:#16a34a;font-size:12px;">${pctHadir}%</td>
+      <td style="text-align:center;color:#d97706;font-size:12px;">${pctIzin}%</td>
+      <td style="text-align:center;font-weight:800;color:${col};font-size:13px;">${pct}%</td>
+      <td style="text-align:center;color:#6b7280;font-size:12px;">${pctTdk}%</td>
+      <td style="min-width:90px;padding:0 8px;">
+        <div title="${pct}% hadir+izin" style="background:#fee2e2;border-radius:20px;height:10px;overflow:hidden;">
+          <div style="width:${pct}%;background:${col};height:100%;border-radius:20px;transition:width .4s;"></div>
+        </div>
+      </td>
+    </tr>`;
+  });
+
+  const totTotal = totAll.hadir + totAll.izin + totAll.sakit + totAll.tidak_hadir;
+  const totPct = totTotal > 0 ? Math.round((totAll.hadir + totAll.izin) / totTotal * 100) : 0;
+  const totPctTdk = totTotal > 0 ? Math.round((totAll.sakit + totAll.tidak_hadir) / totTotal * 100) : 0;
+  const totPctHadir = totTotal > 0 ? Math.round(totAll.hadir / totTotal * 100) : 0;
+  const totPctIzin = totTotal > 0 ? Math.round(totAll.izin / totTotal * 100) : 0;
+  const totCol = totPct>=80?'#16a34a':totPct>=60?'#d97706':'#dc2626';
+
+  wrap.innerHTML = `
+    <div style="margin-top:24px;">
+      <div style="font-weight:700;font-size:13px;color:#1a6644;margin-bottom:8px;">📅 Statistik Per Sesi (${rekapSesiStats.length} sesi)</div>
+      <div style="overflow-x:auto;">
+        <table class="rekap">
+          <thead><tr>
+            <th style="text-align:left;min-width:140px;">Nama Sesi & Tanggal</th>
+            <th style="text-align:left;min-width:160px;">📖 Materi/Kegiatan</th>
+            <th>✅ Hadir</th>
+            <th>🟡 Izin</th>
+            <th>🟣 Sakit</th>
+            <th>❌ Tdk Hadir</th>
+            <th>% Hadir</th>
+            <th>% Izin</th>
+            <th>% Hadir+Izin*</th>
+            <th>% Tdk Hadir</th>
+            <th style="min-width:90px;">Progress</th>
+          </tr></thead>
+          <tbody>${baris.join('')}</tbody>
+          <tfoot><tr style="font-weight:800;background:#e8f5ef;">
+            <td style="padding:8px 6px;color:#1a6644;">TOTAL SEMUA SESI</td>
+            <td></td>
+            <td style="text-align:center;color:#16a34a;">${totAll.hadir}</td>
+            <td style="text-align:center;color:#d97706;">${totAll.izin}</td>
+            <td style="text-align:center;color:#7c3aed;">${totAll.sakit}</td>
+            <td style="text-align:center;color:#dc2626;">${totAll.tidak_hadir}</td>
+            <td style="text-align:center;color:#16a34a;">${totPctHadir}%</td>
+            <td style="text-align:center;color:#d97706;">${totPctIzin}%</td>
+            <td style="text-align:center;font-size:15px;font-weight:900;color:${totCol};">${totPct}%</td>
+            <td style="text-align:center;color:#6b7280;">${totPctTdk}%</td>
+            <td style="padding:0 8px;">
+              <div style="background:#fee2e2;border-radius:20px;height:10px;overflow:hidden;">
+                <div style="width:${totPct}%;background:${totCol};height:100%;border-radius:20px;"></div>
+              </div>
+            </td>
+          </tr></tfoot>
+        </table>
+      </div>
+      <p style="font-size:11px;color:#7a9585;margin-top:4px;">*) % Hadir+Izin = (Hadir + Izin) / Total Anggota per Sesi × 100%</p>
+    </div>`;
+}
+
+function renderAnalisaKehadiran() {
+  const wrap = $('rekapAnalisaWrap');
+  if (!wrap) return;
+
+  const totalSesi = rekapSesiStats.length;
+  const rows = sortedRekapRows();
+
+  const selaluHadir    = rows.filter(r => r.tidak_hadir === 0 && r.sakit === 0);
+  const tidakPernah    = rows.filter(r => (r.hadir + r.izin) === 0);
+  const perluPerhatian = rows.filter(r => r.pct < 60 && (r.hadir + r.izin) > 0);
+  const rajin          = rows.filter(r => r.pct >= 80 && !selaluHadir.find(x => x.nama === r.nama));
+  const hadir1Kali     = rows.filter(r => (r.hadir + r.izin) === 1);
+
+  const adaDiData = new Set(rows.map(r => r.nama));
+  const gaAdaRecord = rekapSemuaAnggota.filter(a => !adaDiData.has(a.nama));
+
+  function kartu(judul, warna, bg, icon, list, ket) {
+    if (!list.length) return '';
+    const chips = list.map(r => {
+      const nm = r.nama || r;
+      const info = r.hadir !== undefined
+        ? ' <span style="color:#888;font-size:10px;">(H:' + r.hadir + ' I:' + (r.izin||0) + ' S:' + (r.sakit||0) + ' X:' + (r.tidak_hadir||0) + ' · ' + r.pct + '%)</span>'
+        : '';
+      return '<span style="display:inline-flex;align-items:center;background:#fff;border:1px solid ' + warna + ';border-radius:20px;padding:3px 10px;font-size:11px;color:#1a3a2a;margin:2px;">' + escapeHtml(nm) + info + '</span>';
+    }).join('');
+    return '<div style="background:' + bg + ';border-left:4px solid ' + warna + ';border-radius:10px;padding:12px 14px;margin-bottom:10px;">'
+      + '<div style="font-weight:700;font-size:12px;color:' + warna + ';margin-bottom:7px;">' + icon + ' ' + judul + ' <span style="font-weight:400;font-size:11px;color:#555;">(' + list.length + ' orang)</span></div>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;">' + chips + '</div>'
+      + (ket ? '<div style="font-size:10px;color:#6b7280;margin-top:5px;">' + ket + '</div>' : '')
+      + '</div>';
+  }
+
+  wrap.innerHTML = '<div style="margin-top:24px;">'
+    + '<div style="font-weight:700;font-size:13px;color:#1a6644;margin-bottom:8px;">&#128269; Analisa Detail Kehadiran Anggota</div>'
+    + '<div style="font-size:11px;color:#7a9585;margin-bottom:12px;">Periode: ' + rekapMeta.label + ' &middot; ' + totalSesi + ' sesi &middot; ' + rows.length + ' anggota tercatat</div>'
+    + kartu('Selalu Hadir / Izin (Tidak Pernah Absen)', '#16a34a', '#f0fdf4', '&#127942;',
+        selaluHadir, 'Tidak pernah tidak hadir / sakit di seluruh ' + totalSesi + ' sesi pada periode ini.')
+    + kartu('Rajin — Kehadiran &ge; 80%', '#2563eb', '#eff6ff', '&#11088;',
+        rajin, 'Hadir/Izin di 80% sesi atau lebih, tapi pernah tidak hadir.')
+    + kartu('Perlu Perhatian — Kehadiran &lt; 60%', '#d97706', '#fffbeb', '&#9888;&#65039;',
+        perluPerhatian, 'Kehadiran rendah. Pernah hadir/izin tapi di bawah 60%.')
+    + kartu('Tidak Pernah Hadir / Izin Sama Sekali', '#dc2626', '#fef2f2', '&#128680;',
+        tidakPernah, 'Tercatat di absensi tapi seluruhnya Tidak Hadir / Sakit. Perlu tindak lanjut!')
+    + (gaAdaRecord.length ? kartu('Tidak Ada Rekam Absensi (Belum Pernah Diabsen)', '#7c3aed', '#f5f3ff', '&#128123;',
+        gaAdaRecord.map(a => ({ nama: a.nama })),
+        'Anggota aktif yang tidak muncul di data absensi periode ini sama sekali.') : '')
+    + (hadir1Kali.length ? kartu('Hanya Hadir / Izin 1 Kali dari ' + totalSesi + ' Sesi', '#ea580c', '#fff7ed', '&#128204;',
+        hadir1Kali, 'Sangat jarang hadir. Muncul hanya 1 kali di seluruh periode ini.') : '')
+    + '</div>';
+}
+
 
 function renderRekapChart(rows) {
   if (typeof Chart === 'undefined') return;  // CDN grafik gagal load
@@ -8559,7 +9081,8 @@ async function exportAcaraPDF() {
   const CW = pageW - M * 2;
   let y = 0;
 
-  const orgName = (document.querySelector('.brand')?.textContent || 'Mumi MB3').trim();
+  const orgName = (document.querySelector('.brand')?.textContent || 'Mumi MB3').trim()
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '').trim();
   const now = new Date();
   const tglCetak = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -9322,7 +9845,7 @@ function cetakRekap() {
     sakit: a.sakit + r.sakit, th: a.th + r.tidak_hadir,
   }), { hadir: 0, izin: 0, sakit: 0, th: 0 });
   const totTotal = tot.hadir + tot.izin + tot.sakit + tot.th;
-  const totPct = totTotal > 0 ? Math.round(tot.hadir / totTotal * 100) : 0;
+  const totPct = totTotal > 0 ? Math.round((tot.hadir + tot.izin) / totTotal * 100) : 0;
   const sortLabel = ($('rekapSort') && $('rekapSort').selectedOptions[0]?.textContent) || 'Hadir terbanyak';
 
   // Helper: bersihkan teks dari karakter Unicode yang nggak didukung Helvetica
@@ -9370,11 +9893,27 @@ function cetakRekap() {
   // % kehadiran keseluruhan
   doc.setFontSize(9); doc.setTextColor(26, 102, 68); doc.setFont(undefined, 'bold');
   doc.text('Tingkat Kehadiran Keseluruhan: ' + totPct + '%  |  Diurutkan: ' + pdfSafe(sortLabel), PW / 2, 49, { align: 'center' });
-  doc.setDrawColor(200, 200, 200); doc.line(14, 51, PW - 14, 51);
+
+  // ── Ringkasan persentase: Hadir / Izin / Sakit / Tanpa Keterangan ──
+  const pctHadirAll    = totTotal > 0 ? Math.round(tot.hadir / totTotal * 100) : 0;
+  const pctIzinAll     = totTotal > 0 ? Math.round(tot.izin  / totTotal * 100) : 0;
+  const pctSakitAll    = totTotal > 0 ? Math.round(tot.sakit / totTotal * 100) : 0;
+  const pctTanpaKetAll = totTotal > 0 ? Math.round(tot.th    / totTotal * 100) : 0;
+  doc.setFontSize(8); doc.setFont(undefined, 'normal'); doc.setTextColor(55, 65, 81);
+  doc.text(
+    'Hadir: ' + pctHadirAll + '%   |   Izin: ' + pctIzinAll + '%   |   Sakit: ' + pctSakitAll + '%   |   Tanpa Keterangan: ' + pctTanpaKetAll + '%',
+    PW / 2, 55, { align: 'center' }
+  );
+  doc.setFontSize(7); doc.setTextColor(120, 130, 120);
+  doc.text(
+    '(Hadir + Izin = ' + (tot.hadir + tot.izin) + ' dari total ' + totTotal + ' catatan kehadiran — ' + rekapMeta.siswa + ' siswa x ' + rekapMeta.sesi + ' sesi)',
+    PW / 2, 59.5, { align: 'center' }
+  );
+  doc.setDrawColor(200, 200, 200); doc.line(14, 62, PW - 14, 62);
 
   // ── Tabel utama dengan warna baris (tanpa kolom Peringkat — emoji medali rusak di PDF) ──
   doc.autoTable({
-    startY: 54,
+    startY: 65,
     head: [['No.', 'Nama Siswa', 'Hadir', 'Izin', 'Sakit', 'Tdk Hadir', 'Total', '% Hadir']],
     body: rows.map((r, i) => [
       String(i + 1),
@@ -9416,21 +9955,161 @@ function cetakRekap() {
     },
   });
 
-  // ── Analisis teks (highlight siswa terbaik & perlu perhatian) ──
-  let yAna = doc.lastAutoTable ? doc.lastAutoTable.finalY + 8 : 200;
-  if (yAna > 240) { doc.addPage(); yAna = 20; }
-  const best = rows[0], worst = rows[rows.length - 1];
-  doc.setFontSize(9); doc.setTextColor(26, 102, 68); doc.setFont(undefined, 'bold');
-  doc.text('Catatan Analisis:', 14, yAna);
-  doc.setFont(undefined, 'normal'); doc.setTextColor(55, 65, 81);
-  // Pakai - (dash) bukan • (bullet), >= bukan ≥ supaya tidak rusak di Helvetica
-  const lines = [
-    '- Kehadiran tertinggi: ' + pdfSafe(best.nama) + ' (' + best.hadir + ' kali hadir, ' + best.pct + '%)',
-    '- Kehadiran terendah: ' + pdfSafe(worst.nama) + ' (' + worst.hadir + ' kali hadir, ' + worst.pct + '%)',
-    '- Siswa dengan kehadiran >= 80%: ' + rows.filter(r => r.pct >= 80).length + ' dari ' + rows.length + ' siswa',
-    '- Siswa dengan kehadiran < 60% (perlu perhatian): ' + rows.filter(r => r.pct < 60).length + ' siswa',
-  ];
-  lines.forEach((l, i) => { doc.text(pdfSafe(l), 14, yAna + 6 + i * 6); });
+  // ── Tabel Statistik Per Sesi ──
+  if (rekapSesiStats.length) {
+    let ySesi = doc.lastAutoTable ? doc.lastAutoTable.finalY + 8 : 200;
+    if (ySesi > 240) { doc.addPage(); ySesi = 20; }
+
+    doc.setFontSize(10); doc.setTextColor(26, 102, 68); doc.setFont(undefined, 'bold');
+    doc.text('Statistik Per Sesi (Izin dihitung sebagai Hadir)', 14, ySesi);
+    doc.setFont(undefined, 'normal');
+
+    const sesiTotAll = { hadir:0, izin:0, sakit:0, tidak_hadir:0 };
+    const sesiBody = rekapSesiStats.map((s, i) => {
+      const total = s.hadir + s.izin + s.sakit + s.tidak_hadir;
+      const pct = total > 0 ? Math.round((s.hadir + s.izin) / total * 100) : 0;
+      const pctTdk = total > 0 ? Math.round((s.sakit + s.tidak_hadir) / total * 100) : 0;
+      const pctHadir = total > 0 ? Math.round(s.hadir / total * 100) : 0;
+      const pctIzin = total > 0 ? Math.round(s.izin / total * 100) : 0;
+      sesiTotAll.hadir       += s.hadir;
+      sesiTotAll.izin        += s.izin;
+      sesiTotAll.sakit       += s.sakit;
+      sesiTotAll.tidak_hadir += s.tidak_hadir;
+      const tglFmt = new Date(s.tanggal).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+      const tglJam = s.jam ? (tglFmt + '\n' + s.jam) : tglFmt;
+      let materiTxt = s.materi ? pdfSafe(s.materi) : '-';
+      if (s.pengajar) materiTxt += '\n(Pengajar: ' + pdfSafe(s.pengajar) + ')';
+      return [
+        String(i + 1),
+        pdfSafe(s.namaSesi || '-'),
+        tglJam,
+        materiTxt,
+        s.hadir,
+        s.izin,
+        s.sakit,
+        s.tidak_hadir,
+        pctHadir + '%',
+        pctIzin + '%',
+        pct + '%',
+        pctTdk + '%',
+      ];
+    });
+    const sesiTotTotal = sesiTotAll.hadir + sesiTotAll.izin + sesiTotAll.sakit + sesiTotAll.tidak_hadir;
+    const sesiTotPct = sesiTotTotal > 0 ? Math.round((sesiTotAll.hadir + sesiTotAll.izin) / sesiTotTotal * 100) : 0;
+    const sesiTotPctTdk = sesiTotTotal > 0 ? Math.round((sesiTotAll.sakit + sesiTotAll.tidak_hadir) / sesiTotTotal * 100) : 0;
+    const sesiTotPctHadir = sesiTotTotal > 0 ? Math.round(sesiTotAll.hadir / sesiTotTotal * 100) : 0;
+    const sesiTotPctIzin = sesiTotTotal > 0 ? Math.round(sesiTotAll.izin / sesiTotTotal * 100) : 0;
+
+    doc.autoTable({
+      startY: ySesi + 4,
+      head: [['No.', 'Nama Sesi', 'Tanggal', 'Materi/Kegiatan', 'Hadir', 'Izin', 'Sakit', 'Tdk Hadir', '% Hadir', '% Izin', '% Hadir+Izin', '% Tdk Hadir']],
+      body: sesiBody,
+      foot: [['', 'TOTAL', '', '', sesiTotAll.hadir, sesiTotAll.izin, sesiTotAll.sakit, sesiTotAll.tidak_hadir, sesiTotPctHadir + '%', sesiTotPctIzin + '%', sesiTotPct + '%', sesiTotPctTdk + '%']],
+      showFoot: 'lastPage',
+      showHead: 'everyPage',
+      styles: { fontSize: 7.3, cellPadding: 2.1 },
+      headStyles: { fillColor: [15, 61, 43], textColor: 255, fontStyle: 'bold', fontSize: 7.3 },
+      footStyles: { fillColor: [232, 245, 239], textColor: [15, 46, 31], fontStyle: 'bold', fontSize: 7.3 },
+      columnStyles: {
+        0: { cellWidth: 8, halign: 'center' },
+        1: { cellWidth: 25 },
+        2: { cellWidth: 20, halign: 'center' },
+        3: { cellWidth: 36 },
+        4: { cellWidth: 11, halign: 'center', textColor: [22, 163, 74], fontStyle: 'bold' },
+        5: { cellWidth: 9, halign: 'center', textColor: [217, 119, 6] },
+        6: { cellWidth: 9, halign: 'center', textColor: [124, 58, 237] },
+        7: { cellWidth: 12, halign: 'center', textColor: [220, 38, 38] },
+        8: { cellWidth: 13, halign: 'center', textColor: [22, 163, 74] },
+        9: { cellWidth: 13, halign: 'center', textColor: [217, 119, 6] },
+        10: { cellWidth: 17, halign: 'center', fontStyle: 'bold' },
+        11: { cellWidth: 14, halign: 'center' },
+      },
+      didParseCell: function(data) {
+        if (data.section === 'body' && data.column.index === 10) {
+          const pctVal = parseInt(data.cell.raw);
+          data.cell.styles.textColor = pctVal >= 80 ? [22, 163, 74] : pctVal >= 60 ? [217, 119, 6] : [220, 38, 38];
+        }
+        if (data.section === 'body' && data.row.index % 2 === 0) {
+          data.cell.styles.fillColor = [247, 250, 248];
+        }
+      },
+    });
+    doc.setFontSize(7.5); doc.setTextColor(120, 130, 120); doc.setFont(undefined, 'normal');
+    const noteY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 4 : ySesi + 60;
+    doc.text('*) % Hadir+Izin = (Hadir + Izin) / Total Anggota per Sesi x 100%', 14, noteY);
+  }
+
+  // ── Analisa Detail Kehadiran ──
+  if (rekapRows.length) {
+    const allRows = sortedRekapRows();
+    const totalSesi = rekapSesiStats.length;
+    const selaluHadir    = allRows.filter(r => r.tidak_hadir === 0 && r.sakit === 0);
+    const tidakPernah    = allRows.filter(r => (r.hadir + r.izin) === 0);
+    const perluPerhatian = allRows.filter(r => r.pct < 60 && (r.hadir + r.izin) > 0);
+    const rajin          = allRows.filter(r => r.pct >= 80 && !selaluHadir.find(x => x.nama === r.nama));
+    const hadir1Kali     = allRows.filter(r => (r.hadir + r.izin) === 1);
+    const adaDiData      = new Set(allRows.map(r => r.nama));
+    const gaAdaRecord    = rekapSemuaAnggota.filter(a => !adaDiData.has(a.nama));
+
+    let yA = doc.lastAutoTable ? doc.lastAutoTable.finalY + 14 : 200;
+    if (yA > 240) { doc.addPage(); yA = 20; }
+
+    doc.setFontSize(10); doc.setTextColor(26, 102, 68); doc.setFont(undefined, 'bold');
+    doc.text('Analisa Detail Kehadiran Anggota', 14, yA);
+    doc.setFont(undefined, 'normal');
+    yA += 5;
+
+    function seksiAnalisa(judul, list, detailFn, ket) {
+      if (!list.length) return;
+      const names = list.map(r => pdfSafe(detailFn ? detailFn(r) : (r.nama || r))).join(', ');
+      const label = pdfSafe(judul) + ' (' + list.length + ' orang):';
+      // Cek apakah perlu halaman baru
+      if (yA > 260) { doc.addPage(); yA = 20; }
+      doc.setFontSize(8.5); doc.setFont(undefined, 'bold');
+      doc.setTextColor(55, 65, 81);
+      doc.text(label, 14, yA);
+      yA += 4;
+      doc.setFont(undefined, 'normal'); doc.setFontSize(8);
+      const wrapped = doc.splitTextToSize(names, 180);
+      wrapped.forEach(line => {
+        if (yA > 270) { doc.addPage(); yA = 20; }
+        doc.text(line, 16, yA);
+        yA += 4.5;
+      });
+      // ── Keterangan otomatis: jelaskan arti kategori ini ──
+      if (ket) {
+        if (yA > 268) { doc.addPage(); yA = 20; }
+        doc.setFontSize(7.3); doc.setFont(undefined, 'italic'); doc.setTextColor(120, 130, 120);
+        const ketWrapped = doc.splitTextToSize(pdfSafe(ket), 180);
+        ketWrapped.forEach(line => {
+          if (yA > 270) { doc.addPage(); yA = 20; }
+          doc.text(line, 16, yA);
+          yA += 3.8;
+        });
+        doc.setFont(undefined, 'normal'); doc.setFontSize(8); doc.setTextColor(55, 65, 81);
+      }
+      yA += 3;
+    }
+
+    seksiAnalisa('Selalu Hadir/Izin di Semua Sesi', selaluHadir,
+      r => r.nama + ' (H:' + r.hadir + ' I:' + (r.izin||0) + ')',
+      'Tidak pernah tidak hadir / sakit di seluruh ' + totalSesi + ' sesi pada periode ini.');
+    seksiAnalisa('Rajin >= 80% Kehadiran', rajin,
+      r => r.nama + ' (' + r.pct + '%)',
+      'Hadir/Izin di 80% sesi atau lebih, tapi pernah tidak hadir.');
+    seksiAnalisa('Perlu Perhatian < 60% Kehadiran', perluPerhatian,
+      r => r.nama + ' (' + r.pct + '%, H:' + r.hadir + ' I:' + (r.izin||0) + ' X:' + r.tidak_hadir + ')',
+      'Kehadiran rendah. Pernah hadir/izin tapi di bawah 60%.');
+    seksiAnalisa('Tidak Pernah Hadir/Izin Sama Sekali', tidakPernah,
+      r => r.nama,
+      'Tercatat di absensi tapi seluruhnya Tidak Hadir / Sakit. Perlu tindak lanjut!');
+    seksiAnalisa('Tidak Ada Rekam Absensi (Belum Pernah Diabsen)', gaAdaRecord,
+      r => r.nama || r,
+      'Anggota aktif yang tidak muncul di data absensi periode ini sama sekali.');
+    seksiAnalisa('Hanya Hadir/Izin 1 Kali dari ' + totalSesi + ' Sesi', hadir1Kali,
+      r => r.nama + ' (' + r.pct + '%)',
+      'Sangat jarang hadir. Muncul hanya 1 kali di seluruh periode ini.');
+  }
 
   _pdfFooter(doc);
   doc.save('rekap-kehadiran-' + rekapMeta.label.replace(/ /g, '-') + '.pdf');
@@ -9693,7 +10372,7 @@ function exportRekapCSV() {
     tot.h += r.hadir; tot.i += r.izin; tot.s += r.sakit; tot.t += r.tidak_hadir;
   });
   const totTotal = tot.h + tot.i + tot.s + tot.t;
-  const totPct = totTotal > 0 ? Math.round(tot.h / totTotal * 100) : 0;
+  const totPct = totTotal > 0 ? Math.round((tot.h + tot.i) / totTotal * 100) : 0;
   rows.push(['', 'TOTAL', tot.h, tot.i, tot.s, tot.t, totTotal, totPct + '%']);
   downloadCSV('rekap-kehadiran-' + rekapMeta.label.replace(/ /g, '-') + '.csv', rows);
 }
@@ -11272,14 +11951,39 @@ function ymd(d) {
 }
 
 async function urlToDataURL(url) {
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error('foto tidak bisa diambil');
-  const blob = await resp.blob();
+  // Coba fetch biasa dulu
+  try {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 10000);
+    const resp = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(tid);
+    if (resp.ok) {
+      const blob = await resp.blob();
+      return await new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(fr.result);
+        fr.onerror = () => reject(new Error('baca foto gagal'));
+        fr.readAsDataURL(blob);
+      });
+    }
+  } catch (_) { /* fetch gagal (CORS/network) → coba fallback */ }
+
+  // Fallback: load via HTMLImageElement + canvas (untuk URL publik Supabase Storage)
   return await new Promise((resolve, reject) => {
-    const fr = new FileReader();
-    fr.onload = () => resolve(fr.result);
-    fr.onerror = () => reject(new Error('baca foto gagal'));
-    fr.readAsDataURL(blob);
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/jpeg', 0.92));
+      } catch (e) { reject(new Error('canvas tainted — foto tidak bisa dikonversi')); }
+    };
+    img.onerror = () => reject(new Error('foto tidak bisa dimuat'));
+    // Cache-bust supaya browser mau load ulang dengan crossOrigin
+    img.src = url + (url.includes('?') ? '&' : '?') + '_t=' + Date.now();
   });
 }
 
