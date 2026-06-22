@@ -3624,6 +3624,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 const SUPABASE_URL = 'https://ksmdsvjpzyptcmhowcjq.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_PqbtdOOyAdKlDqEhtTAMEA_229Ak1F8';
+
 // ════════════════════════════════════════════════════════════════════════════
 
 const { createClient } = supabase;
@@ -5531,7 +5532,7 @@ async function onLoggedIn(user) {
   $('menuRiwayat').style.display = _can('riwayat') ? 'block' : 'none';
   $('menuFoto').style.display = _can('foto') ? 'block' : 'none';
   if ($('menuRecycle')) $('menuRecycle').style.display = _can('recycle') ? 'block' : 'none';
-  $('menuAkses').style.display = 'block'; // semua admin bisa lihat Kelola Akses untuk panel SQL Fix
+  $('menuAkses').style.display = (isMasterAdmin || isSuper) ? 'block' : 'none'; // hanya master admin
 
   const today = new Date();
   $('kmTanggal').valueAsDate = today;
