@@ -3630,6 +3630,27 @@ const SUPABASE_KEY = 'sb_publishable_PqbtdOOyAdKlDqEhtTAMEA_229Ak1F8';
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Handle password recovery dari link email
+db.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    setTimeout(() => {
+      const newPass = prompt('🔐 Reset Password\n\nMasukkan password baru kamu (minimal 6 karakter):');
+      if (newPass && newPass.length >= 6) {
+        db.auth.updateUser({ password: newPass }).then(({ error }) => {
+          if (error) {
+            alert('❌ Gagal ganti password: ' + error.message);
+          } else {
+            alert('✅ Password berhasil diganti!\nSilakan login dengan password baru.');
+            window.location.hash = '';
+          }
+        });
+      } else if (newPass !== null) {
+        alert('❌ Password minimal 6 karakter.');
+      }
+    }, 500);
+  }
+});
+
 // ── Indikator Koneksi (MyBCA-style) ──────────────────────────────────────────
 (function initConnMonitor() {
   const dot = document.getElementById('connDot');
@@ -13725,7 +13746,7 @@ async function resetUserPassword(emailArg) {
   if (!email || !email.includes('@')) { setMsg(msgId, 'Email tidak valid.', true); return; }
   if (!(await askConfirm('Kirim link reset password ke ' + email + '?'))) return;
   setMsg(msgId, '⏳ Mengirim email...');
-  const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+  const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: 'https://kikysr27.github.io/mumimb3/' });
   if (error) { setMsg(msgId, '❌ Gagal: ' + error.message, true); return; }
   setMsg(msgId, '✅ Link reset password dikirim ke ' + email + '. Minta user cek email (termasuk folder Spam).');
   if (!fromBtn) $('resetUserEmail').value = '';
