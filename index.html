@@ -13808,19 +13808,30 @@ async function deleteUserProfile(userId, idx) {
   if (!u) return;
   if (userId === currentProf?.id) { alert('Tidak bisa menghapus akun sendiri.'); return; }
   const nama = u.nama_lengkap || u.email || '(user)';
-  if (!(await askConfirm('Hapus user "' + nama + '"? Akses & login user ini akan dicabut.'))) return;
-  const { data: del, error } = await db.from('profiles').delete().eq('id', userId).select();
-  if (error) {
-    const m = error.message || '';
-    if (m.includes('RLS') || error.code === '42501' || m.includes('permission'))
-      alert('❌ RLS Supabase memblokir DELETE profiles. Tambahkan policy DELETE untuk authenticated.');
-    else alert('❌ Gagal hapus: ' + m);
+  if (!(await askConfirm('Hapus user "' + nama + '"? User ini akan dihapus permanen dari sistem & tidak bisa login lagi.'))) return;
+
+  // 1. Hapus dari profiles dulu
+  const { error: errProf } = await db.from('profiles').delete().eq('id', userId);
+  if (errProf) {
+    const m = errProf.message || '';
+    if (m.includes('RLS') || errProf.code === '42501' || m.includes('permission'))
+      alert('❌ RLS memblokir DELETE profiles. Tambahkan policy DELETE untuk authenticated.');
+    else alert('❌ Gagal hapus profiles: ' + m);
     return;
   }
-  if (!del || !del.length) { alert('❌ Hapus gagal — kemungkinan RLS memblokir DELETE profiles.'); return; }
-  aksesUserList.splice(idx, 1);
-  setMsg('aksesMsg', '✅ User "' + nama + '" dihapus. Login user ini sekarang diblokir.');
+
+  // 2. Hapus dari auth.users via RPC (supaya user tidak bisa login lagi)
+  const { error: errAuth } = await db.rpc('delete_user_by_id', { user_id: userId });
+  if (errAuth) {
+    // profiles sudah terhapus, auth gagal — tetap lanjut tapi kasih warning
+    console.warn('Hapus auth gagal:', errAuth.message);
+    setMsg('aksesMsg', '⚠️ Profil user "' + nama + '" dihapus, tapi gagal hapus dari auth (' + errAuth.message + '). User mungkin masih bisa login.');
+  } else {
+    setMsg('aksesMsg', '✅ User "' + nama + '" berhasil dihapus permanen dari sistem.');
+  }
+
   if (typeof _auditLog === 'function') _auditLog('user', 'DELETE', { nama: nama, email: u.email }, null);
+  aksesUserList.splice(idx, 1);
   renderKelolAkses();
 }
 
@@ -15391,14 +15402,13 @@ onLoggedIn = async function(user) {
   const isRecovery = hashParams.get('type') === 'recovery';
 
   if (isRecovery) {
-    // Jangan signOut — biarkan Supabase auto-set session dari token di URL hash.
-    // onAuthStateChange akan otomatis fire event PASSWORD_RECOVERY setelah session terset.
-    // Tidak perlu return; lanjutkan getSession supaya session recovery terbaca.
+    // Logout session lama dulu supaya PASSWORD_RECOVERY bisa tertangkap
+    await db.auth.signOut();
+    return; // Biarkan onAuthStateChange yang handle
   }
 
   const { data } = await db.auth.getSession();
-  // Kalau ini sesi recovery, onAuthStateChange sudah handle modal-nya — skip onLoggedIn
-  if (data.session?.user && !isRecovery) await onLoggedIn(data.session.user);
+  if (data.session?.user) await onLoggedIn(data.session.user);
 })();
 </script>
 
