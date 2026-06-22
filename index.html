@@ -15391,13 +15391,14 @@ onLoggedIn = async function(user) {
   const isRecovery = hashParams.get('type') === 'recovery';
 
   if (isRecovery) {
-    // Logout session lama dulu supaya PASSWORD_RECOVERY bisa tertangkap
-    await db.auth.signOut();
-    return; // Biarkan onAuthStateChange yang handle
+    // Jangan signOut — biarkan Supabase auto-set session dari token di URL hash.
+    // onAuthStateChange akan otomatis fire event PASSWORD_RECOVERY setelah session terset.
+    // Tidak perlu return; lanjutkan getSession supaya session recovery terbaca.
   }
 
   const { data } = await db.auth.getSession();
-  if (data.session?.user) await onLoggedIn(data.session.user);
+  // Kalau ini sesi recovery, onAuthStateChange sudah handle modal-nya — skip onLoggedIn
+  if (data.session?.user && !isRecovery) await onLoggedIn(data.session.user);
 })();
 </script>
 
