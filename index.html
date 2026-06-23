@@ -11552,17 +11552,19 @@ async function buatLaporan() {
   const firstThis = `${bln}-01`;
   const lastThis  = `${bln}-${String(new Date(y, m, 0).getDate()).padStart(2,'0')}`;
 
-  // ── Ambil semua sumber data secara paralel (Kas + Qurban + Acara) ──
+  // ── Ambil semua sumber data secara paralel (Kas + Qurban + Acara + Saldo Kas) ──
   const [
     { data: allTx, error: errTx },
     { data: allQB },
     { data: allQK },
     { data: allAB },
+    { data: saldoKasRow },
   ] = await Promise.all([
     db.from('transaksi').select('tanggal, tipe, kategori, jumlah'),
     db.from('qurban_bayar').select('tanggal, jumlah'),
     db.from('qurban_keluar').select('tanggal, jumlah'),
     db.from('acara_bayar').select('tanggal, jumlah, tipe'),
+    db.from('saldo_kas').select('*').single(),
   ]);
 
   if (errTx) { $('laporanArea').innerHTML = '<div class="card"><p class="err">Gagal: ' + errTx.message + '</p></div>'; return; }
@@ -11573,8 +11575,26 @@ async function buatLaporan() {
   const ab = allAB || [];
 
   // ── KAS ──
+  // kasAwal = saldo akumulasi sebelum bulan ini.
+  // Cara terbaik: hitung dari transaksi historis (sebelum firstThis).
+  // Lalu validasi konsistensi: kalau bulan yang dipilih = bulan ini,
+  // kasAkhir harus = saldo_kas.saldo (sumber kebenaran). Kalau beda,
+  // artinya ada saldo awal/carry-over di tabel → sesuaikan kasAwal.
   let kasAwal = 0;
   tx.forEach(t => { if (t.tanggal < firstThis) kasAwal += (t.tipe === 'masuk' ? 1 : -1) * Number(t.jumlah || 0); });
+
+  // ── Koreksi kasAwal menggunakan saldo_kas (sumber kebenaran) ──
+  // Hitung kasMasuk & kasKeluar bulan ini dulu (sementara untuk koreksi)
+  const _txBulan = tx.filter(t => t.tanggal >= firstThis && t.tanggal <= lastThis);
+  const _kasMasukBulan  = _txBulan.filter(t=>t.tipe==='masuk' ).reduce((s,t)=>s+Number(t.jumlah||0),0);
+  const _kasKeluarBulan = _txBulan.filter(t=>t.tipe==='keluar').reduce((s,t)=>s+Number(t.jumlah||0),0);
+  const nowYM = new Date().toISOString().slice(0,7);
+  if (saldoKasRow && bln >= nowYM) {
+    // Bulan ini atau mendatang: pakai saldo_kas sebagai acuan akhir bulan
+    // kasAwal = saldo_kas_sekarang - kasMasukBulanIni + kasKeluarBulanIni
+    const saldoAktual = Number(saldoKasRow.saldo || 0);
+    kasAwal = saldoAktual - _kasMasukBulan + _kasKeluarBulan;
+  }
   const txBulan = tx.filter(t => t.tanggal >= firstThis && t.tanggal <= lastThis);
   let kasMasuk = 0, kasKeluar = 0;
   const catKasMasuk = {}, catKasKeluar = {};
@@ -11718,8 +11738,8 @@ function renderLaporan(d) {
           <tr><td class="nm" style="color:#16a34a;">Pemasukan Kas</td><td style="text-align:right;font-weight:700;color:#16a34a;">+ ${IDR(d.kasMasuk||0)}</td></tr>
           <tr><td class="nm" style="color:#dc2626;">Pengeluaran Kas</td><td style="text-align:right;font-weight:700;color:#dc2626;">- ${IDR(d.kasKeluar||0)}</td></tr>
           <tr style="background:#f0faf4;"><td class="nm" style="color:#16a34a;">Kas Murni Akhir Bulan</td><td style="text-align:right;font-weight:700;color:#16a34a;">${IDR((d.kasAwal||0)+(d.kasMasuk||0)-(d.kasKeluar||0))}</td></tr>
-          <tr style="background:#fef3e8;"><td class="nm" style="color:#d97706;">+ Sisa Dana Acara (masuk kas)</td><td style="text-align:right;font-weight:700;color:#d97706;">+ ${IDR((d.acaraAwal||0)+(d.acaraMasuk||0)-(d.acaraKeluar||0))}</td></tr>
-          <tr style="background:#e8f5ef;border-top:2px solid #1a6644;"><td class="nm" style="font-weight:800;font-size:14px;">TOTAL SALDO KAS</td><td style="text-align:right;font-weight:900;font-size:14px;color:#1a6644;">${IDR((d.kasAwal||0)+(d.kasMasuk||0)-(d.kasKeluar||0)+(d.acaraAwal||0)+(d.acaraMasuk||0)-(d.acaraKeluar||0))}</td></tr>
+          <tr style="background:#fef3e8;"><td class="nm" style="color:#d97706;">+ Sisa Dana Acara (terpisah)</td><td style="text-align:right;font-weight:700;color:#d97706;">+ ${IDR((d.acaraAwal||0)+(d.acaraMasuk||0)-(d.acaraKeluar||0))}</td></tr>
+          <tr style="background:#e8f5ef;border-top:2px solid #1a6644;"><td class="nm" style="font-weight:800;font-size:14px;">TOTAL SALDO KAS <span style="font-size:10px;font-weight:400;color:#7a9585;">(Kas Murni + Sisa Acara)</span></td><td style="text-align:right;font-weight:900;font-size:14px;color:#1a6644;">${IDR((d.kasAwal||0)+(d.kasMasuk||0)-(d.kasKeluar||0)+(d.acaraAwal||0)+(d.acaraMasuk||0)-(d.acaraKeluar||0))}</td></tr>
         </tbody>
       </table>
       ${Object.keys(d.catKasMasuk||{}).length ? `
@@ -12410,7 +12430,7 @@ function cetakLaporan() {
       ['Pemasukan Kas', '+ ' + IDR(d.kasMasuk||0)],
       ['Pengeluaran Kas', '- ' + IDR(d.kasKeluar||0)],
       ['Kas Murni Akhir Bulan', IDR(kasAkhir)],
-      ['+ Sisa Dana Acara (masuk kas)', '+ ' + IDR(acaraAkhir)],
+      ['+ Sisa Dana Acara (terpisah)', '+ ' + IDR(acaraAkhir)],
       ['TOTAL SALDO KAS', IDR(totalSaldoKas)],
     ],
     styles: { fontSize: 9, cellPadding: 2.5 },
