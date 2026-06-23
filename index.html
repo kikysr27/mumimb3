@@ -1485,6 +1485,44 @@
 .so-divisi-anggota-list .so-name { font-size:10.5px; }
 .so-divisi-anggota-list .so-role-badge { font-size:8.5px; padding:1px 6px; }
 
+/* ═══ TOOLTIP JOBDESK DIVISI (hover Windows / tap HP) — gaya gelap industrial ═══ */
+.so-jobdesk-tip {
+  position: fixed;
+  z-index: 4000;
+  max-width: min(320px, 86vw);
+  background: rgba(17,24,28,.97);
+  color: #f1f5f4;
+  border: 1px solid rgba(125,211,170,.35);
+  border-radius: 12px;
+  padding: 11px 14px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.5);
+  font-size: 12.5px;
+  line-height: 1.55;
+  pointer-events: none;            /* tidak menghalangi klik di bawahnya */
+  animation: soTipIn .14s ease-out both;
+  white-space: normal;
+  word-break: break-word;
+}
+@keyframes soTipIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+.so-jobdesk-tip .so-tip-title {
+  font-weight: 800; font-size: 12.5px; color: #6fe0aa;
+  margin-bottom: 5px; padding-bottom: 5px;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+}
+.so-jobdesk-tip .so-tip-body { color: #e6efeb; font-weight: 500; }
+.so-jobdesk-tip .so-tip-empty { color: #9fb3aa; font-style: italic; }
+/* Panah kecil penunjuk node */
+.so-jobdesk-tip::after {
+  content: ""; position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: -7px; border-width: 7px 7px 0 7px; border-style: solid;
+  border-color: rgba(17,24,28,.97) transparent transparent transparent;
+}
+.so-jobdesk-tip.tip-bottom::after {
+  bottom: auto; top: -7px;
+  border-width: 0 7px 7px 7px;
+  border-color: transparent transparent rgba(17,24,28,.97) transparent;
+}
+
 /* SVG connector overlay */
 .so-branch-wrap { position:relative; width:100%; display:flex; justify-content:center; }
 .so-branch-svg { display:block; overflow:visible; }
@@ -1549,6 +1587,10 @@
 .prj-task-item:hover { box-shadow:0 2px 10px rgba(26,102,68,.12); }
 .prj-task-item.done-task { opacity:.55; }
 .prj-task-item.done-task .prj-task-title { text-decoration:line-through;color:#7a9585; }
+/* Tugas yang melewati deadline & belum selesai → sorot merah + naik ke atas */
+.prj-task-item.overdue-task { background:#fff1f0 !important; border:1.5px solid #fca5a5; box-shadow:0 0 0 2px #fee2e2 inset; }
+.prj-task-item.overdue-task .prj-task-title { color:#b91c1c; font-weight:800; }
+.prj-overdue-badge { display:inline-block;background:#dc2626;color:#fff;font-size:9.5px;font-weight:800;padding:2px 8px;border-radius:6px;margin-bottom:4px;letter-spacing:.3px;animation:soTipIn .2s ease-out both; }
 .prj-checkbox { width:18px;height:18px;accent-color:#1a6644;cursor:pointer;flex-shrink:0;margin-top:2px; }
 .prj-task-body { flex:1;min-width:0; }
 .prj-task-title { font-size:13px;font-weight:600;color:#0f2e1f;margin-bottom:2px; }
@@ -3157,6 +3199,10 @@
           <input type="text" id="newUserJabatan" placeholder="cth: Bendahara">
           <label>Password (min. 6 karakter)</label>
           <input type="text" id="newUserPass" placeholder="Password untuk user ini" autocomplete="new-password">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;margin:8px 0;padding:8px 10px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;font-size:13px;">
+            <input type="checkbox" id="newUserMaster" style="width:16px;height:16px;margin:0;accent-color:#7c3aed;">
+            👑 Jadikan Admin Master <span class="muted" style="font-weight:400;font-size:11px;">(akses penuh + bisa kelola user lain)</span>
+          </label>
           <button onclick="addNewUser()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">➕ Buat User</button>
           <div id="newUserMsg" style="margin-top:6px;"></div>
         </div>
@@ -3183,8 +3229,8 @@
       <div class="card">
         <h2>🔑 Kelola Akses User</h2>
         <p class="muted" style="margin-bottom:12px;">
-          Atur menu yang boleh dilihat tiap user (centang/uncentang). Bisa juga reset password atau hapus user.<br>
-          Hanya <b>admin@mumi.local</b> (admin master) yang bisa mengubah.
+          Atur menu yang boleh dilihat tiap user (centang/uncentang). Bisa juga reset password, hapus user, atau angkat user jadi <b>Admin Master</b>.<br>
+          Hanya <b>Admin Master</b> yang bisa mengubah. Admin Master baru bisa diangkat lewat tombol <b>👑 Jadikan Admin Master</b> di tiap user.
         </p>
         <div id="aksesMsg" style="margin-bottom:8px;"></div>
         <div id="aksesList"><p class="muted">Memuat daftar user...</p></div>
@@ -3362,7 +3408,7 @@
           </select>
         </div>
         <div>
-          <label>📅 Deadline (Opsional)</label>
+          <label>📅 Deadline <span style="color:#dc2626;">*</span></label>
           <input type="date" id="acTaskDeadline">
         </div>
       </div>
@@ -3408,6 +3454,58 @@
       <div style="display:flex;gap:8px;margin-top:6px;">
         <button onclick="acTaskSaveEdit()" style="flex:1;background:linear-gradient(135deg,#1a6644,#2d9e6b);">💾 Simpan Detail Task</button>
         <button class="danger" onclick="acTaskDeleteFromModal()" style="width:auto;padding:11px 16px;">🗑️ Hapus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODAL DETAIL TUGAS MUSYAWARAH ═══ -->
+  <div id="mswTaskModal" class="task-modal-overlay" style="display:none;z-index:1200;" onclick="if(event.target===this)mswTaskCloseEdit()">
+    <div class="task-modal-box">
+      <div class="task-modal-drag"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h2 style="margin:0;font-size:16px;">✏️ Detail Tugas</h2>
+        <button onclick="mswTaskCloseEdit()" style="width:auto;padding:6px 12px;font-size:12px;background:#f0f7f3;color:#1a6644;">✕ Tutup</button>
+      </div>
+
+      <label>Nama Tugas</label>
+      <input type="text" id="mswTaskName" placeholder="Cth: Susun proposal kegiatan" style="font-weight:600;">
+
+      <label>🏢 Divisi Penanggung Jawab <span style="color:#dc2626;">*</span></label>
+      <select id="mswTaskDivisi"><option value="">— Pilih divisi —</option></select>
+      <div id="mswTaskDivisiHint" style="display:none;font-size:11px;color:#d97706;margin:-4px 0 10px;">
+        Belum ada divisi. Buat dulu di menu <b>Struktur Organisasi</b>.
+      </div>
+
+      <label>👤 Penanggung Jawab Orang (Opsional)</label>
+      <input type="text" id="mswTaskAssignee" placeholder="Nama orang yang bertanggung jawab...">
+
+      <div class="row">
+        <div>
+          <label>Status</label>
+          <select id="mswTaskStatus" onchange="_mswUpdateLateHint()">
+            <option value="todo">⬜ Belum Mulai</option>
+            <option value="progress">🔄 Dikerjakan</option>
+            <option value="done">✅ Selesai</option>
+            <option value="cancelled">❌ Batal</option>
+          </select>
+        </div>
+        <div>
+          <label>📅 Deadline <span style="color:#dc2626;">*</span></label>
+          <input type="date" id="mswTaskDeadline" onchange="_mswUpdateLateHint()">
+        </div>
+      </div>
+
+      <label>🏁 Tanggal Selesai <span class="muted" style="font-size:11px;font-weight:400;">(otomatis terisi saat status "Selesai" — bisa diubah)</span></label>
+      <input type="date" id="mswTaskDoneDate" onchange="_mswUpdateLateHint()">
+      <div id="mswTaskLateHint" style="display:none;font-size:11px;margin:-4px 0 10px;font-weight:700;"></div>
+
+      <label>📝 Catatan (Opsional)</label>
+      <textarea id="mswTaskDesc" placeholder="Detail tugas / catatan progres..." style="min-height:90px;resize:vertical;"></textarea>
+
+      <div id="mswTaskModalMsg"></div>
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <button onclick="mswTaskSaveEdit()" style="flex:1;background:linear-gradient(135deg,#1a6644,#2d9e6b);">💾 Simpan Tugas</button>
+        <button class="danger" onclick="mswTaskDeleteFromModal()" style="width:auto;padding:11px 16px;">🗑️ Hapus</button>
       </div>
     </div>
   </div>
@@ -5581,7 +5679,11 @@ async function onLoggedIn(user) {
   $('appView').style.display = 'block';
   $('currentUser').textContent = `Login sebagai ${prof?.nama_lengkap || user.email} (${prof?.jabatan || 'Admin'})`;
   isSuper = prof?.is_super === true;
-  isMasterAdmin = _isMaster;
+  // Admin master = admin utama bawaan (admin@mumi.local) ATAU user yang
+  // diangkat jadi admin master (kolom is_master = true di tabel profiles).
+  // Admin master punya akses penuh + bisa kelola user + bisa mengangkat
+  // admin master lain.
+  isMasterAdmin = _isMaster || (prof?.is_master === true);
   currentProf = { id: user.id, email: user.email, nama: prof?.nama_lengkap || user.email, jabatan: prof?.jabatan || 'Admin' };
   // Hak akses per-menu (granular). Super admin / master admin = semua menu otomatis.
   const _akses = (prof && prof.akses_menu) || {};
@@ -10419,6 +10521,26 @@ function closeAcaraDetail() {
 }
 
 // ── PDF DETAIL PER ACARA (lengkap: info, tugas, pembayaran MUMI+GP, belum bayar, pengeluaran, sisa) ──
+// Status lengkap tugas untuk PDF — bedakan: Belum Mulai / Proses / Selesai /
+// Batal / TERLAMBAT (lewat deadline & belum selesai). Dipakai PDF Acara,
+// Musyawarah, & Project supaya late task selalu kelihatan jelas.
+function _taskRichStatus(t) {
+  const _td = new Date();
+  const today = _td.getFullYear() + '-' + String(_td.getMonth() + 1).padStart(2, '0') + '-' + String(_td.getDate()).padStart(2, '0');
+  const dl = t.deadline || t.tenggat || '';
+  const dd = t.done_date || '';
+  const done = (t.status === 'done') || (t.done === true);
+  if (t.status === 'cancelled') return 'Batal';
+  if (done) {
+    if (dl && dd && dd > dl) return 'Selesai (Terlambat)';
+    if (dl && dd) return 'Selesai (Tepat waktu)';
+    return 'Selesai';
+  }
+  if (dl && dl < today) return 'TERLAMBAT';
+  if (t.status === 'progress' || t.status === 'on_progress') return 'Proses';
+  return 'Belum Mulai';
+}
+
 async function exportAcaraDetailPDF(acaraId) {
   acaraId = acaraId || currentAcaraId;
   const a = acaraCache.find(x => x.id === acaraId);
@@ -10480,12 +10602,12 @@ async function exportAcaraDetailPDF(acaraId) {
     columnStyles: { 0: { cellWidth: 50, fontStyle: 'bold' }, 1: { cellWidth: 'auto' } },
   });
   if (tasks.length) {
-    const taskStat = st => st === 'done' ? 'Selesai' : st === 'cancelled' ? 'Batal' : st === 'on_progress' ? 'Proses' : 'Belum';
     doc.autoTable({
       startY: doc.lastAutoTable.finalY + 6,
-      head: [['Tugas / Kegiatan', 'Status', 'PIC', 'Deadline']],
-      body: tasks.map(t => [S(t.text || t.judul || t.nama || '-'), (t.status ? taskStat(t.status) : (t.done ? 'Selesai' : 'Belum')), S(t.assignee || t.pic || '-'), t.deadline || t.tenggat || '-']),
+      head: [['Tugas / Kegiatan', 'Status', 'PIC / Penanggung Jawab', 'Deadline']],
+      body: tasks.map(t => [S(t.text || t.judul || t.nama || '-'), _taskRichStatus(t), S(t.assignee || t.pic || '-'), t.deadline || t.tenggat || '-']),
       styles: { fontSize: 8 }, headStyles: { fillColor: [26, 102, 68] },
+      didParseCell: function (dt) { if (dt.section === 'body' && dt.column.index === 1 && /Terlambat|TERLAMBAT/.test(dt.cell.raw)) { dt.cell.styles.textColor = [220, 38, 38]; dt.cell.styles.fontStyle = 'bold'; } },
     });
   }
   doc.autoTable({
@@ -10528,6 +10650,80 @@ async function exportAcaraDetailPDF(acaraId) {
   _pdfFooter(doc);
   doc.save('acara-' + S(a.nama || 'acara').replace(/[\/\\ ]+/g, '-').slice(0, 40) + '.pdf');
   showToast('PDF detail acara berhasil dibuat', 'success');
+}
+
+// ─── Export PDF Musyawarah (notulensi + tugas + divisi). TANPA keuangan. ───
+async function exportMswDetailPDF(mswId) {
+  mswId = mswId || (typeof currentMswId !== 'undefined' ? currentMswId : null);
+  const m = (typeof mswCache !== 'undefined' ? mswCache : []).find(x => x.id === mswId);
+  if (!m) { showToast('Musyawarah tidak ditemukan', 'error'); return; }
+  if (!window.jspdf) { showToast('Library PDF belum termuat, coba lagi sebentar', 'info'); return; }
+  showToast('Menyiapkan PDF musyawarah...', 'info', 1500);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const S = _pdfSafe;
+  const _arr = v => { try { return v ? (typeof v === 'string' ? JSON.parse(v) : v) : []; } catch (_) { return []; } };
+  const tasks = _arr(m.tasks), divList = _arr(m.divisis);
+  const notulen = window.mdToPlainText ? window.mdToPlainText(m.hasil || '', 4000) : (m.hasil || '');
+
+  _pdfHeader(doc, 'NOTULENSI MUSYAWARAH - MUMI MB3', S(m.judul || 'Musyawarah'));
+  doc.autoTable({
+    startY: 28, theme: 'grid', styles: { fontSize: 9, cellPadding: 2.5 },
+    body: [
+      ['Judul / Topik', S(m.judul || '-')],
+      ['Tanggal', (m.tanggal || '-') + (m.jam ? ' · ' + String(m.jam).slice(0, 5) : '')],
+      ['Tempat', S(m.tempat || '-')],
+      ['Divisi Terlibat', divList.length ? S(divList.join(', ')) : '-'],
+      ['Status', m.status === 'arsip' ? 'Arsip' : 'Aktif'],
+    ],
+    columnStyles: { 0: { cellWidth: 50, fontStyle: 'bold' }, 1: { cellWidth: 'auto' } },
+  });
+  if (tasks.length) {
+    const _t2 = new Date();
+    const _today = _t2.getFullYear() + '-' + String(_t2.getMonth() + 1).padStart(2, '0') + '-' + String(_t2.getDate()).padStart(2, '0');
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY + 6,
+      head: [['Tugas', 'Status', 'Divisi', 'PIC / Penanggung Jawab', 'Deadline', 'Selesai', 'Ket.']],
+      body: tasks.map(t => {
+        const selesai = (t.status === 'done' && t.done_date) ? t.done_date : '-';
+        let ket = '-';
+        if (t.status === 'done' && t.done_date && t.deadline) ket = (t.done_date > t.deadline) ? 'Terlambat' : 'Tepat waktu';
+        else if (t.status === 'done' && t.done_date) ket = 'Selesai';
+        else if (t.status !== 'done' && t.status !== 'cancelled' && t.deadline && t.deadline < _today) ket = 'Terlambat';
+        return [S(t.text || '-'), _taskRichStatus(t), S(t.divisi || '-'), S(t.assignee || '-'), t.deadline || '-', selesai, ket];
+      }),
+      styles: { fontSize: 7.5, cellPadding: 2 }, headStyles: { fillColor: [26, 102, 68] },
+      didParseCell: function (dt) { if (dt.section === 'body' && (dt.column.index === 1 || dt.column.index === 6) && /Terlambat|TERLAMBAT/.test(dt.cell.raw)) { dt.cell.styles.textColor = [220, 38, 38]; dt.cell.styles.fontStyle = 'bold'; } },
+    });
+  }
+  // Absensi — HANYA anggota Struktur Organisasi
+  const _members = (typeof window._mswSoMembers === 'function') ? window._mswSoMembers() : [];
+  const _kh = (m.kehadiran && typeof m.kehadiran === 'object' && !Array.isArray(m.kehadiran)) ? m.kehadiran : {};
+  if (_members.length) {
+    const stLabel = s => s === 'hadir' ? 'Hadir' : s === 'izin' ? 'Izin' : 'Tidak Hadir';
+    let cH = 0, cI = 0, cT = 0;
+    const body = _members.map(mem => {
+      const s = _kh[mem.id] || 'tidak';
+      if (s === 'hadir') cH++; else if (s === 'izin') cI++; else cT++;
+      return [S(mem.name || '-'), S(mem.role || mem.divisi || '-'), stLabel(s)];
+    });
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY + 6,
+      head: [['Peserta (Struktur Org)', 'Jabatan / Divisi', 'Kehadiran']],
+      body: body,
+      foot: [['RINGKASAN KEHADIRAN', '', cH + ' Hadir · ' + cI + ' Izin · ' + cT + ' Tidak']],
+      styles: { fontSize: 8 }, headStyles: { fillColor: [37, 99, 235] }, footStyles: { fillColor: [37, 99, 235], textColor: 255 },
+    });
+  }
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 6,
+    head: [['Notulensi / Catatan Musyawarah']],
+    body: [[S(notulen) || '(belum ada catatan)']],
+    styles: { fontSize: 9, cellPadding: 3 }, headStyles: { fillColor: [37, 99, 235] },
+  });
+  _pdfFooter(doc);
+  doc.save('musyawarah-' + S(m.judul || 'musyawarah').replace(/[\/\\ ]+/g, '-').slice(0, 40) + '.pdf');
+  showToast('PDF musyawarah berhasil dibuat', 'success');
 }
 
 async function saveAcaraDetail() {
@@ -13558,7 +13754,7 @@ async function loadKelolAkses() {
   if (panel) panel.style.display = isMasterAdmin ? 'block' : 'none';
   if (!isMasterAdmin) {
     $('aksesMsg').innerHTML = '';
-    $('aksesList').innerHTML = '<div style="padding:14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#b91c1c;font-size:13px;">🔒 Hanya <b>admin master</b> (admin@mumi.local) yang bisa mengelola user & akses.</div>';
+    $('aksesList').innerHTML = '<div style="padding:14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#b91c1c;font-size:13px;">🔒 Hanya <b>Admin Master</b> yang bisa mengelola user & akses.</div>';
     return;
   }
   $('aksesMsg').innerHTML = '';
@@ -13598,16 +13794,17 @@ function renderKelolAkses() {
 
   const html = aksesUserList.map((u, i) => {
     const isSelf = (u.id === currentProf?.id);
-    const isMaster = isSelf && isMasterAdmin;
+    const isRootAdmin = (u.email === 'admin@mumi.local');     // admin utama bawaan (tak bisa diubah)
+    const rowIsMaster = isRootAdmin || (u.is_master === true); // admin master = akses penuh + kelola user
     const akses = u.akses_menu || {};
-    const full = (u.is_super === true) || isMaster; // super/master = akses penuh
-    const masterBadge = isMaster
-      ? '<span class="st-badge st-in_progress" style="font-size:10px;margin-left:4px;">👑 Master Admin (akses penuh)</span>'
+    const full = (u.is_super === true) || rowIsMaster; // super/master = akses penuh
+    const masterBadge = rowIsMaster
+      ? `<span class="st-badge st-in_progress" style="font-size:10px;margin-left:4px;">👑 Admin Master${isRootAdmin ? ' (utama)' : ''} — akses penuh</span>`
       : (u.is_super === true ? '<span class="st-badge st-done" style="font-size:10px;margin-left:4px;">⭐ Super (akses penuh)</span>' : '');
 
     const cekboxes = MENUS.map(m => {
       const on = full || akses[m.key] === true;
-      const dis = (!canEdit || isMaster) ? 'disabled' : '';
+      const dis = (!canEdit || rowIsMaster) ? 'disabled' : '';
       return `<label class="prj-divisi-checkbox-wrap ${on ? 'checked' : ''}" style="font-size:12px;">
         <input type="checkbox" ${on ? 'checked' : ''} ${dis}
           onchange="setMenuAkses('${u.id}','${m.key}',this.checked,${i})"
@@ -13615,11 +13812,18 @@ function renderKelolAkses() {
     }).join('');
 
     const emailLine = u.email ? `<div class="muted" style="font-size:11px;margin-bottom:2px;">📧 ${escapeHtml(u.email)}</div>` : '';
-    // Tombol aksi user (reset password & hapus) — hanya master, dan bukan untuk diri sendiri/master
-    const aksiBtn = (canEdit && !isMaster) ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
-        ${u.email ? `<button class="small secondary" style="width:auto;padding:5px 10px;font-size:11px;" onclick="resetUserPassword('${escapeHtml(u.email)}')">🔑 Reset Password</button>` : ''}
-        <button class="small danger" style="width:auto;padding:5px 10px;font-size:11px;" onclick="deleteUserProfile('${u.id}',${i})">🗑️ Hapus User</button>
-      </div>` : '';
+
+    // Tombol aksi user — admin utama (root) & diri sendiri DILINDUNGI (tanpa tombol).
+    const btns = [];
+    if (canEdit && !isRootAdmin && !isSelf) {
+      // Toggle ANGKAT / CABUT admin master
+      btns.push(`<button class="small ${rowIsMaster ? 'danger' : 'secondary'}" style="width:auto;padding:5px 10px;font-size:11px;"
+        onclick="setMasterAdmin('${u.id}',${!rowIsMaster},${i})">${rowIsMaster ? '👑 Cabut Admin Master' : '👑 Jadikan Admin Master'}</button>`);
+      if (u.email) btns.push(`<button class="small secondary" style="width:auto;padding:5px 10px;font-size:11px;" onclick="resetUserPassword('${escapeHtml(u.email)}')">🔑 Reset Password</button>`);
+      btns.push(`<button class="small danger" style="width:auto;padding:5px 10px;font-size:11px;" onclick="deleteUserProfile('${u.id}',${i})">🗑️ Hapus User</button>`);
+    }
+    const aksiBtn = btns.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">${btns.join('')}</div>` : '';
+
     return `<div style="padding:12px;background:#f0f7f3;border-radius:8px;margin-bottom:8px;">
       <div style="font-weight:700;font-size:13px;">${escapeHtml(u.nama_lengkap || '(tanpa nama)')}${masterBadge}</div>
       ${emailLine}
@@ -13632,7 +13836,7 @@ function renderKelolAkses() {
   $('aksesList').innerHTML = `
     <div style="margin-bottom:12px;padding:10px 12px;background:#fef9c3;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e;">
       ⚠️ <b>Centang menu</b> yang boleh dilihat tiap user. Contoh: User A hanya ☑ Kelola Foto, User B hanya ☑ Tempat Sampah, User C hanya ☑ Riwayat, User D centang ketiga-tiganya.<br>
-      Hanya <b>admin@mumi.local</b> yang bisa mengubah. Perubahan berlaku saat user <b>login berikutnya</b>.
+      Hanya <b>Admin Master</b> yang bisa mengubah. Perubahan berlaku saat user <b>login berikutnya</b>.
     </div>
     <div style="font-size:12px;color:#6b7280;margin-bottom:8px;">Total ${aksesUserList.length} user</div>
     ${html}`;
@@ -13724,6 +13928,47 @@ async function setMenuAkses(userId, key, checked, idx) {
   renderKelolAkses();
 }
 
+// ── ANGKAT / CABUT ADMIN MASTER ──────────────────────────────────────
+// Memberi user lain akses penuh setara admin@mumi.local (kelola user +
+// bisa mengangkat admin master lain). Disimpan di kolom is_master (boolean).
+async function setMasterAdmin(userId, makeMaster, idx) {
+  if (!isMasterAdmin) { alert('Hanya admin master yang bisa mengubah status admin master.'); return; }
+  const u = aksesUserList[idx];
+  if (!u) return;
+  if (u.email === 'admin@mumi.local') { alert('Admin utama (admin@mumi.local) selalu admin master dan tidak bisa diubah.'); return; }
+  if (userId === currentProf?.id) { alert('Anda tidak bisa mengubah status admin master diri sendiri (cegah terkunci).'); return; }
+
+  const nama = u.nama_lengkap || u.email || '(tanpa nama)';
+  const konfirmasi = makeMaster
+    ? `Jadikan "${nama}" sebagai ADMIN MASTER?\n\n• Mendapat AKSES PENUH ke semua menu\n• Bisa mengelola user lain (tambah/hapus/reset password)\n• Bisa mengangkat admin master lain`
+    : `Cabut status ADMIN MASTER dari "${nama}"?\n\nUser ini kembali ke akses biasa (tanpa hak kelola user).`;
+  if (!(await askConfirm(konfirmasi))) return;
+
+  const { error } = await db.from('profiles').update({ is_master: makeMaster }).eq('id', userId);
+  if (error) {
+    const m = error.message || '';
+    if (m.includes('is_master') || m.includes('column')) {
+      alert('❌ Kolom "is_master" belum ada di tabel profiles.\n\nJalankan SQL ini di Supabase → SQL Editor:\n\n' +
+        'ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_master boolean DEFAULT false;');
+    } else if (m.includes('RLS') || error.code === '42501' || m.includes('permission')) {
+      alert('❌ RLS Supabase memblokir UPDATE profiles. Tambahkan policy UPDATE untuk authenticated.');
+    } else {
+      alert('❌ Gagal mengubah status admin master: ' + m);
+    }
+    return;
+  }
+
+  // Update cache lokal + beri tahu
+  u.is_master = makeMaster;
+  setMsg('aksesMsg', '✅ ' + (makeMaster
+    ? 'Berhasil menjadikan ADMIN MASTER: ' + nama
+    : 'Status admin master dicabut dari: ' + nama) + '. Berlaku saat user login berikutnya.');
+  if (typeof _auditLog === 'function') {
+    _auditLog('akses_user', 'UPDATE', null, { user: nama, admin_master: makeMaster });
+  }
+  renderKelolAkses();
+}
+
 // ════════════════ MANAJEMEN USER (hanya admin master) ════════════════
 
 // Tambah user baru: signUp lewat client SEMENTARA (tidak mengganggu sesi admin) + buat profile.
@@ -13733,6 +13978,7 @@ async function addNewUser() {
   const nama  = ($('newUserNama').value || '').trim();
   const jabatan = ($('newUserJabatan').value || '').trim();
   const pass  = $('newUserPass').value || '';
+  const asMaster = !!($('newUserMaster') && $('newUserMaster').checked); // 👑 buat langsung sebagai admin master
   if (!email || !email.includes('@')) { setMsg('newUserMsg', 'Email tidak valid.', true); return; }
   if (pass.length < 6) { setMsg('newUserMsg', 'Password minimal 6 karakter.', true); return; }
   if (!nama) { setMsg('newUserMsg', 'Nama lengkap wajib diisi.', true); return; }
@@ -13754,11 +14000,17 @@ async function addNewUser() {
   // Buat/lengkapi profile. Kalau ada sesi (konfirmasi email OFF) pakai tmp (login sbg user baru)
   // supaya lolos RLS auth.uid()=id; kalau tidak, coba lewat sesi admin.
   const profPayload = { id: newId, nama_lengkap: nama, jabatan: jabatan || 'User', akses_menu: {}, is_super: false, email: email };
+  if (asMaster) profPayload.is_master = true; // hanya ditambah kalau dicentang (aman kalau kolom belum ada)
   const writer = suData.session ? tmp : db;
   let pErr = (await writer.from('profiles').upsert(profPayload)).error;
   if (pErr && /email/i.test(pErr.message || '')) {
     delete profPayload.email; // kolom email belum ada → simpan tanpa email
     pErr = (await writer.from('profiles').upsert(profPayload)).error;
+  }
+  if (pErr && /is_master/i.test(pErr.message || '')) {
+    delete profPayload.is_master; // kolom is_master belum ada → simpan tanpa itu, lalu ingatkan admin
+    pErr = (await writer.from('profiles').upsert(profPayload)).error;
+    if (!pErr) setTimeout(() => alert('⚠️ User dibuat, TAPI kolom "is_master" belum ada sehingga status Admin Master belum tersimpan.\n\nJalankan di Supabase → SQL Editor:\nALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_master boolean DEFAULT false;\n\nLalu angkat user ini lewat tombol "👑 Jadikan Admin Master".'), 150);
   }
   try { await tmp.auth.signOut(); } catch (_) {}
   if (pErr) {
@@ -13769,7 +14021,8 @@ async function addNewUser() {
   const note = suData.session ? '' : ' (Jika "Confirm email" aktif di Supabase, user harus klik link konfirmasi di email dulu sebelum bisa login.)';
   setMsg('newUserMsg', '✅ User "' + nama + '" berhasil dibuat! Atur menu yang boleh dilihat di daftar bawah.' + note);
   $('newUserEmail').value = ''; $('newUserNama').value = ''; $('newUserJabatan').value = ''; $('newUserPass').value = '';
-  if (typeof _auditLog === 'function') _auditLog('user', 'CREATE', null, { nama: nama, email: email });
+  if ($('newUserMaster')) $('newUserMaster').checked = false;
+  if (typeof _auditLog === 'function') _auditLog('user', 'CREATE', null, { nama: nama, email: email, admin_master: asMaster });
   await loadKelolAkses();
 }
 
@@ -13806,33 +14059,43 @@ async function deleteUserProfile(userId, idx) {
   if (!isMasterAdmin) { alert('Hanya admin master yang bisa hapus user.'); return; }
   const u = aksesUserList[idx];
   if (!u) return;
+  if (u.email === 'admin@mumi.local') { alert('Admin utama (admin@mumi.local) tidak bisa dihapus.'); return; }
   if (userId === currentProf?.id) { alert('Tidak bisa menghapus akun sendiri.'); return; }
   const nama = u.nama_lengkap || u.email || '(user)';
-  if (!(await askConfirm('Hapus user "' + nama + '"? User ini akan dihapus permanen dari sistem & tidak bisa login lagi.'))) return;
 
-  // 1. Hapus dari profiles dulu
-  const { error: errProf } = await db.from('profiles').delete().eq('id', userId);
-  if (errProf) {
-    const m = errProf.message || '';
-    if (m.includes('RLS') || errProf.code === '42501' || m.includes('permission'))
-      alert('❌ RLS memblokir DELETE profiles. Tambahkan policy DELETE untuk authenticated.');
-    else alert('❌ Gagal hapus profiles: ' + m);
-    return;
-  }
-
-  // 2. Hapus dari auth.users via RPC (supaya user tidak bisa login lagi)
-  const { error: errAuth } = await db.rpc('delete_user_by_id', { user_id: userId });
-  if (errAuth) {
-    // profiles sudah terhapus, auth gagal — tetap lanjut tapi kasih warning
-    console.warn('Hapus auth gagal:', errAuth.message);
-    setMsg('aksesMsg', '⚠️ Profil user "' + nama + '" dihapus, tapi gagal hapus dari auth (' + errAuth.message + '). User mungkin masih bisa login.');
-  } else {
-    setMsg('aksesMsg', '✅ User "' + nama + '" berhasil dihapus permanen dari sistem.');
-  }
-
-  if (typeof _auditLog === 'function') _auditLog('user', 'DELETE', { nama: nama, email: u.email }, null);
+  // Hapus dari TAMPILAN dulu (belum dari DB) → bisa diurungkan 10 detik.
   aksesUserList.splice(idx, 1);
   renderKelolAkses();
+
+  showUndoToast(nama,
+    function() { // URUNGKAN: kembalikan user ke daftar (DB belum tersentuh)
+      aksesUserList.splice(Math.min(idx, aksesUserList.length), 0, u);
+      renderKelolAkses();
+      setMsg('aksesMsg', '↩️ Penghapusan user "' + nama + '" dibatalkan.');
+    },
+    async function() { // KONFIRMASI: hapus permanen dari profiles + auth
+      // 1. Hapus dari profiles dulu
+      const { error: errProf } = await db.from('profiles').delete().eq('id', userId);
+      if (errProf) {
+        const m = errProf.message || '';
+        if (m.includes('RLS') || errProf.code === '42501' || m.includes('permission'))
+          alert('❌ RLS memblokir DELETE profiles. Tambahkan policy DELETE untuk authenticated.');
+        else alert('❌ Gagal hapus profiles: ' + m);
+        await loadKelolAkses(); // segarkan: user mungkin masih ada
+        return;
+      }
+      // 2. Hapus dari auth.users via RPC (supaya user tidak bisa login lagi)
+      const { error: errAuth } = await db.rpc('delete_user_by_id', { user_id: userId });
+      if (errAuth) {
+        console.warn('Hapus auth gagal:', errAuth.message);
+        setMsg('aksesMsg', '⚠️ Profil user "' + nama + '" dihapus, tapi gagal hapus dari auth (' + errAuth.message + '). User mungkin masih bisa login.');
+      } else {
+        setMsg('aksesMsg', '✅ User "' + nama + '" berhasil dihapus permanen dari sistem.');
+      }
+      if (typeof _auditLog === 'function') _auditLog('user', 'DELETE', { nama: nama, email: u.email }, null);
+    },
+    '👤'
+  );
 }
 
 // ─────────────── ARSIP KAS BULANAN ───────────────
@@ -16207,10 +16470,9 @@ function renderMswList() {
 
   $('mswList').innerHTML = list.map(m => {
     const arsip = m.status === 'arsip';
-    const nPeserta = Array.isArray(m.musyawarah_peserta) ? m.musyawarah_peserta.length : 0;
-    const keuangan = m.musyawarah_keuangan || [];
-    const totMasuk  = keuangan.filter(k=>k.tipe==='masuk').reduce((s,k)=>s+Number(k.jumlah||0),0);
-    const totKeluar = keuangan.filter(k=>k.tipe==='keluar').reduce((s,k)=>s+Number(k.jumlah||0),0);
+    const tasksArr = Array.isArray(m.tasks) ? m.tasks : [];
+    const nTask = tasksArr.length;
+    const nDone = tasksArr.filter(t => t.status === 'done').length;
     const terpilih = mswSeleksi.has(m.id);
 
     return `<div style="padding:14px;background:${arsip?'#edefed':'#f0f7f3'};border-radius:10px;margin-bottom:8px;${arsip?'opacity:.78;':''};position:relative;">
@@ -16225,9 +16487,7 @@ function renderMswList() {
             📅 ${m.tanggal}${m.jam ? ' · ⏰ '+m.jam.slice(0,5) : ''}${m.tempat ? ' · 📍 '+escapeHtml(m.tempat) : ''}
           </div>
           <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
-            <span style="font-size:11px;background:#e8f5ef;color:#16a34a;padding:2px 8px;border-radius:99px;">👥 ${nPeserta} peserta</span>
-            ${totMasuk > 0 ? `<span style="font-size:11px;background:#e8f5ef;color:#16a34a;padding:2px 8px;border-radius:99px;">💰 ${IDR(totMasuk)}</span>` : ''}
-            ${totKeluar > 0 ? `<span style="font-size:11px;background:#fff0f0;color:#dc2626;padding:2px 8px;border-radius:99px;">💸 ${IDR(totKeluar)}</span>` : ''}
+            ${nTask > 0 ? `<span style="font-size:11px;background:#e8f5ef;color:#16a34a;padding:2px 8px;border-radius:99px;">✅ ${nDone}/${nTask} tugas</span>` : ''}
             <span class="st-badge ${arsip?'st-cancelled':'st-done'}" style="font-size:10px;">${arsip?'📦 Arsip':'✅ Aktif'}</span>
           </div>
           ${(window.divisiTagsHTML && m.divisis && m.divisis.length) ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">${divisiTagsHTML(m.divisis, true)}</div>` : ''}
@@ -16462,73 +16722,33 @@ function renderMswForm(msw, peserta=[], keuangan=[]) {
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button onclick="simpanMsw()" style="flex:1;">💾 ${isEdit ? 'Simpan Perubahan' : 'Buat Musyawarah'}</button>
         ${isEdit ? `<button class="secondary" onclick="arsipMsw(${msw.id},'${msw.status==='arsip'?'aktif':'arsip'}')" style="flex:1;">${msw.status==='arsip'?'↩ Aktifkan':'📦 Arsipkan'}</button>` : ''}
+        ${isEdit ? `<button onclick="exportMswDetailPDF(${msw.id})" style="flex:1;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;">📄 Export PDF</button>` : ''}
       </div>
       <div id="mswInfoMsg"></div>
     </div>
 
-    <!-- Peserta -->
+    <!-- Daftar Tugas (divisi + penanggung jawab + deadline) -->
     <div class="card" ${!isEdit?'style="opacity:.5;pointer-events:none;"':''}>
-      <h2>👥 Peserta Hadir${!isEdit?' <span class="muted" style="font-weight:400;font-size:12px;">(simpan dulu)</span>':''}</h2>
-      <input type="text" id="mswPesertaSearch" autocomplete="off"
-        placeholder="🔍 Cari & tambah anggota..."
-        oninput="mswCariPeserta()" style="margin-bottom:0;">
-      <div id="mswPesertaDropdown" style="display:none;background:#f0f7f3;border:2px solid #2d9e6b;border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;"></div>
-      <div id="mswPesertaList" style="margin-top:10px;">
-        ${peserta.length ? peserta.map(p=>`
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#f0f7f3;border-radius:7px;margin-bottom:4px;font-size:13px;">
-            <span style="font-weight:600;">👤 ${escapeHtml(p.nama)}</span>
-            <button class="small danger" onclick="hapusPesertaMsw(${p.id})">✕</button>
-          </div>`).join('') : '<p class="muted" style="font-size:12px;">Belum ada peserta.</p>'}
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+        <h2 style="margin:0;">✅ Daftar Tugas${!isEdit?' <span class="muted" style="font-weight:400;font-size:12px;">(simpan dulu)</span>':''}</h2>
+        <span id="mswTaskProgress" class="muted" style="font-size:12px;"></span>
+      </div>
+      <p class="muted" style="font-size:12px;margin:4px 0 10px;">Tiap tugas bisa pilih <b>divisi</b>, <b>penanggung jawab (orang)</b>, dan <b>deadline</b> — sama seperti Acara. Klik tugas untuk atur detailnya.</p>
+      <div id="mswTaskList" style="margin-bottom:10px;"><p class="muted" style="font-size:12px;">Belum ada tugas.</p></div>
+      <div style="display:flex;gap:6px;">
+        <input type="text" id="mswNewTask" placeholder="Tulis tugas baru lalu Enter / klik Tambah" style="margin:0;" onkeydown="if(event.key==='Enter'){event.preventDefault();mswTaskAdd();}">
+        <button onclick="mswTaskAdd()" style="width:auto;padding:10px 16px;">➕ Tambah</button>
       </div>
     </div>
 
-    <!-- Keuangan -->
+    <!-- Absensi Peserta (HANYA dari Struktur Organisasi) -->
     <div class="card" ${!isEdit?'style="opacity:.5;pointer-events:none;"':''}>
-      <h2>💰 Keuangan Musyawarah${!isEdit?' <span class="muted" style="font-weight:400;font-size:12px;">(simpan dulu)</span>':''}</h2>
-      ${isEdit ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
-        <div style="padding:10px;background:#e8f5ef;border-radius:8px;text-align:center;">
-          <div style="font-size:11px;color:#16a34a;">Pemasukan</div>
-          <div style="font-weight:800;font-size:15px;color:#16a34a;">${IDR(totMasuk)}</div>
-        </div>
-        <div style="padding:10px;background:#fff0f0;border-radius:8px;text-align:center;">
-          <div style="font-size:11px;color:#dc2626;">Pengeluaran</div>
-          <div style="font-weight:800;font-size:15px;color:#dc2626;">${IDR(totKeluar)}</div>
-        </div>
-      </div>` : ''}
-
-      <div class="row">
-        <div>
-          <label>Jenis</label>
-          <select id="mswKeuTipe" style="margin:0;">
-            <option value="masuk">💰 Pemasukan</option>
-            <option value="keluar">💸 Pengeluaran</option>
-          </select>
-        </div>
-        <div>
-          <label>Jumlah (Rp)</label>
-          <input type="number" id="mswKeuJumlah" placeholder="50000" min="1" style="margin:0;">
-        </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+        <h2 style="margin:0;">🙋 Absensi Peserta${!isEdit?' <span class="muted" style="font-weight:400;font-size:12px;">(simpan dulu)</span>':''}</h2>
+        <span id="mswHadirSummary" class="muted" style="font-size:12px;"></span>
       </div>
-      <label style="margin-top:8px;">Keterangan</label>
-      <input type="text" id="mswKeuKet" placeholder="Cth: Konsumsi rapat, uang kas peserta...">
-      <label>Foto Bukti (opsional)</label>
-      <input type="file" id="mswKeuFile" accept="image/*">
-      <button onclick="tambahKeuanganMsw()" style="margin-top:4px;">➕ Tambah Keuangan</button>
-      <div id="mswKeuMsg"></div>
-
-      <div id="mswKeuList" style="margin-top:12px;">
-        ${keuangan.length ? keuangan.map(k=>`
-          <div class="list-item">
-            <div class="left">
-              <div class="name">${k.tipe==='masuk'?'💰':'💸'} ${escapeHtml(k.keterangan||'(tanpa keterangan)')}${k.bukti_url ? ' <a href="'+k.bukti_url+'" target="_blank" style="text-decoration:none;">📷</a>' : ''}</div>
-              <div class="meta">${new Date(k.created_at).toLocaleDateString('id-ID')}</div>
-            </div>
-            <div style="text-align:right;">
-              <span class="badge ${k.tipe==='masuk'?'badge-masuk':'badge-keluar'}">${IDR(k.jumlah)}</span>
-              <button class="small danger" style="margin-top:4px;" onclick="hapusKeuanganMsw(${k.id})">Hapus</button>
-            </div>
-          </div>`).join('') : '<p class="muted" style="font-size:12px;">Belum ada keuangan.</p>'}
-      </div>
+      <p class="muted" style="font-size:12px;margin:4px 0 10px;">Hanya anggota <b>Struktur Organisasi</b> yang bisa diabsen (kalau bukan dari Struktur Org tidak muncul). Pilih: <b>Hadir</b> / <b>Izin</b> / <b>Tidak</b>.</p>
+      <div id="mswHadirList"><p class="muted" style="font-size:12px;">Memuat anggota Struktur Organisasi...</p></div>
     </div>`;
 
   // Set tanggal default jika baru
@@ -16538,6 +16758,15 @@ function renderMswForm(msw, peserta=[], keuangan=[]) {
   }
   // Render checkbox divisi (dipanggil setelah innerHTML di-set)
   if(window.renderDivisiCheckboxes) renderDivisiCheckboxes('mswDivisiCheckboxes', msw?.divisis || []);
+  // Render daftar tugas + absensi (hanya kalau musyawarah sudah disimpan / ada ID)
+  if(isEdit && msw && msw.id){
+    if(window.mswTaskRender) window.mswTaskRender(msw.id);
+    if(window.mswKehadiranRender){
+      window.mswKehadiranRender(msw.id);
+      // Pastikan anggota Struktur Org termuat dari Supabase, lalu render ulang.
+      if(window.ensureStrukturOrgLoaded) window.ensureStrukturOrgLoaded().then(function(){ window.mswKehadiranRender(msw.id); });
+    }
+  }
   // Inject isi notulensi sebagai HTML (bukan markdown literal) + pasang mode WYSIWYG
   var mswHasilEl = document.getElementById('mswHasil');
   if (mswHasilEl) {
@@ -17744,11 +17973,23 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     soScrollToBottom();
   };
   window.so_deleteDivisi = function(id){
-    if(!confirm('Hapus divisi ini? Anggotanya tidak akan ikut terhapus, tapi tidak terhubung ke divisi manapun.')) return;
-    so.divisis=so.divisis.filter(function(d){return d.id!==id;});
-    so.members.forEach(function(m){if(m.divisi===id) m.divisi=null;});
+    var idx=so.divisis.findIndex(function(d){return d.id===id;});
+    if(idx<0) return;
+    var divisi=so.divisis[idx];
+    // Catat anggota yang terhubung ke divisi ini (untuk dipulihkan saat URUNGKAN)
+    var linkedIds=so.members.filter(function(m){return m.divisi===id;}).map(function(m){return m.id;});
+    // Hapus dari tampilan dulu + simpan
+    so.divisis.splice(idx,1);
+    so.members.forEach(function(m){ if(m.divisi===id) m.divisi=null; });
     so_renderAll(); soSave();
-    showToast('🗑️ Divisi dihapus');
+    showUndoToast('Divisi '+(divisi.nama||''),
+      function(){ // URUNGKAN: kembalikan divisi + tautan anggotanya
+        so.divisis.splice(Math.min(idx, so.divisis.length), 0, divisi);
+        so.members.forEach(function(m){ if(linkedIds.indexOf(m.id)>=0) m.divisi=id; });
+        so_renderAll(); soSave();
+      },
+      null, // sudah dihapus & tersimpan; tidak perlu aksi tambahan saat konfirmasi
+      '📂');
   };
   window.so_toggleJobdesk = function(id){
     var box=$id('so_jobdeskEdit_'+id);
@@ -17783,10 +18024,19 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     soScrollToBottom();
   };
   window.so_deleteMember = function(id){
-    if(!confirm('Hapus orang ini dari struktur organisasi?')) return;
-    so.members=so.members.filter(function(m){return m.id!==id;});
+    var idx=so.members.findIndex(function(m){return m.id===id;});
+    if(idx<0) return;
+    var member=so.members[idx];
+    // Hapus dari tampilan dulu + simpan
+    so.members.splice(idx,1);
     so_closeEdit(); so_renderAll(); soSave();
-    showToast('🗑️ Dihapus dari struktur');
+    showUndoToast(member.nama||'Anggota',
+      function(){ // URUNGKAN: kembalikan anggota ke posisi semula
+        so.members.splice(Math.min(idx, so.members.length), 0, member);
+        so_renderAll(); soSave();
+      },
+      null, // sudah dihapus & tersimpan; tidak perlu aksi tambahan saat konfirmasi
+      '👤');
   };
 
   // ── edit modal ───────────────────────────────────────────
@@ -17910,7 +18160,13 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       var anggota=so.members.filter(function(m){return m.divisi===d.id&&m.level==='anggota-divisi';});
       var info='';
       if(kepala.length) info+='<span style="color:#00695c;font-size:10px;">👑 '+kepala.map(function(k){return esc(k.nama);}).join(', ')+'</span>';
-      if(anggota.length) info+=(kepala.length?'<br>':'')+'<span style="font-size:10px;color:#7a9585;">👤 '+anggota.length+' anggota</span>';
+      if(anggota.length){
+        // Tampilkan NAMA tiap anggota divisi (bukan hanya jumlah) — sama seperti kepala.
+        var namaAnggota=anggota.map(function(a){return esc(a.nama);}).join(', ');
+        info+=(kepala.length?'<br>':'')
+          +'<span style="font-size:10px;color:#7a9585;">👤 '+namaAnggota
+          +' <span style="color:#a9bdb1;">('+anggota.length+' anggota)</span></span>';
+      }
       if(!info) info='<span style="font-size:10px;color:#bbb;">Belum ada anggota</span>';
       var jobdesk = d.jobdesk || '';
       var jobdeskPreview = jobdesk
@@ -17984,8 +18240,117 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   function connV(){ return ''; }
   function tier(html){ return '<div class="so-tier">'+html+'</div>'; }
 
+  // ══════════════════════════════════════════════════════════════════════
+  //  TOOLTIP JOBDESK DIVISI — muncul saat node divisi di-HOVER (Windows)
+  //  atau di-TAP (HP). Hilang saat cursor keluar / tap di luar.
+  // ══════════════════════════════════════════════════════════════════════
+  var _soTipEl = null;
+  function _soGetTip(){
+    if(_soTipEl && document.body.contains(_soTipEl)) return _soTipEl;
+    _soTipEl = document.createElement('div');
+    _soTipEl.className = 'so-jobdesk-tip';
+    _soTipEl.style.display = 'none';
+    document.body.appendChild(_soTipEl);
+    return _soTipEl;
+  }
+  // Cari divisi yang terkait dengan sebuah node (kepala ATAU anggota divisi)
+  function _soNodeDivisi(node){
+    if(!node) return null;
+    var id = node.getAttribute('data-node-id');
+    var m = (so.members||[]).find(function(x){return x.id===id;});
+    if(!m || !m.divisi) return null;
+    return (so.divisis||[]).find(function(x){return x.id===m.divisi;}) || null;
+  }
+  function _soHideJobdeskTip(){
+    if(_soTipEl){ _soTipEl.style.display='none'; _soTipEl._node=null; }
+  }
+  function _soShowJobdeskTip(node){
+    var d = _soNodeDivisi(node);
+    if(!d){ _soHideJobdeskTip(); return; }
+    var tip = _soGetTip();
+    var jobdesk = (d.jobdesk||'').trim();
+    tip.innerHTML = '<div class="so-tip-title">📋 Jobdesk '+esc(d.nama)+'</div>'
+      + '<div class="so-tip-body">'
+      + (jobdesk ? esc(jobdesk).replace(/\n/g,'<br>') : '<span class="so-tip-empty">Belum ada jobdesk.</span>')
+      + '</div>';
+    tip.style.display = 'block';
+    tip.style.visibility = 'hidden';        // ukur dulu sebelum diposisikan
+    var r = node.getBoundingClientRect();
+    var tw = tip.offsetWidth, th = tip.offsetHeight;
+    var left = r.left + r.width/2 - tw/2;
+    left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
+    var top = r.top - th - 12;              // default di ATAS node
+    var arrowBottom = true;
+    if(top < 8){ top = r.bottom + 12; arrowBottom = false; } // kalau mepet atas → di bawah
+    tip.classList.toggle('tip-bottom', !arrowBottom);
+    tip.style.left = left+'px';
+    tip.style.top  = top+'px';
+    tip.style.visibility = 'visible';
+    tip._node = node;
+  }
+  function _soToggleJobdeskTip(node){
+    if(_soTipEl && _soTipEl.style.display==='block' && _soTipEl._node===node){
+      _soHideJobdeskTip();
+    } else {
+      _soShowJobdeskTip(node);
+    }
+  }
+  // Pasang sekali (event delegation) — bertahan walau chart di-render ulang.
+  var _soAllowMouse = true; // dimatikan sesaat setelah sentuhan (cegah event mouse sintetis)
+  function _soCanShow(){
+    if(soDrawMode || soDragNodeMode) return false;
+    var panel = document.getElementById('so_panel');
+    if(panel && panel.style.display !== 'none') return false; // mode edit → jangan ganggu
+    return true;
+  }
+  function _soInitJobdeskHints(){
+    var chart = document.getElementById('so_chart');
+    if(!chart || chart._jobdeskHintInit) return;
+    chart._jobdeskHintInit = true;
+
+    // TAP (HP) — pakai touchstart: REAL-TIME, tanpa delay & tanpa konflik event
+    // mouse sintetis. Tap divisi lain → LANGSUNG ganti isi jobdesk.
+    chart.addEventListener('touchstart', function(e){
+      var node = e.target.closest ? e.target.closest('.so-node') : null;
+      if(!node) return;
+      _soAllowMouse = false;                         // blokir mouseover/mouseout sintetis
+      clearTimeout(chart._soTouchTimer);
+      chart._soTouchTimer = setTimeout(function(){ _soAllowMouse = true; }, 700);
+      if(!_soCanShow()){ _soHideJobdeskTip(); return; }
+      _soShowJobdeskTip(node);                        // muncul SEKETIKA saat disentuh
+    }, {passive:true});
+
+    // HOVER (Windows / mouse asli) — diabaikan saat baru saja menyentuh layar.
+    chart.addEventListener('mouseover', function(e){
+      if(!_soAllowMouse) return;
+      var node = e.target.closest ? e.target.closest('.so-node') : null;
+      if(!node || !_soCanShow()) return;
+      _soShowJobdeskTip(node);
+    });
+    chart.addEventListener('mouseout', function(e){
+      if(!_soAllowMouse) return;
+      var node = e.target.closest ? e.target.closest('.so-node') : null;
+      if(!node) return;
+      var to = e.relatedTarget;
+      if(to && node.contains(to)) return;            // masih di dalam node → biarkan
+      _soHideJobdeskTip();
+    });
+  }
+  // Tap/klik di LUAR node → sembunyikan tooltip (dukung sentuh & mouse).
+  function _soOutsideHide(e){
+    if(!_soTipEl || _soTipEl.style.display!=='block') return;
+    var onNode = e.target.closest && e.target.closest('.so-node');
+    if(!onNode) _soHideJobdeskTip();
+  }
+  document.addEventListener('touchstart', _soOutsideHide, {passive:true});
+  document.addEventListener('click', _soOutsideHide);
+  // Sembunyikan saat scroll/resize supaya posisi tidak "ngambang".
+  window.addEventListener('scroll', _soHideJobdeskTip, true);
+  window.addEventListener('resize', _soHideJobdeskTip);
+
   window.so_renderChart=function(){
     var chart=$id('so_chart'), empty=$id('so_emptyState'); if(!chart||!empty) return;
+    _soInitJobdeskHints();
     if(!so.members.length){ empty.style.display='block'; chart.innerHTML=''; return; }
     empty.style.display='none';
     var orgName=($id('so_orgName')||{value:''}).value||'Struktur Organisasi';
@@ -19392,8 +19757,12 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       listEl.innerHTML = '<p class="muted" style="font-size:12px;">Belum ada task. Tambahkan di bawah.</p>';
       return;
     }
-    listEl.innerHTML = tasks.map(function(t){
+    var _today = (function(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
+    function _isOver(t){ return t.deadline && t.status!=='done' && t.status!=='cancelled' && t.deadline < _today; }
+    var _disp = tasks.slice().sort(function(a,b){ return (_isOver(b)?1:0)-(_isOver(a)?1:0); }); // terlambat → paling atas
+    listEl.innerHTML = _disp.map(function(t){
       var st = ST[t.status] || ST.todo;
+      var over = _isOver(t);
       var meta = [];
       if(t.divisi)   meta.push('<span class="prj-divisi-tag" style="font-size:10px;padding:2px 7px;">🏢 '+esc(t.divisi)+'</span>');
       if(t.assignee) meta.push('<span class="prj-anggota-chip" style="font-size:10px;padding:2px 7px;">👤 '+esc(t.assignee)+'</span>');
@@ -19403,9 +19772,10 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       if(t.link)     meta.push('<span style="font-size:10px;color:#2563eb;">🔗 Link</span>');
       if(t.photos && t.photos.length) meta.push('<img src="'+t.photos[0]+'" style="width:18px;height:18px;object-fit:cover;border-radius:4px;vertical-align:middle;border:1px solid #d4e8dc;">'+(t.photos.length>1?'<span style="font-size:10px;color:#7a9585;">+'+(t.photos.length-1)+'</span>':''));
       var done = t.status==='done';
-      return '<div class="prj-task-item'+(done?' done-task':'')+'" onclick="acTaskOpenEdit(\''+t.id+'\')" title="Klik untuk edit detail">'
+      return '<div class="prj-task-item'+(done?' done-task':'')+(over?' overdue-task':'')+'" onclick="acTaskOpenEdit(\''+t.id+'\')" title="Klik untuk edit detail">'
         +'<input type="checkbox" class="prj-checkbox" '+(done?'checked':'')+' onclick="event.stopPropagation()" onchange="event.stopPropagation();acTaskToggle(\''+t.id+'\',this.checked)">'
         +'<div class="prj-task-body">'
+        +(over?'<div class="prj-overdue-badge">⏰ TERLAMBAT • deadline '+fmtDate(t.deadline)+' — belum selesai</div>':'')
         +'<div class="prj-task-title">'+esc(t.text)+'</div>'
         +'<div class="prj-task-meta"><span class="st-badge" style="background:'+st.badge+';color:'+st.c+';font-size:10px;padding:2px 7px;border-radius:6px;">'+st.label+'</span> '+meta.join(' ')+'</div>'
         +'</div>'
@@ -19577,6 +19947,11 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       $id('acTaskModalMsg').innerHTML = '<div class="err">Pilih Divisi Penanggung Jawab dulu — biar jelas siapa yang bertanggung jawab.</div>';
       return;
     }
+    var deadline = $id('acTaskDeadline').value || '';
+    if(!deadline){
+      $id('acTaskModalMsg').innerHTML = '<div class="err">⏰ Deadline WAJIB diisi — ini soal tanggung jawab & tenggat tugas.</div>';
+      return;
+    }
     var tasks = loadTasks(_editAcaraId).slice();
     var t = tasks.find(function(x){ return x.id===_editTaskId; });
     if(!t) return;
@@ -19584,7 +19959,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     t.divisi   = divisi;
     t.assignee = ($id('acTaskAssignee').value||'').trim();
     t.status   = $id('acTaskStatus').value || 'todo';
-    t.deadline = $id('acTaskDeadline').value || '';
+    t.deadline = deadline;
     t.budget   = ($id('acTaskBudget').value||'').trim();
     t.desc     = ($id('acTaskDesc').value||'').trim();
     t.link     = ($id('acTaskLink').value||'').trim();
@@ -19602,6 +19977,321 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     var tid = _editTaskId;
     acTaskCloseEdit();
     window.acTaskDelete(tid);
+  };
+})();
+</script>
+
+<!-- ═══ MUSYAWARAH TASK MODULE SCRIPT ═══ -->
+<!-- Task per-musyawarah (divisi + penanggung jawab + deadline), pola sama -->
+<!-- dengan task Acara, disimpan di kolom musyawarah.tasks (JSONB).         -->
+<script>
+(function(){
+  'use strict';
+  var MSW_TASK_KEY = 'mb3-musyawarah-tasks-';
+  var MSW_HADIR_KEY = 'mb3-musyawarah-hadir-';
+  var _editMswId = null, _editTaskId = null, _curMswId = null;
+  function _todayStr(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  // Anggota HANYA dari Struktur Organisasi (tanpa fallback ke daftar Anggota/siswa).
+  window._mswSoMembers = function(){
+    var list=[], divisiMap={};
+    try{
+      var soRef = (window.so && window.so.members && window.so.members.length) ? window.so : null;
+      if(!soRef){ var raw=localStorage.getItem('so_data'); if(raw) soRef=JSON.parse(raw); }
+      if(soRef && Array.isArray(soRef.divisis)) soRef.divisis.forEach(function(d){ divisiMap[d.id]=d.nama; });
+      if(soRef && Array.isArray(soRef.members)){
+        list = soRef.members.map(function(m){
+          return { id:String(m.id||''), name:m.name||m.nama||'', role:m.role||m.jabatan||'', divisi:(m.divisi?(divisiMap[m.divisi]||m.divisi):'') };
+        });
+      }
+    }catch(e){}
+    return list.filter(function(m){ return m.name; });
+  };
+
+  var ST = {
+    todo:      {label:'⬜ Belum Mulai', badge:'#e5e7eb', c:'#4b5563'},
+    progress:  {label:'🔄 Dikerjakan',  badge:'#fef3c7', c:'#d97706'},
+    done:      {label:'✅ Selesai',      badge:'#d1fae5', c:'#059669'},
+    cancelled: {label:'❌ Batal',        badge:'#fee2e2', c:'#dc2626'}
+  };
+  function $id(id){ return document.getElementById(id); }
+  function uuid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function fmtDate(d){ if(!d) return ''; var p=String(d).split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : d; }
+  function curId(){ return (_curMswId!=null) ? _curMswId : (typeof currentMswId!=='undefined'?currentMswId:null); }
+  function _cache(){ return (typeof mswCache!=='undefined' && mswCache) ? mswCache : []; }
+
+  // LOAD: prioritas kolom musyawarah.tasks → fallback localStorage
+  function loadTasks(id){
+    var m = _cache().find(function(x){ return x.id===id; });
+    if(m && Array.isArray(m.tasks)) return m.tasks;
+    try{ return JSON.parse(localStorage.getItem(MSW_TASK_KEY+id)||'[]'); }catch(e){ return []; }
+  }
+  // SAVE: cache + localStorage + Supabase (fallback aman kalau kolom belum ada)
+  function saveTasks(id, arr){
+    var m = _cache().find(function(x){ return x.id===id; });
+    if(m) m.tasks = arr;
+    try{ localStorage.setItem(MSW_TASK_KEY+id, JSON.stringify(arr)); }catch(e){}
+    db.from('musyawarah').update({ tasks: arr }).eq('id', id).then(function(res){
+      if(res && res.error){
+        var msg = String(res.error.message||'');
+        if(msg.indexOf('tasks')!==-1 && msg.toLowerCase().indexOf('column')!==-1){
+          if(!window._mswTaskSqlNoticeShown){
+            window._mswTaskSqlNoticeShown = true;
+            if(window.showToast) showToast('⚠️ Kolom "tasks" belum ada — tugas tersimpan lokal. Jalankan di Supabase: ALTER TABLE musyawarah ADD COLUMN IF NOT EXISTS tasks jsonb DEFAULT \'[]\';','warn',9000);
+          }
+        } else { console.warn('Musyawarah task save error:', msg); }
+      }
+    });
+  }
+
+  // ── ABSENSI: load/save kehadiran (objek {memberId: 'hadir'|'izin'|'tidak'}) ──
+  function loadKehadiran(id){
+    var m = _cache().find(function(x){ return x.id===id; });
+    if(m && m.kehadiran && typeof m.kehadiran==='object' && !Array.isArray(m.kehadiran)) return m.kehadiran;
+    try{ return JSON.parse(localStorage.getItem(MSW_HADIR_KEY+id)||'{}'); }catch(e){ return {}; }
+  }
+  function saveKehadiran(id, obj){
+    var m = _cache().find(function(x){ return x.id===id; });
+    if(m) m.kehadiran = obj;
+    try{ localStorage.setItem(MSW_HADIR_KEY+id, JSON.stringify(obj)); }catch(e){}
+    db.from('musyawarah').update({ kehadiran: obj }).eq('id', id).then(function(res){
+      if(res && res.error){
+        var msg = String(res.error.message||'');
+        if(msg.indexOf('kehadiran')!==-1 && msg.toLowerCase().indexOf('column')!==-1){
+          if(!window._mswHadirSqlNoticeShown){
+            window._mswHadirSqlNoticeShown = true;
+            if(window.showToast) showToast('⚠️ Kolom "kehadiran" belum ada — absensi tersimpan lokal. Jalankan di Supabase: ALTER TABLE musyawarah ADD COLUMN IF NOT EXISTS kehadiran jsonb DEFAULT \'{}\';','warn',9000);
+          }
+        } else { console.warn('Musyawarah kehadiran save error:', msg); }
+      }
+    });
+  }
+
+  window.mswKehadiranRender = function(id){
+    if(id==null) id = curId();
+    if(id!=null) _curMswId = id;
+    var el = $id('mswHadirList'); if(!el) return;
+    var members = window._mswSoMembers();
+    var sumEl = $id('mswHadirSummary');
+    if(!members.length){
+      el.innerHTML = '<p class="muted" style="font-size:12px;">Belum ada anggota di <b>Struktur Organisasi</b>. Tambahkan dulu di menu Struktur Organisasi.</p>';
+      if(sumEl) sumEl.textContent = '';
+      return;
+    }
+    var kh = loadKehadiran(id);
+    var c = {hadir:0, izin:0, tidak:0};
+    el.innerHTML = members.map(function(mem){
+      var st = kh[mem.id] || 'tidak';
+      if(st==='hadir') c.hadir++; else if(st==='izin') c.izin++; else c.tidak++;
+      function btn(val,label,onbg){
+        var on = (st===val);
+        return '<button onclick="mswSetKehadiran(\''+esc(String(mem.id))+'\',\''+val+'\')" '
+          +'style="width:auto;padding:4px 10px;font-size:11px;border-radius:6px;margin:0;'
+          +(on?('background:'+onbg+';color:#fff;font-weight:700;'):'background:#eef3f0;color:#566;')+'">'+label+'</button>';
+      }
+      var info = esc(mem.name) + (mem.role? ' <span style="color:#7a9585;font-weight:400;">· '+esc(mem.role)+'</span>':'');
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 10px;background:#f0f7f3;border-radius:7px;margin-bottom:5px;">'
+        +'<span style="font-size:12.5px;font-weight:600;">👤 '+info+'</span>'
+        +'<span style="display:flex;gap:4px;flex-shrink:0;">'+btn('hadir','Hadir','#16a34a')+btn('izin','Izin','#d97706')+btn('tidak','Tidak','#dc2626')+'</span>'
+        +'</div>';
+    }).join('');
+    if(sumEl) sumEl.textContent = '✅ '+c.hadir+' hadir · 📝 '+c.izin+' izin · ❌ '+c.tidak+' tidak';
+  };
+
+  window.mswSetKehadiran = function(memId, status){
+    var id = curId(); if(id==null) return;
+    var kh = Object.assign({}, loadKehadiran(id));
+    kh[memId] = status;
+    saveKehadiran(id, kh);
+    mswKehadiranRender(id);
+  };
+
+  function progress(tasks){
+    var aktif = tasks.filter(function(t){ return t.status!=='cancelled'; });
+    if(!aktif.length) return -1;
+    var done = aktif.filter(function(t){ return t.status==='done'; }).length;
+    return Math.round(done/aktif.length*100);
+  }
+
+  window.mswTaskRender = function(id){
+    if(id==null) id = curId();
+    if(id!=null) _curMswId = id;
+    var listEl = $id('mswTaskList'); if(!listEl) return;
+    var tasks = loadTasks(id);
+    var pEl = $id('mswTaskProgress');
+    if(pEl){
+      var aktif = tasks.filter(function(t){ return t.status!=='cancelled'; });
+      var done  = tasks.filter(function(t){ return t.status==='done'; }).length;
+      var pct   = progress(tasks);
+      pEl.textContent = (tasks.length && pct>=0) ? (pct+'% • '+done+'/'+aktif.length+' selesai') : '';
+    }
+    if(!tasks.length){ listEl.innerHTML = '<p class="muted" style="font-size:12px;">Belum ada tugas. Tambahkan di bawah.</p>'; return; }
+    var _today = _todayStr();
+    function _isOver(t){ return t.deadline && t.status!=='done' && t.status!=='cancelled' && t.deadline < _today; }
+    var _disp = tasks.slice().sort(function(a,b){ return (_isOver(b)?1:0)-(_isOver(a)?1:0); }); // terlambat → paling atas
+    listEl.innerHTML = _disp.map(function(t){
+      var st = ST[t.status] || ST.todo;
+      var over = _isOver(t);
+      var meta = [];
+      if(t.divisi)   meta.push('<span class="prj-divisi-tag" style="font-size:10px;padding:2px 7px;">🏢 '+esc(t.divisi)+'</span>');
+      if(t.assignee) meta.push('<span class="prj-anggota-chip" style="font-size:10px;padding:2px 7px;">👤 '+esc(t.assignee)+'</span>');
+      if(t.deadline) meta.push('<span style="font-size:10px;color:#d97706;">📅 '+fmtDate(t.deadline)+'</span>');
+      if(t.status==='done' && t.done_date){
+        var _late = t.deadline && (t.done_date > t.deadline);
+        meta.push('<span style="font-size:10px;font-weight:700;color:'+(_late?'#dc2626':'#16a34a')+';">🏁 '+fmtDate(t.done_date)+(t.deadline?(_late?' • Terlambat':' • Tepat waktu'):'')+'</span>');
+      }
+      if(t.desc)     meta.push('<span style="font-size:10px;color:#7a9585;">📝 '+esc(String(t.desc).slice(0,40))+(String(t.desc).length>40?'…':'')+'</span>');
+      var done = t.status==='done';
+      return '<div class="prj-task-item'+(done?' done-task':'')+(over?' overdue-task':'')+'" onclick="mswTaskOpenEdit(\''+t.id+'\')" title="Klik untuk edit detail">'
+        +'<input type="checkbox" class="prj-checkbox" '+(done?'checked':'')+' onclick="event.stopPropagation()" onchange="event.stopPropagation();mswTaskToggle(\''+t.id+'\',this.checked)">'
+        +'<div class="prj-task-body">'
+        +(over?'<div class="prj-overdue-badge">⏰ TERLAMBAT • deadline '+fmtDate(t.deadline)+' — belum selesai</div>':'')
+        +'<div class="prj-task-title">'+esc(t.text)+'</div>'
+        +'<div class="prj-task-meta"><span class="st-badge" style="background:'+st.badge+';color:'+st.c+';font-size:10px;padding:2px 7px;border-radius:6px;">'+st.label+'</span> '+meta.join(' ')+'</div>'
+        +'</div>'
+        +'<button onclick="event.stopPropagation();mswTaskDelete(\''+t.id+'\')" style="width:auto;padding:3px 8px;font-size:11px;background:#fee2e2;color:#dc2626;flex-shrink:0;">✕</button>'
+        +'</div>';
+    }).join('');
+  };
+
+  window.mswTaskAdd = function(){
+    var id = curId();
+    if(id==null){ if(window.showToast) showToast('Simpan musyawarah dulu sebelum menambah tugas.','error'); return; }
+    var inp = $id('mswNewTask');
+    var text = inp ? inp.value.trim() : '';
+    if(!text){ if(window.showToast) showToast('Tulis nama tugas dulu!','error'); return; }
+    var tasks = loadTasks(id).slice();
+    tasks.push({ id:uuid(), text:text, divisi:'', assignee:'', status:'todo', deadline:'', desc:'', created:new Date().toISOString() });
+    saveTasks(id, tasks);
+    if(inp) inp.value='';
+    mswTaskRender(id);
+    if(window.showToast) showToast('✅ Tugas ditambahkan! Klik untuk atur penanggung jawab.','success',3000);
+  };
+
+  window.mswTaskToggle = function(taskId, done){
+    var id = curId(); if(id==null) return;
+    var tasks = loadTasks(id).slice();
+    var t = tasks.find(function(x){ return x.id===taskId; });
+    if(t){
+      t.status = done ? 'done' : 'todo';
+      if(done){ if(!t.done_date) t.done_date = _todayStr(); }  // catat tanggal selesai
+      else { t.done_date = ''; }
+    }
+    saveTasks(id, tasks);
+    mswTaskRender(id);
+  };
+
+  window.mswTaskDelete = function(taskId){
+    var id = curId(); if(id==null) return;
+    var tasks = loadTasks(id).slice();
+    var idx = tasks.findIndex(function(x){ return x.id===taskId; });
+    if(idx<0) return;
+    var removed = tasks[idx];
+    tasks.splice(idx,1);
+    saveTasks(id, tasks);
+    mswTaskRender(id);
+    if(window.showUndoToast){
+      showUndoToast(removed.text||'Tugas', function(){
+        var arr = loadTasks(id).slice();
+        arr.splice(Math.min(idx, arr.length), 0, removed);
+        saveTasks(id, arr); mswTaskRender(id);
+        if(window.showToast) showToast('↩️ Tugas dikembalikan','success',2500);
+      }, function(){}, '📝');
+    }
+  };
+
+  function fillDivisiDropdown(selectedDivisi){
+    var sel = $id('mswTaskDivisi');
+    var divisiList = (typeof _getAllDivisiList==='function') ? _getAllDivisiList() : [];
+    var opts = '<option value="">— Pilih divisi —</option>' + divisiList.map(function(d){
+      return '<option value="'+esc(d)+'"'+(selectedDivisi===d?' selected':'')+'>🏢 '+esc(d)+'</option>';
+    }).join('');
+    if(selectedDivisi && divisiList.indexOf(selectedDivisi)<0){
+      opts += '<option value="'+esc(selectedDivisi)+'" selected>🏢 '+esc(selectedDivisi)+' (lama)</option>';
+    }
+    if(sel) sel.innerHTML = opts;
+    var hint = $id('mswTaskDivisiHint');
+    if(hint) hint.style.display = divisiList.length ? 'none' : 'block';
+  }
+
+  // Hint TEPAT WAKTU / TERLAMBAT + auto-isi tanggal selesai saat status "Selesai".
+  window._mswUpdateLateHint = function(){
+    var hint = $id('mswTaskLateHint'); if(!hint) return;
+    var status = ($id('mswTaskStatus')||{}).value || 'todo';
+    var dd = ($id('mswTaskDoneDate')||{}).value || '';
+    var dl = ($id('mswTaskDeadline')||{}).value || '';
+    if(status==='done' && !dd && $id('mswTaskDoneDate')){ $id('mswTaskDoneDate').value = _todayStr(); dd = _todayStr(); }
+    if(status!=='done' || !dd || !dl){ hint.style.display='none'; return; }
+    var late = dd > dl;
+    hint.style.display = 'block';
+    hint.style.color = late ? '#dc2626' : '#16a34a';
+    hint.textContent = late ? ('⏰ TERLAMBAT dari deadline ('+fmtDate(dl)+')') : ('✅ TEPAT WAKTU (deadline '+fmtDate(dl)+')');
+  };
+
+  window.mswTaskOpenEdit = function(taskId){
+    var id = curId(); if(id==null) return;
+    var t = loadTasks(id).find(function(x){ return x.id===taskId; });
+    if(!t) return;
+    _editMswId = id; _editTaskId = taskId;
+    fillDivisiDropdown(t.divisi);
+    if(window.ensureStrukturOrgLoaded){ window.ensureStrukturOrgLoaded(true).then(function(){ fillDivisiDropdown(t.divisi); }); }
+    $id('mswTaskName').value     = t.text || '';
+    $id('mswTaskAssignee').value = t.assignee || '';
+    $id('mswTaskStatus').value   = t.status || 'todo';
+    $id('mswTaskDeadline').value = t.deadline || '';
+    $id('mswTaskDoneDate').value = t.done_date || '';
+    $id('mswTaskDesc').value     = t.desc || '';
+    _mswUpdateLateHint();
+    $id('mswTaskModalMsg').innerHTML = '';
+    $id('mswTaskModal').style.display = 'flex';
+    setTimeout(function(){ $id('mswTaskName').focus(); }, 100);
+  };
+
+  window.mswTaskCloseEdit = function(){
+    $id('mswTaskModal').style.display = 'none';
+    _editMswId = null; _editTaskId = null;
+  };
+
+  window.mswTaskSaveEdit = function(){
+    if(_editMswId==null || _editTaskId==null) return;
+    var name = ($id('mswTaskName').value||'').trim();
+    if(!name){ $id('mswTaskModalMsg').innerHTML = '<div class="err">Nama tugas tidak boleh kosong!</div>'; return; }
+    var divisi = $id('mswTaskDivisi').value || '';
+    var divisiList = (typeof _getAllDivisiList==='function') ? _getAllDivisiList() : [];
+    if(!divisi && divisiList.length){
+      $id('mswTaskModalMsg').innerHTML = '<div class="err">Pilih Divisi Penanggung Jawab dulu — biar jelas siapa yang bertanggung jawab.</div>';
+      return;
+    }
+    var deadline = $id('mswTaskDeadline').value || '';
+    if(!deadline){
+      $id('mswTaskModalMsg').innerHTML = '<div class="err">⏰ Deadline WAJIB diisi — ini soal tanggung jawab & tenggat tugas.</div>';
+      return;
+    }
+    var tasks = loadTasks(_editMswId).slice();
+    var t = tasks.find(function(x){ return x.id===_editTaskId; });
+    if(!t) return;
+    t.text     = name;
+    t.divisi   = divisi;
+    t.assignee = ($id('mswTaskAssignee').value||'').trim();
+    t.status   = $id('mswTaskStatus').value || 'todo';
+    t.deadline = deadline;
+    var _dd = $id('mswTaskDoneDate').value || '';
+    if(t.status==='done'){ t.done_date = _dd || t.done_date || _todayStr(); } // selesai → catat tanggal
+    else { t.done_date = ''; }
+    t.desc     = ($id('mswTaskDesc').value||'').trim();
+    t.updated  = new Date().toISOString();
+    saveTasks(_editMswId, tasks);
+    var rid = _editMswId;
+    mswTaskCloseEdit();
+    mswTaskRender(rid);
+    if(window.showToast) showToast('✅ Tugas tersimpan!','success');
+  };
+
+  window.mswTaskDeleteFromModal = function(){
+    if(_editTaskId==null) return;
+    var tid = _editTaskId;
+    mswTaskCloseEdit();
+    window.mswTaskDelete(tid);
   };
 })();
 </script>
@@ -19909,16 +20599,22 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
 
     var taskHtml='';
     if(tasks.length){
-      taskHtml='<div style="margin-top:4px;">'+tasks.map(function(t,i){
+      var _ptoday=(function(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
+      var _pIsOver=function(t){ return t.deadline && !t.done && t.deadline < _ptoday; };
+      // Jaga indeks asli (handler pakai index) sambil sort terlambat ke atas.
+      var _ppairs=tasks.map(function(t,i){ return {t:t,i:i}; }).sort(function(a,b){ return (_pIsOver(b.t)?1:0)-(_pIsOver(a.t)?1:0); });
+      taskHtml='<div style="margin-top:4px;">'+_ppairs.map(function(pair){
+        var t=pair.t, i=pair.i, over=_pIsOver(t);
         var metaHtml='';
         if(t.desc) metaHtml+='<span class="prj-task-desc-preview">📝 '+escapeHtml(window.mdToPlainText(t.desc, 60))+'</span>';
         if(t.link) metaHtml+='<span class="prj-task-link-chip">🔗 Link</span>';
         if(t.photos&&t.photos.length) metaHtml+='<img src="'+t.photos[0]+'" class="prj-task-photo-thumb" alt="foto">';
         if(t.assignee) metaHtml+='<span style="font-size:10px;color:#7a9585;">👤 '+t.assignee+'</span>';
         if(t.deadline) metaHtml+='<span style="font-size:10px;color:#d97706;">📅 '+t.deadline+'</span>';
-        return '<div class="prj-task-item'+(t.done?' done-task':'')+'" onclick="openTaskModal(\''+id+'\','+i+')" title="Klik untuk lihat/edit detail">'
+        return '<div class="prj-task-item'+(t.done?' done-task':'')+(over?' overdue-task':'')+'" onclick="openTaskModal(\''+id+'\','+i+')" title="Klik untuk lihat/edit detail">'
           +'<input type="checkbox" class="prj-checkbox" '+(t.done?'checked':'')+' onclick="event.stopPropagation()" onchange="event.stopPropagation();prjToggleTask(\''+id+'\','+i+',this.checked)">'
           +'<div class="prj-task-body">'
+          +(over?'<div class="prj-overdue-badge">⏰ TERLAMBAT • deadline '+t.deadline+' — belum selesai</div>':'')
           +'<div class="prj-task-title">'+t.text+'</div>'
           +(metaHtml?'<div class="prj-task-meta">'+metaHtml+'</div>':'')
           +'</div>'
@@ -20138,9 +20834,10 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       var done = tasks.filter(function(t){ return t.done; }).length;
       doc.autoTable({
         startY: doc.lastAutoTable.finalY+6,
-        head: [['Task / Kegiatan ('+done+'/'+tasks.length+' selesai)','Status','PIC','Deadline']],
-        body: tasks.map(function(t){ return [S(t.text||'-'), t.done?'Selesai':'Belum', S(t.assignee||'-'), t.deadline||'-']; }),
+        head: [['Task / Kegiatan ('+done+'/'+tasks.length+' selesai)','Status','PIC / Penanggung Jawab','Deadline']],
+        body: tasks.map(function(t){ return [S(t.text||'-'), (typeof _taskRichStatus==='function'?_taskRichStatus(t):(t.done?'Selesai':'Belum')), S(t.assignee||'-'), t.deadline||'-']; }),
         styles:{fontSize:8}, headStyles:{fillColor:[26,102,68]},
+        didParseCell: function(dt){ if(dt.section==='body' && dt.column.index===1 && /Terlambat|TERLAMBAT/.test(dt.cell.raw)){ dt.cell.styles.textColor=[220,38,38]; dt.cell.styles.fontStyle='bold'; } },
       });
     }
     doc.autoTable({
@@ -20364,6 +21061,8 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     if(_taskModalPrjId===null || _taskModalIdx===null) return;
     var name = ($id('taskModalName').value||'').trim();
     if(!name){ $id('taskModalMsg').innerHTML='<div class="err">Nama task tidak boleh kosong!</div>'; return; }
+    var _dl = $id('taskModalDeadline').value||'';
+    if(!_dl){ $id('taskModalMsg').innerHTML='<div class="err">⏰ Deadline WAJIB diisi — ini soal tanggung jawab & tenggat tugas.</div>'; return; }
     var tasks = loadTasks(_taskModalPrjId);
     if(!tasks[_taskModalIdx]) return;
     tasks[_taskModalIdx].text      = name;
@@ -20371,7 +21070,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     tasks[_taskModalIdx].desc      = ($id('taskModalDesc').value||'').trim();
     tasks[_taskModalIdx].link      = ($id('taskModalLink').value||'').trim();
     tasks[_taskModalIdx].photos    = _taskModalPhotos.slice();
-    tasks[_taskModalIdx].deadline  = $id('taskModalDeadline').value||'';
+    tasks[_taskModalIdx].deadline  = _dl;
     tasks[_taskModalIdx].assignee  = ($id('taskModalAssignee').value||'').trim();
     tasks[_taskModalIdx].updated   = new Date().toISOString();
     saveTasks(_taskModalPrjId, tasks);
@@ -20645,7 +21344,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
         <span class="muted" style="font-size:11px;">Max 3 foto, tiap foto maks 2MB</span>
       </div>
       <!-- Deadline task -->
-      <label>📅 Deadline Task (Opsional)</label>
+      <label>📅 Deadline Task <span style="color:#dc2626;">*</span></label>
       <input type="date" id="taskModalDeadline">
       <!-- Penanggung jawab -->
       <label>👤 Penanggung Jawab Task (Opsional)</label>
