@@ -2369,32 +2369,51 @@
         </div>
       </div>
       <div class="card">
-        <h2>Kelola Sesi</h2>
-        <p class="muted" style="margin-bottom:10px;">Tambah sesi kalau 1 hari ada lebih dari 1x ngaji.</p>
-        <label>Nama Sesi</label>
-        <input type="text" id="sesiNama" placeholder="Cth: Ngaji Sore">
-        <label>Tanggal Sesi</label>
-        <input type="date" id="sesiTanggal">
-        <div class="row">
-          <div><label>Jam Mulai (opsional)</label><input type="time" id="sesiMulai"></div>
-          <div><label>Jam Selesai (opsional)</label><input type="time" id="sesiSelesai"></div>
+        <!-- 📅 Kelola Sesi (default: tersembunyi) -->
+        <div onclick="toggleSec(this)" class="sec-toggle-btn" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:linear-gradient(135deg,#f0f7f3,#dcfce7);border:1.5px solid #1a6644;border-radius:10px;user-select:none;cursor:pointer;">
+          <span style="font-size:14px;font-weight:800;color:#1a6644;">📅 Kelola Sesi</span>
+          <span class="toggle-arrow" style="font-size:12px;color:#1a6644;font-weight:700;">▶</span>
         </div>
-        <button onclick="addSesi()">Tambah Sesi</button>
-        <div id="sesiMsg"></div>
-        <div id="sesiList" style="margin-top:10px;"></div>
-        <!-- Riwayat sesi yang sudah lewat -->
-        <div id="sesiRiwayatWrap" style="margin-top:16px;display:none;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;cursor:pointer;" onclick="toggleSesiRiwayat()">
-            <h2 style="margin:0;font-size:14px;color:#7a9585;">🕐 Riwayat Sesi (sudah lewat)</h2>
-            <span id="sesiRiwayatToggle" style="font-size:12px;color:#7a9585;font-weight:700;">▶ Tampilkan</span>
+        <div style="display:none;margin-top:12px;">
+          <p class="muted" style="margin-bottom:10px;">Tambah sesi kalau 1 hari ada lebih dari 1x ngaji.</p>
+          <label>Nama Sesi</label>
+          <input type="text" id="sesiNama" placeholder="Cth: Ngaji Sore">
+          <label>Tanggal Sesi</label>
+          <input type="date" id="sesiTanggal">
+          <div class="row">
+            <div><label>Jam Mulai (opsional)</label><input type="time" id="sesiMulai"></div>
+            <div><label>Jam Selesai (opsional)</label><input type="time" id="sesiSelesai"></div>
           </div>
-          <div id="sesiRiwayatBody" style="display:none;">
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
-              <label style="font-size:12px;color:#7a9585;font-weight:600;margin:0;text-transform:none;letter-spacing:0;">Filter Bulan:</label>
-              <select id="sesiRiwayatFilter" onchange="renderSesiList()" style="width:auto;padding:6px 10px;font-size:13px;margin:0;flex:1;max-width:260px;"></select>
+          <button onclick="addSesi()">Tambah Sesi</button>
+          <div id="sesiMsg"></div>
+          <div id="sesiList" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <!-- ═══ CARD TERPISAH: RIWAYAT SESI (sudah lewat) ═══ -->
+      <div class="card">
+        <!-- 🕐 Riwayat Sesi (default: tersembunyi) -->
+        <div onclick="toggleSec(this)" class="sec-toggle-btn" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:linear-gradient(135deg,#f7f7f5,#e5e7eb);border:1.5px solid #6b7280;border-radius:10px;user-select:none;cursor:pointer;">
+          <span style="font-size:14px;font-weight:800;color:#374151;">🕐 Riwayat Sesi (sudah lewat)</span>
+          <span class="toggle-arrow" style="font-size:12px;color:#374151;font-weight:700;">▶</span>
+        </div>
+        <div style="display:none;margin-top:12px;">
+          <div id="sesiRiwayatWrap" style="display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;cursor:pointer;" onclick="toggleSesiRiwayat()">
+              <h2 style="margin:0;font-size:14px;color:#7a9585;">📋 Daftar Sesi Lewat</h2>
+              <span id="sesiRiwayatToggle" style="font-size:12px;color:#7a9585;font-weight:700;">▶ Tampilkan</span>
             </div>
-            <div id="sesiRiwayatList"></div>
+            <div id="sesiRiwayatBody" style="display:none;">
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+                <label style="font-size:12px;color:#7a9585;font-weight:600;margin:0;text-transform:none;letter-spacing:0;">Filter Bulan:</label>
+                <select id="sesiRiwayatFilter" onchange="renderSesiList()" style="width:auto;padding:6px 10px;font-size:13px;margin:0;flex:1;max-width:260px;"></select>
+              </div>
+              <div id="sesiRiwayatList"></div>
+            </div>
           </div>
+          <p id="sesiRiwayatKosong" class="muted" style="font-size:12px;padding:14px;text-align:center;background:#f7faf8;border-radius:8px;">
+            Belum ada sesi yang lewat. Riwayat akan muncul otomatis setelah ada sesi yang melewati tanggal hari ini.
+          </p>
         </div>
       </div>
     </div>
@@ -2579,6 +2598,9 @@
             <button type="button" class="desc-toolbar-btn" onclick="window.insertTodoToEditor(document.getElementById('acDeskripsi'))" title="Tambah tugas (checkbox)" style="background:#dcfce7;color:#14532d;">☑️ Tugas</button>
             <button type="button" class="desc-toolbar-btn" onclick="window.showMentionPopup(document.getElementById('acDeskripsi'),'@')" title="Tag anggota" style="background:#ede9fe;color:#5b21b6;">@ Mention</button>
             <button type="button" class="desc-toolbar-btn" onclick="window.insertPollToEditor(document.getElementById('acDeskripsi'))" title="Buat polling" style="background:#fef3c7;color:#78350f;">🗳️ Poll</button>
+            <button type="button" class="desc-toolbar-btn" onclick="window.editorCopy(document.getElementById('acDeskripsi'))" title="Salin teks terpilih" style="background:#e0f2fe;color:#0369a1;">📋 Salin</button>
+            <button type="button" class="desc-toolbar-btn" onclick="window.editorCut(document.getElementById('acDeskripsi'))" title="Potong teks terpilih" style="background:#fef9c3;color:#713f12;">✂️ Potong</button>
+            <button type="button" class="desc-toolbar-btn" onclick="window.editorPaste(document.getElementById('acDeskripsi'))" title="Tempel dari clipboard" style="background:#f0fdf4;color:#166534;">📌 Tempel</button>
             <span class="desc-toolbar-hint" style="margin-left:auto;">Klik kanan untuk menu lengkap</span>
           </div>
           <div id="acDeskripsi" class="wysiwyg-editor" contenteditable="true" spellcheck="true"
@@ -2675,6 +2697,9 @@
           <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('ul')" title="Bullet">• List</button>
           <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('ol')" title="Numbered">1. List</button>
           <button type="button" class="desc-toolbar-btn" data-style-btn onclick="window.showStylePicker(document.getElementById('catIsi'), this)" title="Style" style="background:#dbeafe;color:#1e3a8a;">Aa Style ▾</button>
+          <button type="button" class="desc-toolbar-btn" onclick="window.editorCopy(document.getElementById('catIsi'))" title="Salin teks terpilih" style="background:#e0f2fe;color:#0369a1;">📋 Salin</button>
+          <button type="button" class="desc-toolbar-btn" onclick="window.editorCut(document.getElementById('catIsi'))" title="Potong teks terpilih" style="background:#fef9c3;color:#713f12;">✂️ Potong</button>
+          <button type="button" class="desc-toolbar-btn" onclick="window.editorPaste(document.getElementById('catIsi'))" title="Tempel dari clipboard" style="background:#f0fdf4;color:#166534;">📌 Tempel</button>
         </div>
         <div id="catIsi" class="wysiwyg-editor" contenteditable="true" spellcheck="true" style="min-height:280px;max-height:600px;"
              data-placeholder="Tulis catatan apa saja di sini. Pilih kata lalu klik tombol format di atas, atau klik kanan..."></div>
@@ -2858,6 +2883,9 @@
             <button type="button" class="desc-toolbar-btn" onclick="window.insertTodoToEditor(document.getElementById('prjDeskripsi'))" title="Tambah tugas (checkbox)" style="background:#dcfce7;color:#14532d;">☑️ Tugas</button>
             <button type="button" class="desc-toolbar-btn" onclick="window.showMentionPopup(document.getElementById('prjDeskripsi'),'@')" title="Tag anggota" style="background:#ede9fe;color:#5b21b6;">@ Mention</button>
             <button type="button" class="desc-toolbar-btn" onclick="window.insertPollToEditor(document.getElementById('prjDeskripsi'))" title="Buat polling" style="background:#fef3c7;color:#78350f;">🗳️ Poll</button>
+            <button type="button" class="desc-toolbar-btn" onclick="window.editorCopy(document.getElementById('prjDeskripsi'))" title="Salin teks terpilih" style="background:#e0f2fe;color:#0369a1;">📋 Salin</button>
+            <button type="button" class="desc-toolbar-btn" onclick="window.editorCut(document.getElementById('prjDeskripsi'))" title="Potong teks terpilih" style="background:#fef9c3;color:#713f12;">✂️ Potong</button>
+            <button type="button" class="desc-toolbar-btn" onclick="window.editorPaste(document.getElementById('prjDeskripsi'))" title="Tempel dari clipboard" style="background:#f0fdf4;color:#166534;">📌 Tempel</button>
             <span id="prjAutoSaveStatus" class="autosave-status saved" style="margin:0 0 0 auto;">✓ Tersimpan</span>
             <button type="button" onclick="bukaProjectTabBaru()"
                style="background:#1a6644;color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;width:auto;margin:0;text-transform:none;letter-spacing:0;display:inline-flex;align-items:center;gap:4px;line-height:1;"
@@ -2897,14 +2925,26 @@
             <option value="high">🔴 High</option>
           </select>
 
-          <label>Divisi yang Terlibat</label>
-          <div id="prjDivisiCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:10px;background:#f0f7f3;border-radius:10px;min-height:44px;">
-            <span class="muted" style="font-size:12px;">Memuat divisi dari Struktur Org...</span>
+          <!-- 🏢 Divisi yang Terlibat (default: tersembunyi) -->
+          <div onclick="toggleSec(this)" class="sec-toggle-btn" style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#e8f5ef;border-radius:10px;user-select:none;cursor:pointer;margin-bottom:6px;">
+            <span style="font-size:13px;font-weight:700;color:#1a6644;">🏢 Divisi yang Terlibat</span>
+            <span class="toggle-arrow" style="font-size:11px;color:#1a6644;font-weight:700;">▶</span>
+          </div>
+          <div style="display:none;margin-bottom:10px;">
+            <div id="prjDivisiCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px;background:#f0f7f3;border-radius:10px;min-height:44px;">
+              <span class="muted" style="font-size:12px;">Memuat divisi dari Struktur Org...</span>
+            </div>
           </div>
 
-          <label>Anggota Bertanggung Jawab</label>
-          <div id="prjAnggotaCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:10px;background:#f0f7f3;border-radius:10px;max-height:180px;overflow-y:auto;">
-            <span class="muted" style="font-size:12px;">Memuat anggota...</span>
+          <!-- 👤 Anggota Bertanggung Jawab (default: tersembunyi) -->
+          <div onclick="toggleSec(this)" class="sec-toggle-btn" style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#e8f5ef;border-radius:10px;user-select:none;cursor:pointer;margin-bottom:6px;">
+            <span style="font-size:13px;font-weight:700;color:#1a6644;">👤 Anggota Bertanggung Jawab</span>
+            <span class="toggle-arrow" style="font-size:11px;color:#1a6644;font-weight:700;">▶</span>
+          </div>
+          <div style="display:none;margin-bottom:10px;">
+            <div id="prjAnggotaCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px;background:#f0f7f3;border-radius:10px;max-height:180px;overflow-y:auto;">
+              <span class="muted" style="font-size:12px;">Memuat anggota...</span>
+            </div>
           </div>
 
           <label>Budget / Anggaran (Rp, opsional)</label>
@@ -3312,21 +3352,42 @@
       <input type="number" id="amBiaya" min="0" placeholder="0">
 
       <div style="border-top:2px dashed #e0ece5;margin:14px 0 10px;"></div>
-      <h2 style="font-size:14px;margin-bottom:6px;">🎯 Target Iuran Acara per Kategori</h2>
-      <p class="muted" style="margin-bottom:10px;font-size:11px;">
-        Atur target iuran tiap kategori anggota untuk acara ini (opsional).<br>
-        Kosongkan = kategori tersebut pakai "Biaya per Peserta" di atas (atau tidak ada target).
-      </p>
-      <div id="amTpkArea"><p class="muted" style="font-size:12px;">Memuat kategori...</p></div>
 
-      <label>🏢 Divisi yang Terlibat <span class="muted" style="font-size:11px;font-weight:400;">(pilih satu/banyak)</span></label>
-      <div id="amDivisiCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:10px;background:#f0f7f3;border-radius:10px;min-height:44px;">
-        <span class="muted" style="font-size:12px;">Memuat divisi dari Struktur Org...</span>
+      <!-- 🎯 Target Iuran Acara per Kategori (default: tersembunyi) -->
+      <div onclick="toggleSec(this)" class="sec-toggle-btn" style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#fef3e8;border-radius:10px;user-select:none;cursor:pointer;margin-bottom:6px;">
+        <span style="font-size:13px;font-weight:700;color:#d97706;">🎯 Target Iuran Acara per Kategori</span>
+        <span class="toggle-arrow" style="font-size:11px;color:#d97706;font-weight:700;">▶</span>
+      </div>
+      <div style="display:none;margin-bottom:10px;">
+        <p class="muted" style="margin-bottom:10px;font-size:11px;">
+          Atur target iuran tiap kategori anggota untuk acara ini (opsional).<br>
+          Kosongkan = kategori tersebut pakai "Biaya per Peserta" di atas (atau tidak ada target).
+        </p>
+        <div id="amTpkArea"><p class="muted" style="font-size:12px;">Memuat kategori...</p></div>
       </div>
 
-      <label>👤 Anggota Bertanggung Jawab <span class="muted" style="font-size:11px;font-weight:400;">(pilih satu/banyak)</span></label>
-      <div id="amAnggotaCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:10px;background:#f0f7f3;border-radius:10px;max-height:180px;overflow-y:auto;">
-        <span class="muted" style="font-size:12px;">Memuat anggota...</span>
+      <!-- 🏢 Divisi yang Terlibat (default: tersembunyi) -->
+      <div onclick="toggleSec(this)" class="sec-toggle-btn" style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#e8f5ef;border-radius:10px;user-select:none;cursor:pointer;margin-bottom:6px;">
+        <span style="font-size:13px;font-weight:700;color:#1a6644;">🏢 Divisi yang Terlibat</span>
+        <span class="toggle-arrow" style="font-size:11px;color:#1a6644;font-weight:700;">▶</span>
+      </div>
+      <div style="display:none;margin-bottom:10px;">
+        <p class="muted" style="font-size:11px;margin-bottom:6px;">(pilih satu/banyak)</p>
+        <div id="amDivisiCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px;background:#f0f7f3;border-radius:10px;min-height:44px;">
+          <span class="muted" style="font-size:12px;">Memuat divisi dari Struktur Org...</span>
+        </div>
+      </div>
+
+      <!-- 👤 Anggota Bertanggung Jawab (default: tersembunyi) -->
+      <div onclick="toggleSec(this)" class="sec-toggle-btn" style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#e8f5ef;border-radius:10px;user-select:none;cursor:pointer;margin-bottom:6px;">
+        <span style="font-size:13px;font-weight:700;color:#1a6644;">👤 Anggota Bertanggung Jawab</span>
+        <span class="toggle-arrow" style="font-size:11px;color:#1a6644;font-weight:700;">▶</span>
+      </div>
+      <div style="display:none;margin-bottom:10px;">
+        <p class="muted" style="font-size:11px;margin-bottom:6px;">(pilih satu/banyak)</p>
+        <div id="amAnggotaCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px;background:#f0f7f3;border-radius:10px;max-height:180px;overflow-y:auto;">
+          <span class="muted" style="font-size:12px;">Memuat anggota...</span>
+        </div>
       </div>
 
       <label>Deskripsi Lengkap / Detail Acara <span class="muted" style="font-size:11px;font-weight:400;">(pilih kata, klik tombol / klik kanan)</span></label>
@@ -3354,6 +3415,9 @@
         <button type="button" class="desc-toolbar-btn" onclick="window.insertTodoToEditor(document.getElementById('amDeskripsi'))" title="Tambah tugas (checkbox)" style="background:#dcfce7;color:#14532d;">☑️ Tugas</button>
         <button type="button" class="desc-toolbar-btn" onclick="window.showMentionPopup(document.getElementById('amDeskripsi'),'@')" title="Tag anggota (atau ketik @)" style="background:#ede9fe;color:#5b21b6;">@ Mention</button>
         <button type="button" class="desc-toolbar-btn" onclick="window.insertPollToEditor(document.getElementById('amDeskripsi'))" title="Buat polling" style="background:#fef3c7;color:#78350f;">🗳️ Poll</button>
+        <button type="button" class="desc-toolbar-btn" onclick="window.editorCopy(document.getElementById('amDeskripsi'))" title="Salin teks terpilih" style="background:#e0f2fe;color:#0369a1;">📋 Salin</button>
+        <button type="button" class="desc-toolbar-btn" onclick="window.editorCut(document.getElementById('amDeskripsi'))" title="Potong teks terpilih" style="background:#fef9c3;color:#713f12;">✂️ Potong</button>
+        <button type="button" class="desc-toolbar-btn" onclick="window.editorPaste(document.getElementById('amDeskripsi'))" title="Tempel dari clipboard" style="background:#f0fdf4;color:#166534;">📌 Tempel</button>
         <span id="amAutoSaveStatus" class="autosave-status saved" style="margin:0 0 0 auto;">✓ Tersimpan</span>
         <button type="button" onclick="bukaAcaraTabBaru()"
            style="background:#1a6644;color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;width:auto;margin:0;text-transform:none;letter-spacing:0;display:inline-flex;align-items:center;gap:4px;line-height:1;"
@@ -4178,6 +4242,19 @@ const setMsg = (id, text, isErr) => {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 }
+
+// ─── HELPER: Toggle hide/show untuk section sub-menu (Acara / Project) ───
+// Dipakai di header tombol yang langsung diikuti div konten. Header berupa
+// .sec-toggle-btn + ada .toggle-arrow di dalamnya. Konten = nextElementSibling.
+// Default semua section TERTUTUP (display:none di markup HTML / saat dirender).
+window.toggleSec = function(btn) {
+  var content = btn.nextElementSibling;
+  if (!content) return;
+  var open = content.style.display !== 'none';
+  content.style.display = open ? 'none' : '';
+  var arr = btn.querySelector('.toggle-arrow');
+  if (arr) arr.textContent = open ? '▶' : '▼';
+};
 
 // ─────────────────────────────────────────────────────────────
 //  DESCRIPTION RICH FORMAT (Notion-like) — heading, bold, link
@@ -5042,6 +5119,63 @@ window.insertPollToEditor = function(editorEl) {
   editorEl.focus();
   document.execCommand('insertHTML', false, pollHtml);
   try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(e){}
+};
+
+// ─── HELPER: Copy / Cut / Paste untuk editor di HP ───────────
+window.editorCopy = async function(editorEl) {
+  if (!editorEl) return;
+  editorEl.focus();
+  var sel = window.getSelection();
+  if (!sel || sel.isCollapsed) {
+    // Tidak ada seleksi → select all
+    document.execCommand('selectAll');
+    sel = window.getSelection();
+  }
+  var text = sel ? sel.toString() : '';
+  if (!text) { alert('Tidak ada teks yang dipilih.'); return; }
+  try {
+    await navigator.clipboard.writeText(text);
+    var btn = document.activeElement;
+    // feedback singkat
+    var orig = btn.textContent;
+    btn.textContent = '✓ Disalin!'; btn.style.background='#bbf7d0';
+    setTimeout(function(){ btn.textContent = orig; btn.style.background=''; }, 1200);
+  } catch(e) {
+    try { document.execCommand('copy'); } catch(e2){}
+    alert('Teks disalin (gunakan Ctrl+C jika gagal).');
+  }
+};
+
+window.editorCut = async function(editorEl) {
+  if (!editorEl) return;
+  editorEl.focus();
+  var sel = window.getSelection();
+  if (!sel || sel.isCollapsed) { alert('Pilih teks yang ingin dipotong.'); return; }
+  var text = sel ? sel.toString() : '';
+  if (!text) { alert('Tidak ada teks yang dipilih.'); return; }
+  try {
+    await navigator.clipboard.writeText(text);
+    document.execCommand('delete');
+    try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(e){}
+  } catch(e) {
+    try { document.execCommand('cut'); } catch(e2){}
+  }
+};
+
+window.editorPaste = async function(editorEl) {
+  if (!editorEl) return;
+  editorEl.focus();
+  try {
+    var text = await navigator.clipboard.readText();
+    if (text) {
+      document.execCommand('insertText', false, text);
+      try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(e){}
+    } else { alert('Clipboard kosong.'); }
+  } catch(e) {
+    // Fallback: minta user paste manual
+    try { document.execCommand('paste'); } catch(e2){}
+    alert('Tekan OK lalu Ctrl+V / tahan-tempel untuk paste.');
+  }
 };
 
 // ─── HELPER: Polling vote (simpan di localStorage per user) ───
@@ -8550,9 +8684,11 @@ function renderSesiList() {
   const wrapRiwayat = $('sesiRiwayatWrap');
   const listRiwayat = $('sesiRiwayatList');
   const filterEl    = $('sesiRiwayatFilter');
+  const kosongEl    = $('sesiRiwayatKosong');
   if (wrapRiwayat && listRiwayat) {
     if (sesiRiwayat.length) {
       wrapRiwayat.style.display = 'block';
+      if (kosongEl) kosongEl.style.display = 'none';
 
       // Kelompokkan sesi per bulan (YYYY-MM)
       const NAMA_BULAN = ['Januari','Februari','Maret','April','Mei','Juni',
@@ -8592,6 +8728,7 @@ function renderSesiList() {
       }).join('');
     } else {
       wrapRiwayat.style.display = 'none';
+      if (kosongEl) kosongEl.style.display = 'block';
     }
   }
 }
@@ -11259,6 +11396,13 @@ async function renderAcaraBayar(acaraId) {
 
   $('amBayarArea').innerHTML = `
 
+    <!-- ══ OUTER TOGGLE: PEMBAYARAN PESERTA (default: tersembunyi) ══ -->
+    <div onclick="toggleSec(this)" class="sec-toggle-btn" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:linear-gradient(135deg,#dcfce7,#bbf7d0);border:1.5px solid #16a34a;border-radius:10px;user-select:none;cursor:pointer;margin-bottom:8px;">
+      <span style="font-size:14px;font-weight:800;color:#15803d;">💰 Pembayaran Peserta (Opsional)</span>
+      <span class="toggle-arrow" style="font-size:12px;color:#15803d;font-weight:700;">▶</span>
+    </div>
+    <div style="display:none;margin-bottom:14px;">
+
     <!-- ══ SECTION: PEMBAYARAN PESERTA (collapsible) ══ -->
     <div onclick="(function(el){var b=el.parentElement.querySelector('.am-bayar-form');var open=b.style.display!=='none';b.style.display=open?'none':'block';el.querySelector('.toggle-arrow').textContent=open?'▶':'▼';})(this)"
       style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:9px 12px;background:#e8f5ef;border-radius:10px;user-select:none;margin-bottom:8px;">
@@ -11348,13 +11492,27 @@ async function renderAcaraBayar(acaraId) {
       </div>
     </div>` : ''}
 
-    ${_gpBayarSectionHtml({ prefix:'amGp', roster:gpRoster, bayarRows:gpBayarRows, biaya, addFn:'addAcaraBayarGp', delFn:'deleteAcaraBayarGp', ikutGpmt:acIkutGpmt, ikutGpsd:acIkutGpsd, toggleFn:'acToggleGpInclude' })}
+    </div><!-- /OUTER TOGGLE: Pembayaran Peserta -->
+
+    <!-- ══ OUTER TOGGLE: PEMBAYARAN ANAK GP (default: tersembunyi) ══ -->
+    <div onclick="toggleSec(this)" class="sec-toggle-btn" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:linear-gradient(135deg,#f5f3ff,#ddd6fe);border:1.5px solid #7c3aed;border-radius:10px;user-select:none;cursor:pointer;margin-bottom:8px;">
+      <span style="font-size:14px;font-weight:800;color:#6d28d9;">🧒👧 Pembayaran Anak GP (GPMT/GPSD)</span>
+      <span class="toggle-arrow" style="font-size:12px;color:#6d28d9;font-weight:700;">▶</span>
+    </div>
+    <div style="display:none;margin-bottom:14px;">
+      ${_gpBayarSectionHtml({ prefix:'amGp', roster:gpRoster, bayarRows:gpBayarRows, biaya, addFn:'addAcaraBayarGp', delFn:'deleteAcaraBayarGp', ikutGpmt:acIkutGpmt, ikutGpsd:acIkutGpsd, toggleFn:'acToggleGpInclude' })}
+    </div>
 
     <!-- ══ DIVIDER ══ -->
     <div style="border-top:2px dashed #e0ece5;margin:20px 0 16px;"></div>
 
-    <!-- ══ SECTION: PENGELUARAN ACARA ══ -->
-    <h2 style="font-size:14px;margin-bottom:10px;color:#dc2626;">🧾 Pengeluaran Acara</h2>
+    <!-- ══ OUTER TOGGLE: PENGELUARAN ACARA (default: tersembunyi) ══ -->
+    <div onclick="toggleSec(this)" class="sec-toggle-btn" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:linear-gradient(135deg,#fee2e2,#fecaca);border:1.5px solid #dc2626;border-radius:10px;user-select:none;cursor:pointer;margin-bottom:8px;">
+      <span style="font-size:14px;font-weight:800;color:#b91c1c;">🧾 Pengeluaran Acara</span>
+      <span class="toggle-arrow" style="font-size:12px;color:#b91c1c;font-weight:700;">▶</span>
+    </div>
+    <div style="display:none;margin-bottom:14px;">
+
     <p class="muted" style="font-size:11px;margin-bottom:12px;">Catat semua pengeluaran untuk acara ini (konsumsi, dekorasi, transport, dll).</p>
     <div class="row">
       <div><label>Tanggal</label><input type="date" id="amKeluarTgl"></div>
@@ -11382,6 +11540,8 @@ async function renderAcaraBayar(acaraId) {
         </div>`).join('')}
       </div>
     </div>` : '<p class="muted" style="margin-top:10px;">Belum ada pengeluaran dicatat.</p>'}
+
+    </div><!-- /OUTER TOGGLE: Pengeluaran Acara -->
 
     <!-- ══ SALDO AKHIR ACARA ══ -->
     <div style="margin-top:20px;border-radius:14px;overflow:hidden;border:2px solid ${saldoAkhir>=0?'#16a34a':'#dc2626'};">
@@ -17196,6 +17356,9 @@ function renderMswForm(msw, peserta=[], keuangan=[]) {
         <button type="button" class="desc-toolbar-btn" onclick="window.insertTodoToEditor(document.getElementById('mswHasil'))" title="Tambah tugas (checkbox)" style="background:#dcfce7;color:#14532d;">☑️ Tugas</button>
         <button type="button" class="desc-toolbar-btn" onclick="window.showMentionPopup(document.getElementById('mswHasil'),'@')" title="Tag anggota (atau ketik @ di editor)" style="background:#ede9fe;color:#5b21b6;">@ Mention</button>
         <button type="button" class="desc-toolbar-btn" onclick="window.insertPollToEditor(document.getElementById('mswHasil'))" title="Buat polling" style="background:#fef3c7;color:#78350f;">🗳️ Poll</button>
+        <button type="button" class="desc-toolbar-btn" onclick="window.editorCopy(document.getElementById('mswHasil'))" title="Salin teks terpilih" style="background:#e0f2fe;color:#0369a1;">📋 Salin</button>
+        <button type="button" class="desc-toolbar-btn" onclick="window.editorCut(document.getElementById('mswHasil'))" title="Potong teks terpilih" style="background:#fef9c3;color:#713f12;">✂️ Potong</button>
+        <button type="button" class="desc-toolbar-btn" onclick="window.editorPaste(document.getElementById('mswHasil'))" title="Tempel dari clipboard" style="background:#f0fdf4;color:#166534;">📌 Tempel</button>
         <span id="mswAutoSaveStatus" class="autosave-status saved" style="margin:0 0 0 auto;">✓ Tersimpan</span>
         <button type="button" onclick="bukaNotulensiTabBaru()"
            style="background:#1a6644;color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;width:auto;margin:0;text-transform:none;letter-spacing:0;display:inline-flex;align-items:center;gap:4px;line-height:1;"
@@ -18452,14 +18615,75 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     });
   };
 
+  // ── PRESERVE LAYOUT: Hindari node lain bergeser saat ADD baru ───────────
+  // Algoritma:
+  //  1) Sebelum render ulang: capture visual position (x,y) tiap node existing
+  //     dalam koordinat #so_chart (offset-based, scroll-proof).
+  //  2) Jalankan callback (push data + so_renderAll).
+  //  3) Setelah DOM siap: bandingkan posisi baru vs lama. Selisihnya jadi
+  //     offset baru di soNodeOffsets — sehingga node existing TETAP terlihat
+  //     di posisi semula, walau auto-layout flex/tier sudah berubah.
+  //  4) Node BARU (tidak ada di snapshot) dibiarkan di posisi default-nya.
+  // Tanpa fungsi ini, menambah 1 anggota baru bisa menggeser SEMUA node lain
+  // di tier yang sama (flex re-center) — rusak total layout yang sudah rapi.
+  function soPreserveLayout(callback) {
+    var chart = document.getElementById('so_chart');
+    if (!chart) { try { callback(); } catch(e) {} return; }
+    var crBefore = chart.getBoundingClientRect();
+    var snap = {};
+    chart.querySelectorAll('[data-node-id]').forEach(function(n) {
+      var id = n.getAttribute('data-node-id');
+      if (!id) return;
+      var r = n.getBoundingClientRect();
+      snap[id] = { x: r.left - crBefore.left, y: r.top - crBefore.top };
+    });
+
+    try { callback(); } catch(e) { console.error('soPreserveLayout cb error:', e); }
+
+    // setTimeout supaya pengukuran dilakukan SETELAH layout pass selesai
+    setTimeout(function() {
+      var chart2 = document.getElementById('so_chart');
+      if (!chart2) return;
+      var crAfter = chart2.getBoundingClientRect();
+      var changed = false;
+      Object.keys(snap).forEach(function(id) {
+        var n = chart2.querySelector('[data-node-id="'+id+'"]');
+        if (!n) return; // node hilang (tidak mungkin di ADD scenario)
+        var r = n.getBoundingClientRect();
+        var nowX = r.left - crAfter.left;
+        var nowY = r.top - crAfter.top;
+        var oldOff = soNodeOffsets[id] || { dx: 0, dy: 0 };
+        // visual_now = auto_now + oldOff. Kita mau visual_final = snap[id]
+        // → newOff = snap[id] - (visual_now - oldOff) = snap[id] - nowX + oldOff
+        var dx = Math.round(snap[id].x - nowX + (oldOff.dx || 0));
+        var dy = Math.round(snap[id].y - nowY + (oldOff.dy || 0));
+        if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+          soNodeOffsets[id] = { dx: dx, dy: dy };
+          n.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+          changed = true;
+        }
+      });
+      if (changed) {
+        soSave();
+        // Garis manual ikut digeser karena ngitung dari node box terbaru
+        if (typeof soRenderManualLines === 'function') soRenderManualLines();
+        if (typeof soRedrawBranches === 'function') soRedrawBranches();
+      }
+    }, 80);
+  }
+  window.soPreserveLayout = soPreserveLayout; // expose untuk debug
+
   // ── divisi CRUD ──────────────────────────────────────────
   window.so_addDivisi = function(){
     var nama=($id('so_divNama').value||'').trim();
     if(!nama){ showToast('Nama divisi tidak boleh kosong','error'); return; }
-    so.divisis.push({id:'d'+(so.idCtr++),nama:nama});
-    $id('so_divNama').value='';
-    so_renderAll(); soSave();
-    showToast('✅ Divisi '+nama+' ditambahkan');
+    soPreserveLayout(function(){
+      so.divisis.push({id:'d'+(so.idCtr++),nama:nama});
+      $id('so_divNama').value='';
+      so_renderAll();
+    });
+    soSave();
+    showToast('✅ Divisi '+nama+' ditambahkan — node lama tidak digeser');
     soScrollToBottom();
   };
   window.so_deleteDivisi = function(id){
@@ -18506,11 +18730,16 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     var jab=($id('so_inputJabatan').value||'').trim()||defLabel[lv];
     var needDivisi=(lv==='divisi'||lv==='anggota-divisi');
     var div=needDivisi?($id('so_inputDivisi').value||null):null;
-    so.members.push({id:'m'+(so.idCtr++),nama:nama,jabatan:jab,level:lv,divisi:div,photo:so.curPhoto});
-    $id('so_inputNama').value=''; $id('so_inputJabatan').value='';
-    so.curPhoto=null; $id('so_photoPreview').innerHTML='📷 Upload foto'; $id('so_photoInput').value='';
-    so_renderAll(); soSave();
-    showToast('✅ '+nama+' ditambahkan');
+    // Bungkus dengan soPreserveLayout supaya tier yang baru tambah anggota
+    // tidak menggeser anggota lain (terutama yg sudah di-drag manual).
+    soPreserveLayout(function(){
+      so.members.push({id:'m'+(so.idCtr++),nama:nama,jabatan:jab,level:lv,divisi:div,photo:so.curPhoto});
+      $id('so_inputNama').value=''; $id('so_inputJabatan').value='';
+      so.curPhoto=null; $id('so_photoPreview').innerHTML='📷 Upload foto'; $id('so_photoInput').value='';
+      so_renderAll();
+    });
+    soSave();
+    showToast('✅ '+nama+' ditambahkan — node lama tidak digeser');
     soScrollToBottom();
   };
   window.so_deleteMember = function(id){
@@ -20196,12 +20425,31 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   function uuid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function fmtDate(d){ if(!d) return ''; var p=String(d).split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : d; }
+  function _todayStr(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+  // ── AUTO-ADVANCE: task "Belum Mulai" otomatis jadi "Dikerjakan" begitu ──
+  // tanggal hari ini sudah sampai/lewat deadline-nya (cukup sekali jalan,   ──
+  // status lain (done/cancelled/progress) tidak disentuh).                 ──
+  function _autoAdvanceStatus(tasks){
+    var today = _todayStr();
+    var changed = false;
+    (tasks||[]).forEach(function(t){
+      if(t && t.status === 'todo' && t.deadline && t.deadline <= today){
+        t.status = 'progress';
+        changed = true;
+      }
+    });
+    return changed;
+  }
 
   // ── LOAD: prioritas kolom acara.tasks → fallback localStorage ──
   function loadTasks(acaraId){
     var a = (window.acaraCache||[]).find(function(x){ return x.id===acaraId; });
-    if(a && Array.isArray(a.tasks)) return a.tasks;
-    try{ return JSON.parse(localStorage.getItem(AC_TASK_KEY+acaraId)||'[]'); }catch(e){ return []; }
+    var tasks;
+    if(a && Array.isArray(a.tasks)) tasks = a.tasks;
+    else { try{ tasks = JSON.parse(localStorage.getItem(AC_TASK_KEY+acaraId)||'[]'); }catch(e){ tasks = []; } }
+    if(_autoAdvanceStatus(tasks)) saveTasks(acaraId, tasks);
+    return tasks;
   }
 
   // ── SAVE: cache + localStorage + Supabase (fallback aman kalau kolom belum ada) ──
@@ -20510,11 +20758,31 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   function curId(){ return (_curMswId!=null) ? _curMswId : (typeof currentMswId!=='undefined'?currentMswId:null); }
   function _cache(){ return (typeof mswCache!=='undefined' && mswCache) ? mswCache : []; }
 
+  // ── AUTO-ADVANCE: task "Belum Mulai" otomatis jadi "Dikerjakan" begitu ──
+  // tanggal hari ini sudah sampai/lewat deadline-nya (status lain seperti ──
+  // done/cancelled/progress tidak disentuh) — sama seperti modul Acara.   ──
+  function _autoAdvanceStatus(tasks){
+    var today = _todayStr();
+    var changed = false;
+    (tasks||[]).forEach(function(t){
+      if(t && t.status === 'todo' && t.deadline && t.deadline <= today){
+        t.status = 'progress';
+        changed = true;
+      }
+    });
+    return changed;
+  }
+
   // LOAD: prioritas kolom musyawarah.tasks → fallback localStorage
+  // (otomatis naik "Belum Mulai" → "Dikerjakan" begitu tanggal hari ini
+  //  sudah sampai/lewat deadline-nya — sama seperti modul task Acara)
   function loadTasks(id){
     var m = _cache().find(function(x){ return x.id===id; });
-    if(m && Array.isArray(m.tasks)) return m.tasks;
-    try{ return JSON.parse(localStorage.getItem(MSW_TASK_KEY+id)||'[]'); }catch(e){ return []; }
+    var tasks;
+    if(m && Array.isArray(m.tasks)) tasks = m.tasks;
+    else { try{ tasks = JSON.parse(localStorage.getItem(MSW_TASK_KEY+id)||'[]'); }catch(e){ tasks = []; } }
+    if(_autoAdvanceStatus(tasks)) saveTasks(id, tasks);
+    return tasks;
   }
   // SAVE: cache + localStorage + Supabase (fallback aman kalau kolom belum ada)
   function saveTasks(id, arr){
@@ -21185,10 +21453,12 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       +(anggotaChips?'<div style="margin-bottom:12px;"><div style="font-size:11px;font-weight:700;color:#7a9585;text-transform:uppercase;margin-bottom:5px;">Tim Penanggung Jawab</div><div style="display:flex;flex-wrap:wrap;gap:4px;">'+anggotaChips+'</div></div>':'')
       // Progress
       +(progress>=0?'<div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:11px;font-weight:700;color:#7a9585;text-transform:uppercase;">Progress Task</span><span style="font-size:12px;font-weight:800;color:#1a6644;">'+progress+'%</span></div><div class="prog"><div style="width:'+progress+'%;height:100%;background:linear-gradient(90deg,#1a6644,#2d9e6b);border-radius:10px;transition:width 1s;"></div></div></div>':'')
-      // Pemasukan / Pembayaran
-      +bayarHtml
-      // Pembayaran Anak GP (GPMT/GPSD) — diisi async oleh _prjRenderGpSection
-      +'<div id="prjGpSection"></div>'
+      // Pemasukan / Pembayaran (OUTER TOGGLE — default tersembunyi)
+      +'<div onclick="toggleSec(this)" class="sec-toggle-btn" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:linear-gradient(135deg,#dcfce7,#bbf7d0);border:1.5px solid #16a34a;border-radius:10px;user-select:none;cursor:pointer;margin-bottom:8px;"><span style="font-size:14px;font-weight:800;color:#15803d;">💰 Pemasukan / Pembayaran</span><span class="toggle-arrow" style="font-size:12px;color:#15803d;font-weight:700;">▶</span></div>'
+      +'<div style="display:none;margin-bottom:14px;">'+bayarHtml+'</div>'
+      // Pembayaran Anak GP (GPMT/GPSD) — OUTER TOGGLE, default tersembunyi, content diisi async oleh _prjRenderGpSection
+      +'<div onclick="toggleSec(this)" class="sec-toggle-btn" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:linear-gradient(135deg,#f5f3ff,#ddd6fe);border:1.5px solid #7c3aed;border-radius:10px;user-select:none;cursor:pointer;margin-bottom:8px;"><span style="font-size:14px;font-weight:800;color:#6d28d9;">🧒👧 Pembayaran Anak GP (GPMT/GPSD)</span><span class="toggle-arrow" style="font-size:12px;color:#6d28d9;font-weight:700;">▶</span></div>'
+      +'<div style="display:none;margin-bottom:14px;"><div id="prjGpSection"></div></div>'
       // Tasks
       +'<div style="font-size:11px;font-weight:700;color:#7a9585;text-transform:uppercase;margin-bottom:8px;">📋 Task List</div>'
       +taskHtml
