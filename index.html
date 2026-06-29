@@ -1905,19 +1905,33 @@
       </div>
       <div id="iuranPrintArea" class="print-only"></div>
 
-      <!-- ARSIP KAS BULANAN -->
-      <div class="card">
-        <h2>📦 Arsip Kas Bulanan</h2>
+      <!-- BULAN BERJALAN — bulan ini & ke depan, SELALU tampil -->
+      <div class="card" data-no-collapse>
+        <h2 style="margin:0 0 8px;">🔄 Bulan Berjalan</h2>
         <p class="muted" style="margin-bottom:10px;font-size:12px;">
-          Setiap bulan otomatis tercatat. Status <b style="color:#16a34a">✅ Done</b> bila semua siswa lunas,
-          <b style="color:#d97706">🔄 On Progress</b> bila masih ada yang belum bayar.
+          Bulan yang masih berlangsung (belum lewat). Status <b style="color:#16a34a">✅ Done</b> bila semua siswa
+          (yang wajib iuran) lunas, <b style="color:#d97706">🔄 On Progress</b> bila masih ada yang belum bayar.
         </p>
         <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
-          <button onclick="cekSemuaBulan()">🔄 Cek & Perbarui Semua Status</button>
+          <button onclick="cekSemuaBulan()">🔄 Cek &amp; Perbarui Semua Status</button>
           <button class="secondary" onclick="buatBulanBaru()">➕ Buat Bulan Baru Manual</button>
         </div>
         <div id="kasBulanMsg"></div>
-        <div id="kasBulanList"><p class="muted">Memuat arsip...</p></div>
+        <div id="kasBerjalanList"><p class="muted">Memuat...</p></div>
+      </div>
+
+      <!-- ARSIP KAS BULANAN — bulan yang SUDAH LEWAT, bisa di-hide, DEFAULT tersembunyi -->
+      <div class="card" data-no-collapse>
+        <div onclick="toggleArsipKas()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:8px;">
+          <h2 style="margin:0;">📦 Arsip Kas Bulanan</h2>
+          <button type="button" id="arsipKasToggleBtn" class="small secondary" style="white-space:nowrap;">Tampilkan ▼</button>
+        </div>
+        <div id="arsipKasBody" style="display:none;margin-top:12px;">
+          <p class="muted" style="margin-bottom:10px;font-size:12px;">
+            Bulan yang sudah lewat — otomatis <b style="color:#3730a3">📦 Diarsipkan</b> (tidak menggantung "On Progress").
+          </p>
+          <div id="kasBulanList"><p class="muted">Memuat arsip...</p></div>
+        </div>
       </div>
     </div>
 
@@ -4538,7 +4552,13 @@ window.mdToStructuredLines = function(text) {
   s = s.replace(/\[POLL:[^\]]+\]/g, '[Polling]');
   s = s.replace(/^[\s]*-\s*\[(x|X| )\]\s*/gm, function(m, c){ return (c.toLowerCase()==='x' ? '[v] ' : '[ ] '); });
   s = s.replace(/@\[([^\]]+)\]\(mention:[^)]+\)/g, '@$1');
-  s = s.replace(/\[([^\[\]]+)\]\((?:https?:\/\/|www\.)[^\s)]+\)/g, '$1');
+  // Link [judul](url): simpan sebagai token supaya PDF bisa render JUDUL (biru,
+  // bisa diklik) — bukan URL panjang. Token diresolve jadi segments per baris.
+  var _mdLinks = [];
+  s = s.replace(/\[([^\[\]]+)\]\(((?:https?:\/\/|www\.)[^\s)]+)\)/g, function(_m, label, url){
+    _mdLinks.push({ label: label, url: url });
+    return '' + (_mdLinks.length - 1) + '';
+  });
   // 2. Strip inline formatting (pertahankan TEXT-nya saja)
   s = s.replace(/\{c[#a-zA-Z0-9]+\}([\s\S]+?)\{\/c\}/g, '$1');
   s = s.replace(/\{h[#a-zA-Z0-9]+\}([\s\S]+?)\{\/h\}/g, '$1');
@@ -4578,6 +4598,28 @@ window.mdToStructuredLines = function(text) {
     }
     out.push({ type: 'para', text: raw.trim() });
   }
+  // Resolve token link → .segments (untuk render JUDUL biru & bisa diklik di PDF),
+  // dan ganti token di .text dengan judul (teks bersih) untuk konsumen lain.
+  var _S0 = String.fromCharCode(0xE000), _S1 = String.fromCharCode(0xE001);
+  function _resolveLinks(txt){
+    if (typeof txt !== 'string' || txt.indexOf(_S0) < 0) return null;
+    var re = new RegExp(_S0 + '(\\d+)' + _S1, 'g');
+    var segs = [], last = 0, m, plain = '';
+    while ((m = re.exec(txt))) {
+      if (m.index > last) { var t = txt.slice(last, m.index); segs.push({ text: t }); plain += t; }
+      var lk = _mdLinks[parseInt(m[1], 10)] || { label: '', url: '' };
+      segs.push({ text: lk.label, url: lk.url }); plain += lk.label;
+      last = m.index + m[0].length;
+    }
+    if (last < txt.length) { var t2 = txt.slice(last); segs.push({ text: t2 }); plain += t2; }
+    return { segments: segs, text: plain };
+  }
+  out.forEach(function(ln){
+    if (ln && typeof ln.text === 'string') {
+      var r = _resolveLinks(ln.text);
+      if (r) { ln.text = r.text; ln.segments = r.segments; }
+    }
+  });
   return out;
 };
 
@@ -4729,6 +4771,114 @@ window.htmlElementToMarkdown = function(rootEl) {
     .replace(/^\s+|\s+$/g, '');
 };
 
+// ─── HELPER: Modal sisipkan / edit LINK dengan JUDUL wajib ───
+// Dipakai semua editor WYSIWYG (Acara, Project, Musyawarah, Catatan).
+// • Judul WAJIB diisi → yang tampil & tersimpan adalah judul, bukan URL panjang.
+// • Tombol "Deteksi judul" mengisi judul otomatis dari URL.
+// • Kalau kursor sedang di dalam link, modal jadi mode EDIT (ubah URL/judul).
+window.showLinkDialog = function(editorEl) {
+  if (!editorEl) return;
+  editorEl.focus();
+  var sel = window.getSelection();
+  var savedRange = (sel && sel.rangeCount) ? sel.getRangeAt(0).cloneRange() : null;
+  var selectedText = savedRange ? String(savedRange.toString() || '') : '';
+
+  // Deteksi anchor di posisi kursor → mode edit
+  var curAnchor = null;
+  if (savedRange) {
+    var node = savedRange.startContainer;
+    while (node && node !== editorEl) {
+      if (node.nodeType === 1 && node.tagName === 'A') { curAnchor = node; break; }
+      node = node.parentNode;
+    }
+  }
+
+  // Saran judul dari URL (host / segmen path terakhir, dirapikan)
+  function suggestTitle(u) {
+    try {
+      u = String(u || '').trim();
+      if (!u) return '';
+      if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+      var a = document.createElement('a'); a.href = u;
+      var host = (a.hostname || '').replace(/^www\./, '');
+      var segs = (a.pathname || '').split('/').filter(Boolean);
+      var last = segs.length ? decodeURIComponent(segs[segs.length - 1]) : '';
+      last = last.replace(/\.\w{1,5}$/, '').replace(/[-_+]+/g, ' ').trim();
+      if (last) return last.charAt(0).toUpperCase() + last.slice(1);
+      return host || u;
+    } catch (e) { return ''; }
+  }
+
+  var initUrl   = curAnchor ? (curAnchor.getAttribute('href') || '') : '';
+  var initJudul = curAnchor ? (curAnchor.textContent || '') : (selectedText || '');
+
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100001;display:flex;align-items:center;justify-content:center;padding:16px;';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#fff;border-radius:14px;max-width:420px;width:100%;padding:20px;box-shadow:0 14px 50px rgba(0,0,0,.4);';
+  var fld = 'width:100%;padding:11px 12px;border:2px solid #d4e8dc;border-radius:10px;font-size:14px;box-sizing:border-box;margin-bottom:4px;';
+  box.innerHTML =
+    '<div style="font-size:16px;font-weight:800;color:#1a6644;margin-bottom:12px;">🔗 ' + (curAnchor ? 'Edit Link' : 'Sisipkan Link') + '</div>' +
+    '<label style="font-size:11px;font-weight:700;color:#7a9585;text-transform:uppercase;letter-spacing:.4px;">URL / Alamat Link</label>' +
+    '<input id="_lnkUrl" type="text" inputmode="url" placeholder="https://contoh.com/..." style="' + fld + '">' +
+    '<div style="text-align:right;margin:0 0 10px;"><button id="_lnkAuto" type="button" style="width:auto;padding:5px 10px;font-size:11px;background:#e8f5ef;color:#1a6644;border:1px solid #b2d8c4;border-radius:6px;">✨ Deteksi judul dari URL</button></div>' +
+    '<label style="font-size:11px;font-weight:700;color:#7a9585;text-transform:uppercase;letter-spacing:.4px;">Judul Link <span style="color:#dc2626;">*</span> (wajib)</label>' +
+    '<input id="_lnkJudul" type="text" placeholder="Cth: Proposal Kegiatan" style="' + fld + '">' +
+    '<div style="font-size:11px;color:#7a9585;margin:2px 0 12px;">Yang tampil di teks adalah <b>judul</b> ini — bukan URL panjang.</div>' +
+    '<div id="_lnkMsg" style="font-size:12px;color:#dc2626;min-height:16px;margin-bottom:6px;"></div>' +
+    '<div style="display:flex;gap:8px;justify-content:flex-end;">' +
+      '<button id="_lnkCancel" type="button" style="width:auto;padding:10px 16px;background:#f0f0f0;color:#333;border:none;border-radius:9px;font-weight:700;">Batal</button>' +
+      '<button id="_lnkSave" type="button" style="width:auto;padding:10px 18px;background:linear-gradient(135deg,#1a6644,#2d9e6b);color:#fff;border:none;border-radius:9px;font-weight:700;">' + (curAnchor ? 'Simpan' : 'Sisipkan') + '</button>' +
+    '</div>';
+  ov.appendChild(box); document.body.appendChild(ov);
+
+  var inUrl = box.querySelector('#_lnkUrl');
+  var inJud = box.querySelector('#_lnkJudul');
+  var msgEl = box.querySelector('#_lnkMsg');
+  inUrl.value = initUrl;
+  inJud.value = initJudul;
+
+  // Auto-saran judul saat URL diketik/paste & judul masih kosong
+  inUrl.addEventListener('blur', function() {
+    if (!inJud.value.trim() && inUrl.value.trim()) inJud.value = suggestTitle(inUrl.value);
+  });
+  box.querySelector('#_lnkAuto').onclick = function() {
+    if (inUrl.value.trim()) { inJud.value = suggestTitle(inUrl.value); inJud.focus(); }
+    else { msgEl.textContent = 'Isi URL dulu untuk deteksi judul.'; }
+  };
+
+  function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
+  box.querySelector('#_lnkCancel').onclick = close;
+  ov.addEventListener('click', function(e) { if (e.target === ov) close(); });
+
+  function _escAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+  function _escTxt(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  box.querySelector('#_lnkSave').onclick = function() {
+    var url = inUrl.value.trim();
+    var judul = inJud.value.trim();
+    if (!url) { msgEl.textContent = 'URL wajib diisi.'; inUrl.focus(); return; }
+    if (!judul) { msgEl.textContent = 'Judul link wajib diisi.'; inJud.focus(); return; }
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+
+    if (curAnchor) {
+      // Mode edit: ubah anchor yang ada
+      curAnchor.setAttribute('href', url);
+      curAnchor.textContent = judul;
+    } else {
+      editorEl.focus();
+      // Pulihkan posisi kursor sebelum modal dibuka
+      if (savedRange) { var s2 = window.getSelection(); s2.removeAllRanges(); s2.addRange(savedRange); }
+      var html = '<a href="' + _escAttr(url) + '">' + _escTxt(judul) + '</a>&nbsp;';
+      document.execCommand('insertHTML', false, html);
+    }
+    try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+    close();
+  };
+
+  setTimeout(function() { (initUrl ? inJud : inUrl).focus(); }, 60);
+};
+
 // ─── HELPER: pasang WYSIWYG mode (toolbar, context menu, paste handler) di element contenteditable ───
 window.attachWysiwyg = function(editorEl) {
   if (!editorEl || editorEl._wysiwygAttached) return;
@@ -4828,10 +4978,8 @@ window.attachWysiwyg = function(editorEl) {
           try { localStorage.setItem('wysiwyg_lineHeight', value || ''); } catch(_){}
           break;
         case 'link': {
-          var url = prompt('Tempelkan URL:');
-          if (!url) break;
-          if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-          document.execCommand('createLink', false, url);
+          // Modal sisipkan link dengan JUDUL wajib (judul yang tampil, bukan URL panjang)
+          window.showLinkDialog(editorEl);
           break;
         }
         case 'clear': document.execCommand('removeFormat'); break;
@@ -4870,6 +5018,17 @@ window.attachWysiwyg = function(editorEl) {
   editorEl.addEventListener('click', function(e) {
     if (e.target.matches && e.target.matches('input[type="checkbox"]')) {
       window.toggleTodoCheckbox(e.target);
+      return;
+    }
+    // Tap link di dalam editor → buka di tab baru (mobile-friendly).
+    // Di contenteditable, link normalnya tidak bisa di-tap; ini yang memperbaikinya.
+    // Untuk mengubah link, pakai tombol 🔗 Link lagi (akan terdeteksi link di kursor).
+    var a = e.target.closest && e.target.closest('a');
+    if (a && a.getAttribute('href')) {
+      e.preventDefault();
+      var href = a.getAttribute('href');
+      if (!/^https?:\/\//i.test(href)) href = 'https://' + href;
+      window.open(href, '_blank', 'noopener,noreferrer');
     }
   });
 
@@ -6065,9 +6224,34 @@ async function uploadBukti(inputId) {
   return db.storage.from('bukti').getPublicUrl(name).data.publicUrl;
 }
 
-// Link kecil "📷" untuk lihat foto bukti (kalau ada)
+// Link kecil "📷" untuk lihat foto bukti (kalau ada).
+// Klik → tampilkan foto LANGSUNG sebagai popup (lightbox) yang bisa ditutup,
+// BUKAN pindah ke tab/website lain.
 function buktiLink(url) {
-  return url ? ` <a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;" title="Lihat foto bukti">📷</a>` : '';
+  return url ? ` <a href="javascript:void(0)" onclick="showFoto('${url}');return false;" style="text-decoration:none;cursor:pointer;" title="Lihat foto bukti">📷</a>` : '';
+}
+
+// Lightbox foto: tampil di tengah layar dengan latar gelap. Klik di mana saja
+// (foto / latar / ✕) atau tekan Esc untuk menutup. Tidak perlu buka website lain.
+function showFoto(url) {
+  if (!url) return;
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:100000;display:flex;align-items:center;justify-content:center;padding:18px;cursor:zoom-out;';
+  var img = document.createElement('img');
+  img.src = url;
+  img.style.cssText = 'max-width:96vw;max-height:90vh;border-radius:10px;box-shadow:0 12px 50px rgba(0,0,0,.6);object-fit:contain;';
+  var x = document.createElement('div');
+  x.textContent = '✕';
+  x.style.cssText = 'position:absolute;top:12px;right:18px;font-size:32px;color:#fff;cursor:pointer;line-height:1;user-select:none;text-shadow:0 1px 4px rgba(0,0,0,.8);';
+  var hint = document.createElement('div');
+  hint.textContent = 'Ketuk untuk tutup';
+  hint.style.cssText = 'position:absolute;bottom:16px;left:50%;transform:translateX(-50%);color:#cbd5e1;font-size:12px;background:rgba(0,0,0,.5);padding:5px 12px;border-radius:20px;';
+  ov.appendChild(img); ov.appendChild(x); ov.appendChild(hint);
+  function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); document.removeEventListener('keydown', onKey); }
+  function onKey(e) { if (e.key === 'Escape') close(); }
+  ov.addEventListener('click', close);
+  document.addEventListener('keydown', onKey);
+  document.body.appendChild(ov);
 }
 
 // Konfirmasi hapus — popup bergaya app (ganti confirm() bawaan browser)
@@ -6111,7 +6295,7 @@ const TABEL_LABEL = {
   foto_bukti: '🖼️ Foto Bukti Dihapus',
 };
 let rekapRows = [], rekapMeta = {}, rekapSesiStats = [], rekapSemuaAnggota = [];
-let iuranRows = [], iuranMeta = {}, kategoriCache = [], currentIuranId = null;
+let iuranRows = [], iuranMeta = {}, kategoriCache = [], currentIuranId = null, iuranLain = [];
 
 // ─────────────── AUTH ───────────────
 function toggleLoginPass() {
@@ -6873,12 +7057,25 @@ async function loadDashboard() {
 }
 
 // ─────────────── TRANSAKSI (Kas Masuk & Pengeluaran) ───────────────
+// Wajibkan keterangan kalau ada FOTO yang dipilih. Return true bila valid:
+//  • tidak ada foto  → keterangan bebas (boleh kosong)
+//  • ada foto        → keterangan WAJIB terisi (foto harus ada penjelasannya)
+function _wajibKeteranganFoto(fileInputId, keteranganValue) {
+  var inp = document.getElementById(fileInputId);
+  var adaFoto = !!(inp && inp.files && inp.files.length);
+  if (!adaFoto) return true;
+  return !!(keteranganValue && String(keteranganValue).trim());
+}
+
 async function addKasMasuk() {
   const btn = document.querySelector('#sec-kasmasuk button[onclick="addKasMasuk()"]');
   if (!_lockBtn('addKasMasuk', btn)) return;
   try {
     const jumlah = parseUang($('kmJumlah').value);
     if (!jumlah || jumlah <= 0) { setMsg('kmMsg', 'Jumlah harus > 0', true); return; }
+    if (!_wajibKeteranganFoto('kmFile', $('kmSumber').value)) {
+      setMsg('kmMsg', 'Wajib isi keterangan/sumber kalau melampirkan foto', true); return;
+    }
     let bukti = null;
     try { bukti = await uploadBukti('kmFile'); }
     catch (e) { setMsg('kmMsg', 'Gagal upload foto: ' + e.message, true); return; }
@@ -6970,10 +7167,15 @@ async function deleteTx(id) {
   const label = txRow
     ? (txRow.keterangan || txRow.kategori || '?') + ' — ' + (txRow.tanggal || '') + ' — ' + (txRow.tipe === 'masuk' ? '+' : '-') + IDR(txRow.jumlah || 0)
     : 'Transaksi #' + id;
-  // Optimistic: reload (data akan hilang dari tampilan setelah hapus permanen)
+  // OPTIMISTIC: langsung sembunyikan baris yang dihapus supaya terlihat
+  // "langsung terhapus". Penghapusan permanen di DB tetap dilakukan saat
+  // konfirmasi (timer habis / tombol ✕). Kalau di-Urungkan, baris muncul lagi.
+  var _delBtn = document.querySelector('button[onclick="deleteTx(' + id + ')"]');
+  var _delRow = (_delBtn && _delBtn.closest) ? _delBtn.closest('.list-item') : null;
+  if (_delRow) _delRow.style.display = 'none';
   showUndoToast(label,
     async function() {
-      // Undo: tidak perlu insert ulang karena belum dihapus dari DB
+      // Undo: tampilkan lagi (reload mengembalikan baris dari DB)
       loadKasMasuk(); loadPengeluaran();
     },
     async function() {
@@ -6981,6 +7183,10 @@ async function deleteTx(id) {
       const { data: deleted, error } = await db.from('transaksi').delete().eq('id', id).select();
       if (error) { showToast('Gagal hapus: ' + error.message, 'error'); loadKasMasuk(); loadPengeluaran(); return; }
       if (!deleted || deleted.length === 0) { showToast('❌ Hapus GAGAL — Supabase RLS memblokir DELETE.', 'error'); loadKasMasuk(); loadPengeluaran(); return; }
+      _auditLog('transaksi', 'DELETE', {
+        id, keterangan: txRow?.keterangan, kategori: txRow?.kategori,
+        jumlah: txRow?.jumlah, tipe: txRow?.tipe, tanggal: txRow?.tanggal,
+      }, null, (txRow?.tipe === 'masuk' ? 'Kas masuk' : 'Pengeluaran') + ' dihapus');
       if (txRow && txRow.bukti_url) {
         var path = txRow.bukti_url.split('/bukti/')[1];
         if (path) db.storage.from('bukti').remove([path]);
@@ -6989,6 +7195,151 @@ async function deleteTx(id) {
     },
     txRow && txRow.tipe === 'masuk' ? '💵' : '💸'
   );
+}
+
+// ════════════════════════════════════════════════════════════════════════
+//  MODAL EDIT GENERIK untuk record transaksi (DB) — bisa ubah jumlah,
+//  keterangan, tanggal, DAN FOTO (ganti / hapus). Dipakai SEMUA menu uang
+//  (kas, qurban, acara, GP). Semua perubahan dicatat ke Riwayat (audit_log).
+//
+//  cfg = {
+//    table, id, title, reload,
+//    jumlah   : true,              // tampilkan field Jumlah
+//    ketKey   : 'keterangan',      // nama kolom keterangan ('' bila tak ada)
+//    ketLabel : 'Keterangan',
+//    ketRequired: false | true | function(row)->bool,
+//    tanggal  : true,              // tampilkan field Tanggal
+//    fotoField: 'bukti_url',
+//  }
+//  Aturan foto: kalau ADA foto, keterangan WAJIB (bila kolom keterangan ada).
+// ════════════════════════════════════════════════════════════════════════
+async function _editTrxModal(cfg) {
+  var fotoField = cfg.fotoField || 'bukti_url';
+  // Sumber data: dari DB (cfg.table) ATAU record yang sudah disiapkan caller
+  // (cfg.row, mis. data localStorage Project). Untuk cfg.row, persist via cfg.onSave.
+  var row = cfg.row;
+  if (!row) {
+    const { data } = await db.from(cfg.table).select('*').eq('id', cfg.id).single();
+    row = data;
+  }
+  if (!row) { showToast('Data tidak ditemukan', 'error'); return; }
+  var ketReq = (typeof cfg.ketRequired === 'function') ? !!cfg.ketRequired(row) : !!cfg.ketRequired;
+
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#0f2a22;color:#e8f5ee;border:1px solid #1a6644;border-radius:14px;max-width:440px;width:100%;padding:18px;max-height:92vh;overflow:auto;box-shadow:0 12px 44px rgba(0,0,0,.55);';
+  var fld = 'width:100%;padding:9px;border-radius:8px;border:1px solid #1a6644;background:#0a1f19;color:#fff;box-sizing:border-box;font-size:14px;';
+  var html = '<div style="font-size:16px;font-weight:800;margin-bottom:12px;color:#34d399;">✏️ ' + escapeHtml(cfg.title || 'Edit Data') + '</div>';
+  if (cfg.jumlah !== false)
+    html += '<label style="font-size:12px;display:block;margin:8px 0 3px;">Jumlah (Rp)</label><input id="_etJml" type="text" inputmode="numeric" style="' + fld + '">';
+  if (cfg.ketKey)
+    html += '<label style="font-size:12px;display:block;margin:10px 0 3px;">' + escapeHtml(cfg.ketLabel || 'Keterangan') + (ketReq ? ' *' : '') + '</label><input id="_etKet" type="text" style="' + fld + '">';
+  if (cfg.tanggal !== false)
+    html += '<label style="font-size:12px;display:block;margin:10px 0 3px;">Tanggal</label><input id="_etTgl" type="date" style="' + fld + '">';
+  html += '<label style="font-size:12px;display:block;margin:12px 0 3px;">Foto Bukti</label>';
+  html += '<div id="_etFotoNow" style="font-size:12px;margin-bottom:6px;"></div>';
+  html += '<input id="_editFotoFile" type="file" accept="image/*" style="' + fld + '">';
+  html += '<label style="font-size:12px;display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer;"><input id="_etFotoHapus" type="checkbox"> Hapus foto yang ada</label>';
+  html += '<div id="_etMsg" style="font-size:12px;margin-top:8px;min-height:16px;"></div>';
+  html += '<div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;"><button id="_etCancel" style="padding:9px 16px;border-radius:8px;background:#374151;color:#fff;border:none;font-weight:700;cursor:pointer;">Batal</button><button id="_etSave" style="padding:9px 16px;border-radius:8px;background:#16a34a;color:#fff;border:none;font-weight:700;cursor:pointer;">Simpan</button></div>';
+  box.innerHTML = html;
+  ov.appendChild(box); document.body.appendChild(ov);
+
+  if (cfg.jumlah !== false) box.querySelector('#_etJml').value = (row.jumlah != null ? String(row.jumlah) : '');
+  if (cfg.ketKey) box.querySelector('#_etKet').value = row[cfg.ketKey] || '';
+  if (cfg.tanggal !== false) box.querySelector('#_etTgl').value = row.tanggal || '';
+  var fotoNow = box.querySelector('#_etFotoNow');
+  if (row[fotoField]) fotoNow.innerHTML = '✅ Ada foto — <a href="javascript:void(0)" onclick="showFoto(\'' + row[fotoField] + '\');return false;" style="color:#7FDBFF;cursor:pointer;">lihat</a>. Pilih file untuk GANTI, atau centang Hapus.';
+  else fotoNow.innerHTML = '<span style="color:#9fb3c8;">Belum ada foto. Pilih file untuk menambah.</span>';
+
+  function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
+  box.querySelector('#_etCancel').onclick = close;
+  ov.addEventListener('click', function(e) { if (e.target === ov) close(); });
+
+  box.querySelector('#_etSave').onclick = async function() {
+    var msg = box.querySelector('#_etMsg');
+    var upd = {}, lama = {};
+    if (cfg.jumlah !== false) {
+      var jml = parseUang(box.querySelector('#_etJml').value);
+      if (!jml || jml <= 0) { msg.innerHTML = '<span style="color:#f87171">Jumlah harus &gt; 0</span>'; return; }
+      upd.jumlah = jml; lama.jumlah = row.jumlah;
+    }
+    var ketVal = '';
+    if (cfg.ketKey) {
+      ketVal = box.querySelector('#_etKet').value.trim();
+      if (ketReq && !ketVal) { msg.innerHTML = '<span style="color:#f87171">' + escapeHtml(cfg.ketLabel || 'Keterangan') + ' wajib diisi</span>'; return; }
+      upd[cfg.ketKey] = ketVal || null; lama[cfg.ketKey] = row[cfg.ketKey];
+    }
+    if (cfg.tanggal !== false) { upd.tanggal = box.querySelector('#_etTgl').value || row.tanggal; lama.tanggal = row.tanggal; }
+    // ── Foto: tentukan url baru (keep / ganti / hapus) ──
+    var fileInp = box.querySelector('#_editFotoFile');
+    var adaFileBaru = !!(fileInp && fileInp.files && fileInp.files.length);
+    var hapusFoto = box.querySelector('#_etFotoHapus').checked;
+    var newBukti = row[fotoField] || null;
+    if (hapusFoto) newBukti = null;
+    if (adaFileBaru) {
+      try { newBukti = await uploadBukti('_editFotoFile'); }
+      catch (e) { msg.innerHTML = '<span style="color:#f87171">Gagal upload foto: ' + escapeHtml(e.message) + '</span>'; return; }
+    }
+    // Aturan: ada foto → keterangan wajib (kalau kolom keterangan tersedia)
+    if (newBukti && cfg.ketKey && !ketVal) { msg.innerHTML = '<span style="color:#f87171">Wajib isi ' + escapeHtml(cfg.ketLabel || 'keterangan') + ' kalau ada foto</span>'; return; }
+    upd[fotoField] = newBukti; lama[fotoField] = row[fotoField] || null;
+
+    // Persist: lewat callback (cfg.onSave, mis. Project/localStorage) ATAU DB.
+    if (typeof cfg.onSave === 'function') {
+      try {
+        var res = await cfg.onSave(upd, row, newBukti);
+        if (res && res.error) { msg.innerHTML = '<span style="color:#f87171">Gagal: ' + escapeHtml(String(res.error)) + '</span>'; return; }
+      } catch (e) { msg.innerHTML = '<span style="color:#f87171">Gagal: ' + escapeHtml(e.message) + '</span>'; return; }
+    } else {
+      const { error } = await db.from(cfg.table).update(upd).eq('id', cfg.id);
+      if (error) { msg.innerHTML = '<span style="color:#f87171">Gagal: ' + escapeHtml(error.message) + '</span>'; return; }
+      // Hapus foto lama dari storage kalau diganti/dihapus
+      if (row[fotoField] && row[fotoField] !== newBukti) {
+        var op = row[fotoField].split('/bukti/')[1]; if (op) db.storage.from('bukti').remove([op]);
+      }
+    }
+    _auditLog(cfg.logTable || cfg.table, 'UPDATE', { id: cfg.id, ...lama }, { id: cfg.id, ...upd }, 'Edit ' + (cfg.title || cfg.logTable || cfg.table));
+    close();
+    showToast('✅ Perubahan tersimpan', 'success');
+    if (typeof cfg.reload === 'function') cfg.reload();
+  };
+}
+
+// ── Wrapper edit per menu (semua pakai modal generik di atas) ──
+function editTx(id) {
+  _editTrxModal({ table: 'transaksi', id, title: 'Transaksi Kas',
+    ketKey: 'keterangan', ketLabel: 'Keterangan', ketRequired: r => r.tipe === 'keluar',
+    tanggal: true, reload: () => { loadKasMasuk(); loadPengeluaran(); } });
+}
+function editBayarQurban(id) {
+  _editTrxModal({ table: 'qurban_bayar', id, title: 'Pemasukan Qurban',
+    ketKey: 'catatan', ketLabel: 'Catatan', tanggal: true,
+    reload: () => loadPeriodeDetail(currentPeriodeId) });
+}
+function editKeluarQurban(id) {
+  _editTrxModal({ table: 'qurban_keluar', id, title: 'Pengeluaran Qurban',
+    ketKey: 'keterangan', ketLabel: 'Keterangan', ketRequired: true, tanggal: true,
+    reload: () => loadPeriodeDetail(currentPeriodeId) });
+}
+function editQurbanBayarGp(id) {
+  _editTrxModal({ table: 'qurban_bayar_gp', id, title: 'Pembayaran Anak GP (Qurban)',
+    ketKey: '', tanggal: true, reload: () => loadPeriodeDetail(currentPeriodeId) });
+}
+function editAcaraBayar(id) {
+  _editTrxModal({ table: 'acara_bayar', id, title: 'Pembayaran Acara',
+    ketKey: 'nama', ketLabel: 'Nama / Keterangan', ketRequired: true, tanggal: true,
+    reload: () => renderAcaraBayar(currentAcaraId) });
+}
+function editAcaraKeluar(id) {
+  _editTrxModal({ table: 'acara_bayar', id, title: 'Pengeluaran Acara',
+    ketKey: 'nama', ketLabel: 'Keterangan', ketRequired: true, tanggal: true,
+    reload: () => renderAcaraBayar(currentAcaraId) });
+}
+function editAcaraBayarGp(id) {
+  _editTrxModal({ table: 'acara_bayar_gp', id, title: 'Pembayaran Anak GP (Acara)',
+    ketKey: '', tanggal: true, reload: () => renderAcaraBayar(currentAcaraId) });
 }
 
 function renderTx(target, list, withDelete) {
@@ -7003,7 +7354,7 @@ function renderTx(target, list, withDelete) {
       </div>
       <div style="text-align:right;">
         <span class="badge badge-${t.tipe}">${t.tipe === 'masuk' ? '+' : '-'} ${IDR(t.jumlah)}</span>
-        ${withDelete ? `<button class="small danger" style="margin-top:4px" onclick="deleteTx(${t.id})">Hapus</button>` : ''}
+        ${withDelete ? `<div style="margin-top:4px;display:flex;gap:4px;justify-content:flex-end;"><button class="small" onclick="editTx(${t.id})">Edit</button><button class="small danger" onclick="deleteTx(${t.id})">Hapus</button></div>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -9529,6 +9880,8 @@ async function absToggleGpInclude(group, checked) {
     const s = (sesiCache || []).find(x => String(x.id) === String(sesiId));
     if (s) s[col] = checked;
     await loadAbsensi();
+    _auditLog('sesi', 'UPDATE', null, { sesi_id: sesiId, [col]: checked },
+      group.toUpperCase() + (checked ? ' diikutkan ke sesi absensi' : ' tidak diikutkan ke sesi absensi'));
     showToast(checked ? ('🧒 ' + group.toUpperCase() + ' diikutkan ke sesi ini') : (group.toUpperCase() + ' tidak diikutkan'), 'success', 1800);
   } catch (e) {
     if (cb) cb.checked = !checked;
@@ -9585,10 +9938,44 @@ async function _gpRosterFor(ikutGpmt, ikutGpsd) {
   return roster;
 }
 
+// Progress bar "berapa % anak yang SUDAH BAYAR" (berbasis JUMLAH ORANG, bukan uang).
+// Dipakai di Acara / Project / Qurban. Denominator = anggota MUMI + anak GP yang
+// DIIKUTKAN (checklist GPMT/GPSD). Karena toggle GP me-render ulang detail, angka
+// ini otomatis ikut berubah saat checklist diubah.
+function _progressBayarBar(paidCount, totalCount, note) {
+  const pct = totalCount > 0 ? Math.round(paidCount / totalCount * 100) : 0;
+  const col = pct >= 100 ? '#16a34a' : (pct > 0 ? '#f59e0b' : '#dc2626');
+  return `<div style="margin:12px 0;padding:12px 14px;background:#f0f7f3;border:1px solid #d6e6dd;border-radius:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:800;color:#1a6644;margin-bottom:6px;flex-wrap:wrap;gap:4px;">
+      <span>👥 Progress Bayar (MUMI + GP)</span>
+      <span><b style="color:${col};">${pct}%</b> · ${paidCount}/${totalCount} sudah bayar</span>
+    </div>
+    <div style="height:9px;background:#e5e7eb;border-radius:99px;overflow:hidden;">
+      <div style="width:${pct}%;height:100%;background:${col};border-radius:99px;transition:width .3s;"></div>
+    </div>
+    ${note ? `<div class="muted" style="font-size:11px;margin-top:5px;">${note}</div>` : ''}
+  </div>`;
+}
+
+// Hitung progress bayar gabungan (anggota MUMI + anak GP) berbasis jumlah orang.
+// memberRows: array baris anggota dgn properti .paid (jumlah dibayar) — sudah = paid>0.
+// gpRoster: daftar anak GP yang diikutkan; gpBayarRows: baris pembayaran GP.
+function _calcProgressBayar(memberRows, gpRoster, gpBayarRows) {
+  const memTotal = (memberRows || []).length;
+  const memPaid  = (memberRows || []).filter(r => Number(r.paid || 0) > 0).length;
+  const gpPaidSet = new Set((gpBayarRows || []).map(b => b.gp_tipe + '_' + b.gp_id));
+  const gpTotal = (gpRoster || []).length;
+  const gpPaid  = gpPaidSet.size;
+  return {
+    paid: memPaid + gpPaid, total: memTotal + gpTotal,
+    memTotal, memPaid, gpTotal, gpPaid,
+  };
+}
+
 // Bangun HTML section pembayaran anak GP (checkbox grup + form + tabel sudah/belum + riwayat).
 // cfg: { prefix, roster, bayarRows, biaya, addFn, delFn, ikutGpmt, ikutGpsd, toggleFn }
 function _gpBayarSectionHtml(cfg) {
-  const { prefix, roster, bayarRows, biaya, addFn, delFn, ikutGpmt, ikutGpsd, toggleFn } = cfg;
+  const { prefix, roster, bayarRows, biaya, addFn, delFn, editFn, ikutGpmt, ikutGpsd, toggleFn } = cfg;
   const tgt = Number(biaya || 0);
   const agg = {};
   (bayarRows || []).forEach(b => {
@@ -9606,7 +9993,7 @@ function _gpBayarSectionHtml(cfg) {
     : '<option value="">— belum ada anak GP —</option>';
   const sudahHtml = sudah.map(r => `<tr><td class="nm">${escapeHtml(r.nama)} ${tag(r.tipe)}</td><td>${r.count}x</td><td style="font-weight:700;color:#1a6644">${IDR(r.total)}</td>${tgt > 0 ? `<td>${r.total >= tgt ? '<span class="badge" style="background:#d1fae5;color:#059669">LUNAS</span>' : '<span class="badge" style="background:#fef9c3;color:#b45309">KURANG</span>'}</td>` : ''}</tr>`).join('');
   const belumHtml = belum.map(k => `<tr><td class="nm">${escapeHtml(k.nama || '(?)')} ${tag(k._g)}</td>${tgt > 0 ? '<td style="text-align:right;">' + IDR(tgt) + '</td>' : ''}<td><span class="badge" style="background:#fee2e2;color:#dc2626">BELUM</span></td></tr>`).join('');
-  const riwayatHtml = (bayarRows || []).length ? bayarRows.map(b => `<div class="list-item"><div class="left"><div class="name">${escapeHtml(b.nama || '(?)')} ${tag(b.gp_tipe)}${buktiLink(b.bukti_url)}</div><div class="meta">${b.tanggal || ''}</div></div><div style="text-align:right;"><span class="badge badge-masuk">${IDR(b.jumlah)}</span><button class="small danger" style="margin-top:4px" onclick="${delFn}('${b.id}')">Hapus</button></div></div>`).join('') : '';
+  const riwayatHtml = (bayarRows || []).length ? bayarRows.map(b => `<div class="list-item"><div class="left"><div class="name">${escapeHtml(b.nama || '(?)')} ${tag(b.gp_tipe)}${buktiLink(b.bukti_url)}</div><div class="meta">${b.tanggal || ''}</div></div><div style="text-align:right;"><span class="badge badge-masuk">${IDR(b.jumlah)}</span><div style="margin-top:4px;display:flex;gap:4px;justify-content:flex-end;">${editFn ? `<button class="small" onclick="${editFn}('${b.id}')">Edit</button>` : ''}<button class="small danger" onclick="${delFn}('${b.id}')">Hapus</button></div></div></div>`).join('') : '';
   const anyIkut = ikutGpmt || ikutGpsd;
   return `
     <div style="margin:18px 0 6px;padding:12px 14px;border:2px dashed #ddd6fe;border-radius:12px;background:#faf5ff;">
@@ -9627,6 +10014,7 @@ function _gpBayarSectionHtml(cfg) {
       <button onclick="${addFn}()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">➕ Simpan Pembayaran GP</button>
       <div id="${prefix}BayarMsg"></div>
       <div class="muted" style="margin-top:8px;font-size:12px;">Terkumpul dari anak GP: <b style="color:#7c3aed;">${IDR(gpTotal)}</b></div>
+      ${(roster || []).length ? (function(){ var _t=(roster||[]).length, _s=sudah.length, _p=_t>0?Math.round(_s/_t*100):0, _c=_p>=100?'#16a34a':(_p>0?'#7c3aed':'#dc2626'); return `<div style="margin-top:8px;"><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#6d28d9;margin-bottom:4px;"><span>👧🧒 Progress Bayar Anak GP</span><span><b style="color:${_c};">${_p}%</b> · ${_s}/${_t} sudah bayar</span></div><div style="height:8px;background:#e9d5ff;border-radius:99px;overflow:hidden;"><div style="width:${_p}%;height:100%;background:${_c};border-radius:99px;transition:width .3s;"></div></div></div>`; })() : ''}
       ${sudah.length ? `<div style="margin-top:10px;overflow-x:auto;"><div style="font-size:12px;font-weight:700;color:#059669;margin-bottom:4px;">✅ Sudah Bayar (${sudah.length})</div><table class="rekap"><thead><tr><th style="text-align:left">Nama</th><th>Bayar</th><th>Total</th>${tgt > 0 ? '<th>Status</th>' : ''}</tr></thead><tbody>${sudahHtml}</tbody></table></div>` : ''}
       ${belum.length ? `<div style="margin-top:10px;overflow-x:auto;"><div style="font-size:12px;font-weight:700;color:#dc2626;margin-bottom:4px;">❌ Belum Bayar (${belum.length})</div><table class="rekap"><thead><tr><th style="text-align:left">Nama</th>${tgt > 0 ? '<th>Target</th>' : ''}<th>Status</th></tr></thead><tbody>${belumHtml}</tbody></table></div>` : ''}
       ${riwayatHtml ? `<div style="margin-top:10px;"><div style="font-size:12px;font-weight:700;color:#6d28d9;margin-bottom:4px;">📋 Riwayat (${(bayarRows || []).length})</div>${riwayatHtml}</div>` : ''}
@@ -10251,7 +10639,11 @@ async function loadPeriodeDetail(id) {
   const nBelum    = allSiswa.filter(r => r.status==='belum').length;
   const nNoTarget = allSiswa.filter(r => r.tgt===null && r.paid>0).length;
 
-  periodeDetailData = { per, bayar, keluar, totMasuk, totKeluar, sisa, target, pct, siswaRows: allSiswa };
+  // Progress bayar gabungan (anggota MUMI + anak GP yang diikutkan)
+  const _qMemberRows = allSiswa.filter(r => r.id !== null);
+  const _qProg = _calcProgressBayar(_qMemberRows, qGpRoster, qGpBayarRows);
+
+  periodeDetailData = { per, bayar, keluar, totMasuk, totKeluar, sisa, target, pct, siswaRows: allSiswa, prog: _qProg };
 
   // Render target per kategori inputs
   const katInputs = kategoriCache.length
@@ -10323,8 +10715,9 @@ async function loadPeriodeDetail(id) {
         <div class="saldo-card keluar"><div class="label">Pengeluaran</div><div class="value">${IDR(totKeluar)}</div></div>
         <div class="saldo-card saldo"><div class="label">Sisa Dana</div><div class="value">${IDR(sisa)}</div></div>
       </div>
+      ${_progressBayarBar(_qProg.paid, _qProg.total, `Anggota MUMI: ${_qProg.memPaid}/${_qProg.memTotal} · Anak GP: ${_qProg.gpPaid}/${_qProg.gpTotal}` + ((qIkutGpmt||qIkutGpsd) ? '' : ' · (centang GPMT/GPSD di bawah untuk ikut dihitung)'))}
       ${target>0 ? `<div style="margin-top:10px;">
-        <div class="muted" style="font-size:11px;">Progress target total: ${IDR(totMasuk)} / ${IDR(target)} (${pct}%)</div>
+        <div class="muted" style="font-size:11px;">Progress target total (dana): ${IDR(totMasuk)} / ${IDR(target)} (${pct}%)</div>
         <div class="prog"><div style="width:${pct}%"></div></div></div>` : ''}
       ${per.target_pembelian ? `<div class="muted" style="margin-top:8px;font-size:12px;">🎯 Target pembelian: <b>${escapeHtml(per.target_pembelian)}</b></div>` : ''}
     </div>
@@ -10388,12 +10781,12 @@ async function loadPeriodeDetail(id) {
         <div class="left"><div class="name">${escapeHtml(b.nama||'(?)')}${buktiLink(b.bukti_url)}</div>
           <div class="meta">${b.tanggal}${b.catatan ? ' · '+escapeHtml(b.catatan) : ''}</div></div>
         <div style="text-align:right;"><span class="badge badge-masuk">${IDR(b.jumlah)}</span>
-          <button class="small danger" style="margin-top:4px" onclick="deleteBayarQurban(${b.id})">Hapus</button></div>
+          <div style="margin-top:4px;display:flex;gap:4px;justify-content:flex-end;"><button class="small" onclick="editBayarQurban(${b.id})">Edit</button><button class="small danger" onclick="deleteBayarQurban(${b.id})">Hapus</button></div></div>
       </div>`).join('') : '<p class="muted">Belum ada.</p>'}
     </div>
 
     <div class="card">
-      ${_gpBayarSectionHtml({ prefix:'qdGp', roster:qGpRoster, bayarRows:qGpBayarRows, biaya:0, addFn:'addQurbanBayarGp', delFn:'deleteQurbanBayarGp', ikutGpmt:qIkutGpmt, ikutGpsd:qIkutGpsd, toggleFn:'qbnToggleGpInclude' })}
+      ${_gpBayarSectionHtml({ prefix:'qdGp', roster:qGpRoster, bayarRows:qGpBayarRows, biaya:0, addFn:'addQurbanBayarGp', delFn:'deleteQurbanBayarGp', editFn:'editQurbanBayarGp', ikutGpmt:qIkutGpmt, ikutGpsd:qIkutGpsd, toggleFn:'qbnToggleGpInclude' })}
     </div>
 
     <div class="card">
@@ -10414,7 +10807,7 @@ async function loadPeriodeDetail(id) {
         <div class="left"><div class="name">${escapeHtml(k.keterangan||'(tanpa keterangan)')}${buktiLink(k.bukti_url)}</div>
           <div class="meta">${k.tanggal}</div></div>
         <div style="text-align:right;"><span class="badge badge-keluar">${IDR(k.jumlah)}</span>
-          <button class="small danger" style="margin-top:4px" onclick="deleteKeluarQurban(${k.id})">Hapus</button></div>
+          <div style="margin-top:4px;display:flex;gap:4px;justify-content:flex-end;"><button class="small" onclick="editKeluarQurban(${k.id})">Edit</button><button class="small danger" onclick="deleteKeluarQurban(${k.id})">Hapus</button></div></div>
       </div>`).join('') : '<p class="muted">Belum ada.</p>'}
     </div>`;
 
@@ -10437,6 +10830,8 @@ async function qbnToggleGpInclude(group, checked) {
       throw error;
     }
     await loadPeriodeDetail(currentPeriodeId);
+    _auditLog('qurban_periode', 'UPDATE', null, { periode_id: currentPeriodeId, [col]: checked },
+      group.toUpperCase() + (checked ? ' diikutkan ke qurban' : ' tidak diikutkan ke qurban'));
     showToast(checked ? ('🧒 ' + group.toUpperCase() + ' diikutkan ke qurban ini') : (group.toUpperCase() + ' tidak diikutkan'), 'success', 1800);
   } catch (e) { if (cb) cb.checked = !checked; showToast('Gagal: ' + e.message, 'error'); }
 }
@@ -10466,6 +10861,11 @@ async function addQurbanBayarGp() {
       if (_isMissingTableErr(error)) { _showGpBayarSqlNotice('qurban'); return; }
       setMsg('qdGpBayarMsg', 'Gagal: ' + error.message, true); return;
     }
+    _auditLog('qurban_bayar_gp', 'INSERT', null, {
+      nama, gp_tipe: tipe, gp_id: parseInt(gid), jumlah: jml,
+      tanggal: $('qdGpBayarTgl').value || new Date().toISOString().slice(0,10),
+      periode_id: currentPeriodeId,
+    }, 'Pembayaran anak ' + tipe.toUpperCase() + ' (qurban)');
     showToast('✅ Pembayaran anak GP dicatat!', 'success');
     await loadPeriodeDetail(currentPeriodeId);
   } finally { _unlockBtn('addQurbanBayarGp'); }
@@ -10479,6 +10879,10 @@ async function deleteQurbanBayarGp(id) {
     async function() {
       const { error } = await db.from('qurban_bayar_gp').delete().eq('id', id);
       if (error) { showToast('Gagal hapus: ' + error.message, 'error'); return; }
+      _auditLog('qurban_bayar_gp', 'DELETE', {
+        id, nama: row?.nama, gp_tipe: row?.gp_tipe, gp_id: row?.gp_id,
+        jumlah: row?.jumlah, periode_id: row?.periode_id,
+      }, null, 'Pembayaran anak GP (qurban) dihapus');
       if (row && row.bukti_url) { const p = row.bukti_url.split('/bukti/')[1]; if (p) db.storage.from('bukti').remove([p]); }
       loadPeriodeDetail(currentPeriodeId);
     },
@@ -10493,6 +10897,11 @@ async function simpanTargetPeriode() {
     target_pembelian: $('qdBeli').value.trim() || null,
   }).eq('id', currentPeriodeId);
   if (error) { setMsg('qdTargetMsg', 'Gagal: ' + error.message, true); return; }
+  _auditLog('qurban_periode', 'UPDATE', null, {
+    periode_id: currentPeriodeId,
+    target_dana: parseUang($('qdTarget').value),
+    target_pembelian: $('qdBeli').value.trim() || null,
+  }, 'Target qurban diubah');
   setMsg('qdTargetMsg', '✅ Target tersimpan');
   loadPeriodeDetail(currentPeriodeId);
 }
@@ -10531,6 +10940,8 @@ async function archivePeriode(status) {
   if (!currentPeriodeId) return;
   const { error } = await db.from('qurban_periode').update({ status }).eq('id', currentPeriodeId);
   if (error) { alert('Gagal arsipkan: ' + error.message); return; }
+  _auditLog('qurban_periode', 'UPDATE', null, { periode_id: currentPeriodeId, status },
+    'Status qurban diubah ke ' + status);
   loadPeriodeDetail(currentPeriodeId);
 }
 
@@ -10578,6 +10989,9 @@ async function addBayarQurban() {
       nama = $('qdBayarAng').selectedOptions[0].textContent;
     }
     if (!jml || jml <= 0) { setMsg('qdBayarMsg', 'Jumlah harus > 0', true); return; }
+    if (!_wajibKeteranganFoto('qdBayarFile', $('qdBayarCat').value)) {
+      setMsg('qdBayarMsg', 'Wajib isi catatan/keterangan kalau melampirkan foto', true); return;
+    }
     let bukti = null;
     try { bukti = await uploadBukti('qdBayarFile'); }
     catch (e) { setMsg('qdBayarMsg', 'Gagal upload foto: ' + e.message, true); return; }
@@ -10591,6 +11005,11 @@ async function addBayarQurban() {
       if (bukti) { const path = bukti.split('/bukti/')[1]; if (path) db.storage.from('bukti').remove([path]); }
       setMsg('qdBayarMsg', 'Gagal: ' + error.message, true); return;
     }
+    _auditLog('qurban_bayar', 'INSERT', null, {
+      nama, anggota_id: luar ? null : parseInt(angId), jumlah: jml,
+      tanggal: $('qdBayarTgl').value || new Date().toISOString().slice(0,10),
+      periode_id: currentPeriodeId, non_anggota: !!luar,
+    }, 'Pemasukan qurban');
     loadPeriodeDetail(currentPeriodeId);
   } finally { _unlockBtn('addBayarQurban'); }
 }
@@ -10608,6 +11027,9 @@ async function deleteBayarQurban(id) {
       const { data: deleted, error } = await db.from('qurban_bayar').delete().eq('id', id).select();
       if (error) { showToast('Gagal hapus: ' + error.message, 'error'); loadPeriodeDetail(currentPeriodeId); return; }
       if (!deleted || deleted.length === 0) { showToast('❌ Hapus GAGAL — Supabase RLS memblokir DELETE.', 'error'); loadPeriodeDetail(currentPeriodeId); return; }
+      _auditLog('qurban_bayar', 'DELETE', {
+        id, nama: row?.nama, jumlah: row?.jumlah, tanggal: row?.tanggal, periode_id: row?.periode_id,
+      }, null, 'Pemasukan qurban dihapus');
       if (row && row.bukti_url) { var p = row.bukti_url.split('/bukti/')[1]; if (p) db.storage.from('bukti').remove([p]); }
       loadPeriodeDetail(currentPeriodeId);
     },
@@ -10635,6 +11057,11 @@ async function addKeluarQurban() {
       if (bukti) { const path = bukti.split('/bukti/')[1]; if (path) db.storage.from('bukti').remove([path]); }
       setMsg('qdKeluarMsg', 'Gagal: ' + error.message, true); return;
     }
+    _auditLog('qurban_keluar', 'INSERT', null, {
+      keterangan: ket, jumlah: jml,
+      tanggal: $('qdKeluarTgl').value || new Date().toISOString().slice(0,10),
+      periode_id: currentPeriodeId,
+    }, 'Pengeluaran qurban');
     loadPeriodeDetail(currentPeriodeId);
   } finally { _unlockBtn('addKeluarQurban'); }
 }
@@ -10649,6 +11076,9 @@ async function deleteKeluarQurban(id) {
       const { data: deleted, error } = await db.from('qurban_keluar').delete().eq('id', id).select();
       if (error) { showToast('Gagal hapus: ' + error.message, 'error'); loadPeriodeDetail(currentPeriodeId); return; }
       if (!deleted || deleted.length === 0) { showToast('❌ Hapus GAGAL — Supabase RLS memblokir DELETE.', 'error'); loadPeriodeDetail(currentPeriodeId); return; }
+      _auditLog('qurban_keluar', 'DELETE', {
+        id, keterangan: row?.keterangan, jumlah: row?.jumlah, tanggal: row?.tanggal, periode_id: row?.periode_id,
+      }, null, 'Pengeluaran qurban dihapus');
       if (row && row.bukti_url) { var p = row.bukti_url.split('/bukti/')[1]; if (p) db.storage.from('bukti').remove([p]); }
       loadPeriodeDetail(currentPeriodeId);
     },
@@ -10673,6 +11103,14 @@ async function cetakPeriode() {
   gpRows.forEach(b => { const k = b.gp_tipe + '_' + b.gp_id; if (!gpAgg[k]) gpAgg[k] = { nama: b.nama || '(?)', tipe: b.gp_tipe, total: 0, count: 0 }; gpAgg[k].total += Number(b.jumlah || 0); gpAgg[k].count++; });
   const gpSudah = Object.values(gpAgg).sort((x, y) => y.total - x.total);
   const gpTotal = gpSudah.reduce((s, r) => s + r.total, 0);
+  // Pemasukan dari NON-ANGGOTA ("luar") qurban — supaya jelas dana selain anggota.
+  let qbRows = [];
+  try { const r = await db.from('qurban_bayar').select('anggota_id, nama, jumlah').eq('periode_id', p.id); qbRows = r.data || []; } catch (e) {}
+  const qbLuarAgg = {};
+  qbRows.filter(b => !b.anggota_id).forEach(b => { const k = 'x' + (b.nama || ''); if (!qbLuarAgg[k]) qbLuarAgg[k] = { nama: b.nama || '(?)', total: 0, count: 0 }; qbLuarAgg[k].total += Number(b.jumlah || 0); qbLuarAgg[k].count++; });
+  const qbLuarSudah = Object.values(qbLuarAgg).sort((x, y) => y.total - x.total);
+  const qbLuarTotal = qbLuarSudah.reduce((s, r) => s + r.total, 0);
+  const qbMemberTotal = qbRows.filter(b => b.anggota_id).reduce((s, b) => s + Number(b.jumlah || 0), 0);
   const statLabel = s => s === 'lunas' ? 'LUNAS' : s === 'sebagian' ? 'SEBAGIAN' : s === 'bayar' ? 'BAYAR' : 'BELUM';
 
   _pdfHeader(doc, 'LAPORAN DETAIL QURBAN - MUMI MB3', 'Periode: ' + S(p.nama) + ' (' + (p.status === 'arsip' ? 'Arsip' : 'Aktif') + ')');
@@ -10683,8 +11121,10 @@ async function cetakPeriode() {
       ['Status', p.status === 'arsip' ? 'Arsip' : 'Aktif'],
       ['Target Dana', IDR(d.target)],
       ['Target Pembelian', S(p.target_pembelian || '-')],
-      ['Total Pemasukan (MUMI + GP)', IDR(d.totMasuk)],
+      ['Total Pemasukan (MUMI + GP + Umum)', IDR(d.totMasuk)],
       ['  - di antaranya dari Anak GP', IDR(gpTotal)],
+      ['  - di antaranya dari Non-Anggota/Umum', IDR(qbLuarTotal)],
+      ['Progress Bayar (jumlah anak: MUMI + GP)', d.prog ? (d.prog.paid + '/' + d.prog.total + ' (' + (d.prog.total ? Math.round(d.prog.paid / d.prog.total * 100) : 0) + '%)') : '-'],
       ['Total Pengeluaran', IDR(d.totKeluar)],
       [d.sisa >= 0 ? 'Sisa Dana' : 'Minus / Kurang Dana', IDR(d.sisa)],
     ],
@@ -10709,6 +11149,15 @@ async function cetakPeriode() {
       body: gpSudah.map(r => [S(r.nama), (r.tipe || '').toUpperCase(), r.count + 'x', IDR(r.total)]),
       foot: [['SUBTOTAL ANAK GP', '', '', IDR(gpTotal)]],
       styles: { fontSize: 8 }, headStyles: { fillColor: [124, 58, 237] }, footStyles: { fillColor: [124, 58, 237], textColor: 255 },
+    });
+  }
+  if (qbLuarSudah.length) {
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY + 6,
+      head: [['Pemasukan Non-Anggota / Umum', 'Kali', 'Total']],
+      body: qbLuarSudah.map(r => [S(r.nama), r.count + 'x', IDR(r.total)]),
+      foot: [['SUBTOTAL NON-ANGGOTA', '', IDR(qbLuarTotal)]],
+      styles: { fontSize: 8 }, headStyles: { fillColor: [180, 83, 9] }, footStyles: { fillColor: [180, 83, 9], textColor: 255 },
     });
   }
   doc.autoTable({
@@ -11090,16 +11539,32 @@ async function exportAcaraDetailPDF(acaraId) {
   const getTarget = id => { const m = id ? angMap[String(id)] : null; const k = m && m.kategori_id ? String(m.kategori_id) : null; if (k && tpk[k] !== undefined) return Number(tpk[k]); return biaya > 0 ? biaya : null; };
   const katNama = id => { const m = id ? angMap[String(id)] : null; return m && m.kategori_anggota ? m.kategori_anggota.nama : '-'; };
 
+  // Pisahkan pembayar ANGGOTA MUMI vs NON-ANGGOTA ("luar") supaya di PDF jelas
+  // dana dari mana saja (bukan cuma anggota).
   const agg = {};
-  bayar.forEach(b => { const k = b.anggota_id || ('x' + (b.nama || '')); if (!agg[k]) agg[k] = { nama: b.nama || '(?)', total: 0, count: 0, anggota_id: b.anggota_id }; agg[k].total += Number(b.jumlah || 0); agg[k].count++; });
+  bayar.forEach(b => { if (!b.anggota_id) return; const k = b.anggota_id; if (!agg[k]) agg[k] = { nama: b.nama || '(?)', total: 0, count: 0, anggota_id: b.anggota_id }; agg[k].total += Number(b.jumlah || 0); agg[k].count++; });
   const sudah = Object.values(agg).sort((x, y) => y.total - x.total);
+  const luarAgg = {};
+  bayar.filter(b => !b.anggota_id).forEach(b => { const k = 'x' + (b.nama || ''); if (!luarAgg[k]) luarAgg[k] = { nama: b.nama || '(?)', total: 0, count: 0 }; luarAgg[k].total += Number(b.jumlah || 0); luarAgg[k].count++; });
+  const luarSudah = Object.values(luarAgg).sort((x, y) => y.total - x.total);
   const sudahIds = new Set(bayar.map(b => b.anggota_id).filter(Boolean));
   const belum = angTampil.filter(x => !sudahIds.has(x.id));
   const gpAgg = {};
   gpBayar.forEach(b => { const k = b.gp_tipe + '_' + b.gp_id; if (!gpAgg[k]) gpAgg[k] = { nama: b.nama || '(?)', tipe: b.gp_tipe, total: 0, count: 0 }; gpAgg[k].total += Number(b.jumlah || 0); gpAgg[k].count++; });
   const gpSudah = Object.values(gpAgg).sort((x, y) => y.total - x.total);
 
-  const totalMasuk  = bayar.reduce((s, b) => s + Number(b.jumlah || 0), 0) + gpBayar.reduce((s, b) => s + Number(b.jumlah || 0), 0);
+  const totMember = sudah.reduce((s, r) => s + r.total, 0);
+  const totLuar   = luarSudah.reduce((s, r) => s + r.total, 0);
+  const totGp     = gpBayar.reduce((s, b) => s + Number(b.jumlah || 0), 0);
+  // Progress bayar gabungan (anggota MUMI + anak GP yang diikutkan)
+  let _acdGpRoster = [];
+  if (a.ikut_gpmt === true || a.ikut_gpsd === true) {
+    try { _acdGpRoster = await _gpRosterFor(a.ikut_gpmt === true, a.ikut_gpsd === true); } catch (e) {}
+  }
+  const _acdPaid  = angTampil.filter(x => sudahIds.has(x.id)).length + gpSudah.length;
+  const _acdTotal = angTampil.length + _acdGpRoster.length;
+  const _acdPct   = _acdTotal > 0 ? Math.round(_acdPaid / _acdTotal * 100) : 0;
+  const totalMasuk  = bayar.reduce((s, b) => s + Number(b.jumlah || 0), 0) + totGp;
   const totalKeluar = keluar.reduce((s, b) => s + Number(b.jumlah || 0), 0);
   const sisa = totalMasuk - totalKeluar;
 
@@ -11119,6 +11584,7 @@ async function exportAcaraDetailPDF(acaraId) {
       ['Divisi Terlibat', divList.length ? S(divList.join(', ')) : '-'],
       ['Anggaran / Target Dana', IDR(a.anggaran || 0)],
       ['Biaya per Peserta', biaya ? IDR(biaya) : '-'],
+      ['Progress Bayar (jumlah anak: MUMI + GP)', _acdPaid + '/' + _acdTotal + ' (' + _acdPct + '%)'],
     ],
     columnStyles: { 0: { cellWidth: 50, fontStyle: 'bold' }, 1: { cellWidth: 'auto' } },
   });
@@ -11150,7 +11616,17 @@ async function exportAcaraDetailPDF(acaraId) {
       startY: doc.lastAutoTable.finalY + 4,
       head: [['Sudah Bayar (Anak GP)', 'Grup', 'Kali', 'Total']],
       body: gpSudah.map(r => [S(r.nama), (r.tipe || '').toUpperCase(), r.count + 'x', IDR(r.total)]),
-      styles: { fontSize: 8 }, headStyles: { fillColor: [124, 58, 237] },
+      foot: [['SUBTOTAL ANAK GP', '', '', IDR(totGp)]],
+      styles: { fontSize: 8 }, headStyles: { fillColor: [124, 58, 237] }, footStyles: { fillColor: [124, 58, 237], textColor: 255 },
+    });
+  }
+  if (luarSudah.length) {
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY + 4,
+      head: [['Pemasukan Non-Anggota / Umum', 'Kali', 'Total']],
+      body: luarSudah.map(r => [S(r.nama), r.count + 'x', IDR(r.total)]),
+      foot: [['SUBTOTAL NON-ANGGOTA', '', IDR(totLuar)]],
+      styles: { fontSize: 8 }, headStyles: { fillColor: [180, 83, 9] }, footStyles: { fillColor: [180, 83, 9], textColor: 255 },
     });
   }
   doc.autoTable({
@@ -11167,9 +11643,20 @@ async function exportAcaraDetailPDF(acaraId) {
     styles: { fontSize: 8 }, headStyles: { fillColor: [220, 38, 38] }, footStyles: { fillColor: [220, 38, 38], textColor: 255 },
   });
   doc.autoTable({
-    startY: doc.lastAutoTable.finalY + 6, theme: 'grid', styles: { fontSize: 10, cellPadding: 3 },
+    startY: doc.lastAutoTable.finalY + 6, theme: 'grid', styles: { fontSize: 9, cellPadding: 2.5 },
+    head: [['RINCIAN SUMBER DANA MASUK', 'Jumlah']],
     body: [
-      ['TOTAL PEMASUKAN (MUMI + GP)', IDR(totalMasuk)],
+      ['Dari Anggota MUMI', IDR(totMember)],
+      ['Dari Anak GP (GPMT/GPSD)', IDR(totGp)],
+      ['Dari Non-Anggota / Umum', IDR(totLuar)],
+    ],
+    columnStyles: { 0: { cellWidth: 120 }, 1: { halign: 'right', fontStyle: 'bold' } },
+    headStyles: { fillColor: [26, 102, 68] },
+  });
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 4, theme: 'grid', styles: { fontSize: 10, cellPadding: 3 },
+    body: [
+      ['TOTAL PEMASUKAN (MUMI + GP + Umum)', IDR(totalMasuk)],
       ['TOTAL PENGELUARAN', IDR(totalKeluar)],
       [sisa >= 0 ? 'SISA DANA' : 'MINUS / KURANG DANA', IDR(sisa)],
     ],
@@ -11394,7 +11881,13 @@ async function renderAcaraBayar(acaraId) {
   const jmlSudah = angTampil.filter(x => sudahBayarIds.has(x.id)).length;
   const jmlBelum = belumBayar.length;
 
+  // Progress bayar gabungan (anggota MUMI + anak GP yang diikutkan) — berbasis jumlah orang.
+  const _acGpPaid = new Set(gpBayarRows.map(b => b.gp_tipe + '_' + b.gp_id)).size;
+  const _acProg = { paid: jmlSudah + _acGpPaid, total: angTampil.length + gpRoster.length,
+    memPaid: jmlSudah, memTotal: angTampil.length, gpPaid: _acGpPaid, gpTotal: gpRoster.length };
+
   $('amBayarArea').innerHTML = `
+    ${_progressBayarBar(_acProg.paid, _acProg.total, `Anggota MUMI: ${_acProg.memPaid}/${_acProg.memTotal} · Anak GP: ${_acProg.gpPaid}/${_acProg.gpTotal}` + ((acIkutGpmt||acIkutGpsd) ? '' : ' · (centang GPMT/GPSD di bawah untuk ikut dihitung)'))}
 
     <!-- ══ OUTER TOGGLE: PEMBAYARAN PESERTA (default: tersembunyi) ══ -->
     <div onclick="toggleSec(this)" class="sec-toggle-btn" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:linear-gradient(135deg,#dcfce7,#bbf7d0);border:1.5px solid #16a34a;border-radius:10px;user-select:none;cursor:pointer;margin-bottom:8px;">
@@ -11487,7 +11980,7 @@ async function renderAcaraBayar(acaraId) {
         ${bayar.map(b => `<div class="list-item">
           <div class="left"><div class="name">${escapeHtml(b.nama||'(?)')}${buktiLink(b.bukti_url)}</div><div class="meta">${b.tanggal}</div></div>
           <div style="text-align:right;"><span class="badge badge-masuk">${IDR(b.jumlah)}</span>
-            <button class="small danger" style="margin-top:4px" onclick="deleteAcaraBayar(${b.id})">Hapus</button></div>
+            <div style="margin-top:4px;display:flex;gap:4px;justify-content:flex-end;"><button class="small" onclick="editAcaraBayar(${b.id})">Edit</button><button class="small danger" onclick="deleteAcaraBayar(${b.id})">Hapus</button></div></div>
         </div>`).join('')}
       </div>
     </div>` : ''}
@@ -11500,7 +11993,7 @@ async function renderAcaraBayar(acaraId) {
       <span class="toggle-arrow" style="font-size:12px;color:#6d28d9;font-weight:700;">▶</span>
     </div>
     <div style="display:none;margin-bottom:14px;">
-      ${_gpBayarSectionHtml({ prefix:'amGp', roster:gpRoster, bayarRows:gpBayarRows, biaya, addFn:'addAcaraBayarGp', delFn:'deleteAcaraBayarGp', ikutGpmt:acIkutGpmt, ikutGpsd:acIkutGpsd, toggleFn:'acToggleGpInclude' })}
+      ${_gpBayarSectionHtml({ prefix:'amGp', roster:gpRoster, bayarRows:gpBayarRows, biaya, addFn:'addAcaraBayarGp', delFn:'deleteAcaraBayarGp', editFn:'editAcaraBayarGp', ikutGpmt:acIkutGpmt, ikutGpsd:acIkutGpsd, toggleFn:'acToggleGpInclude' })}
     </div>
 
     <!-- ══ DIVIDER ══ -->
@@ -11536,7 +12029,7 @@ async function renderAcaraBayar(acaraId) {
         ${keluar.map(b => `<div class="list-item">
           <div class="left"><div class="name">${escapeHtml(b.nama||'Pengeluaran')}${buktiLink(b.bukti_url)}</div><div class="meta">${b.tanggal}</div></div>
           <div style="text-align:right;"><span class="badge badge-keluar">${IDR(b.jumlah)}</span>
-            <button class="small danger" style="margin-top:4px" onclick="deleteAcaraKeluar(${b.id})">Hapus</button></div>
+            <div style="margin-top:4px;display:flex;gap:4px;justify-content:flex-end;"><button class="small" onclick="editAcaraKeluar(${b.id})">Edit</button><button class="small danger" onclick="deleteAcaraKeluar(${b.id})">Hapus</button></div></div>
         </div>`).join('')}
       </div>
     </div>` : '<p class="muted" style="margin-top:10px;">Belum ada pengeluaran dicatat.</p>'}
@@ -11584,6 +12077,8 @@ async function acToggleGpInclude(group, checked) {
     const a = acaraCache.find(x => x.id === currentAcaraId);
     if (a) a[col] = checked;
     await renderAcaraBayar(currentAcaraId);
+    _auditLog('acara', 'UPDATE', null, { acara_id: currentAcaraId, [col]: checked },
+      group.toUpperCase() + (checked ? ' diikutkan ke acara' : ' tidak diikutkan ke acara'));
     showToast(checked ? ('🧒 ' + group.toUpperCase() + ' diikutkan ke acara ini') : (group.toUpperCase() + ' tidak diikutkan'), 'success', 1800);
   } catch (e) { if (cb) cb.checked = !checked; showToast('Gagal: ' + e.message, 'error'); }
 }
@@ -11614,6 +12109,11 @@ async function addAcaraBayarGp() {
       if (_isMissingTableErr(error)) { _showGpBayarSqlNotice('acara'); return; }
       setMsg('amGpBayarMsg', 'Gagal: ' + error.message, true); return;
     }
+    _auditLog('acara_bayar_gp', 'INSERT', null, {
+      nama, gp_tipe: tipe, gp_id: parseInt(gid), jumlah: jml,
+      tanggal: $('amGpBayarTgl').value || new Date().toISOString().slice(0,10),
+      acara_id: currentAcaraId,
+    }, 'Pembayaran anak ' + tipe.toUpperCase() + ' (acara)');
     showToast('✅ Pembayaran anak GP dicatat!', 'success');
     await renderAcaraBayar(currentAcaraId);
   } finally { _unlockBtn('addAcaraBayarGp'); }
@@ -11627,6 +12127,10 @@ async function deleteAcaraBayarGp(id) {
     async function() {
       const { error } = await db.from('acara_bayar_gp').delete().eq('id', id);
       if (error) { showToast('Gagal hapus: ' + error.message, 'error'); return; }
+      _auditLog('acara_bayar_gp', 'DELETE', {
+        id, nama: row?.nama, gp_tipe: row?.gp_tipe, gp_id: row?.gp_id,
+        jumlah: row?.jumlah, acara_id: row?.acara_id,
+      }, null, 'Pembayaran anak GP (acara) dihapus');
       if (row && row.bukti_url) { const p = row.bukti_url.split('/bukti/')[1]; if (p) db.storage.from('bukti').remove([p]); }
       renderAcaraBayar(currentAcaraId);
     },
@@ -11664,6 +12168,11 @@ async function addAcaraBayar() {
       if (bukti) { const path = bukti.split('/bukti/')[1]; if (path) db.storage.from('bukti').remove([path]); }
       setMsg('amBayarMsg', 'Gagal: ' + error.message, true); return;
     }
+    _auditLog('acara_bayar', 'INSERT', null, {
+      nama, anggota_id: luar ? null : parseInt(angId), jumlah: jml, tipe: 'masuk',
+      tanggal: $('amBayarTgl').value || new Date().toISOString().slice(0,10),
+      acara_id: currentAcaraId, non_anggota: !!luar,
+    }, 'Pemasukan acara');
     await renderAcaraBayar(currentAcaraId);
   } finally { _unlockBtn('addAcaraBayar'); }
 }
@@ -11688,6 +12197,11 @@ async function addAcaraKeluar() {
       if (bukti) { const path = bukti.split('/bukti/')[1]; if (path) db.storage.from('bukti').remove([path]); }
       setMsg('amKeluarMsg', 'Gagal: ' + error.message, true); return;
     }
+    _auditLog('acara_bayar', 'INSERT', null, {
+      keterangan: ket, jumlah: jml, tipe: 'keluar',
+      tanggal: $('amKeluarTgl').value || new Date().toISOString().slice(0,10),
+      acara_id: currentAcaraId,
+    }, 'Pengeluaran acara');
     showToast('✅ Pengeluaran dicatat!', 'success');
     await renderAcaraBayar(currentAcaraId);
   } finally { _unlockBtn('addAcaraKeluar'); }
@@ -11703,6 +12217,9 @@ async function deleteAcaraKeluar(id) {
       const { data: deleted, error } = await db.from('acara_bayar').delete().eq('id', id).select();
       if (error) { showToast('Gagal hapus: ' + error.message, 'error'); renderAcaraBayar(currentAcaraId); return; }
       if (!deleted || deleted.length === 0) { showToast('Hapus GAGAL — Supabase RLS memblokir DELETE.', 'error'); renderAcaraBayar(currentAcaraId); return; }
+      _auditLog('acara_bayar', 'DELETE', {
+        id, nama: row?.nama, jumlah: row?.jumlah, tipe: row?.tipe || 'keluar', acara_id: row?.acara_id,
+      }, null, 'Pengeluaran acara dihapus');
       if (row && row.bukti_url) { var p = row.bukti_url.split('/bukti/')[1]; if (p) db.storage.from('bukti').remove([p]); }
       renderAcaraBayar(currentAcaraId);
     },
@@ -11719,6 +12236,9 @@ async function deleteAcaraBayar(id) {
       const { data: deleted, error } = await db.from('acara_bayar').delete().eq('id', id).select();
       if (error) { showToast('Gagal hapus: ' + error.message, 'error'); renderAcaraBayar(currentAcaraId); return; }
       if (!deleted || deleted.length === 0) { showToast('Hapus GAGAL — Supabase RLS memblokir DELETE.', 'error'); renderAcaraBayar(currentAcaraId); return; }
+      _auditLog('acara_bayar', 'DELETE', {
+        id, nama: row?.nama, jumlah: row?.jumlah, tipe: row?.tipe || 'masuk', acara_id: row?.acara_id,
+      }, null, 'Pemasukan acara dihapus');
       if (row && row.bukti_url) { var p = row.bukti_url.split('/bukti/')[1]; if (p) db.storage.from('bukti').remove([p]); }
       renderAcaraBayar(currentAcaraId);
     },
@@ -12424,13 +12944,22 @@ async function loadIuran() {
     const target = iuran * months;
     const bayar  = paid[a.id] || 0;
     let status = 'belum';
-    if (target > 0 && bayar >= target) status = 'lunas';
+    if (target === 0) status = 'tanpa';            // tidak ada kewajiban iuran (Rp 0) → netral, tidak dihitung lunas/belum
+    else if (bayar >= target) status = 'lunas';
     else if (bayar > 0) status = 'sebagian';
     // Anggota tidak dicentang tampil_absensi: hanya muncul jika ada kontribusi (bayar > 0)
     const tampil = a.tampil_absensi !== false;
     if (!tampil && bayar === 0) return null;
     return { id: a.id, nama: a.nama, kategori: kat ? kat.nama : '(tanpa kategori)', iuran, target, bayar, status, tampil };
   }).filter(Boolean);
+  // Pemasukan KAS lain di periode ini yang BUKAN iuran anggota — mis. dari
+  // NON-anggota, donasi, atau sumber lain. Supaya jelas "uang dari mana" selain
+  // dari kas anggota (saldo bisa bergerak walau belum ada anggota yang bayar).
+  const { data: txLain } = await db.from('transaksi')
+    .select('keterangan, kategori, jumlah, tanggal, anggota_id, anggota(nama)')
+    .eq('tipe', 'masuk').neq('kategori', 'qurban')
+    .gte('tanggal', first).lte('tanggal', last).limit(100000);
+  iuranLain = (txLain || []).filter(t => !(t.anggota_id && (t.kategori === 'iuran' || t.kategori === 'kas_bulanan')));
   iuranMeta = { label, mode };
   renderIuran();
 }
@@ -12438,6 +12967,7 @@ async function loadIuran() {
 function _iuranBadge(s) {
   if (s === 'lunas')    return '<span class="badge" style="background:#d1fae5;color:#059669">LUNAS</span>';
   if (s === 'sebagian') return '<span class="badge" style="background:#fef3c7;color:#d97706">SEBAGIAN</span>';
+  if (s === 'tanpa')    return '<span class="badge" style="background:#e5e7eb;color:#6b7280" title="Tidak ada kewajiban iuran (Rp 0)">— TANPA IURAN</span>';
   return '<span class="badge" style="background:#fee2e2;color:#dc2626">BELUM</span>';
 }
 
@@ -12446,13 +12976,17 @@ function renderIuran() {
   const isBulan = iuranMeta.mode === 'bulan';
   const totBayar  = iuranRows.reduce((s,r) => s + r.bayar, 0);
   const totTarget = iuranRows.reduce((s,r) => s + r.target, 0);
-  const nLunas    = iuranRows.filter(r => r.status === 'lunas').length;
-  const nSebagian = iuranRows.filter(r => r.status === 'sebagian').length;
-  const nBelum    = iuranRows.filter(r => r.status === 'belum').length;
+  // Hitungan hanya dari anggota yang WAJIB iuran (target > 0). Anggota Rp 0
+  // (status 'tanpa') tidak dihitung lunas/sebagian/belum.
+  const wajibRows = iuranRows.filter(r => r.target > 0);
+  const nLunas    = wajibRows.filter(r => r.status === 'lunas').length;
+  const nSebagian = wajibRows.filter(r => r.status === 'sebagian').length;
+  const nBelum    = wajibRows.filter(r => r.status === 'belum').length;
+  const nTanpa    = iuranRows.filter(r => r.status === 'tanpa').length;
   $('iuranResult').innerHTML = `
     <p class="muted" style="margin:8px 0;">
       Periode <b>${iuranMeta.label}</b> · Terkumpul <b style="color:#16a34a">${IDR(totBayar)}</b> / target ${IDR(totTarget)}<br>
-      ✅ ${nLunas} lunas &nbsp; 🟡 ${nSebagian} sebagian &nbsp; ❌ ${nBelum} belum bayar
+      ✅ ${nLunas} lunas &nbsp; 🟡 ${nSebagian} sebagian &nbsp; ❌ ${nBelum} belum bayar${nTanpa ? ` &nbsp; ⚪ ${nTanpa} tanpa iuran` : ''}
     </p>
     <div style="display:flex;gap:6px;margin-bottom:10px;">
       <button class="secondary" onclick="exportIuranCSV()">📄 Export CSV</button>
@@ -12468,7 +13002,31 @@ function renderIuran() {
         <td>${_iuranBadge(r.status)}</td>
         ${isBulan ? `<td><button class="small" onclick="catatIuran(${r.id})">+ Bayar</button></td>` : ''}
       </tr>`).join('')}</tbody>
-    </table></div>`;
+    </table></div>${_iuranLainHtml()}`;
+}
+
+// Ringkasan pemasukan kas LAIN (bukan iuran anggota) di periode terpilih —
+// supaya jelas dari mana saja uang masuk selain kas anggota.
+function _iuranLainHtml() {
+  const lain = iuranLain || [];
+  const totLain = lain.reduce((s, t) => s + Number(t.jumlah || 0), 0);
+  if (!lain.length) {
+    return `<div style="margin-top:12px;padding:10px 12px;background:#f0f7f3;border:1px solid #d6e6dd;border-radius:8px;font-size:12px;color:#4b6b5a;">
+      ℹ️ Tidak ada pemasukan kas lain (non-iuran anggota) di periode ini. Semua pemasukan berasal dari iuran anggota.</div>`;
+  }
+  const rows = lain.map(t => `<tr>
+      <td class="nm">${escapeHtml(t.keterangan || (t.anggota?.nama ? t.anggota.nama : '(tanpa keterangan)'))}</td>
+      <td style="font-size:11px;">${escapeHtml(t.kategori || '-')}${t.anggota_id ? '' : ' · non-anggota'}</td>
+      <td style="font-size:11px;">${t.tanggal || ''}</td>
+      <td style="font-weight:700;color:#16a34a;">${IDR(t.jumlah)}</td>
+    </tr>`).join('');
+  return `<div style="margin-top:14px;padding:12px;background:#fffaf0;border:1px solid #fde9c8;border-radius:8px;">
+    <div style="font-weight:800;font-size:13px;color:#b45309;margin-bottom:4px;">💰 Pemasukan Kas Lain (bukan iuran anggota)</div>
+    <div class="muted" style="font-size:12px;margin-bottom:8px;">Total <b style="color:#16a34a;">${IDR(totLain)}</b> · ${lain.length} transaksi — uang masuk dari non-anggota / donasi / sumber lain.</div>
+    <div style="overflow-x:auto;"><table class="rekap">
+      <thead><tr><th style="text-align:left">Keterangan / Sumber</th><th>Kategori</th><th>Tanggal</th><th>Jumlah</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div></div>`;
 }
 
 // ── Pengaturan kategori (di menu Kas Masuk) ──
@@ -12678,11 +13236,47 @@ function _pdfRenderMd(doc, mdText, opts) {
     doc.setFontSize(fontSize);
     doc.setTextColor(textColor[0], textColor[1], textColor[2]);
 
-    var fullText = prefix + S(ln.text || '');
-    var wrapped = doc.splitTextToSize(fullText, maxW - leftIndent);
     var lh = fontSize * 0.4 + 1.2; // mm per baris (approx Helvetica)
     var prefixW = prefix ? doc.getTextWidth(prefix) : 0;
 
+    // Baris dengan link → render JUDUL biru + bisa diklik (textWithLink), wrapping per-kata
+    if (ln.segments) {
+      ensureSpace(lh + 0.5);
+      var availW = maxW - leftIndent;
+      var spaceW = doc.getTextWidth(' ');
+      var x0 = marginL + leftIndent, x = x0;
+      if (prefix) { doc.text(prefix, x, y); x += prefixW; }
+      var hangX = x0 + prefixW;
+      var words = [];
+      ln.segments.forEach(function(sg){
+        String(S(sg.text || '')).split(/(\s+)/).forEach(function(p){
+          if (p === '') return;
+          if (/^\s+$/.test(p)) words.push({ sp: true });
+          else words.push({ text: p, url: sg.url || null });
+        });
+      });
+      var atStart = true;
+      for (var wi = 0; wi < words.length; wi++) {
+        var wd = words[wi];
+        if (wd.sp) { if (!atStart) x += spaceW; continue; }
+        var ww = doc.getTextWidth(wd.text);
+        if (!atStart && (x + ww) > (x0 + availW)) { y += lh; ensureSpace(lh + 0.5); x = hangX; atStart = true; }
+        if (wd.url) {
+          doc.setTextColor(37, 99, 235);
+          try { doc.textWithLink(wd.text, x, y, { url: wd.url }); } catch (e) { doc.text(wd.text, x, y); }
+          doc.setDrawColor(37, 99, 235); doc.setLineWidth(0.3); doc.line(x, y + 0.8, x + ww, y + 0.8);
+          doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+        } else {
+          doc.text(wd.text, x, y);
+        }
+        x += ww; atStart = false;
+      }
+      y += lh;
+      continue;
+    }
+
+    var fullText = prefix + S(ln.text || '');
+    var wrapped = doc.splitTextToSize(fullText, maxW - leftIndent);
     for (var w = 0; w < wrapped.length; w++) {
       ensureSpace(lh + 0.5);
       var xOffset = (w > 0 && prefix) ? prefixW : 0;
@@ -12722,17 +13316,38 @@ function cetakIuran() {
   const doc = new jsPDF();
   const totBayar  = iuranRows.reduce((s,r) => s + r.bayar, 0);
   const totTarget = iuranRows.reduce((s,r) => s + r.target, 0);
-  const nLunas = iuranRows.filter(r => r.status === 'lunas').length;
-  const nBelum = iuranRows.filter(r => r.status === 'belum').length;
+  const _wajibRows = iuranRows.filter(r => r.target > 0);
+  const nLunas = _wajibRows.filter(r => r.status === 'lunas').length;
+  const nBelum = _wajibRows.filter(r => r.status === 'belum').length;
   _pdfHeader(doc, 'LAPORAN IURAN KAS — MUMI MB3', 'Periode: ' + iuranMeta.label);
   doc.setFontSize(9); doc.setTextColor(60,60,60); doc.setFont(undefined,'normal');
-  doc.text(`Terkumpul ${IDR(totBayar)} / target ${IDR(totTarget)}  -  ${nLunas} lunas  -  ${nBelum} belum bayar`, 14, 30);
+  const _iuPct = _wajibRows.length > 0 ? Math.round(nLunas / _wajibRows.length * 100) : 0;
+  doc.text(`Terkumpul ${IDR(totBayar)} / target ${IDR(totTarget)}  -  ${nLunas}/${_wajibRows.length} lunas (${_iuPct}%)  -  ${nBelum} belum bayar`, 14, 30);
   doc.autoTable({
     startY: 34,
     head: [['Nama','Kategori','Iuran/bln','Target','Terbayar','Status']],
-    body: iuranRows.map(r => [r.nama, r.kategori, IDR(r.iuran), IDR(r.target), IDR(r.bayar), r.status.toUpperCase()]),
+    body: iuranRows.map(r => [r.nama, r.kategori, IDR(r.iuran), IDR(r.target), IDR(r.bayar), r.status === 'tanpa' ? 'TANPA IURAN' : r.status.toUpperCase()]),
     styles: { fontSize: 8 }, headStyles: { fillColor: [26,102,68] },
   });
+  // Pemasukan kas LAIN (bukan iuran anggota) — non-anggota/donasi/sumber lain.
+  const _lain = iuranLain || [];
+  if (_lain.length) {
+    const _totLain = _lain.reduce((s, t) => s + Number(t.jumlah || 0), 0);
+    let _y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 40) + 8;
+    doc.setFontSize(10); doc.setTextColor(180, 83, 9); doc.setFont(undefined, 'bold');
+    doc.text('Pemasukan Kas Lain (bukan iuran anggota): ' + IDR(_totLain), 14, _y);
+    doc.setFont(undefined, 'normal'); doc.setTextColor(60, 60, 60);
+    doc.autoTable({
+      startY: _y + 3,
+      head: [['Keterangan / Sumber', 'Kategori', 'Tanggal', 'Jumlah']],
+      body: _lain.map(t => [
+        t.keterangan || (t.anggota && t.anggota.nama ? t.anggota.nama : '(tanpa keterangan)'),
+        (t.kategori || '-') + (t.anggota_id ? '' : ' (non-anggota)'),
+        t.tanggal || '', IDR(t.jumlah),
+      ]),
+      styles: { fontSize: 8 }, headStyles: { fillColor: [180, 83, 9] },
+    });
+  }
   _pdfFooter(doc);
   doc.save('iuran-kas-' + iuranMeta.label.replace(/ /g, '-') + '.pdf');
 }
@@ -14746,6 +15361,16 @@ async function deleteUserProfile(userId, idx) {
 }
 
 // ─────────────── ARSIP KAS BULANAN ───────────────
+// Toggle tampil/sembunyi sub "Arsip Kas Bulanan" (default tersembunyi).
+function toggleArsipKas() {
+  var body = document.getElementById('arsipKasBody');
+  var btn = document.getElementById('arsipKasToggleBtn');
+  if (!body) return;
+  var show = body.style.display === 'none';
+  body.style.display = show ? 'block' : 'none';
+  if (btn) btn.textContent = show ? 'Sembunyikan ▲' : 'Tampilkan ▼';
+}
+
 function loadKasBulanSection() {
   if (kasBulanCache.length) renderKasBulan();
   // Auto-pastikan bulan berjalan sudah ada di DB (penting kalau user sudah login
@@ -14793,6 +15418,7 @@ async function _cekStatusSemuaBulan(tampilMsg) {
 
   const { data: ang } = await db.from('anggota').select('id, kategori_anggota(iuran_kas)').eq('status', 'aktif');
   const anggota = ang || [];
+  const bulanIni = new Date().toISOString().slice(0, 7); // "YYYY-MM" — utk deteksi bulan lewat
 
   // Untuk tiap bulan, hitung apakah semua siswa sudah lunas
   for (const b of bulanList) {
@@ -14806,30 +15432,34 @@ async function _cekStatusSemuaBulan(tampilMsg) {
     const paid = {};
     (tx || []).forEach(t => { paid[t.anggota_id] = (paid[t.anggota_id]||0) + Number(t.jumlah||0); });
 
-    // Hitung apakah semua anggota aktif sudah lunas
-    const semuaLunas = anggota.length > 0 && anggota.every(a => {
-      const target = Number(a.kategori_anggota?.iuran_kas || 0);
-      return target === 0 || (paid[a.id] || 0) >= target;
-    });
-    const adaBelum = anggota.some(a => {
-      const target = Number(a.kategori_anggota?.iuran_kas || 0);
-      return target > 0 && (paid[a.id] || 0) < target;
-    });
+    // HANYA hitung anggota yang PUNYA KEWAJIBAN iuran (target > 0). Anggota
+    // dengan iuran Rp 0 (mis. kategori "Lain-Lain"/"Mencari Kerja") TIDAK
+    // dihitung lunas maupun belum — supaya persentase jujur (tidak ada
+    // "lunas" palsu / 6% padahal belum ada yang bayar).
+    const wajib = anggota.filter(a => Number(a.kategori_anggota?.iuran_kas || 0) > 0);
+    const nLunas = wajib.filter(a => (paid[a.id] || 0) >= Number(a.kategori_anggota?.iuran_kas || 0)).length;
+    const semuaLunas = wajib.length > 0 && nLunas === wajib.length;
 
-    const newStatus = semuaLunas && anggota.length > 0 ? 'done' : 'on_progress';
+    // Status:
+    //  • 'done'        → semua anggota WAJIB iuran sudah lunas (hijau)
+    //  • 'arsip'       → bulan SUDAH LEWAT (auto-arsip) atau diarsipkan manual,
+    //                    walau belum semua lunas (abu/biru) — supaya tidak
+    //                    menggantung "On Progress" selamanya.
+    //  • 'on_progress' → bulan berjalan & belum semua lunas (kuning)
+    const isPast = b.bulan < bulanIni;
+    let newStatus;
+    if (semuaLunas) newStatus = 'done';
+    else if (isPast || b.status === 'arsip') newStatus = 'arsip';
+    else newStatus = 'on_progress';
     // Update jika status berubah
     if (b.status !== newStatus) {
       await db.from('kas_bulan').update({ status: newStatus }).eq('id', b.id);
       b.status = newStatus;
     }
-    // Hitung ringkasan
-    const nLunas   = anggota.filter(a => {
-      const t = Number(a.kategori_anggota?.iuran_kas || 0);
-      return t === 0 || (paid[a.id]||0) >= t;
-    }).length;
+    // Ringkasan — basis = anggota wajib iuran saja
     b._nLunas   = nLunas;
-    b._nTotal   = anggota.length;
-    b._nBelum   = anggota.length - nLunas;
+    b._nTotal   = wajib.length;
+    b._nBelum   = wajib.length - nLunas;
   }
 
   kasBulanCache = bulanList;
@@ -14838,27 +15468,32 @@ async function _cekStatusSemuaBulan(tampilMsg) {
 }
 
 function renderKasBulan() {
+  const elBerjalan = $('kasBerjalanList');
   const el = $('kasBulanList');
-  if (!el) return;
-  if (!kasBulanCache.length) {
-    el.innerHTML = '<p class="muted">Belum ada arsip bulan. Klik "Cek & Perbarui" untuk memulai.</p>';
-    return;
-  }
+  if (!el && !elBerjalan) return;
   const today = new Date().toISOString().slice(0, 7);
-  el.innerHTML = kasBulanCache.map(b => {
+  // Pisah: BULAN BERJALAN (bulan ini & ke depan) vs ARSIP (bulan yang sudah lewat).
+  const berjalan = kasBulanCache.filter(b => b.bulan >= today);
+  const arsip    = kasBulanCache.filter(b => b.bulan < today);
+  const renderOne = (b) => {
     const isDone = b.status === 'done';
+    const isArsip = b.status === 'arsip';
     const isThisMonth = b.bulan === today;
     const [yy, mm] = b.bulan.split('-').map(Number);
     const label = BULAN[mm-1] + ' ' + yy;
     const pct = b._nTotal > 0 ? Math.round(b._nLunas / b._nTotal * 100) : 0;
     const statusBadge = isDone
       ? '<span class="st-badge st-done" style="font-size:11px;">✅ Done</span>'
+      : isArsip
+      ? '<span class="st-badge" style="font-size:11px;background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:99px;">📦 Diarsipkan</span>'
       : '<span class="st-badge st-in_progress" style="font-size:11px;">🔄 On Progress</span>';
     const bulanBadge = isThisMonth
       ? '<span style="font-size:10px;padding:2px 6px;background:#dbeafe;color:#1d4ed8;border-radius:99px;margin-left:6px;">Bulan ini</span>'
       : '';
 
-    return `<div style="padding:12px;background:${isDone?'#f0fdf4':'#fffbeb'};border:1px solid ${isDone?'#bbf7d0':'#fde68a'};border-radius:8px;margin-bottom:8px;">
+    const _bg = isDone ? '#f0fdf4' : isArsip ? '#eef2ff' : '#fffbeb';
+    const _bd = isDone ? '#bbf7d0' : isArsip ? '#c7d2fe' : '#fde68a';
+    return `<div style="padding:12px;background:${_bg};border:1px solid ${_bd};border-radius:8px;margin-bottom:8px;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
         <div style="flex:1;">
           <div style="font-weight:700;font-size:13px;">
@@ -14878,12 +15513,18 @@ function renderKasBulan() {
           ${statusBadge}
           <button class="small secondary" style="font-size:11px;"
             onclick="lihatBulanKas('${b.bulan}')">👁️ Lihat Detail</button>
-          ${!isDone ? `<button class="small secondary" style="font-size:11px;"
+          ${(!isDone && !isArsip) ? `<button class="small secondary" style="font-size:11px;"
             onclick="arsipkanManual(${b.id},'${b.bulan}')">📦 Arsip Manual</button>` : ''}
         </div>
       </div>
     </div>`;
-  }).join('');
+  };
+  if (elBerjalan) elBerjalan.innerHTML = berjalan.length
+    ? berjalan.map(renderOne).join('')
+    : '<p class="muted" style="font-size:12px;">Belum ada bulan berjalan. Klik "Cek & Perbarui Semua Status".</p>';
+  if (el) el.innerHTML = arsip.length
+    ? arsip.map(renderOne).join('')
+    : '<p class="muted" style="font-size:12px;">Belum ada arsip bulan yang sudah lewat.</p>';
 }
 
 // Klik "Lihat Detail" → buka card Iuran (kalau terkunci) + isi filter + scroll
@@ -14956,16 +15597,20 @@ async function buatBulanBaru() {
   cekSemuaBulan();
 }
 
-// Arsip manual (paksa status on_progress tetap tersimpan sebagai arsip dengan catatan)
+// Arsip manual — TUTUP bulan ini sebagai "Diarsipkan" (status='arsip') walau
+// belum semua lunas, + simpan catatan. Status arsip dipertahankan oleh
+// _cekStatusSemuaBulan (tidak balik ke on_progress).
 async function arsipkanManual(id, bulan) {
   const [yy, mm] = bulan.split('-').map(Number);
   const label = BULAN[mm-1] + ' ' + yy;
   const catatan = prompt(`Arsipkan ${label}? Masukkan catatan (opsional, atau kosongkan lalu Enter):`);
   if (catatan === null) return; // user cancel
   const { error } = await db.from('kas_bulan').update({
+    status: 'arsip',
     catatan: catatan.trim() || null
   }).eq('id', id);
   if (error) { alert('Gagal: ' + error.message); return; }
+  _auditLog('kas_bulan', 'UPDATE', { id, bulan }, { id, bulan, status: 'arsip', catatan: catatan.trim() || null }, 'Arsip bulan ' + label);
   setMsg('kasBulanMsg', '✅ ' + label + ' diarsipkan');
   cekSemuaBulan();
 }
@@ -18294,6 +18939,9 @@ async function tambahKeuanganMsw() {
     const jumlah = parseUang($('mswKeuJumlah')?.value);
     const ket    = $('mswKeuKet')?.value?.trim();
     if (!jumlah || jumlah <= 0) { setMsg('mswKeuMsg', 'Jumlah harus > 0', true); return; }
+    if (!_wajibKeteranganFoto('mswKeuFile', ket)) {
+      setMsg('mswKeuMsg', 'Wajib isi keterangan kalau melampirkan foto', true); return;
+    }
     let bukti = null;
     try { bukti = await uploadBukti('mswKeuFile'); }
     catch(e) { setMsg('mswKeuMsg', 'Gagal upload foto: ' + e.message, true); return; }
@@ -20411,6 +21059,12 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   var _curId       = null;  // id acara aktif (di-set saat acTaskRender dipanggil)
   var _acTaskPhotos = [];   // foto task yang sedang diedit (base64), maks 3
 
+  // ── Registry "dirty / belum tersinkron" (anti status balik sendiri) ──
+  // Selama perubahan lokal belum dikonfirmasi tersimpan ke server, refetch
+  // (loadAcara/loadMusyawarah/prjLoadFromSupabase) TIDAK boleh menimpa data
+  // lokal dengan data server yang mungkin masih basi (race) atau gagal commit.
+  window._taskDirty = window._taskDirty || { acara:{}, musyawarah:{}, mswHadir:{}, projects:{} };
+
   // id acara aktif — utamakan yang di-track modul, fallback ke global.
   function curId(){ return (_curId != null) ? _curId : window.currentAcaraId; }
 
@@ -20453,21 +21107,26 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   }
 
   // ── SAVE: cache + localStorage + Supabase (fallback aman kalau kolom belum ada) ──
+  // Tandai DIRTY dulu; baru bersih saat server konfirmasi sukses. Selama dirty,
+  // loadAcara tidak akan menimpa tasks lokal (lihat guard di akhir modul).
   function saveTasks(acaraId, arr){
     var a = (window.acaraCache||[]).find(function(x){ return x.id===acaraId; });
     if(a) a.tasks = arr;
     try{ localStorage.setItem(AC_TASK_KEY+acaraId, JSON.stringify(arr)); }catch(e){}
+    window._taskDirty.acara[acaraId] = true;
+    function _fail(msg){
+      // tetap DIRTY: data aman di localStorage, jangan biarkan refetch menimpanya
+      if(msg.indexOf('tasks')!==-1 && msg.toLowerCase().indexOf('column')!==-1){
+        if(!window._acTaskSqlNoticeShown){
+          window._acTaskSqlNoticeShown = true;
+          if(window.showToast) showToast('⚠️ Kolom "tasks" belum ada — task tersimpan lokal. Jalankan di Supabase: ALTER TABLE acara ADD COLUMN IF NOT EXISTS tasks jsonb DEFAULT \'[]\';','warn',9000);
+        }
+      } else { console.warn('Acara task save error:', msg); }
+    }
     db.from('acara').update({ tasks: arr }).eq('id', acaraId).then(function(res){
-      if(res && res.error){
-        var msg = String(res.error.message||'');
-        if(msg.indexOf('tasks')!==-1 && msg.toLowerCase().indexOf('column')!==-1){
-          if(!window._acTaskSqlNoticeShown){
-            window._acTaskSqlNoticeShown = true;
-            if(window.showToast) showToast('⚠️ Kolom "tasks" belum ada — task tersimpan lokal. Jalankan di Supabase: ALTER TABLE acara ADD COLUMN IF NOT EXISTS tasks jsonb DEFAULT \'[]\';','warn',9000);
-          }
-        } else { console.warn('Acara task save error:', msg); }
-      }
-    });
+      if(res && res.error){ _fail(String(res.error.message||'')); }
+      else { window._taskDirty.acara[acaraId] = false; } // sukses → server boleh dipercaya lagi
+    }, function(err){ _fail(String((err && err.message) || err || 'network')); });
   }
 
   function progress(tasks){
@@ -20716,6 +21375,24 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     acTaskCloseEdit();
     window.acTaskDelete(tid);
   };
+
+  // ── GUARD: refetch acara TIDAK boleh menimpa tasks yang belum tersinkron ──
+  // Mencegah status task "balik sendiri" karena loadAcara dapat data server basi.
+  if(!window._loadAcaraTaskGuard && typeof loadAcara === 'function'){
+    window._loadAcaraTaskGuard = true;
+    var _origLoadAcara_tg = loadAcara;
+    loadAcara = async function(){
+      var r = await _origLoadAcara_tg.apply(this, arguments);
+      try {
+        (window.acaraCache||[]).forEach(function(a){
+          if(a && window._taskDirty.acara[a.id]){
+            try{ var ls = JSON.parse(localStorage.getItem(AC_TASK_KEY+a.id)||'null'); if(Array.isArray(ls)) a.tasks = ls; }catch(e){}
+          }
+        });
+      } catch(e){}
+      return r;
+    };
+  }
 })();
 </script>
 
@@ -20785,21 +21462,25 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     return tasks;
   }
   // SAVE: cache + localStorage + Supabase (fallback aman kalau kolom belum ada)
+  // DIRTY sampai server konfirmasi — cegah status tugas "balik sendiri".
   function saveTasks(id, arr){
+    window._taskDirty = window._taskDirty || { acara:{}, musyawarah:{}, mswHadir:{}, projects:{} };
     var m = _cache().find(function(x){ return x.id===id; });
     if(m) m.tasks = arr;
     try{ localStorage.setItem(MSW_TASK_KEY+id, JSON.stringify(arr)); }catch(e){}
+    window._taskDirty.musyawarah[id] = true;
+    function _fail(msg){
+      if(msg.indexOf('tasks')!==-1 && msg.toLowerCase().indexOf('column')!==-1){
+        if(!window._mswTaskSqlNoticeShown){
+          window._mswTaskSqlNoticeShown = true;
+          if(window.showToast) showToast('⚠️ Kolom "tasks" belum ada — tugas tersimpan lokal. Jalankan di Supabase: ALTER TABLE musyawarah ADD COLUMN IF NOT EXISTS tasks jsonb DEFAULT \'[]\';','warn',9000);
+        }
+      } else { console.warn('Musyawarah task save error:', msg); }
+    }
     db.from('musyawarah').update({ tasks: arr }).eq('id', id).then(function(res){
-      if(res && res.error){
-        var msg = String(res.error.message||'');
-        if(msg.indexOf('tasks')!==-1 && msg.toLowerCase().indexOf('column')!==-1){
-          if(!window._mswTaskSqlNoticeShown){
-            window._mswTaskSqlNoticeShown = true;
-            if(window.showToast) showToast('⚠️ Kolom "tasks" belum ada — tugas tersimpan lokal. Jalankan di Supabase: ALTER TABLE musyawarah ADD COLUMN IF NOT EXISTS tasks jsonb DEFAULT \'[]\';','warn',9000);
-          }
-        } else { console.warn('Musyawarah task save error:', msg); }
-      }
-    });
+      if(res && res.error){ _fail(String(res.error.message||'')); }
+      else { window._taskDirty.musyawarah[id] = false; }
+    }, function(err){ _fail(String((err && err.message) || err || 'network')); });
   }
 
   // ── ABSENSI: load/save kehadiran (objek {memberId: 'hadir'|'izin'|'tidak'}) ──
@@ -20809,20 +21490,23 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     try{ return JSON.parse(localStorage.getItem(MSW_HADIR_KEY+id)||'{}'); }catch(e){ return {}; }
   }
   function saveKehadiran(id, obj){
+    window._taskDirty = window._taskDirty || { acara:{}, musyawarah:{}, mswHadir:{}, projects:{} };
     var m = _cache().find(function(x){ return x.id===id; });
     if(m) m.kehadiran = obj;
     try{ localStorage.setItem(MSW_HADIR_KEY+id, JSON.stringify(obj)); }catch(e){}
+    window._taskDirty.mswHadir[id] = true;
+    function _fail(msg){
+      if(msg.indexOf('kehadiran')!==-1 && msg.toLowerCase().indexOf('column')!==-1){
+        if(!window._mswHadirSqlNoticeShown){
+          window._mswHadirSqlNoticeShown = true;
+          if(window.showToast) showToast('⚠️ Kolom "kehadiran" belum ada — absensi tersimpan lokal. Jalankan di Supabase: ALTER TABLE musyawarah ADD COLUMN IF NOT EXISTS kehadiran jsonb DEFAULT \'{}\';','warn',9000);
+        }
+      } else { console.warn('Musyawarah kehadiran save error:', msg); }
+    }
     db.from('musyawarah').update({ kehadiran: obj }).eq('id', id).then(function(res){
-      if(res && res.error){
-        var msg = String(res.error.message||'');
-        if(msg.indexOf('kehadiran')!==-1 && msg.toLowerCase().indexOf('column')!==-1){
-          if(!window._mswHadirSqlNoticeShown){
-            window._mswHadirSqlNoticeShown = true;
-            if(window.showToast) showToast('⚠️ Kolom "kehadiran" belum ada — absensi tersimpan lokal. Jalankan di Supabase: ALTER TABLE musyawarah ADD COLUMN IF NOT EXISTS kehadiran jsonb DEFAULT \'{}\';','warn',9000);
-          }
-        } else { console.warn('Musyawarah kehadiran save error:', msg); }
-      }
-    });
+      if(res && res.error){ _fail(String(res.error.message||'')); }
+      else { window._taskDirty.mswHadir[id] = false; }
+    }, function(err){ _fail(String((err && err.message) || err || 'network')); });
   }
 
   window.mswKehadiranRender = function(id){
@@ -21051,6 +21735,27 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     mswTaskCloseEdit();
     window.mswTaskDelete(tid);
   };
+
+  // ── GUARD: refetch musyawarah TIDAK boleh menimpa tugas/absensi yang belum tersinkron ──
+  if(!window._loadMswTaskGuard && typeof loadMusyawarah === 'function'){
+    window._loadMswTaskGuard = true;
+    var _origLoadMsw_tg = loadMusyawarah;
+    loadMusyawarah = async function(){
+      var r = await _origLoadMsw_tg.apply(this, arguments);
+      try {
+        (window.mswCache||[]).forEach(function(m){
+          if(!m) return;
+          if(window._taskDirty.musyawarah[m.id]){
+            try{ var lt = JSON.parse(localStorage.getItem(MSW_TASK_KEY+m.id)||'null'); if(Array.isArray(lt)) m.tasks = lt; }catch(e){}
+          }
+          if(window._taskDirty.mswHadir[m.id]){
+            try{ var lh = JSON.parse(localStorage.getItem(MSW_HADIR_KEY+m.id)||'null'); if(lh && typeof lh==='object' && !Array.isArray(lh)) m.kehadiran = lh; }catch(e){}
+          }
+        });
+      } catch(e){}
+      return r;
+    };
+  }
 })();
 </script>
 
@@ -21084,10 +21789,14 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     try{ return JSON.parse(localStorage.getItem(PRJ_KEY)||'[]'); }catch(e){ return []; } 
   }
   function saveProjects(arr){
+    window._taskDirty = window._taskDirty || { acara:{}, musyawarah:{}, mswHadir:{}, projects:{} };
     localStorage.setItem(PRJ_KEY, JSON.stringify(arr));
     _prjCache = arr;
     // Refresh notifikasi bell — task project kemungkinan berubah
     if (window._refreshTaskNotif) window._refreshTaskNotif();
+    // DIRTY sampai server konfirmasi — cegah perubahan lokal "balik sendiri"
+    // saat prjLoadFromSupabase menarik data server yang mungkin masih basi.
+    window._taskDirty.projects.main = true;
     // Simpan ke Supabase — upsert satu row berisi semua projects sebagai JSON
     db.from('projects').upsert({ key: 'main', data: arr }, { onConflict: 'key' })
       .then(function(res){
@@ -21095,12 +21804,14 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
           var msg = res.error.message||'';
           // Tabel belum ada → cukup simpan di localStorage (sudah dilakukan)
           if(msg.indexOf('projects')>-1 || msg.indexOf('does not exist')>-1 || msg.indexOf('relation')>-1){
-            // diam — localStorage sudah backup
+            // diam — localStorage sudah backup (tetap dirty: jangan ditimpa server)
           } else {
             console.warn('Projects save error:', msg);
           }
+        } else {
+          window._taskDirty.projects.main = false; // sukses → server boleh dipercaya lagi
         }
-      });
+      }, function(){ /* network error → tetap dirty */ });
   }
   // Load projects dari Supabase saat pertama buka, sync ke localStorage
   function prjLoadFromSupabase(callback){
@@ -21127,6 +21838,15 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
           return;
         }
         var arr = res.data.data || [];
+        // Kalau ada perubahan lokal yang BELUM tersinkron, jangan timpa dengan
+        // data server (cegah task "balik sendiri"). Pakai lokal & dorong ulang.
+        if(window._taskDirty && window._taskDirty.projects && window._taskDirty.projects.main){
+          var local2 = loadProjects();
+          _prjCache = local2;
+          saveProjects(local2);
+          if(callback) callback(local2);
+          return;
+        }
         _prjCache = arr;
         // Sync ke localStorage
         try{ localStorage.setItem(PRJ_KEY, JSON.stringify(arr)); }catch(e){}
@@ -21399,7 +22119,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     // dari oninput. (filterSiswa memakai field .id sbg value & .nama sbg teks.)
     window.prjBayarAngList = getMembersList().map(function(m){ return { id:m.name, nama:m.name }; });
     var bayarRiwayat = bayarList.length ? bayarList.map(function(b){
-      return '<div class="list-item"><div class="left"><div class="name">'+escapeHtml(b.nama||'(?)')+(b.luar?' <span style="font-size:10px;color:#b45309;font-weight:700;">(non-anggota)</span>':'')+buktiLink(b.bukti_url)+'</div><div class="meta">'+(b.tanggal||'')+(b.keterangan?' · '+escapeHtml(b.keterangan):'')+'</div></div><div style="text-align:right;"><span class="badge badge-masuk">'+IDR(b.jumlah)+'</span><button class="small danger" style="margin-top:4px" onclick="prjDeleteBayar(\''+id+'\',\''+b.id+'\')">Hapus</button></div></div>';
+      return '<div class="list-item"><div class="left"><div class="name">'+escapeHtml(b.nama||'(?)')+(b.luar?' <span style="font-size:10px;color:#b45309;font-weight:700;">(non-anggota)</span>':'')+buktiLink(b.bukti_url)+'</div><div class="meta">'+(b.tanggal||'')+(b.keterangan?' · '+escapeHtml(b.keterangan):'')+'</div></div><div style="text-align:right;"><span class="badge badge-masuk">'+IDR(b.jumlah)+'</span><div style="margin-top:4px;display:flex;gap:4px;justify-content:flex-end;"><button class="small" onclick="prjEditBayar(\''+id+'\',\''+b.id+'\')">Edit</button><button class="small danger" onclick="prjDeleteBayar(\''+id+'\',\''+b.id+'\')">Hapus</button></div></div></div>';
     }).join('') : '<p class="muted" style="font-size:12px;">Belum ada pemasukan.</p>';
     // Toggle buka/tutup form (collapsed default) supaya hemat ruang saat anggota banyak.
     var bayarToggle = '(function(el){var b=el.parentElement.querySelector(\'.prj-bayar-form\');var open=b.style.display!==\'none\';b.style.display=open?\'none\':\'block\';el.querySelector(\'.toggle-arrow\').textContent=open?\'▶\':\'▼\';})(this)';
@@ -21446,7 +22166,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       +(p.budget?'<div style="background:#fef3c7;border-radius:8px;padding:10px;"><div style="font-size:10px;color:#7a9585;text-transform:uppercase;font-weight:700;">Budget</div><div style="font-weight:700;font-size:13px;">Rp '+parseInt(p.budget).toLocaleString("id")+'</div></div>':'')
       +'</div>'
       // Deskripsi
-      +(p.deskripsi?'<div style="background:#f0f7f3;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px;line-height:1.6;color:#374151;">'+p.deskripsi+'</div>':'')
+      +(p.deskripsi?'<div style="background:#f0f7f3;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px;line-height:1.6;color:#374151;word-break:break-word;">'+descToHTML(p.deskripsi)+'</div>':'')
       // Divisi terlibat
       +(divisiTags?'<div style="margin-bottom:10px;"><div style="font-size:11px;font-weight:700;color:#7a9585;text-transform:uppercase;margin-bottom:5px;">Divisi Terlibat</div><div style="display:flex;flex-wrap:wrap;gap:4px;">'+divisiTags+'</div></div>':'')
       // Anggota
@@ -21483,7 +22203,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     if(!p){ el.innerHTML=''; return; }
     var ikutGpmt = p.ikut_gpmt===true, ikutGpsd = p.ikut_gpsd===true;
     var roster = await _gpRosterFor(ikutGpmt, ikutGpsd);
-    el.innerHTML = _gpBayarSectionHtml({ prefix:'prjGp', roster:roster, bayarRows:(p._bayarGp||[]), biaya:0, addFn:'prjAddBayarGp', delFn:'prjDeleteBayarGp', ikutGpmt:ikutGpmt, ikutGpsd:ikutGpsd, toggleFn:'prjToggleGpInclude' });
+    el.innerHTML = _gpBayarSectionHtml({ prefix:'prjGp', roster:roster, bayarRows:(p._bayarGp||[]), biaya:0, addFn:'prjAddBayarGp', delFn:'prjDeleteBayarGp', editFn:'prjEditBayarGp', ikutGpmt:ikutGpmt, ikutGpsd:ikutGpsd, toggleFn:'prjToggleGpInclude' });
     var dt = $id('prjGpBayarTgl'); if(dt) dt.valueAsDate = new Date();
   }
   window._prjRenderGpSection = _prjRenderGpSection;
@@ -21566,7 +22286,15 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     var bayar = p._bayar||[], bayarGp = p._bayarGp||[];
     var totalBayar = bayar.reduce(function(s,b){ return s+(Number(b.jumlah)||0); },0);
     var totalGp = bayarGp.reduce(function(s,b){ return s+(Number(b.jumlah)||0); },0);
+    var totalLuar = bayar.filter(function(b){ return b.luar; }).reduce(function(s,b){ return s+(Number(b.jumlah)||0); },0);
+    var totalMember = totalBayar - totalLuar;
     var totalMasuk = totalBayar + totalGp;
+    // Progress bayar anak GP (jumlah orang) — roster dari grup yang diikutkan.
+    var prjGpRoster = [];
+    try { if(p.ikut_gpmt===true || p.ikut_gpsd===true) prjGpRoster = await _gpRosterFor(p.ikut_gpmt===true, p.ikut_gpsd===true); } catch(e){}
+    var prjGpPaid = new Set(bayarGp.map(function(b){ return b.gp_tipe+'_'+b.gp_id; })).size;
+    var prjGpTotal = prjGpRoster.length;
+    var prjGpPct = prjGpTotal>0 ? Math.round(prjGpPaid/prjGpTotal*100) : 0;
     var budget = parseInt(p.budget)||0;
     var sisa = budget - totalMasuk;
     var STAT = (typeof STATUS_LABELS!=='undefined') ? STATUS_LABELS : {};
@@ -21586,6 +22314,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
         ['Tanggal Mulai', p.tanggal_mulai||'-'],
         ['Tenggat / Due Date', p.tanggal_selesai||'-'],
         ['Budget', budget?IDR(budget):'-'],
+        ['Progress Bayar Anak GP', prjGpTotal ? (prjGpPaid+'/'+prjGpTotal+' ('+prjGpPct+'%)') : '- (GP tidak diikutkan)'],
         ['Divisi Terlibat', divs?S(divs):'-'],
         ['Tim Penanggung Jawab', pj?S(pj):'-'],
       ],
@@ -21626,9 +22355,20 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       });
     }
     doc.autoTable({
-      startY: doc.lastAutoTable.finalY+6, theme:'grid', styles:{fontSize:10,cellPadding:3},
+      startY: doc.lastAutoTable.finalY+6, theme:'grid', styles:{fontSize:9,cellPadding:2.5},
+      head: [['RINCIAN SUMBER DANA MASUK','Jumlah']],
       body: [
-        ['TOTAL TERKUMPUL (MUMI + GP)', IDR(totalMasuk)],
+        ['Dari Anggota MUMI', IDR(totalMember)],
+        ['Dari Anak GP (GPMT/GPSD)', IDR(totalGp)],
+        ['Dari Non-Anggota / Umum', IDR(totalLuar)],
+      ],
+      columnStyles:{0:{cellWidth:120},1:{halign:'right',fontStyle:'bold'}},
+      headStyles:{fillColor:[26,102,68]},
+    });
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY+4, theme:'grid', styles:{fontSize:10,cellPadding:3},
+      body: [
+        ['TOTAL TERKUMPUL (MUMI + GP + Umum)', IDR(totalMasuk)],
         ['BUDGET', budget?IDR(budget):'-'],
         [budget ? (sisa>=0?'SISA BUDGET':'OVER BUDGET / MINUS') : 'TOTAL DANA', budget?IDR(sisa):IDR(totalMasuk)],
       ],
@@ -21658,6 +22398,9 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       if(!nama){ setMsg('prjBayarMsg','Pilih anggota dulu (atau centang Non-anggota)', true); return; }
     }
     if(!jml || jml<=0){ setMsg('prjBayarMsg','Jumlah harus > 0', true); return; }
+    if (!_wajibKeteranganFoto('prjBayarFile', $('prjBayarKet') && $('prjBayarKet').value)) {
+      setMsg('prjBayarMsg','Wajib isi keterangan kalau melampirkan foto', true); return;
+    }
     var bukti=null;
     try { if(typeof uploadBukti==='function') bukti = await uploadBukti('prjBayarFile'); }
     catch(e){ setMsg('prjBayarMsg','Gagal upload foto: '+e.message, true); return; }
@@ -21686,6 +22429,56 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     saveProjects(projects);
     showToast('Pemasukan dihapus');
     prjOpenDetail(prjId);
+  };
+
+  // Edit pemasukan project (jumlah, keterangan, tanggal, foto) — pakai modal
+  // generik _editTrxModal dgn backend localStorage. Tercatat di Riwayat.
+  window.prjEditBayar = function(prjId, bayarId){
+    var projects=loadProjects();
+    var p=projects.find(function(x){ return x.id===prjId; });
+    var b = p && p._bayar ? p._bayar.find(function(x){ return String(x.id)===String(bayarId); }) : null;
+    if(!b){ showToast('Data tidak ditemukan','error'); return; }
+    _editTrxModal({
+      row: b, id: bayarId, title: 'Pemasukan Project', logTable: 'project_bayar',
+      ketKey: 'keterangan', ketLabel: 'Keterangan', tanggal: true,
+      onSave: async function(upd, oldRow, newBukti){
+        var pj=loadProjects();
+        var pp=pj.find(function(x){ return x.id===prjId; });
+        var bb = pp && pp._bayar ? pp._bayar.find(function(x){ return String(x.id)===String(bayarId); }) : null;
+        if(!bb) return { error:'Data tidak ditemukan' };
+        bb.jumlah = upd.jumlah; bb.keterangan = upd.keterangan; bb.tanggal = upd.tanggal; bb.bukti_url = newBukti;
+        pp.updated = new Date().toISOString();
+        saveProjects(pj);
+        if (oldRow.bukti_url && oldRow.bukti_url !== newBukti) { var op=oldRow.bukti_url.split('/bukti/')[1]; if(op) db.storage.from('bukti').remove([op]); }
+        prjOpenDetail(prjId);
+        return {};
+      }
+    });
+  };
+
+  // Edit pembayaran anak GP project (jumlah, tanggal, foto) — localStorage.
+  window.prjEditBayarGp = function(bayarId){
+    var prjId = window._prjGpCurrentId; if(!prjId) return;
+    var projects=loadProjects();
+    var p=projects.find(function(x){ return x.id===prjId; });
+    var b = p && p._bayarGp ? p._bayarGp.find(function(x){ return String(x.id)===String(bayarId); }) : null;
+    if(!b){ showToast('Data tidak ditemukan','error'); return; }
+    _editTrxModal({
+      row: b, id: bayarId, title: 'Pembayaran Anak GP (Project)', logTable: 'project_bayar_gp',
+      ketKey: '', tanggal: true,
+      onSave: async function(upd, oldRow, newBukti){
+        var pj=loadProjects();
+        var pp=pj.find(function(x){ return x.id===prjId; });
+        var bb = pp && pp._bayarGp ? pp._bayarGp.find(function(x){ return String(x.id)===String(bayarId); }) : null;
+        if(!bb) return { error:'Data tidak ditemukan' };
+        bb.jumlah = upd.jumlah; bb.tanggal = upd.tanggal; bb.bukti_url = newBukti;
+        pp.updated = new Date().toISOString();
+        await saveProjects(pj);
+        if (oldRow.bukti_url && oldRow.bukti_url !== newBukti) { var op=oldRow.bukti_url.split('/bukti/')[1]; if(op) db.storage.from('bukti').remove([op]); }
+        if (window._prjRenderGpSection) _prjRenderGpSection(prjId); else prjOpenDetail(prjId);
+        return {};
+      }
+    });
   };
 
   /* ─── TASKS ──────────────────────────────────────────── */
