@@ -1646,6 +1646,35 @@
 /* Mode geser node */
 .so-drag-node-active .so-node { cursor: grab !important; }
 .so-drag-node-active .so-node:active { cursor: grabbing !important; }
+
+/* ─── Link teks di halaman login (Daftar Akun / Lupa Password) ─── */
+.auth-link {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  color: #2d9e6b;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 4px;
+  width: auto;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.auth-link:hover { color: #1a6644; }
+[data-theme="dark"] .auth-link { color: #6fdcab; }
+[data-theme="dark"] .auth-link:hover { color: #a7f3d0; }
+
+/* Kartu pendaftaran menunggu persetujuan (Kelola Akses) */
+.pending-card {
+  padding: 12px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+[data-theme="dark"] .pending-card { background: rgba(245,158,11,.08); border-color: rgba(245,158,11,.3); }
 </style>
 <script>
   // Pasang tema sedini mungkin supaya tidak ada kedip warna saat halaman dibuka
@@ -1664,7 +1693,9 @@
 
   <!-- ════════════ LOGIN ════════════ -->
   <div id="loginView">
-    <div class="card">
+
+    <!-- ─── PANE: MASUK ─── -->
+    <div class="card" id="authLogin">
       <h1>🕌 Mumi MB3</h1>
       <p class="muted" style="margin-bottom:18px;">Sistem Manajemen Kas, Anggota, Kehadiran & Acara</p>
       <label>Email Admin</label>
@@ -1680,10 +1711,75 @@
       </div>
       <button id="loginBtn" onclick="doLogin()">Masuk</button>
       <div id="loginMsg"></div>
+
+      <!-- Link: Lupa Password & Daftar Akun -->
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap;">
+        <button type="button" class="auth-link" onclick="showAuthPane('forgot')">🔑 Lupa password?</button>
+        <button type="button" class="auth-link" onclick="showAuthPane('register')">📝 Daftar akun baru</button>
+      </div>
       <p class="muted" style="margin-top:12px;text-align:center;font-size:12px;">
-        Hanya admin terdaftar yang bisa masuk.
+        Pendaftaran baru harus disetujui <b>Admin Master</b> dulu sebelum bisa masuk.
       </p>
     </div>
+
+    <!-- ─── PANE: DAFTAR AKUN ─── -->
+    <div class="card" id="authRegister" style="display:none;">
+      <h1>📝 Daftar Akun</h1>
+      <p class="muted" style="margin-bottom:8px;">Isi data di bawah. Pendaftaranmu akan dikirim ke <b>Admin Master</b> untuk disetujui.</p>
+      <div style="padding:10px 12px;background:#fef9c3;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e;margin-bottom:14px;">
+        ⏳ Setelah daftar, kamu <b>belum bisa langsung masuk</b>. Tunggu Admin Master menyetujui di menu <b>Kelola Akses</b>.
+      </div>
+
+      <label>Email (Gmail / email aktif)</label>
+      <input id="regEmail" type="email" placeholder="cth: namakamu@gmail.com" autocomplete="off">
+      <label>Nama Lengkap</label>
+      <input id="regNama" type="text" placeholder="cth: Ahmad Fauzi">
+      <label>Jabatan / Peran</label>
+      <input id="regJabatan" type="text" placeholder="cth: Bendahara, Sekretaris, Anggota">
+      <label>Password (min. 6 karakter)</label>
+      <div style="position:relative;margin-bottom:10px;">
+        <input id="regPass" type="password" placeholder="••••••••" autocomplete="new-password" style="margin-bottom:0;padding-right:48px;">
+        <button type="button" onclick="toggleShowPass('regPass', this)"
+          style="position:absolute;right:0;top:0;bottom:0;width:44px;background:transparent;
+                 border:none;cursor:pointer;font-size:18px;color:#7a9585;padding:0;
+                 display:flex;align-items:center;justify-content:center;border-radius:0 10px 10px 0;
+                 box-shadow:none;transform:none;">👁️</button>
+      </div>
+      <label>Ulangi Password</label>
+      <div style="position:relative;margin-bottom:10px;">
+        <input id="regPass2" type="password" placeholder="••••••••" autocomplete="new-password" style="margin-bottom:0;padding-right:48px;">
+        <button type="button" onclick="toggleShowPass('regPass2', this)"
+          style="position:absolute;right:0;top:0;bottom:0;width:44px;background:transparent;
+                 border:none;cursor:pointer;font-size:18px;color:#7a9585;padding:0;
+                 display:flex;align-items:center;justify-content:center;border-radius:0 10px 10px 0;
+                 box-shadow:none;transform:none;">👁️</button>
+      </div>
+
+      <button id="regBtn" onclick="doRegister()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">📨 Kirim Pendaftaran</button>
+      <div id="regMsg"></div>
+      <div style="text-align:center;margin-top:14px;">
+        <button type="button" class="auth-link" onclick="showAuthPane('login')">← Kembali ke halaman Masuk</button>
+      </div>
+    </div>
+
+    <!-- ─── PANE: LUPA PASSWORD ─── -->
+    <div class="card" id="authForgot" style="display:none;">
+      <h1>🔑 Lupa Password</h1>
+      <p class="muted" style="margin-bottom:8px;">Masukkan email akunmu. Kami kirim link untuk membuat <b>password baru</b>.</p>
+      <div style="padding:10px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:12px;color:#1e40af;margin-bottom:14px;">
+        📧 Buka email → klik link → otomatis muncul form <b>Buat Password Baru</b>. Cek juga folder <b>Spam</b>.
+      </div>
+
+      <label>Email Akun</label>
+      <input id="forgotEmail" type="email" placeholder="cth: namakamu@gmail.com" autocomplete="off">
+
+      <button id="forgotBtn" onclick="doForgotPassword()" style="background:linear-gradient(135deg,#d97706,#f59e0b);">📧 Kirim Link Reset Password</button>
+      <div id="forgotMsg"></div>
+      <div style="text-align:center;margin-top:14px;">
+        <button type="button" class="auth-link" onclick="showAuthPane('login')">← Kembali ke halaman Masuk</button>
+      </div>
+    </div>
+
   </div>
 
   <!-- ════════════ APP ════════════ -->
@@ -1965,8 +2061,26 @@
         <button onclick="addPengeluaran()">Simpan Pengeluaran</button>
         <div id="pgMsg"></div>
       </div>
+      <!-- ═══ REKAP SEMUA PENGELUARAN (KAS + ACARA + PROJECT) ═══ -->
+      <div class="card" style="border:2px solid #fecaca;">
+        <h2>📊 Rekap Semua Pengeluaran</h2>
+        <p class="muted" style="margin-bottom:10px;font-size:12px;">
+          Menggabungkan pengeluaran dari <b>Kas</b>, <b>Acara</b>, dan <b>Project</b> — lengkap dengan sub-total per sumber
+          dan total per bulan.<br>
+          🐐 <b>Qurban TIDAK ikut dihitung</b> di sini, karena keuangannya berdiri sendiri (lihat menu Qurban).
+        </p>
+        <div class="row">
+          <div><label>Bulan</label><input type="month" id="pgRekapBulan" onchange="loadPengeluaranRekap()"></div>
+          <div style="display:flex;align-items:flex-end;gap:6px;">
+            <button class="secondary" onclick="document.getElementById('pgRekapBulan').value='';loadPengeluaranRekap()">Semua Bulan</button>
+          </div>
+        </div>
+        <div id="pgRekapBox" style="margin-top:8px;"><p class="muted">Memuat rekap...</p></div>
+      </div>
+
       <div class="card">
-        <h2>Riwayat Pengeluaran</h2>
+        <h2>💰 Riwayat Pengeluaran Kas</h2>
+        <p class="muted" style="margin-bottom:8px;font-size:12px;">Khusus pengeluaran yang dicatat lewat form di atas (sumber: Kas).</p>
         <div class="row">
           <div><label>Filter Bulan</label><input type="month" id="pgFilter" onchange="loadPengeluaran()"></div>
           <div style="display:flex;align-items:flex-end;">
@@ -2207,12 +2321,61 @@
       <div id="anggotaPdfModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:16px;">
         <div style="background:#fff;border-radius:14px;padding:20px;max-width:380px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.3);">
           <h2 style="margin:0 0 6px;font-size:17px;">📄 Export PDF Anggota</h2>
-          <p class="muted" style="font-size:12px;margin-bottom:14px;">Pilih populasi yang dimasukkan ke PDF. Default hanya MUMI; centang GPMT/GPSD untuk menambahkan halaman daftar anak GP.</p>
-          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+          <p class="muted" style="font-size:12px;margin-bottom:14px;">Pilih populasi & saring anggota yang masuk ke PDF. Biarkan semua apa adanya = export <b>TOTAL</b> (semua anggota).</p>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
             <label style="display:flex;align-items:center;gap:8px;padding:10px;background:#eef2ff;border-radius:8px;font-weight:600;color:#3730a3;"><input type="checkbox" id="pdfPopMumi" checked disabled style="width:auto;margin:0;"> 👥 Anggota MUMI <span style="font-weight:400;font-size:11px;color:#6b7280;">(selalu termasuk)</span></label>
             <label style="display:flex;align-items:center;gap:8px;padding:10px;background:#f0f7f3;border-radius:8px;cursor:pointer;font-weight:500;"><input type="checkbox" id="pdfPopGpmt" style="width:auto;margin:0;"> 🧒 Anggota GPMT</label>
             <label style="display:flex;align-items:center;gap:8px;padding:10px;background:#f0f7f3;border-radius:8px;cursor:pointer;font-weight:500;"><input type="checkbox" id="pdfPopGpsd" style="width:auto;margin:0;"> 👧 Anggota GPSD</label>
           </div>
+
+          <!-- ═══ FILTER ANGGOTA MUMI ═══ -->
+          <div style="border-top:1px solid #e5e7eb;padding-top:12px;margin-bottom:12px;">
+            <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#1a6644;">🔍 Saring Anggota MUMI</div>
+
+            <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;">Kategori</label>
+            <div style="display:flex;gap:6px;margin:4px 0 6px;">
+              <button type="button" class="small secondary" style="width:auto;padding:3px 8px;font-size:10px;" onclick="pdfKatSetAll(true)">Pilih Semua</button>
+              <button type="button" class="small secondary" style="width:auto;padding:3px 8px;font-size:10px;" onclick="pdfKatSetAll(false)">Kosongkan</button>
+            </div>
+            <div id="pdfKatList" style="max-height:130px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
+              <span class="muted" style="font-size:12px;">Memuat kategori...</span>
+            </div>
+
+            <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;">Peran MT</label>
+            <select id="pdfFilterPeran" onchange="pdfUpdateCount()" style="margin-bottom:8px;">
+              <option value="">Semua peran</option>
+              <option value="mahasiswa">🎓 Mahasiswa</option>
+              <option value="karyawan_mahasiswa">💼 Karyawan Mahasiswa</option>
+              <option value="mubaligh">🕌 Mubaligh</option>
+              <option value="mubalighot">🕌 Mubalighot</option>
+              <option value="mubaligh_mubalighot">🕌 Mubaligh + Mubalighot</option>
+              <option value="bukan_mubalighot">🚫 Bukan Mubalighot</option>
+              <option value="bukan_mubaligh_mubalighot">🚫 Bukan Mubaligh & Bukan Mubalighot</option>
+              <option value="bukan_mt">👤 Bukan MT</option>
+            </select>
+
+            <div style="display:flex;gap:8px;">
+              <div style="flex:1;">
+                <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;">Status</label>
+                <select id="pdfFilterStatus" onchange="pdfUpdateCount()">
+                  <option value="">Semua</option>
+                  <option value="aktif">✅ Aktif saja</option>
+                  <option value="nonaktif">⛔ Non-aktif saja</option>
+                </select>
+              </div>
+              <div style="flex:1;">
+                <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;">Usia Nikah</label>
+                <select id="pdfFilterUsia" onchange="pdfUpdateCount()">
+                  <option value="">Semua umur</option>
+                  <option value="sudah">💍 Sudah usia nikah</option>
+                  <option value="belum">⏳ Belum usia nikah</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="pdfFilterCount" style="margin-top:10px;padding:8px 10px;background:#f0f7f3;border-radius:8px;font-size:12px;font-weight:600;color:#1a6644;text-align:center;">—</div>
+          </div>
+
           <div style="display:flex;gap:8px;">
             <button class="secondary" onclick="document.getElementById('anggotaPdfModal').style.display='none'" style="flex:1;">Batal</button>
             <button onclick="exportAnggotaPDF()" style="flex:1;background:linear-gradient(135deg,#dc2626,#ef4444);">📄 Buat PDF</button>
@@ -3268,6 +3431,21 @@
 
       <!-- ═══ PANEL ADMIN MASTER (tambah/hapus user, password) — hanya admin@mumi.local ═══ -->
       <div id="aksesAdminPanel" style="display:none;">
+
+        <!-- ═══ PENDAFTARAN MENUNGGU PERSETUJUAN (ACC / REJECT) ═══ -->
+        <div class="card" style="border:2px solid #fbbf24;">
+          <h2>📥 Pendaftaran Menunggu Persetujuan <span id="pendingCount" class="st-badge st-in_progress" style="font-size:11px;margin-left:4px;">0</span></h2>
+          <p class="muted" style="margin-bottom:10px;font-size:12px;">
+            User yang mendaftar sendiri lewat tombol <b>📝 Daftar akun baru</b> di halaman login muncul di sini.
+            Mereka <b>belum bisa masuk</b> sampai kamu tekan <b>✅ Setujui</b>.
+          </p>
+          <div style="margin-bottom:8px;">
+            <button class="secondary small" style="width:auto;padding:5px 10px;font-size:11px;" onclick="loadKelolAkses()">🔄 Refresh</button>
+          </div>
+          <div id="pendingMsg" style="margin-bottom:8px;"></div>
+          <div id="pendingList"><p class="muted">Memuat...</p></div>
+        </div>
+
         <div class="card" style="border:2px solid #ddd6fe;">
           <h2>➕ Tambah User Baru</h2>
           <p class="muted" style="margin-bottom:10px;font-size:12px;">Buat akun user baru langsung dari sini — tidak perlu buka Supabase. Setelah dibuat, atur menu yang boleh dilihat di daftar bawah.</p>
@@ -6298,6 +6476,11 @@ let rekapRows = [], rekapMeta = {}, rekapSesiStats = [], rekapSemuaAnggota = [];
 let iuranRows = [], iuranMeta = {}, kategoriCache = [], currentIuranId = null, iuranLain = [];
 
 // ─────────────── AUTH ───────────────
+
+// URL tujuan setelah user klik link reset password di email.
+// WAJIB terdaftar di Supabase → Authentication → URL Configuration → Redirect URLs.
+const AUTH_REDIRECT_URL = 'https://kikysr27.github.io/mumimb3/';
+
 function toggleLoginPass() {
   const inp = document.getElementById('loginPass');
   const btn = document.getElementById('togglePassBtn');
@@ -6308,6 +6491,149 @@ function toggleLoginPass() {
     inp.type = 'password';
     btn.textContent = '👁️';
   }
+}
+
+// Toggle show/hide password generic — dipakai di form Daftar Akun (regPass, regPass2), dll.
+function toggleShowPass(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    inp.type = 'password';
+    btn.textContent = '👁️';
+  }
+}
+
+// Pindah antar-halaman auth: 'login' | 'register' | 'forgot'
+function showAuthPane(pane) {
+  const panes = { login: 'authLogin', register: 'authRegister', forgot: 'authForgot' };
+  Object.keys(panes).forEach(k => {
+    const el = $(panes[k]);
+    if (el) el.style.display = (k === pane) ? 'block' : 'none';
+  });
+  ['loginMsg', 'regMsg', 'forgotMsg'].forEach(id => {
+    const el = $(id);
+    if (el) { el.className = ''; el.innerHTML = ''; }
+  });
+}
+
+// ── DAFTAR AKUN BARU (self-service) ──────────────────────────────────────────
+// Alur: signUp bikin akun auth → langsung buat baris profiles dengan
+// status = 'pending'. User BELUM bisa masuk sampai Admin Master menyetujui
+// di menu Kelola Akses (status diubah jadi 'approved').
+//
+// Kenapa profile dibuat oleh USER-nya sendiri (bukan admin)?
+// Karena RLS profiles memakai auth.uid() = id — hanya pemilik yang boleh INSERT
+// baris dirinya. Admin cukup meng-UPDATE kolom status saat menyetujui.
+async function doRegister() {
+  const email    = ($('regEmail').value || '').trim().toLowerCase();
+  const nama     = ($('regNama').value || '').trim();
+  const jabatan  = ($('regJabatan').value || '').trim();
+  const pass     = $('regPass').value || '';
+  const pass2    = $('regPass2').value || '';
+  const btn      = $('regBtn');
+
+  if (!email || !email.includes('@')) { setMsg('regMsg', 'Email tidak valid.', true); return; }
+  if (!nama)            { setMsg('regMsg', 'Nama lengkap wajib diisi.', true); return; }
+  if (pass.length < 6)  { setMsg('regMsg', 'Password minimal 6 karakter.', true); return; }
+  if (pass !== pass2)   { setMsg('regMsg', 'Password dan ulangi password tidak sama.', true); return; }
+
+  btn.disabled = true; btn.textContent = '⏳ Mengirim...';
+  const resetBtn = () => { btn.disabled = false; btn.textContent = '📨 Kirim Pendaftaran'; };
+  setMsg('regMsg', '⏳ Mendaftarkan akun...');
+
+  // Client SEMENTARA (persistSession:false) supaya tidak menimpa sesi apa pun.
+  let tmp;
+  try {
+    tmp = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false, storageKey: 'sb-register-temp' }
+    });
+  } catch (e) { resetBtn(); setMsg('regMsg', 'Gagal menyiapkan: ' + e.message, true); return; }
+
+  const { data: suData, error: suErr } = await tmp.auth.signUp({ email, password: pass });
+  if (suErr) {
+    resetBtn();
+    const low = (suErr.message || '').toLowerCase();
+    const hint = low.includes('already')
+      ? '<br><br>Email ini sudah terdaftar. Kalau lupa password, pakai menu <b>🔑 Lupa password?</b>.'
+      : (low.includes('password') ? '<br><br>Password terlalu lemah, coba yang lebih panjang.' : '');
+    setMsg('regMsg', '❌ Gagal daftar: ' + suErr.message + hint, true);
+    return;
+  }
+
+  const newId = suData.user && suData.user.id;
+  if (!newId) { resetBtn(); setMsg('regMsg', '❌ Gagal: akun tidak terbuat.', true); return; }
+
+  // Tanpa sesi (Confirm email AKTIF di Supabase) → RLS menolak INSERT profile.
+  if (!suData.session) {
+    resetBtn();
+    setMsg('regMsg',
+      '⚠️ Akun dibuat, tapi <b>email harus dikonfirmasi dulu</b>.<br>' +
+      'Cek email kamu → klik link konfirmasi → lalu <b>daftar ulang / hubungi Admin Master</b> ' +
+      'agar pendaftaranmu masuk antrean persetujuan.', true);
+    return;
+  }
+
+  // Buat profile milik sendiri dengan status 'pending' (menunggu ACC admin master).
+  const payload = {
+    id: newId, nama_lengkap: nama, jabatan: jabatan || 'User',
+    akses_menu: {}, is_super: false, email: email, status: 'pending'
+  };
+  let pErr = (await tmp.from('profiles').upsert(payload)).error;
+  // Fallback bertingkat kalau kolom belum ada di database
+  if (pErr && /status/i.test(pErr.message || '')) {
+    resetBtn();
+    setMsg('regMsg',
+      '❌ Kolom <b>status</b> belum ada di tabel <code>profiles</code>.<br><br>' +
+      'Minta Admin Master jalankan SQL ini di Supabase → SQL Editor:<br>' +
+      "<code>ALTER TABLE profiles ADD COLUMN IF NOT EXISTS status text DEFAULT 'approved';</code>", true);
+    try { await tmp.auth.signOut(); } catch (_) {}
+    return;
+  }
+  if (pErr && /email/i.test(pErr.message || '')) {
+    delete payload.email;
+    pErr = (await tmp.from('profiles').upsert(payload)).error;
+  }
+  try { await tmp.auth.signOut(); } catch (_) {}
+
+  if (pErr) {
+    resetBtn();
+    setMsg('regMsg', '⚠️ Akun auth dibuat, tapi pendaftaran gagal disimpan: ' + pErr.message +
+      '<br><br>Hubungi Admin Master.', true);
+    return;
+  }
+
+  resetBtn();
+  $('regEmail').value = ''; $('regNama').value = ''; $('regJabatan').value = '';
+  $('regPass').value = ''; $('regPass2').value = '';
+  setMsg('regMsg',
+    '✅ <b>Pendaftaran terkirim!</b><br>' +
+    'Akunmu sedang <b>menunggu persetujuan Admin Master</b>. ' +
+    'Kamu akan bisa masuk setelah disetujui.');
+}
+
+// ── LUPA PASSWORD ────────────────────────────────────────────────────────────
+// Kirim link reset ke email. Saat user klik link-nya, handler PASSWORD_RECOVERY
+// (di atas) otomatis memunculkan modal "Buat Password Baru".
+async function doForgotPassword() {
+  const email = ($('forgotEmail').value || '').trim().toLowerCase();
+  const btn   = $('forgotBtn');
+  if (!email || !email.includes('@')) { setMsg('forgotMsg', 'Email tidak valid.', true); return; }
+
+  btn.disabled = true; btn.textContent = '⏳ Mengirim...';
+  setMsg('forgotMsg', '⏳ Mengirim email...');
+
+  const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: AUTH_REDIRECT_URL });
+
+  btn.disabled = false; btn.textContent = '📧 Kirim Link Reset Password';
+  if (error) { setMsg('forgotMsg', '❌ Gagal: ' + error.message, true); return; }
+
+  $('forgotEmail').value = '';
+  setMsg('forgotMsg',
+    '✅ <b>Link reset dikirim ke ' + escapeHtml(email) + '</b><br>' +
+    'Buka email → klik link → buat password baru. Jangan lupa cek folder <b>Spam</b>.');
 }
 
 async function doLogin() {
@@ -6364,19 +6690,38 @@ async function doLogout() {
   location.replace(location.pathname);
 }
 
+// Tolak login: keluarkan sesi, balik ke halaman Masuk, tampilkan alasan.
+async function _blockLogin(html) {
+  try { await db.auth.signOut(); } catch (_) {}
+  $('appView').style.display = 'none';
+  $('loginView').style.display = 'block';
+  showAuthPane('login');
+  setMsg('loginMsg', html, true);
+  const lb = $('loginBtn');
+  if (lb) { lb.disabled = false; lb.textContent = 'Masuk'; }
+}
+
 async function onLoggedIn(user) {
   const _isMaster = (user.email === 'admin@mumi.local');
   const { data: prof, error: profErr } = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
   // User yang profile-nya DIHAPUS = dinonaktifkan → blokir login (admin master selalu boleh masuk).
   // Hanya blokir kalau query sukses & memang tidak ada baris (bukan karena error jaringan/RLS) → aman.
   if (!prof && !profErr && !_isMaster) {
-    try { await db.auth.signOut(); } catch (_) {}
-    $('appView').style.display = 'none';
-    $('loginView').style.display = 'block';
-    setMsg('loginMsg', '🔒 Akun ini sudah dinonaktifkan oleh admin master. Silakan hubungi admin.', true);
-    const lb = $('loginBtn'); if (lb) { lb.disabled = false; lb.textContent = 'Masuk'; }
+    await _blockLogin('🔒 Akun ini sudah dinonaktifkan oleh admin master. Silakan hubungi admin.');
     return;
   }
+
+  // ── GATE PERSETUJUAN ADMIN MASTER ──
+  // status: 'pending' = daftar mandiri, belum di-ACC · 'rejected' = ditolak.
+  // Kolom belum ada / null / 'approved' → dianggap LOLOS (user lama tidak terkunci).
+  const _status = prof && prof.status;
+  if (!_isMaster && (_status === 'pending' || _status === 'rejected')) {
+    await _blockLogin(_status === 'pending'
+      ? '⏳ <b>Pendaftaranmu belum disetujui.</b><br>Akun ini masih menunggu persetujuan <b>Admin Master</b>. Coba lagi nanti.'
+      : '🚫 <b>Pendaftaranmu ditolak</b> oleh Admin Master.<br>Silakan hubungi Admin Master untuk info lebih lanjut.');
+    return;
+  }
+
   $('loginView').style.display = 'none';
   $('appView').style.display = 'block';
   $('currentUser').textContent = `Login sebagai ${prof?.nama_lengkap || user.email} (${prof?.jabatan || 'Admin'})`;
@@ -6401,6 +6746,7 @@ async function onLoggedIn(user) {
   $('absTanggal').valueAsDate = today;
   $('acTanggal').valueAsDate = today;
   $('sesiTanggal').valueAsDate = today;
+  if ($('pgRekapBulan')) $('pgRekapBulan').value = today.toISOString().slice(0, 7);  // rekap pengeluaran: default bulan ini
   $('rekapBulan').value = today.toISOString().slice(0, 7);
   $('rekapTahun').value = today.getFullYear();
   $('lapBulan').value = today.toISOString().slice(0, 7);
@@ -6432,7 +6778,8 @@ function openSection(name) {
   // Pasang fitur collapsible di kartu-kartu section ini (sekali saja per section)
   if (window.setupCollapsibleSection) window.setupCollapsibleSection(name);
   const loaders = {
-    saldo: loadDashboard, kasmasuk: () => { loadKasMasuk(); loadKasBulanSection(); }, pengeluaran: loadPengeluaran,
+    saldo: loadDashboard, kasmasuk: () => { loadKasMasuk(); loadKasBulanSection(); },
+    pengeluaran: () => { loadPengeluaran(); loadPengeluaranRekap(); },
     qurban: loadQurban, anggota: loadAnggota, absensi: loadAbsensi, musyawarah: loadMusyawarah, acara: () => {
       // Reset acara view ke list/kanban
       if ($('acListView')) $('acListView').style.display = 'block';
@@ -7159,6 +7506,130 @@ async function loadPengeluaran() {
   const total = list.reduce((s, t) => s + Number(t.jumlah || 0), 0);
   $('pgTotal').innerHTML = `Total ${f ? 'bulan ' + f : '(semua)'}: <b style="color:#dc2626">${IDR(total)}</b> · ${list.length} transaksi`;
   renderTx('pgList', list, true);
+}
+
+// ═══════════ REKAP SEMUA PENGELUARAN (KAS + ACARA + PROJECT) ═══════════
+// Sumber uang keluar di aplikasi ini ada 3 (qurban SENGAJA dikecualikan):
+//   • Kas     → tabel `transaksi`   (tipe = 'keluar')
+//   • Acara   → tabel `acara_bayar` (tipe = 'keluar'; kolom `nama` dipakai sbg keterangan)
+//   • Project → projects.data JSON  (array `_keluar` di tiap project)
+// Qurban ada di `qurban_keluar` — TIDAK diikutkan (keuangannya berdiri sendiri).
+async function loadPengeluaranRekap() {
+  const box = $('pgRekapBox');
+  if (!box) return;
+  box.innerHTML = '<p class="muted">Memuat rekap...</p>';
+
+  const bln = $('pgRekapBulan') ? $('pgRekapBulan').value : '';
+  let dari = null, sampai = null;
+  if (bln) {
+    const [y, m] = bln.split('-').map(Number);
+    dari   = `${bln}-01`;
+    sampai = `${bln}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`;
+  }
+  const dalamBulan = (tgl) => !bln || (tgl && tgl >= dari && tgl <= sampai);
+
+  // ── Ambil Kas + Acara paralel ──
+  let qKas = db.from('transaksi')
+    .select('id, tanggal, jumlah, kategori, keterangan, bukti_url')
+    .eq('tipe', 'keluar').neq('kategori', 'qurban');
+  let qAcr = db.from('acara_bayar')
+    .select('id, tanggal, jumlah, nama, bukti_url, acara(nama)')
+    .eq('tipe', 'keluar');
+  if (bln) {
+    qKas = qKas.gte('tanggal', dari).lte('tanggal', sampai);
+    qAcr = qAcr.gte('tanggal', dari).lte('tanggal', sampai);
+  }
+
+  let kasRows = [], acrRows = [], prjRows = [];
+  try {
+    const [rKas, rAcr] = await Promise.all([qKas, qAcr]);
+    kasRows = (rKas.data || []).map(r => ({
+      tanggal: r.tanggal, jumlah: Number(r.jumlah || 0),
+      keterangan: r.keterangan || '(tanpa keterangan)',
+      sub: r.kategori || 'lain', bukti_url: r.bukti_url,
+    }));
+    acrRows = (rAcr.data || []).map(r => ({
+      tanggal: r.tanggal, jumlah: Number(r.jumlah || 0),
+      keterangan: r.nama || '(tanpa keterangan)',
+      sub: (r.acara && r.acara.nama) ? r.acara.nama : 'Acara', bukti_url: r.bukti_url,
+    }));
+  } catch (e) {
+    box.innerHTML = '<p class="err">Gagal memuat: ' + escapeHtml(e.message || String(e)) + '</p>';
+    return;
+  }
+
+  // ── Project: baca JSON, kumpulkan _keluar dari semua project ──
+  try {
+    const { data: pr } = await db.from('projects').select('data').eq('key', 'main').maybeSingle();
+    const KAT = window.PRJ_KAT_LABEL || {};
+    (Array.isArray(pr && pr.data) ? pr.data : []).forEach(p => {
+      (p._keluar || []).forEach(k => {
+        if (!dalamBulan(k.tanggal)) return;
+        prjRows.push({
+          tanggal: k.tanggal, jumlah: Number(k.jumlah || 0),
+          keterangan: k.keterangan || '(tanpa keterangan)',
+          sub: (p.nama || 'Project') + ' · ' + (KAT[k.kategori] || k.kategori || 'lain'),
+          bukti_url: k.bukti_url,
+        });
+      });
+    });
+  } catch (e) { /* project opsional — jangan gagalkan seluruh rekap */ }
+
+  const sum = arr => arr.reduce((s, r) => s + r.jumlah, 0);
+  const sumber = [
+    { key: 'kas',     ikon: '💰', nama: 'Kas',     warna: '#2563eb', rows: kasRows },
+    { key: 'acara',   ikon: '🎉', nama: 'Acara',   warna: '#d97706', rows: acrRows },
+    { key: 'project', ikon: '📁', nama: 'Project', warna: '#7c3aed', rows: prjRows },
+  ];
+  const grand  = sum(kasRows) + sum(acrRows) + sum(prjRows);
+  const nTrx   = kasRows.length + acrRows.length + prjRows.length;
+  const perBln = bln ? ('bulan ' + bln) : 'semua bulan';
+
+  if (nTrx === 0) {
+    box.innerHTML = `<p class="muted">Tidak ada pengeluaran untuk ${escapeHtml(perBln)}.</p>`;
+    return;
+  }
+
+  // ── Kartu sub-total per sumber ──
+  const kartu = sumber.map(s => {
+    const t = sum(s.rows);
+    const pct = grand > 0 ? Math.round(t / grand * 100) : 0;
+    return `<div style="flex:1;min-width:130px;background:#fff;border:1.5px solid ${s.warna}33;border-left:4px solid ${s.warna};border-radius:10px;padding:10px 12px;">
+      <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;">${s.ikon} ${s.nama}</div>
+      <div style="font-size:15px;font-weight:800;color:${s.warna};margin-top:2px;">${IDR(t)}</div>
+      <div class="muted" style="font-size:11px;">${s.rows.length} transaksi · ${pct}%</div>
+    </div>`;
+  }).join('');
+
+  // ── Rincian per sumber (collapsible) ──
+  const rincian = sumber.map(s => {
+    if (!s.rows.length) return '';
+    const rows = s.rows
+      .slice().sort((a, b) => String(b.tanggal || '').localeCompare(String(a.tanggal || '')))
+      .map(r => `<div class="list-item">
+        <div class="left">
+          <div class="name">${escapeHtml(r.keterangan)}${buktiLink(r.bukti_url)}</div>
+          <div class="meta">${escapeHtml(r.tanggal || '-')} · ${escapeHtml(String(r.sub))}</div>
+        </div>
+        <div><span class="badge badge-keluar">${IDR(r.jumlah)}</span></div>
+      </div>`).join('');
+    return `<div style="margin-top:10px;">
+      <div onclick="toggleSec(this)" class="sec-toggle-btn" style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:${s.warna}14;border:1.5px solid ${s.warna}55;border-radius:10px;cursor:pointer;user-select:none;">
+        <span style="font-size:13px;font-weight:800;color:${s.warna};">${s.ikon} ${s.nama} — ${IDR(sum(s.rows))}</span>
+        <span class="toggle-arrow" style="font-size:11px;color:${s.warna};font-weight:700;">▶</span>
+      </div>
+      <div style="display:none;margin-top:6px;">${rows}</div>
+    </div>`;
+  }).join('');
+
+  box.innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">${kartu}</div>
+    <div style="background:linear-gradient(135deg,#dc2626,#ef4444);border-radius:12px;padding:14px 16px;color:#fff;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;opacity:.85;">Total Pengeluaran — ${escapeHtml(perBln)}</div>
+      <div style="font-size:24px;font-weight:800;margin-top:2px;">${IDR(grand)}</div>
+      <div style="font-size:11px;opacity:.85;">${nTrx} transaksi · Kas + Acara + Project (tanpa Qurban)</div>
+    </div>
+    ${rincian}`;
 }
 
 async function deleteTx(id) {
@@ -8208,7 +8679,126 @@ function renderUsiaNikahStat() {
 
 // ─────────── EXPORT ANGGOTA PDF ───────────
 // Buka modal pilih populasi sebelum export PDF anggota
+// ═══════════ FILTER EXPORT PDF ANGGOTA ═══════════
+// Kolom `anggota.peran` = TEXT berisi JSON array, mis. '["mubaligh","mahasiswa"]'.
+// Versi global (dipakai modal filter + exportAnggotaPDF).
+function _peranArr(a) {
+  try { return JSON.parse(a.peran || '[]'); }
+  catch (e) { return a.peran ? [a.peran] : []; }
+}
+
+// Terapkan semua pilihan filter di modal ke daftar anggota.
+// Semua kosong / semua kategori tercentang = TOTAL (tidak menyaring apa pun).
+function _pdfFilterAnggota(list) {
+  const katBoxes = Array.from(document.querySelectorAll('#pdfKatList input[type=checkbox]'));
+  const katOn    = katBoxes.filter(c => c.checked).map(c => c.value);
+  const katSemua = katBoxes.length > 0 && katOn.length === katBoxes.length;
+
+  const fPeran  = (document.getElementById('pdfFilterPeran')  || {}).value || '';
+  const fStatus = (document.getElementById('pdfFilterStatus') || {}).value || '';
+  const fUsia   = (document.getElementById('pdfFilterUsia')   || {}).value || '';
+
+  return list.filter(a => {
+    // ── Kategori (nilai '0' = Tanpa Kategori) ──
+    if (katBoxes.length && !katSemua) {
+      const key = a.kategori_id ? String(a.kategori_id) : '0';
+      if (!katOn.includes(key)) return false;
+    }
+
+    // ── Peran MT ──
+    if (fPeran) {
+      const p = _peranArr(a);
+      if (fPeran === 'mubaligh_mubalighot') {
+        if (!p.includes('mubaligh') && !p.includes('mubalighot')) return false;
+      } else if (fPeran === 'bukan_mubalighot') {
+        if (p.includes('mubalighot')) return false;
+      } else if (fPeran === 'bukan_mubaligh_mubalighot') {
+        if (p.includes('mubaligh') || p.includes('mubalighot')) return false;
+      } else if (!p.includes(fPeran)) return false;
+    }
+
+    // ── Status ──
+    if (fStatus === 'aktif'    && a.status !== 'aktif') return false;
+    if (fStatus === 'nonaktif' && a.status === 'aktif') return false;
+
+    // ── Usia nikah (batas L/P dari setelan aplikasi) ──
+    if (fUsia) {
+      const u  = hitungUmur(a.tanggal_lahir);
+      const th = getUsiaNikahThresholdFor(a.jenis_kelamin);
+      if (fUsia === 'sudah' && !(u !== null && u >= th)) return false;
+      if (fUsia === 'belum' && !(u !== null && u <  th)) return false;
+    }
+    return true;
+  });
+}
+
+// Ringkasan filter aktif — dicetak di header PDF supaya jelas isinya apa.
+function _pdfFilterLabel() {
+  const katBoxes = Array.from(document.querySelectorAll('#pdfKatList input[type=checkbox]'));
+  const katOn    = katBoxes.filter(c => c.checked);
+  const katSemua = katBoxes.length > 0 && katOn.length === katBoxes.length;
+
+  const fPeran  = (document.getElementById('pdfFilterPeran')  || {}).value || '';
+  const fStatus = (document.getElementById('pdfFilterStatus') || {}).value || '';
+  const fUsia   = (document.getElementById('pdfFilterUsia')   || {}).value || '';
+
+  const bagian = [];
+  if (katBoxes.length && !katSemua) {
+    bagian.push('Kategori: ' + (katOn.length ? katOn.map(c => c.dataset.nama).join(', ') : '(tidak ada)'));
+  }
+  const peranLbl = {
+    mahasiswa: 'Mahasiswa', karyawan_mahasiswa: 'Karyawan Mahasiswa',
+    mubaligh: 'Mubaligh', mubalighot: 'Mubalighot',
+    mubaligh_mubalighot: 'Mubaligh + Mubalighot',
+    bukan_mubalighot: 'Bukan Mubalighot',
+    bukan_mubaligh_mubalighot: 'Bukan Mubaligh & Mubalighot',
+    bukan_mt: 'Bukan MT',
+  };
+  if (fPeran)  bagian.push('Peran: ' + (peranLbl[fPeran] || fPeran));
+  if (fStatus) bagian.push('Status: ' + (fStatus === 'aktif' ? 'Aktif' : 'Non-aktif'));
+  if (fUsia)   bagian.push(fUsia === 'sudah' ? 'Sudah usia nikah' : 'Belum usia nikah');
+
+  return bagian.length ? bagian.join(' | ') : 'TOTAL - semua anggota';
+}
+
+// Centang / kosongkan semua kategori sekaligus.
+function pdfKatSetAll(on) {
+  document.querySelectorAll('#pdfKatList input[type=checkbox]').forEach(c => { c.checked = on; });
+  pdfUpdateCount();
+}
+
+// Hitung ulang berapa anggota yang lolos filter (tampil live di modal).
+function pdfUpdateCount() {
+  const el = document.getElementById('pdfFilterCount');
+  if (!el) return;
+  const n     = _pdfFilterAnggota(anggotaFull || []).length;
+  const total = (anggotaFull || []).length;
+  el.innerHTML = n === 0
+    ? '<span style="color:#dc2626;">⚠️ 0 anggota cocok — PDF akan kosong</span>'
+    : `📊 <b>${n}</b> dari ${total} anggota akan diekspor`;
+}
+
 function openAnggotaPdfModal() {
+  // Bangun daftar kategori dari data yang ADA (kategori di app ini bebas diketik user,
+  // bukan daftar tetap) + opsi "Tanpa Kategori" kalau memang ada anggota tanpa kategori.
+  const box = document.getElementById('pdfKatList');
+  if (box) {
+    const items = (kategoriCache || []).map(k => ({ id: String(k.id), nama: k.nama }));
+    if ((anggotaFull || []).some(a => !a.kategori_id)) items.push({ id: '0', nama: 'Tanpa Kategori' });
+
+    box.innerHTML = items.length
+      ? items.map(k => {
+          const n = (anggotaFull || []).filter(a =>
+            (a.kategori_id ? String(a.kategori_id) : '0') === k.id).length;
+          return `<label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;font-weight:500;">
+            <input type="checkbox" value="${escapeHtml(k.id)}" data-nama="${escapeHtml(k.nama)}" checked
+              onchange="pdfUpdateCount()" style="width:16px;height:16px;margin:0;accent-color:#1a6644;">
+            ${escapeHtml(k.nama)} <span class="muted" style="font-size:11px;">(${n})</span>
+          </label>`;
+        }).join('')
+      : '<span class="muted" style="font-size:12px;">Belum ada kategori.</span>';
+  }
+  pdfUpdateCount();
   const m = document.getElementById('anggotaPdfModal');
   if (m) m.style.display = 'flex';
 }
@@ -8223,6 +8813,17 @@ async function exportAnggotaPDF() {
   // Populasi tambahan untuk PDF (MUMI selalu termasuk; GPMT/GPSD opsional)
   const wantGpmt = !!(document.getElementById('pdfPopGpmt') && document.getElementById('pdfPopGpmt').checked);
   const wantGpsd = !!(document.getElementById('pdfPopGpsd') && document.getElementById('pdfPopGpsd').checked);
+
+  // [BARU] Terapkan filter kategori/peran/status/usia-nikah SEBELUM modal ditutup
+  // (predikatnya membaca isian modal). Semua bagian PDF turunan dari `all`,
+  // jadi cukup disaring di sini — statistik & rincian ikut terfilter otomatis.
+  const filtered   = _pdfFilterAnggota(anggotaFull);
+  const filterInfo = _pdfFilterLabel();
+  if (filtered.length === 0) {
+    showToast('Tidak ada anggota yang cocok dengan filter. Longgarkan filternya.', 'warn');
+    return;   // modal sengaja dibiarkan terbuka agar user bisa langsung membetulkan
+  }
+
   const _pdfModal = document.getElementById('anggotaPdfModal');
   if (_pdfModal) _pdfModal.style.display = 'none';
   const { jsPDF } = window.jspdf;
@@ -8254,11 +8855,11 @@ async function exportAnggotaPDF() {
   const now      = new Date();
   const tglCetak = now.toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 
-  const all    = anggotaFull;
+  const all    = filtered;   // [BARU] sudah tersaring sesuai pilihan di modal
   const aktif  = all.filter(a => a.status === 'aktif');
   const nonAkt = all.filter(a => a.status !== 'aktif');
 
-  const getPeran  = (a) => { try { return JSON.parse(a.peran||'[]'); } catch(e){ return a.peran?[a.peran]:[]; } };
+  const getPeran  = _peranArr;
   const cntKey    = (arr, k, v) => arr.filter(a => a[k] === v).length;
   const cntPeran  = (arr, v)    => arr.filter(a => getPeran(a).includes(v)).length;
 
@@ -8287,7 +8888,12 @@ async function exportAnggotaPDF() {
         doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(160,210,185);
         doc.text(b.label, sx+(bw-3)/2, 34.5, {align:'center'});
       });
-      y = 43;
+      // [BARU] Strip keterangan filter — biar jelas PDF ini isinya siapa saja.
+      doc.setFillColor(...G_LIGHT);
+      doc.rect(margin, 41, cW, 6, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...G_DARK);
+      doc.text('FILTER: ' + pdfSafe(filterInfo), margin + 2, 45);
+      y = 51;
     } else {
       doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...WHITE);
       doc.text('LAPORAN DATA ANGGOTA  |  ' + orgName, margin, 6.5);
@@ -9284,6 +9890,7 @@ async function bukaSesiDetail(sesiId) {
   }
 
   const rows = kehRes.data || [];
+  rows.forEach(r => { r._grp = 'mumi'; });
   // Sisipkan absensi anak GP (GPMT/GPSD) untuk sesi ini, kalau ada (tabel mungkin belum ada — abaikan kalau error)
   try {
     const { data: kehGp } = await db.from('kehadiran_gp')
@@ -9295,7 +9902,7 @@ async function bukaSesiDetail(sesiId) {
       if (kehGp.some(k => k.gp_tipe === 'gpsd')) { const { data: g } = await db.from('gpsd').select('id, nama'); (g||[]).forEach(x => { nm['gpsd_' + x.id] = x.nama; }); }
       kehGp.forEach(k => {
         const key = k.gp_tipe + '_' + k.gp_id;
-        rows.push({ anggota_id: key, status: k.status, tanggal: k.tanggal, anggota: { nama: (nm[key] || '(?)') + ' (' + k.gp_tipe.toUpperCase() + ')' } });
+        rows.push({ anggota_id: key, status: k.status, tanggal: k.tanggal, anggota: { nama: (nm[key] || '(?)') + ' (' + k.gp_tipe.toUpperCase() + ')' }, _grp: k.gp_tipe });
       });
     }
   } catch(e) {}
@@ -9314,6 +9921,40 @@ async function bukaSesiDetail(sesiId) {
   const nTidakImplisit = angAktif.filter(a => !angPunyaRecord.has(a.id)).length * tanggalSet.length;
   const nTidak = nTidakDB + nTidakImplisit;
   const total  = nHadir + nIzin + nTidak;
+
+  // Statistik per kelompok (MUMI / GPMT / GPSD) — otomatis dipisah kalau ada anak GP di sesi ini
+  const mumiRows = rows.filter(r => r._grp === 'mumi');
+  const gpmtRows = rows.filter(r => r._grp === 'gpmt');
+  const gpsdRows = rows.filter(r => r._grp === 'gpsd');
+  const hasGp = gpmtRows.length > 0 || gpsdRows.length > 0;
+  function _grpStat(list, withImplisit) {
+    const h  = list.filter(r => r.status === 'hadir').length;
+    const iz = list.filter(r => r.status === 'izin').length;
+    let tk  = list.filter(r => r.status === 'tidak_hadir').length;
+    if (withImplisit) {
+      const punya = new Set(list.map(r => r.anggota_id));
+      tk += angAktif.filter(a => !punya.has(a.id)).length * tanggalSet.length;
+    }
+    const tot = h + iz + tk;
+    return { h, iz, tk, tot, pct: tot > 0 ? Math.round((h + iz) / tot * 100) : 0 };
+  }
+  const stMumi = _grpStat(mumiRows, true);
+  const stGpmt = _grpStat(gpmtRows, false);
+  const stGpsd = _grpStat(gpsdRows, false);
+  function _grpCard(label, icon, bg, color, st) {
+    const pctColor = st.pct >= 80 ? '#16a34a' : st.pct >= 60 ? '#d97706' : '#dc2626';
+    return `<div style="background:${bg};border-radius:10px;padding:12px;">
+      <div style="font-size:11px;font-weight:800;color:${color};margin-bottom:8px;">${icon} ${label}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:12px;">
+        <span style="display:flex;gap:8px;flex-wrap:wrap;">
+          <span style="color:#16a34a;font-weight:700;">✅${st.h}</span>
+          <span style="color:#d97706;font-weight:700;">🟡${st.iz}</span>
+          <span style="color:#dc2626;font-weight:700;">❌${st.tk}</span>
+        </span>
+        <span style="font-weight:800;color:${pctColor};">${st.pct}%</span>
+      </div>
+    </div>`;
+  }
 
   // Rekap per siswa
   const siswaStat = {};
@@ -9407,6 +10048,15 @@ async function bukaSesiDetail(sesiId) {
 
   $('sesiDetailBody').innerHTML = `
     <!-- Statistik -->
+    ${hasGp ? `
+    <div style="font-weight:700;font-size:12px;color:#1a6644;margin-bottom:6px;">📊 Kehadiran per Kelompok</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px;">
+      ${_grpCard('MUMI', '👥', '#f0f7f3', '#1a6644', stMumi)}
+      ${gpmtRows.length ? _grpCard('GPMT', '🧒', '#eef2ff', '#4338ca', stGpmt) : ''}
+      ${gpsdRows.length ? _grpCard('GPSD', '👧', '#fce7f3', '#be185d', stGpsd) : ''}
+    </div>
+    <div style="font-weight:700;font-size:12px;color:#1a6644;margin-bottom:6px;">Σ Total Keseluruhan (MUMI + GP)</div>
+    ` : ''}
     <div class="stat-grid" style="margin-bottom:12px;">
       <div class="stat"><div class="sv" style="color:#16a34a;">${nHadir}</div><div class="sl">Total Hadir</div></div>
       <div class="stat"><div class="sv" style="color:#d97706;">${nIzin}</div><div class="sl">Total Izin</div></div>
@@ -10680,11 +11330,13 @@ async function loadPeriodeDetail(id) {
     <div class="card">
       <h2>🐐 Qurban ${escapeHtml(per.nama)}
         <span class="st-badge ${arsip?'st-cancelled':'st-in_progress'}">${arsip?'Arsip':'Aktif'}</span></h2>
+      <label>Nama Periode</label>
+      <input type="text" id="qdNama" value="${escapeHtml(per.nama||'')}" placeholder="Cth: 2025/2026">
       <label>Target Dana Total (Rp)</label>
       <input type="number" id="qdTarget" value="${target}" min="0">
       <label>Target Pembelian</label>
       <input type="text" id="qdBeli" value="${escapeHtml(per.target_pembelian||'')}" placeholder="Cth: 2 ekor sapi">
-      <button onclick="simpanTargetPeriode()">Simpan Target</button>
+      <button onclick="simpanTargetPeriode()">💾 Simpan Perubahan</button>
       <div id="qdTargetMsg"></div>
       <div style="display:flex;gap:6px;margin-top:8px;">
         <button class="secondary" onclick="cetakPeriode()">🖨️ Cetak / PDF</button>
@@ -10892,17 +11544,30 @@ async function deleteQurbanBayarGp(id) {
 
 async function simpanTargetPeriode() {
   if (!currentPeriodeId) return;
-  const { error } = await db.from('qurban_periode').update({
+
+  // [BARU] Nama periode kini ikut bisa diubah (sebelumnya hanya target).
+  const nama = ($('qdNama') ? $('qdNama').value : '').trim();
+  if ($('qdNama') && !nama) { setMsg('qdTargetMsg', 'Nama periode tidak boleh kosong.', true); return; }
+
+  // Cegah nama bentrok dengan periode lain (biar tidak membingungkan saat memilih periode).
+  const bentrok = (periodeCache || []).some(p =>
+    p.id !== currentPeriodeId &&
+    (p.nama || '').trim().toLowerCase() === nama.toLowerCase());
+  if (bentrok) { setMsg('qdTargetMsg', 'Nama periode "' + escapeHtml(nama) + '" sudah dipakai periode lain.', true); return; }
+
+  const payload = {
     target_dana: parseUang($('qdTarget').value),
     target_pembelian: $('qdBeli').value.trim() || null,
-  }).eq('id', currentPeriodeId);
+  };
+  if (nama) payload.nama = nama;
+
+  const { error } = await db.from('qurban_periode').update(payload).eq('id', currentPeriodeId);
   if (error) { setMsg('qdTargetMsg', 'Gagal: ' + error.message, true); return; }
   _auditLog('qurban_periode', 'UPDATE', null, {
-    periode_id: currentPeriodeId,
-    target_dana: parseUang($('qdTarget').value),
-    target_pembelian: $('qdBeli').value.trim() || null,
-  }, 'Target qurban diubah');
-  setMsg('qdTargetMsg', '✅ Target tersimpan');
+    periode_id: currentPeriodeId, ...payload,
+  }, 'Periode qurban diubah');
+  setMsg('qdTargetMsg', '✅ Perubahan tersimpan');
+  await loadPeriodeList();          // refresh daftar → nama baru langsung terlihat
   loadPeriodeDetail(currentPeriodeId);
 }
 
@@ -14422,18 +15087,77 @@ const _AUDIT_FIELD_LABEL = {
   jenjang_sekolah: 'Jenjang Sekolah', jumlah: 'Jumlah', keterangan: 'Keterangan',
   tanggal: 'Tanggal', jam_mulai: 'Jam Mulai', jam_selesai: 'Jam Selesai',
   target_dana: 'Target Dana', email: 'Email', role: 'Peran Akses',
+  tasks: 'Daftar Tugas',
 };
 
 function _auditFieldLabel(k) {
-  return _AUDIT_FIELD_LABEL[k] || k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const key = String(k || '').toLowerCase();
+  return _AUDIT_FIELD_LABEL[key] || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// Deteksi OTOMATIS: apakah nilai ini array yang isinya objek (mis. daftar tugas,
+// daftar divisi, item checklist, dsb — di menu Acara, Musyawarah, Project, apapun)?
+// Tidak lagi bergantung pada daftar nama field manual — jadi field BARU apapun,
+// di menu manapun, otomatis dirangkum manusiawi juga, bukan didump sebagai JSON mentah.
+function _auditIsArrObj(v) {
+  return Array.isArray(v) && v.some(x => x && typeof x === 'object' && !Array.isArray(x));
+}
+
+// Ambil nama tampilan dari 1 item di dalam array (tugas/divisi/dst)
+function _auditItemName(item) {
+  return (item && (item.text || item.desc || item.nama || item.judul || item.label || item.title)) || '(tanpa judul)';
+}
+
+// Rangkum perubahan 1 field yang isinya array-of-object jadi 1 baris teks, contoh:
+// "Daftar Tugas: ➕ 1 ditambah (Keuangan)"  atau  "Daftar Tugas: ✏️ 1 diubah (Keuangan: status todo → done)"
+function _auditArrObjSummary(label, lamaArr, baruArr) {
+  const lama = Array.isArray(lamaArr) ? lamaArr : [];
+  const baru = Array.isArray(baruArr) ? baruArr : [];
+  const lamaMap = {}; lama.forEach((x, i) => { lamaMap[(x && x.id) || ('__i' + i)] = x; });
+  const baruMap = {}; baru.forEach((x, i) => { baruMap[(x && x.id) || ('__i' + i)] = x; });
+  const semuaId = [...new Set([...Object.keys(lamaMap), ...Object.keys(baruMap)])];
+  const ditambah = [], dihapus = [], diubah = [];
+  semuaId.forEach(id => {
+    const l = lamaMap[id], b = baruMap[id];
+    if (l && !b) dihapus.push(_auditItemName(l));
+    else if (!l && b) ditambah.push(_auditItemName(b));
+    else if (l && b && JSON.stringify(l) !== JSON.stringify(b)) {
+      if (l.status !== b.status) diubah.push(_auditItemName(b) + ' (status: ' + (l.status || '-') + ' → ' + (b.status || '-') + ')');
+      else diubah.push(_auditItemName(b));
+    }
+  });
+  const parts = [];
+  if (ditambah.length) parts.push('➕ ' + ditambah.length + ' ditambah (' + ditambah.slice(0, 2).join(', ') + (ditambah.length > 2 ? ', dll' : '') + ')');
+  if (dihapus.length)  parts.push('➖ ' + dihapus.length + ' dihapus (' + dihapus.slice(0, 2).join(', ') + (dihapus.length > 2 ? ', dll' : '') + ')');
+  if (diubah.length)   parts.push('✏️ ' + diubah.length + ' diubah (' + diubah.slice(0, 2).join(', ') + (diubah.length > 2 ? ', dll' : '') + ')');
+  return label + ': ' + (parts.join(' · ') || 'tidak ada perubahan terdeteksi');
+}
+
+// Ubah 1 objek biasa (bukan array) jadi teks "key: val, key2: val2" yang enak dibaca —
+// dipakai sebagai jaring pengaman terakhir supaya TIDAK PERNAH ada JSON mentah {"..":".."} yang tampil ke user.
+function _auditFmtObjInline(obj) {
+  if (!obj || typeof obj !== 'object') return String(obj);
+  const entries = Object.entries(obj).filter(([k]) => !_AUDIT_SKIP_FIELD.has(k) && !k.startsWith('_'));
+  if (!entries.length) return '(kosong)';
+  return entries.map(([k, v]) => {
+    let val;
+    if (v === null || v === undefined || v === '') val = '(kosong)';
+    else if (Array.isArray(v)) val = _auditIsArrObj(v) ? (v.length + ' item') : (v.length ? v.join(', ') : '(kosong)');
+    else if (typeof v === 'object') val = _auditFmtObjInline(v);
+    else val = String(v);
+    return _auditFieldLabel(k) + ' ' + val;
+  }).join(', ');
 }
 
 function _auditFmtVal(k, v) {
   if (v === null || v === undefined || v === '') return '(kosong)';
   if (k === 'jumlah' || k === 'target_dana') return IDR(v);
-  if (typeof v === 'object') {
-    try { return JSON.stringify(v); } catch (e) { return String(v); }
+  if (Array.isArray(v)) {
+    if (!v.length) return '(kosong)';
+    if (v.every(x => typeof x !== 'object' || x === null)) return v.join(', '); // array teks/angka biasa, mis. peran
+    return v.length + ' item'; // array of object — dipakai kalau _auditArrObjSummary tidak jalan; tetap ringkas, jangan dump JSON
   }
+  if (typeof v === 'object') return _auditFmtObjInline(v); // objek biasa → "key: val, ..." bukan JSON mentah
   return String(v);
 }
 
@@ -14447,9 +15171,12 @@ function _auditSummary(e) {
       .filter(k => !_AUDIT_SKIP_FIELD.has(k) && !k.startsWith('_'));
     const berubah = semuaKey.filter(k => JSON.stringify(lama[k]) !== JSON.stringify(baru[k]));
     if (berubah.length) {
-      const parts = berubah.slice(0, 3).map(k =>
-        _auditFieldLabel(k) + ': ' + _auditFmtVal(k, lama[k]) + ' → ' + _auditFmtVal(k, baru[k])
-      );
+      const parts = berubah.slice(0, 3).map(k => {
+        if (_auditIsArrObj(lama[k]) || _auditIsArrObj(baru[k])) {
+          return _auditArrObjSummary(_auditFieldLabel(k), lama[k], baru[k]);
+        }
+        return _auditFieldLabel(k) + ': ' + _auditFmtVal(k, lama[k]) + ' → ' + _auditFmtVal(k, baru[k]);
+      });
       let txt = parts.join(' · ');
       if (berubah.length > 3) txt += ' · +' + (berubah.length - 3) + ' field lain';
       return txt;
@@ -14593,7 +15320,21 @@ function bukaDetailLog(idx) {
         </div>`;
     }
     if (typeof val === 'number' && k === 'jumlah') return escapeHtml(IDR(val));
-    if (typeof val === 'object') return escapeHtml(JSON.stringify(val));
+    if (Array.isArray(val)) {
+      if (!val.length) return '<span style="color:#9ca3af;font-style:italic;">(kosong)</span>';
+      if (val.every(x => typeof x !== 'object' || x === null)) return escapeHtml(val.join(', '));
+      return '<ul style="margin:0;padding-left:16px;">' + val.map(it => {
+        const nm = escapeHtml(_auditItemName(it));
+        const st = (it && it.status) ? ' <span style="color:#6b7280;">(' + escapeHtml(it.status) + ')</span>' : '';
+        const ekstra = [];
+        if (it && it.divisi) ekstra.push('divisi: ' + it.divisi);
+        if (it && it.assignee) ekstra.push('PIC: ' + it.assignee);
+        if (it && it.deadline) ekstra.push('tenggat: ' + it.deadline);
+        const ekstraTxt = ekstra.length ? ' <span style="color:#9ca3af;">— ' + escapeHtml(ekstra.join(', ')) + '</span>' : '';
+        return '<li>' + nm + st + ekstraTxt + '</li>';
+      }).join('') + '</ul>';
+    }
+    if (typeof val === 'object') return escapeHtml(_auditFmtObjInline(val));
     return escapeHtml(String(val));
   }
 
@@ -14622,10 +15363,17 @@ function bukaDetailLog(idx) {
   } else {
     const semuaKey = [...new Set([...Object.keys(lama), ...Object.keys(baru)])];
     const perubahanRows = semuaKey.filter(k => JSON.stringify(lama[k]) !== JSON.stringify(baru[k])).map(k => {
-      const vLama = lama[k] === null || lama[k] === undefined ? '<i style="color:#9ca3af">null</i>' : escapeHtml(k === 'jumlah' ? IDR(lama[k]) : String(lama[k]));
-      const vBaru = baru[k] === null || baru[k] === undefined ? '<i style="color:#9ca3af">null</i>' : escapeHtml(k === 'jumlah' ? IDR(baru[k]) : String(baru[k]));
+      if (_auditIsArrObj(lama[k]) || _auditIsArrObj(baru[k])) {
+        const ringkas = _auditArrObjSummary('', lama[k], baru[k]).replace(/^:\s*/, '');
+        return `<tr>
+          <td style="padding:5px 8px;font-weight:600;font-size:12px;vertical-align:top;white-space:nowrap;">${escapeHtml(_auditFieldLabel(k))}</td>
+          <td colspan="2" style="padding:5px 8px;font-size:12px;color:#374151;">${escapeHtml(ringkas)}</td>
+        </tr>`;
+      }
+      const vLama = lama[k] === null || lama[k] === undefined ? '<i style="color:#9ca3af">null</i>' : escapeHtml(_auditFmtVal(k, lama[k]));
+      const vBaru = baru[k] === null || baru[k] === undefined ? '<i style="color:#9ca3af">null</i>' : escapeHtml(_auditFmtVal(k, baru[k]));
       return `<tr>
-        <td style="padding:5px 8px;font-weight:600;font-size:12px;vertical-align:top;white-space:nowrap;">${escapeHtml(k)}</td>
+        <td style="padding:5px 8px;font-weight:600;font-size:12px;vertical-align:top;white-space:nowrap;">${escapeHtml(_auditFieldLabel(k))}</td>
         <td style="padding:5px 8px;font-size:12px;color:#dc2626;text-decoration:line-through;">${vLama}</td>
         <td style="padding:5px 8px;font-size:12px;color:#16a34a;font-weight:700;">${vBaru}</td>
       </tr>`;
@@ -15038,7 +15786,93 @@ async function loadKelolAkses() {
   // Kita simpan email di currentProf saat login, tapi untuk daftar semua user
   // kita perlu kolom email di profiles. Jika belum ada, tampilkan tanpa email.
   aksesUserList = data || [];
+  renderPendingList();
   renderKelolAkses();
+}
+
+// ── ANTREAN PENDAFTARAN (status = 'pending') ────────────────────────────────
+// Admin master menekan ✅ Setujui (status → 'approved', user bisa masuk)
+// atau ❌ Tolak (status → 'rejected', user diblokir dengan pesan jelas).
+function renderPendingList() {
+  const box = $('pendingList');
+  const cnt = $('pendingCount');
+  if (!box) return;
+
+  // Simpan index ASLI ke aksesUserList agar tombol tetap menunjuk user yang benar.
+  const pend = aksesUserList
+    .map((u, i) => ({ u, i }))
+    .filter(x => x.u.status === 'pending');
+
+  if (cnt) cnt.textContent = String(pend.length);
+
+  if (!pend.length) {
+    box.innerHTML = '<p class="muted" style="font-size:13px;">✅ Tidak ada pendaftaran yang menunggu. Semua sudah diproses.</p>';
+    return;
+  }
+
+  box.innerHTML = pend.map(({ u, i }) => {
+    const nama    = escapeHtml(u.nama_lengkap || '(tanpa nama)');
+    const email   = u.email ? `<div class="muted" style="font-size:11px;">📧 ${escapeHtml(u.email)}</div>` : '';
+    const jabatan = escapeHtml(u.jabatan || '-');
+    return `<div class="pending-card">
+      <div style="font-weight:700;font-size:13px;">${nama}
+        <span class="st-badge st-in_progress" style="font-size:10px;margin-left:4px;">⏳ Menunggu ACC</span>
+      </div>
+      ${email}
+      <div class="muted" style="font-size:11px;margin:2px 0 8px;">Jabatan: ${jabatan}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="small" style="width:auto;padding:6px 12px;font-size:11px;background:linear-gradient(135deg,#16a34a,#22c55e);"
+          onclick="approveUser('${u.id}',${i})">✅ Setujui</button>
+        <button class="small danger" style="width:auto;padding:6px 12px;font-size:11px;"
+          onclick="rejectUser('${u.id}',${i})">❌ Tolak</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Ubah status pendaftaran. Dipakai oleh approveUser / rejectUser.
+async function _setUserStatus(userId, idx, newStatus) {
+  if (!isMasterAdmin) { alert('Hanya admin master yang bisa memproses pendaftaran.'); return false; }
+  const u = aksesUserList[idx];
+  if (!u) return false;
+
+  const { error } = await db.from('profiles').update({ status: newStatus }).eq('id', userId);
+  if (error) {
+    const m = error.message || '';
+    if (/status|column/i.test(m)) {
+      setMsg('pendingMsg', '❌ Kolom <b>status</b> belum ada di tabel <code>profiles</code>. Jalankan di Supabase → SQL Editor:<br>' +
+        "<code>ALTER TABLE profiles ADD COLUMN IF NOT EXISTS status text DEFAULT 'approved';</code>", true);
+    } else {
+      setMsg('pendingMsg', '❌ Gagal: ' + escapeHtml(m), true);
+    }
+    return false;
+  }
+  u.status = newStatus;   // update cache lokal → render ulang tanpa fetch
+  renderPendingList();
+  renderKelolAkses();
+  return true;
+}
+
+async function approveUser(userId, idx) {
+  const u = aksesUserList[idx]; if (!u) return;
+  const nama = u.nama_lengkap || u.email || '(user)';
+  if (!(await askConfirm(`Setujui pendaftaran "${nama}"?\n\nUser langsung bisa MASUK ke aplikasi.\nMenu yang boleh dilihat bisa kamu atur di daftar bawah.`))) return;
+  setMsg('pendingMsg', '⏳ Menyetujui...');
+  if (await _setUserStatus(userId, idx, 'approved')) {
+    setMsg('pendingMsg', '✅ "' + escapeHtml(nama) + '" disetujui. Sekarang bisa login. Atur hak menunya di daftar bawah.');
+    if (typeof _auditLog === 'function') _auditLog('user', 'APPROVE', userId, { nama: nama, email: u.email });
+  }
+}
+
+async function rejectUser(userId, idx) {
+  const u = aksesUserList[idx]; if (!u) return;
+  const nama = u.nama_lengkap || u.email || '(user)';
+  if (!(await askConfirm(`Tolak pendaftaran "${nama}"?\n\nUser TIDAK bisa masuk dan akan melihat pesan "pendaftaran ditolak".\nKamu masih bisa menyetujuinya nanti dari daftar bawah.`))) return;
+  setMsg('pendingMsg', '⏳ Menolak...');
+  if (await _setUserStatus(userId, idx, 'rejected')) {
+    setMsg('pendingMsg', '🚫 Pendaftaran "' + escapeHtml(nama) + '" ditolak.');
+    if (typeof _auditLog === 'function') _auditLog('user', 'REJECT', userId, { nama: nama, email: u.email });
+  }
 }
 
 function renderKelolAkses() {
@@ -15055,14 +15889,22 @@ function renderKelolAkses() {
   const canEdit = isMasterAdmin; // hanya admin utama yang boleh ubah
 
   const html = aksesUserList.map((u, i) => {
+    // Yang masih menunggu ACC tampil di kartu "📥 Pendaftaran Menunggu Persetujuan" —
+    // jangan digandakan di sini. (return '' agar index `i` tetap sinkron.)
+    if (u.status === 'pending') return '';
+
     const isSelf = (u.id === currentProf?.id);
     const isRootAdmin = (u.email === 'admin@mumi.local');     // admin utama bawaan (tak bisa diubah)
     const rowIsMaster = isRootAdmin || (u.is_master === true); // admin master = akses penuh + kelola user
     const akses = u.akses_menu || {};
     const full = (u.is_super === true) || rowIsMaster; // super/master = akses penuh
+    const isRejected = (u.status === 'rejected');
     const masterBadge = rowIsMaster
       ? `<span class="st-badge st-in_progress" style="font-size:10px;margin-left:4px;">👑 Admin Master${isRootAdmin ? ' (utama)' : ''} — akses penuh</span>`
       : (u.is_super === true ? '<span class="st-badge st-done" style="font-size:10px;margin-left:4px;">⭐ Super (akses penuh)</span>' : '');
+    const rejectBadge = isRejected
+      ? '<span class="st-badge st-todo" style="font-size:10px;margin-left:4px;background:#fee2e2;color:#b91c1c;">🚫 Ditolak — tidak bisa masuk</span>'
+      : '';
 
     const cekboxes = MENUS.map(m => {
       const on = full || akses[m.key] === true;
@@ -15078,6 +15920,11 @@ function renderKelolAkses() {
     // Tombol aksi user — admin utama (root) & diri sendiri DILINDUNGI (tanpa tombol).
     const btns = [];
     if (canEdit && !isRootAdmin && !isSelf) {
+      // User yang pernah DITOLAK bisa disetujui ulang dari sini
+      if (isRejected) {
+        btns.push(`<button class="small" style="width:auto;padding:5px 10px;font-size:11px;background:linear-gradient(135deg,#16a34a,#22c55e);"
+          onclick="approveUser('${u.id}',${i})">✅ Setujui Sekarang</button>`);
+      }
       // Toggle ANGKAT / CABUT admin master
       btns.push(`<button class="small ${rowIsMaster ? 'danger' : 'secondary'}" style="width:auto;padding:5px 10px;font-size:11px;"
         onclick="setMasterAdmin('${u.id}',${!rowIsMaster},${i})">${rowIsMaster ? '👑 Cabut Admin Master' : '👑 Jadikan Admin Master'}</button>`);
@@ -15086,8 +15933,8 @@ function renderKelolAkses() {
     }
     const aksiBtn = btns.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">${btns.join('')}</div>` : '';
 
-    return `<div style="padding:12px;background:#f0f7f3;border-radius:8px;margin-bottom:8px;">
-      <div style="font-weight:700;font-size:13px;">${escapeHtml(u.nama_lengkap || '(tanpa nama)')}${masterBadge}</div>
+    return `<div style="padding:12px;background:${isRejected ? '#fef2f2' : '#f0f7f3'};border-radius:8px;margin-bottom:8px;">
+      <div style="font-weight:700;font-size:13px;">${escapeHtml(u.nama_lengkap || '(tanpa nama)')}${masterBadge}${rejectBadge}</div>
       ${emailLine}
       <div class="muted" style="font-size:11px;margin:2px 0 8px;">Jabatan: ${escapeHtml(u.jabatan || '-')}</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;">${cekboxes}</div>
@@ -15100,7 +15947,7 @@ function renderKelolAkses() {
       ⚠️ <b>Centang menu</b> yang boleh dilihat tiap user. Contoh: User A hanya ☑ Kelola Foto, User B hanya ☑ Tempat Sampah, User C hanya ☑ Riwayat, User D centang ketiga-tiganya.<br>
       Hanya <b>Admin Master</b> yang bisa mengubah. Perubahan berlaku saat user <b>login berikutnya</b>.
     </div>
-    <div style="font-size:12px;color:#6b7280;margin-bottom:8px;">Total ${aksesUserList.length} user</div>
+    <div style="font-size:12px;color:#6b7280;margin-bottom:8px;">Total ${aksesUserList.filter(u => u.status !== 'pending').length} user aktif</div>
     ${html}`;
 }
 
@@ -15261,10 +16108,15 @@ async function addNewUser() {
   if (!newId) { setMsg('newUserMsg', '❌ Gagal: user tidak terbuat.', true); return; }
   // Buat/lengkapi profile. Kalau ada sesi (konfirmasi email OFF) pakai tmp (login sbg user baru)
   // supaya lolos RLS auth.uid()=id; kalau tidak, coba lewat sesi admin.
-  const profPayload = { id: newId, nama_lengkap: nama, jabatan: jabatan || 'User', akses_menu: {}, is_super: false, email: email };
+  // status:'approved' → user buatan admin langsung aktif, TIDAK masuk antrean persetujuan.
+  const profPayload = { id: newId, nama_lengkap: nama, jabatan: jabatan || 'User', akses_menu: {}, is_super: false, email: email, status: 'approved' };
   if (asMaster) profPayload.is_master = true; // hanya ditambah kalau dicentang (aman kalau kolom belum ada)
   const writer = suData.session ? tmp : db;
   let pErr = (await writer.from('profiles').upsert(profPayload)).error;
+  if (pErr && /status/i.test(pErr.message || '')) {
+    delete profPayload.status; // kolom status belum ada → simpan tanpa itu (user tetap bisa login)
+    pErr = (await writer.from('profiles').upsert(profPayload)).error;
+  }
   if (pErr && /email/i.test(pErr.message || '')) {
     delete profPayload.email; // kolom email belum ada → simpan tanpa email
     pErr = (await writer.from('profiles').upsert(profPayload)).error;
@@ -15280,6 +16132,22 @@ async function addNewUser() {
     await loadKelolAkses();
     return;
   }
+
+  // [KEAMANAN] Baris profile di atas ditulis oleh sesi USER BARU, bukan admin.
+  // Jika trigger pengaman aktif di database, semua INSERT dipaksa jadi
+  // status='pending' & is_master=false (supaya pendaftar liar tidak bisa
+  // mengangkat dirinya sendiri jadi Admin Master).
+  // Karena user ini memang dibuat oleh ADMIN, kita finalisasi dari sesi admin:
+  // status → 'approved', dan is_master sesuai centang.
+  const { error: finErr } = await db.from('profiles')
+    .update({ status: 'approved', is_master: asMaster })
+    .eq('id', newId);
+  if (finErr && !/status|is_master|column/i.test(finErr.message || '')) {
+    setMsg('newUserMsg', '⚠️ User dibuat, tapi gagal mengaktifkan: ' + finErr.message, true);
+    await loadKelolAkses();
+    return;
+  }
+
   const note = suData.session ? '' : ' (Jika "Confirm email" aktif di Supabase, user harus klik link konfirmasi di email dulu sebelum bisa login.)';
   setMsg('newUserMsg', '✅ User "' + nama + '" berhasil dibuat! Atur menu yang boleh dilihat di daftar bawah.' + note);
   $('newUserEmail').value = ''; $('newUserNama').value = ''; $('newUserJabatan').value = ''; $('newUserPass').value = '';
@@ -22063,6 +22931,19 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   };
 
   /* ─── OPEN DETAIL ────────────────────────────────────── */
+  // [BARU] Kategori pengeluaran project — dipakai form + menu Pengeluaran.
+  var PRJ_KAT_LABEL = {
+    operasional:  'Operasional',
+    perlengkapan: 'Perlengkapan / Sarana',
+    konsumsi:     'Konsumsi',
+    transport:    'Transport',
+    lain:         'Lain-lain',
+  };
+  var PRJ_KAT_OPTS = Object.keys(PRJ_KAT_LABEL).map(function(k){
+    return '<option value="'+k+'">'+PRJ_KAT_LABEL[k]+'</option>';
+  }).join('');
+  window.PRJ_KAT_LABEL = PRJ_KAT_LABEL;   // dibaca menu Pengeluaran
+
   window.prjOpenDetail = function(id){
     var projects=loadProjects();
     var p=projects.find(function(x){ return x.id===id; });
@@ -22143,6 +23024,35 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       +'</div>'
       +'<div style="margin-top:10px;">'+bayarRiwayat+'</div>';
 
+    // ─── SECTION PENGELUARAN PROJECT ───
+    // [BARU] Sebelumnya project TIDAK punya pengeluaran sama sekali — hanya budget
+    // (rencana) + pemasukan. Sekarang realisasi uang keluar dicatat di p._keluar,
+    // ikut tersimpan di JSON project (tanpa tabel baru), dan ditarik oleh menu
+    // Pengeluaran sebagai sub-sumber "Project".
+    var keluarList  = p._keluar || [];
+    var totalKeluar = keluarList.reduce(function(s,k){ return s + (Number(k.jumlah)||0); }, 0);
+    var sisaDana    = totalBayar - totalKeluar;   // dana terkumpul - realisasi keluar
+    var keluarRiwayat = keluarList.length ? keluarList.map(function(k){
+      return '<div class="list-item"><div class="left"><div class="name">'+escapeHtml(k.keterangan||'(tanpa keterangan)')+buktiLink(k.bukti_url)+'</div><div class="meta">'+(k.tanggal||'')+' · '+escapeHtml(PRJ_KAT_LABEL[k.kategori]||k.kategori||'lain')+'</div></div><div style="text-align:right;"><span class="badge badge-keluar">'+IDR(k.jumlah)+'</span><div style="margin-top:4px;display:flex;gap:4px;justify-content:flex-end;"><button class="small danger" onclick="prjDeleteKeluar(\''+id+'\',\''+k.id+'\')">Hapus</button></div></div></div>';
+    }).join('') : '<p class="muted" style="font-size:12px;">Belum ada pengeluaran.</p>';
+    var keluarToggle = '(function(el){var b=el.parentElement.querySelector(\'.prj-keluar-form\');var open=b.style.display!==\'none\';b.style.display=open?\'none\':\'block\';el.querySelector(\'.toggle-arrow\').textContent=open?\'▶\':\'▼\';})(this)';
+    var keluarHtml = '<div style="border-top:2px dashed #e0ece5;margin:14px 0 12px;"></div>'
+      +'<div style="font-size:11px;font-weight:700;color:#7a9585;text-transform:uppercase;margin-bottom:6px;">💸 Pengeluaran Project</div>'
+      +'<div class="muted" style="font-size:12px;margin-bottom:6px;">Keluar <b style="color:#dc2626;">'+IDR(totalKeluar)+'</b> · Sisa dana <b style="color:'+(sisaDana>=0?'#16a34a':'#dc2626')+';">'+IDR(sisaDana)+'</b> <span style="font-size:11px;">(pemasukan '+IDR(totalBayar)+' − keluar '+IDR(totalKeluar)+')</span></div>'
+      +'<div onclick="'+keluarToggle+'" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:9px 12px;background:#fee2e2;border-radius:10px;user-select:none;margin-top:8px;"><span style="font-size:13px;font-weight:700;color:#b91c1c;">➕ Catat Pengeluaran</span><span class="toggle-arrow" style="font-size:11px;color:#b91c1c;font-weight:700;">▶</span></div>'
+      +'<div class="prj-keluar-form" style="display:none;margin-top:8px;">'
+        +'<div class="row">'
+          +'<div><label>Kategori</label><select id="prjKeluarKat">'+PRJ_KAT_OPTS+'</select></div>'
+          +'<div><label>Tanggal</label><input type="date" id="prjKeluarTgl"></div>'
+        +'</div>'
+        +'<label>Jumlah (Rp)</label><input type="number" id="prjKeluarJml" min="1" placeholder="50000">'
+        +'<label>Untuk Apa / Tujuan Pengeluaran</label><input type="text" id="prjKeluarKet" placeholder="cth: beli banner, sewa sound system">'
+        +'<label>Foto Bukti (opsional)</label><input type="file" id="prjKeluarFile" accept="image/*">'
+        +'<button onclick="prjAddKeluar(\''+id+'\')" style="background:linear-gradient(135deg,#dc2626,#ef4444);">➕ Simpan Pengeluaran</button>'
+        +'<div id="prjKeluarMsg"></div>'
+      +'</div>'
+      +'<div style="margin-top:10px;">'+keluarRiwayat+'</div>';
+
     $id('prjDetailContent').innerHTML='<div class="card">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:12px;">'
       +'<div><h2 style="margin:0;font-size:18px;">'+p.nama+'</h2></div>'
@@ -22176,6 +23086,9 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       // Pemasukan / Pembayaran (OUTER TOGGLE — default tersembunyi)
       +'<div onclick="toggleSec(this)" class="sec-toggle-btn" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:linear-gradient(135deg,#dcfce7,#bbf7d0);border:1.5px solid #16a34a;border-radius:10px;user-select:none;cursor:pointer;margin-bottom:8px;"><span style="font-size:14px;font-weight:800;color:#15803d;">💰 Pemasukan / Pembayaran</span><span class="toggle-arrow" style="font-size:12px;color:#15803d;font-weight:700;">▶</span></div>'
       +'<div style="display:none;margin-bottom:14px;">'+bayarHtml+'</div>'
+      // [BARU] Pengeluaran Project — OUTER TOGGLE, default tersembunyi
+      +'<div onclick="toggleSec(this)" class="sec-toggle-btn" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:linear-gradient(135deg,#fee2e2,#fecaca);border:1.5px solid #dc2626;border-radius:10px;user-select:none;cursor:pointer;margin-bottom:8px;"><span style="font-size:14px;font-weight:800;color:#b91c1c;">💸 Pengeluaran Project</span><span class="toggle-arrow" style="font-size:12px;color:#b91c1c;font-weight:700;">▶</span></div>'
+      +'<div style="display:none;margin-bottom:14px;">'+keluarHtml+'</div>'
       // Pembayaran Anak GP (GPMT/GPSD) — OUTER TOGGLE, default tersembunyi, content diisi async oleh _prjRenderGpSection
       +'<div onclick="toggleSec(this)" class="sec-toggle-btn" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:linear-gradient(135deg,#f5f3ff,#ddd6fe);border:1.5px solid #7c3aed;border-radius:10px;user-select:none;cursor:pointer;margin-bottom:8px;"><span style="font-size:14px;font-weight:800;color:#6d28d9;">🧒👧 Pembayaran Anak GP (GPMT/GPSD)</span><span class="toggle-arrow" style="font-size:12px;color:#6d28d9;font-weight:700;">▶</span></div>'
       +'<div style="display:none;margin-bottom:14px;"><div id="prjGpSection"></div></div>'
@@ -22190,6 +23103,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       +'<p style="font-size:11px;color:#7a9585;margin-top:6px;">💡 Klik nama task untuk tambah deskripsi, foto, link, dan detail lainnya.</p>'
       +'</div>';
     if($id('prjBayarTgl')) $id('prjBayarTgl').valueAsDate = new Date();
+    if($id('prjKeluarTgl')) $id('prjKeluarTgl').valueAsDate = new Date();
     window._prjGpCurrentId = id;
     _prjRenderGpSection(id);
   };
@@ -22296,7 +23210,11 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     var prjGpTotal = prjGpRoster.length;
     var prjGpPct = prjGpTotal>0 ? Math.round(prjGpPaid/prjGpTotal*100) : 0;
     var budget = parseInt(p.budget)||0;
-    var sisa = budget - totalMasuk;
+    // [BARU] Pengeluaran project kini nyata (p._keluar), jadi sisa dana =
+    // dana terkumpul - realisasi keluar. "Sisa budget" tetap dihitung terpisah.
+    var totalKeluarPrj = (p._keluar||[]).reduce(function(s,k){ return s+(Number(k.jumlah)||0); },0);
+    var sisa = totalMasuk - totalKeluarPrj;
+    var sisaBudget = budget - totalKeluarPrj;
     var STAT = (typeof STATUS_LABELS!=='undefined') ? STATUS_LABELS : {};
     var PRI = (typeof PRIORITY_LABELS!=='undefined') ? PRIORITY_LABELS : {};
     var divs = (p.divisis||[]).join(', ');
@@ -22313,7 +23231,11 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
         ['Prioritas', S(PRI[p.prioritas]||p.prioritas||'-')],
         ['Tanggal Mulai', p.tanggal_mulai||'-'],
         ['Tenggat / Due Date', p.tanggal_selesai||'-'],
-        ['Budget', budget?IDR(budget):'-'],
+        ['Budget (Anggaran)', budget?IDR(budget):'-'],
+        ['Total Pemasukan', IDR(totalMasuk)],
+        ['Total Pengeluaran', IDR(totalKeluarPrj)],
+        ['Sisa Dana (Masuk - Keluar)', IDR(sisa)],
+        ['Sisa Budget (Anggaran - Keluar)', budget?IDR(sisaBudget):'-'],
         ['Progress Bayar Anak GP', prjGpTotal ? (prjGpPaid+'/'+prjGpTotal+' ('+prjGpPct+'%)') : '- (GP tidak diikutkan)'],
         ['Divisi Terlibat', divs?S(divs):'-'],
         ['Tim Penanggung Jawab', pj?S(pj):'-'],
@@ -22429,6 +23351,58 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     saveProjects(projects);
     showToast('Pemasukan dihapus');
     prjOpenDetail(prjId);
+  };
+
+  // ── [BARU] PENGELUARAN PROJECT (p._keluar) ──
+  // Disimpan di dalam JSON project, sama seperti _bayar. Menu Pengeluaran
+  // membacanya sebagai sub-sumber "Project".
+  window.prjAddKeluar = async function(prjId){
+    var projects=loadProjects();
+    var p=projects.find(function(x){ return x.id===prjId; });
+    if(!p) return;
+    var jml = parseUang($('prjKeluarJml').value);
+    var ket = ($('prjKeluarKet').value||'').trim();
+    if(!jml || jml<=0){ setMsg('prjKeluarMsg','Jumlah harus > 0', true); return; }
+    if(!ket){ setMsg('prjKeluarMsg','Isi tujuan pengeluaran dulu', true); return; }
+    var bukti=null;
+    try { if(typeof uploadBukti==='function') bukti = await uploadBukti('prjKeluarFile'); }
+    catch(e){ setMsg('prjKeluarMsg','Gagal upload foto: '+e.message, true); return; }
+    p._keluar = p._keluar || [];
+    p._keluar.unshift({
+      id: uuid(),
+      tanggal: $('prjKeluarTgl').value || new Date().toISOString().slice(0,10),
+      kategori: $('prjKeluarKat').value || 'lain',
+      jumlah: jml,
+      keterangan: ket,
+      bukti_url: bukti||null,
+      created: new Date().toISOString(),
+      dicatat_oleh: (window.currentProf && window.currentProf.id) || null,
+    });
+    p.updated = new Date().toISOString();
+    saveProjects(projects);
+    showToast('✅ Pengeluaran project dicatat!');
+    prjOpenDetail(prjId);
+  };
+
+  window.prjDeleteKeluar = function(prjId, keluarId){
+    var projects=loadProjects();
+    var p=projects.find(function(x){ return x.id===prjId; });
+    if(!p || !p._keluar) return;
+    var row = p._keluar.find(function(k){ return String(k.id)===String(keluarId); });
+    var label = row ? (row.keterangan||'Pengeluaran')+' — '+IDR(row.jumlah||0) : 'Pengeluaran project';
+    showUndoToast(label,
+      function(){},
+      async function(){
+        var pr = loadProjects();
+        var pp = pr.find(function(x){ return x.id===prjId; });
+        if(!pp) return;
+        pp._keluar = (pp._keluar||[]).filter(function(k){ return String(k.id)!==String(keluarId); });
+        pp.updated = new Date().toISOString();
+        await saveProjects(pr);
+        prjOpenDetail(prjId);
+      },
+      '💸'
+    );
   };
 
   // Edit pemasukan project (jumlah, keterangan, tanggal, foto) — pakai modal
