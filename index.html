@@ -2800,10 +2800,10 @@
           <label style="margin:0 0 6px;display:block;font-weight:700;">Populasi yang Dilaporkan</label>
           <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:14px;">
             <label style="display:flex;align-items:center;gap:6px;font-weight:500;cursor:pointer;"><input type="checkbox" id="lapPopMumi" checked style="width:auto;margin:0;"> 👥 MUMI</label>
-            <label style="display:flex;align-items:center;gap:6px;font-weight:500;cursor:pointer;"><input type="checkbox" id="lapPopGpmt" style="width:auto;margin:0;"> 🧒 GPMT</label>
-            <label style="display:flex;align-items:center;gap:6px;font-weight:500;cursor:pointer;"><input type="checkbox" id="lapPopGpsd" style="width:auto;margin:0;"> 👧 GPSD</label>
+            <label style="display:flex;align-items:center;gap:6px;font-weight:500;cursor:pointer;"><input type="checkbox" id="lapPopGpmt" checked style="width:auto;margin:0;"> 🧒 GPMT</label>
+            <label style="display:flex;align-items:center;gap:6px;font-weight:500;cursor:pointer;"><input type="checkbox" id="lapPopGpsd" checked style="width:auto;margin:0;"> 👧 GPSD</label>
           </div>
-          <div class="muted" style="font-size:11px;margin-top:5px;">Default hanya MUMI. Centang GPMT/GPSD untuk menambahkan kontribusi anak GP (dari Acara & Qurban) ke laporan & PDF. Lalu klik "Buat Laporan" lagi.</div>
+          <div class="muted" style="font-size:11px;margin-top:5px;">Default: semua (MUMI + GPMT + GPSD) supaya angka <b>cocok dengan menu Saldo</b>. Uang anak GP sudah dilipat ke Sisa Dana Acara/Qurban. Hilangkan centang untuk laporan populasi tertentu saja, lalu klik "Buat Laporan" lagi.</div>
         </div>
         <!-- Tab pilihan -->
         <div style="display:flex;gap:6px;margin-bottom:14px;">
@@ -4008,63 +4008,139 @@ const SUPABASE_KEY = 'sb_publishable_PqbtdOOyAdKlDqEhtTAMEA_229Ak1F8';
 // ════════════════════════════════════════════════════════════════════════════
 
 const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// Handle password recovery dari link email
-db.auth.onAuthStateChange(async (event, session) => {
-  if (event === 'PASSWORD_RECOVERY') {
-    // Tampilkan modal ganti password
-    const modal = document.createElement('div');
-    modal.id = 'recoveryModal';
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
-    modal.innerHTML = `
-      <div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-        <div style="text-align:center;margin-bottom:20px;">
-          <div style="font-size:36px;margin-bottom:8px;">🔐</div>
-          <h2 style="color:#1a6644;font-size:18px;margin-bottom:4px;">Buat Password Baru</h2>
-          <p style="color:#7a9585;font-size:13px;">Masukkan password baru untuk akun kamu</p>
-        </div>
-        <div style="margin-bottom:12px;">
-          <input id="recNewPass" type="password" placeholder="Password baru (min. 6 karakter)"
-            style="width:100%;padding:12px 14px;border:1.5px solid #d4e8dc;border-radius:10px;font-size:14px;outline:none;">
-        </div>
-        <div style="margin-bottom:20px;">
-          <input id="recConfPass" type="password" placeholder="Ulangi password baru"
-            style="width:100%;padding:12px 14px;border:1.5px solid #d4e8dc;border-radius:10px;font-size:14px;outline:none;">
-        </div>
-        <div id="recMsg" style="margin-bottom:12px;font-size:13px;text-align:center;min-height:18px;"></div>
-        <button id="recBtn" style="width:100%;padding:13px;background:linear-gradient(135deg,#1a6644,#2d9e6b);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">
-          ✅ Simpan Password Baru
-        </button>
-      </div>`;
-    document.body.appendChild(modal);
-
-    document.getElementById('recBtn').onclick = async () => {
-      const p1 = document.getElementById('recNewPass').value;
-      const p2 = document.getElementById('recConfPass').value;
-      const msg = document.getElementById('recMsg');
-      const btn = document.getElementById('recBtn');
-
-      if (p1.length < 6) { msg.innerHTML = '<span style="color:#dc2626;">❌ Password minimal 6 karakter</span>'; return; }
-      if (p1 !== p2) { msg.innerHTML = '<span style="color:#dc2626;">❌ Password tidak cocok</span>'; return; }
-
-      btn.disabled = true;
-      btn.textContent = 'Menyimpan...';
-      const { error } = await db.auth.updateUser({ password: p1 });
-      if (error) {
-        msg.innerHTML = '<span style="color:#dc2626;">❌ ' + error.message + '</span>';
-        btn.disabled = false;
-        btn.textContent = '✅ Simpan Password Baru';
-      } else {
-        msg.innerHTML = '<span style="color:#16a34a;">✅ Password berhasil diganti!</span>';
-        setTimeout(() => {
-          modal.remove();
-          window.location.hash = '';
-          window.location.reload();
-        }, 1500);
-      }
-    };
+// [FIX RESET PASSWORD] Konfigurasi auth eksplisit:
+// - detectSessionInUrl: otomatis baca token reset dari URL saat halaman dibuka
+// - flowType 'implicit': link reset membawa token di hash (#access_token) → ANDAL
+//   dibuka lintas HP/browser tanpa perlu "code verifier" (penyebab Auth session missing).
+const db = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    detectSessionInUrl: true,
+    persistSession: true,
+    autoRefreshToken: true,
+    flowType: 'implicit',
   }
+});
+
+// ════════════════ RESET PASSWORD — "Buat Password Baru" ════════════════
+let _recoveryShown = false;
+
+// Toggle lihat/sembunyikan password di modal reset
+function _recToggleEye(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁️'; }
+}
+
+async function _hasSession() {
+  try { return !!(await db.auth.getSession()).data.session; } catch (e) { return false; }
+}
+
+// Tukar token/code reset dari URL jadi sesi — dukung SEMUA format link Supabase
+// (implicit #access_token, PKCE ?code=, atau token_hash di query/hash).
+// Mengembalikan true kalau sesi berhasil terbentuk.
+async function _ensureRecoverySession() {
+  // 0) Mungkin detectSessionInUrl sudah menangani otomatis.
+  if (await _hasSession()) return true;
+
+  // Gabung parameter dari QUERY dan HASH (Supabase bisa menaruh di salah satunya).
+  const params = new URLSearchParams();
+  const qs = (window.location.search || '').replace(/^\?/, '');
+  const hs = (window.location.hash   || '').replace(/^#/, '');
+  if (qs) new URLSearchParams(qs).forEach((v, k) => params.set(k, v));
+  if (hs) new URLSearchParams(hs).forEach((v, k) => params.set(k, v));
+
+  try {
+    if (params.get('code')) {
+      await db.auth.exchangeCodeForSession(window.location.href);      // PKCE
+    } else {
+      const th = params.get('token_hash') || params.get('token');
+      if (th) await db.auth.verifyOtp({ type: 'recovery', token_hash: th });  // verify flow
+    }
+  } catch (e) { /* biar detectSessionInUrl yang menangani */ }
+
+  // Beri waktu proses async selesai — poll sampai ~1.8 detik.
+  for (let i = 0; i < 6; i++) {
+    if (await _hasSession()) return true;
+    await new Promise(r => setTimeout(r, 300));
+  }
+  return await _hasSession();
+}
+
+function showRecoveryModal() {
+  if (_recoveryShown || document.getElementById('recoveryModal')) return;
+  _recoveryShown = true;
+  const eyeBtn = (id) => `<button type="button" onclick="_recToggleEye('${id}',this)"
+    style="position:absolute;right:0;top:0;bottom:0;width:44px;background:transparent;border:none;cursor:pointer;
+           font-size:18px;color:#7a9585;display:flex;align-items:center;justify-content:center;">👁️</button>`;
+  const modal = document.createElement('div');
+  modal.id = 'recoveryModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:36px;margin-bottom:8px;">🔐</div>
+        <h2 style="color:#1a6644;font-size:18px;margin-bottom:4px;">Buat Password Baru</h2>
+        <p style="color:#7a9585;font-size:13px;">Masukkan password baru untuk akun kamu</p>
+      </div>
+      <div style="position:relative;margin-bottom:12px;">
+        <input id="recNewPass" type="password" placeholder="Password baru (min. 6 karakter)"
+          style="width:100%;padding:12px 46px 12px 14px;border:1.5px solid #d4e8dc;border-radius:10px;font-size:14px;outline:none;">
+        ${eyeBtn('recNewPass')}
+      </div>
+      <div style="position:relative;margin-bottom:20px;">
+        <input id="recConfPass" type="password" placeholder="Ulangi password baru"
+          style="width:100%;padding:12px 46px 12px 14px;border:1.5px solid #d4e8dc;border-radius:10px;font-size:14px;outline:none;">
+        ${eyeBtn('recConfPass')}
+      </div>
+      <div id="recMsg" style="margin-bottom:12px;font-size:13px;text-align:center;min-height:18px;"></div>
+      <button id="recBtn" style="width:100%;padding:13px;background:linear-gradient(135deg,#1a6644,#2d9e6b);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">
+        ✅ Simpan Password Baru
+      </button>
+    </div>`;
+  document.body.appendChild(modal);
+
+  document.getElementById('recBtn').onclick = async () => {
+    const p1 = document.getElementById('recNewPass').value;
+    const p2 = document.getElementById('recConfPass').value;
+    const msg = document.getElementById('recMsg');
+    const btn = document.getElementById('recBtn');
+
+    if (p1.length < 6) { msg.innerHTML = '<span style="color:#dc2626;">❌ Password minimal 6 karakter</span>'; return; }
+    if (p1 !== p2)     { msg.innerHTML = '<span style="color:#dc2626;">❌ Password tidak cocok</span>'; return; }
+
+    btn.disabled = true; btn.textContent = 'Menyimpan...';
+
+    // [FIX] Preflight: pastikan sesi recovery ADA. Tanpa ini updateUser pasti
+    // gagal "Auth session missing". Kalau belum ada, coba tukar token dari URL.
+    let sess = null;
+    try { sess = (await db.auth.getSession()).data.session; } catch (e) {}
+    if (!sess) { await _ensureRecoverySession(); try { sess = (await db.auth.getSession()).data.session; } catch (e) {} }
+    if (!sess) {
+      msg.innerHTML = '<span style="color:#dc2626;">❌ Sesi reset tidak ditemukan.<br>Link mungkin sudah kadaluarsa, atau dibuka di HP/browser yang berbeda dari saat minta reset. Minta link baru lalu buka di perangkat yang sama.</span>';
+      btn.disabled = false; btn.textContent = '✅ Simpan Password Baru';
+      return;
+    }
+
+    const { error } = await db.auth.updateUser({ password: p1 });
+    if (error) {
+      msg.innerHTML = '<span style="color:#dc2626;">❌ ' + error.message + '</span>';
+      btn.disabled = false; btn.textContent = '✅ Simpan Password Baru';
+    } else {
+      msg.innerHTML = '<span style="color:#16a34a;">✅ Password berhasil diganti! Mengalihkan ke login...</span>';
+      setTimeout(async () => {
+        try { await db.auth.signOut(); } catch (e) {}   // keluar dari sesi recovery
+        window.location.hash = '';
+        try { window.history.replaceState(null, '', window.location.pathname); } catch (e) {}
+        window.location.reload();
+      }, 1500);
+    }
+  };
+}
+
+// Event resmi dari Supabase (fire saat token recovery berhasil dibaca dari URL)
+db.auth.onAuthStateChange((event) => {
+  if (event === 'PASSWORD_RECOVERY') showRecoveryModal();
 });
 
 // ── Indikator Koneksi (MyBCA-style) ──────────────────────────────────────────
@@ -6471,6 +6547,18 @@ const TABEL_LABEL = {
   qurban_bayar: 'Pemasukan Qurban', qurban_keluar: 'Pengeluaran Qurban',
   acara: 'Acara', acara_bayar: 'Pembayaran Acara',
   foto_bukti: '🖼️ Foto Bukti Dihapus',
+  // Label tabel baru agar Riwayat menampilkan nama yang enak dibaca
+  gpmt: '🧒 Anak GPMT', gpsd: '👧 Anak GPSD',
+  anggota: 'Anggota', kategori_anggota: 'Kategori Anggota',
+  sesi: 'Sesi Absensi', kehadiran: 'Absensi', catatan_sesi: 'Catatan Pertemuan',
+  catatan: '📝 Catatan', login: '🔑 Login', user: '👤 User / Akun',
+  akses_user: '🔐 Akses User', arsip_saldo: '💾 Arsip Saldo',
+  recycle_bin: '🗑️ Tempat Sampah',
+  project: '📁 Project', project_bayar: '📁 Pemasukan Project',
+  project_keluar: '📁 Pengeluaran Project', project_bayar_gp: '📁 Bayar GP (Project)',
+  project_task: '📁 Task Project',
+  acara_bayar_gp: 'Bayar GP (Acara)', qurban_bayar_gp: 'Bayar GP (Qurban)',
+  musyawarah: 'Musyawarah', export_pdf: '📄 Export PDF', export_csv: '📄 Export CSV',
 };
 let rekapRows = [], rekapMeta = {}, rekapSesiStats = [], rekapSemuaAnggota = [];
 let iuranRows = [], iuranMeta = {}, kategoriCache = [], currentIuranId = null, iuranLain = [];
@@ -6604,6 +6692,12 @@ async function doRegister() {
       '<br><br>Hubungi Admin Master.', true);
     return;
   }
+
+  // [AUDIT] Catat pendaftaran akun baru (menunggu persetujuan).
+  // Catatan: pendaftar belum login, jadi "oleh" tercatat sbg tidak diketahui —
+  // yang penting ada jejak email + nama yang mendaftar.
+  if (typeof _auditLog === 'function') _auditLog('user', 'REGISTER', null,
+    { email, nama, jabatan: jabatan || 'User', status: 'pending' }, 'Pendaftaran akun baru: ' + email);
 
   resetBtn();
   $('regEmail').value = ''; $('regNama').value = ''; $('regJabatan').value = '';
@@ -7258,6 +7352,7 @@ async function simpanCatatan() {
   };
   // Try Supabase
   try {
+    const _editMode = !!currentCatatanId;
     if (currentCatatanId) {
       // Update
       const { error } = await db.from('catatan').update(payload).eq('id', currentCatatanId);
@@ -7269,6 +7364,9 @@ async function simpanCatatan() {
       if (error) throw error;
       currentCatatanId = data.id;
     }
+    // [AUDIT] Catat simpan/edit catatan
+    if (typeof _auditLog === 'function') _auditLog('catatan', _editMode ? 'UPDATE' : 'INSERT', null,
+      { judul: payload.judul }, (_editMode ? 'Edit catatan: ' : 'Buat catatan: ') + payload.judul);
     setMsg('catMsg', '✅ Catatan tersimpan!', false);
     await loadCatatan();
     setTimeout(tutupFormCatatan, 800);
@@ -7337,6 +7435,9 @@ async function hapusCatatan() {
         } else {
           await db.from('catatan').delete().eq('id', idToDelete);
         }
+        // [AUDIT] Catat hapus catatan (setelah konfirmasi)
+        if (typeof _auditLog === 'function') _auditLog('catatan', 'DELETE',
+          { judul: (savedRow && savedRow.judul) || judulCatatan }, null, 'Hapus catatan: ' + ((savedRow && savedRow.judul) || judulCatatan));
       } catch(e) {
         showToast('Gagal hapus: ' + e.message, 'error');
         // Rollback cache kalau gagal
@@ -8151,6 +8252,8 @@ async function saveGP(group) {
   const editId = $(group + '_editId') ? $(group + '_editId').value : '';
   try {
     let error;
+    // Snapshot data lama untuk audit (khusus mode edit)
+    const _lamaGP = editId ? (gpData[group] || []).find(x => String(x.id) === String(editId)) : null;
     if (editId) {
       ({ error } = await db.from(group).update(payload).eq('id', parseInt(editId)));
     } else {
@@ -8162,6 +8265,19 @@ async function saveGP(group) {
     if (error) {
       if (_isMissingTableErr(error)) { _showGPSqlNotice(group); return; }
       throw error;
+    }
+    // [AUDIT] Catat tambah/edit anak GPMT/GPSD ke Riwayat
+    if (typeof _auditLog === 'function') {
+      const _snap = { nama: payload.nama, nama_panggilan: payload.nama_panggilan || null,
+                      jenis_kelamin: payload.jenis_kelamin || null, tanggal_lahir: payload.tanggal_lahir || null,
+                      nama_sekolah: payload.nama_sekolah || null, kelas_gp: payload.kelas_gp || null };
+      if (editId) {
+        _auditLog(group, 'UPDATE',
+          _lamaGP ? { id: _lamaGP.id, nama: _lamaGP.nama } : { id: editId }, { id: editId, ..._snap },
+          'Edit anak ' + _gpLabel(group));
+      } else {
+        _auditLog(group, 'INSERT', null, _snap, 'Tambah anak ' + _gpLabel(group));
+      }
     }
     if (msg) { msg.style.color = '#16a34a'; msg.textContent = '✅ Tersimpan!'; }
     resetGPForm(group);
@@ -8196,6 +8312,12 @@ async function deleteGP(group, id) {
   try {
     const { error } = await db.from(group).delete().eq('id', id);
     if (error) throw error;
+    // [AUDIT] Catat hapus anak GPMT/GPSD ke Riwayat
+    if (typeof _auditLog === 'function') {
+      _auditLog(group, 'DELETE',
+        a ? { id: a.id, nama: a.nama, nama_sekolah: a.nama_sekolah || null, kelas_gp: a.kelas_gp || null } : { id },
+        null, 'Hapus anak ' + _gpLabel(group));
+    }
     await loadGP(group);
     showToast('Dihapus', 'success', 1500);
   } catch (e) { showToast('Gagal hapus: ' + e.message, 'error'); }
@@ -8208,6 +8330,12 @@ async function toggleGPFlag(group, id, field, checked) {
     if (error) throw error;
     const a = (gpData[group] || []).find(x => x.id === id);
     if (a) a[field] = checked;
+    // [AUDIT] Catat perubahan flag ikut_kegiatan / ikut_absensi anak GP
+    if (typeof _auditLog === 'function') {
+      _auditLog(group, 'UPDATE',
+        { id, [field]: !checked }, { id, nama: a ? a.nama : null, [field]: checked },
+        (checked ? 'Aktifkan ' : 'Matikan ') + field + ' anak ' + _gpLabel(group));
+    }
     showToast(checked ? '✅ Diaktifkan' : 'Dimatikan', 'success', 1200);
   } catch (e) { showToast('Gagal: ' + e.message, 'error'); }
 }
@@ -9763,6 +9891,9 @@ async function deleteSesi(id) {
       // Bersihkan absensi anak GP untuk sesi ini (tabel kehadiran_gp tidak punya cascade FK,
       // jadi harus dihapus manual biar tidak jadi record yatim yang muncul di rekap).
       else { try { await db.from('kehadiran_gp').delete().eq('sesi_id', id); } catch (e) {} }
+      // [AUDIT] Catat hapus sesi
+      if (typeof _auditLog === 'function') _auditLog('sesi', 'DELETE',
+        s ? { id: s.id, nama: s.nama, tanggal: s.tanggal } : { id }, null, 'Hapus sesi: ' + nama);
     },
     '📋'
   );
@@ -10171,6 +10302,11 @@ async function ubahTanggalPertemuan(sesiId, tanggalLama, rowId) {
     .eq('sesi_id', sesiId)
     .eq('tanggal', tanggalLama);
   // diabaikan errornya kalau tabel belum ada
+
+  // [AUDIT] Catat pemindahan tanggal pertemuan (absensi + catatan ikut pindah)
+  if (typeof _auditLog === 'function') _auditLog('kehadiran', 'UPDATE',
+    { sesi_id: sesiId, tanggal: tanggalLama }, { sesi_id: sesiId, tanggal: tanggalBaru },
+    'Ubah tanggal pertemuan ' + tanggalLama + ' → ' + tanggalBaru);
 
   if (msgEl) msgEl.innerHTML = '<span style="color:#16a34a;">✅ Tanggal berhasil diubah! Memuat ulang...</span>';
 
@@ -11597,6 +11733,9 @@ async function simpanTargetKategori() {
     }
     return;
   }
+  // [AUDIT] Catat perubahan target iuran qurban per kategori
+  if (typeof _auditLog === 'function') _auditLog('qurban_periode', 'UPDATE', null,
+    { periode_id: currentPeriodeId, target_per_kategori: tpk }, 'Ubah target qurban per kategori');
   setMsg('qdTpkMsg', '✅ Target per kategori tersimpan');
   loadPeriodeDetail(currentPeriodeId);
 }
@@ -13211,11 +13350,11 @@ const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus
 const BULAN_SG = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
 let chartBar = null, chartPie = null, chartRekap = null, laporanData = null, periodeDetailData = null;
 
-// ── Filter populasi laporan (MUMI default; bisa + GPMT/GPSD) ──
+// ── Filter populasi laporan (default SEMUA: MUMI + GPMT + GPSD, agar cocok Saldo) ──
 function _lapPopFilter() {
   let mumi = document.getElementById('lapPopMumi') ? document.getElementById('lapPopMumi').checked : true;
-  let gpmt = document.getElementById('lapPopGpmt') ? document.getElementById('lapPopGpmt').checked : false;
-  let gpsd = document.getElementById('lapPopGpsd') ? document.getElementById('lapPopGpsd').checked : false;
+  let gpmt = document.getElementById('lapPopGpmt') ? document.getElementById('lapPopGpmt').checked : true;
+  let gpsd = document.getElementById('lapPopGpsd') ? document.getElementById('lapPopGpsd').checked : true;
   if (!mumi && !gpmt && !gpsd) { mumi = true; if (document.getElementById('lapPopMumi')) document.getElementById('lapPopMumi').checked = true; }
   const parts = []; if (mumi) parts.push('MUMI'); if (gpmt) parts.push('GPMT'); if (gpsd) parts.push('GPSD');
   return { mumi, gpmt, gpsd, label: parts.join(' + ') };
@@ -13245,11 +13384,16 @@ function _gpLaporanTotals(pop, gp) {
   const g = (cond, v) => cond ? v : 0;
   const gpmtAcara = g(pop.gpmt, gp.gpmt.acara),  gpmtQurban = g(pop.gpmt, gp.gpmt.qurban);
   const gpsdAcara = g(pop.gpsd, gp.gpsd.acara),  gpsdQurban = g(pop.gpsd, gp.gpsd.qurban);
+  // Saldo awal GP dipisah per bidang (Acara vs Qurban) supaya bisa dilipat
+  // ke baris "Sisa Dana Acara"/"Sisa Dana Qurban" masing-masing dengan benar.
+  const gpAcaraAwal  = g(pop.gpmt, gp.gpmt.awalAcara)  + g(pop.gpsd, gp.gpsd.awalAcara);
+  const gpQurbanAwal = g(pop.gpmt, gp.gpmt.awalQurban) + g(pop.gpsd, gp.gpsd.awalQurban);
   const gpmtAwal = g(pop.gpmt, gp.gpmt.awalAcara + gp.gpmt.awalQurban);
   const gpsdAwal = g(pop.gpsd, gp.gpsd.awalAcara + gp.gpsd.awalQurban);
   return {
     gpmtAcara, gpmtQurban, gpsdAcara, gpsdQurban,
     gpAcara: gpmtAcara + gpsdAcara, gpQurban: gpmtQurban + gpsdQurban,
+    gpAcaraAwal, gpQurbanAwal,      // saldo awal GP per bidang
     gpAwal: gpmtAwal + gpsdAwal,
     gpMasuk: gpmtAcara + gpmtQurban + gpsdAcara + gpsdQurban,
   };
@@ -13272,9 +13416,9 @@ function _gpLaporanSectionHtml(d) {
   const sub = (d.gpAcara || 0) + (d.gpQurban || 0);
   return `
     <div style="border-left:4px solid #7c3aed;padding-left:10px;margin:14px 0 6px;">
-      <h2 style="font-size:14px;color:#7c3aed;margin:0;">🧒👧 Kontribusi Anak GP (GPMT/GPSD)</h2>
+      <h2 style="font-size:14px;color:#7c3aed;margin:0;">🧒👧 Rincian Kontribusi Anak GP (GPMT/GPSD)</h2>
     </div>
-    <p class="muted" style="font-size:11px;margin:0 0 6px;">Uang anak GP ini bagian dari dana Acara/Qurban — tercatat terpisah dari anggota MUMI.</p>
+    <p class="muted" style="font-size:11px;margin:0 0 6px;">ℹ️ Angka di bawah <b>SUDAH termasuk</b> dalam "Sisa Dana Acara" &amp; "Sisa Dana Qurban" di atas — ini hanya rincian, <b>jangan dijumlah lagi</b>.</p>
     <table class="rekap" style="margin-bottom:16px;"><tbody>
       ${rows.join('')}
       <tr style="background:#f3eefe;border-top:2px solid #7c3aed;"><td class="nm" style="font-weight:800;">SUBTOTAL ANAK GP</td><td style="text-align:right;font-weight:900;color:#7c3aed;">${IDR(sub)}</td></tr>
@@ -13369,11 +13513,28 @@ async function buatLaporan() {
   const gpT = _gpLaporanTotals(pop, gpRaw);
   const _mm = pop.mumi ? 1 : 0;  // kalau MUMI tidak dicentang, bagian MUMI tidak dihitung
 
-  // ── Gabungkan ── (kategori MUMI hanya dipakai kalau MUMI dicentang)
-  const catMasuk  = pop.mumi ? { ...catKasMasuk,  ...catQMasuk,  ...catAMasuk  } : {};
+  // ── [SINKRON SALDO] Lipat kontribusi anak GP ke bidang Acara & Qurban ──
+  // Menu Saldo SELALU menggabungkan uang anak GP ke "Sisa Dana Acara/Qurban".
+  // Agar Laporan cocok dengan Saldo, uang GP (yang sudah difilter populasi)
+  // dilipat ke angka Acara/Qurban di sini. GP hanya pemasukan (tidak ada keluar).
+  // Catatan: MUMI digate _mm, GP digate pop.gpmt/gpsd — jadi filter tetap jalan.
+  const acaraAwalC   = (_mm ? acaraAwal   : 0) + gpT.gpAcaraAwal;
+  const acaraMasukC  = (_mm ? acaraMasuk  : 0) + gpT.gpAcara;
+  const acaraKeluarC = (_mm ? acaraKeluar : 0);
+  const qurbanAwalC   = (_mm ? qurbanAwal   : 0) + gpT.gpQurbanAwal;
+  const qurbanMasukC  = (_mm ? qurbanMasuk  : 0) + gpT.gpQurban;
+  const qurbanKeluarC = (_mm ? qurbanKeluar : 0);
+
+  // Kategori pemasukan: tambah rincian anak GP (transparan; ikut menjumlah).
+  const catGpAcara  = gpT.gpAcara  ? { '🧒👧 Acara — Anak GP':  gpT.gpAcara  } : {};
+  const catGpQurban = gpT.gpQurban ? { '🧒👧 Qurban — Anak GP': gpT.gpQurban } : {};
+  const catMasuk  = { ...(pop.mumi ? { ...catKasMasuk, ...catQMasuk, ...catAMasuk } : {}), ...catGpAcara, ...catGpQurban };
   const catKeluar = pop.mumi ? { ...catKasKeluar, ...catQKeluar, ...catAKeluar } : {};
-  const saldoAwal  = (kasAwal + qurbanAwal + acaraAwal) * _mm + gpT.gpAwal;
-  const totMasuk   = (kasMasuk + qurbanMasuk + acaraMasuk) * _mm + gpT.gpMasuk;
+
+  // Grand total pakai nilai gabungan — hasilnya IDENTIK dengan rumus lama
+  // (…*_mm + gpAwal / + gpMasuk), jadi tidak ada double-count.
+  const saldoAwal  = (kasAwal  * _mm) + qurbanAwalC  + acaraAwalC;
+  const totMasuk   = (kasMasuk * _mm) + qurbanMasukC + acaraMasukC;
   const totKeluar  = (kasKeluar + qurbanKeluar + acaraKeluar) * _mm;
   const saldoAkhir = saldoAwal + totMasuk - totKeluar;
   const jumlahTx   = (pop.mumi ? (txBulan.length + qbBulan.length + qkBulan.length + abBulan.length) : 0);
@@ -13403,8 +13564,8 @@ async function buatLaporan() {
     bulanNama: BULAN[m-1], y, saldoAwal, totMasuk, totKeluar, saldoAkhir,
     catMasuk, catKeluar, barData, jumlahTx,
     kasAwal, kasMasuk, kasKeluar, catKasMasuk, catKasKeluar,
-    qurbanAwal: _mm?qurbanAwal:0, qurbanMasuk: _mm?qurbanMasuk:0, qurbanKeluar: _mm?qurbanKeluar:0,
-    acaraAwal: _mm?acaraAwal:0, acaraMasuk: _mm?acaraMasuk:0, acaraKeluar: _mm?acaraKeluar:0,
+    qurbanAwal: qurbanAwalC, qurbanMasuk: qurbanMasukC, qurbanKeluar: qurbanKeluarC,
+    acaraAwal: acaraAwalC, acaraMasuk: acaraMasukC, acaraKeluar: acaraKeluarC,
     pop,
     gpmtAcara: gpT.gpmtAcara, gpmtQurban: gpT.gpmtQurban,
     gpsdAcara: gpT.gpsdAcara, gpsdQurban: gpT.gpsdQurban,
@@ -13751,6 +13912,8 @@ async function addKategoriFromAnggota() {
     nama, iuran_kas: 0, urutan: kategoriCache.length + 1,
   });
   if (error) { setMsg('agKatMsg', 'Gagal: ' + error.message, true); return; }
+  // [AUDIT] Catat tambah kategori dari menu Anggota
+  if (typeof _auditLog === 'function') _auditLog('kategori_anggota', 'INSERT', null, { nama }, 'Tambah kategori: ' + nama);
   setMsg('agKatMsg', '✅ Kategori "' + nama + '" ditambahkan. Atur target nominal di menu Kas Masuk / Acara / Qurban.');
   $('agKatNama').value = '';
   loadKategori();
@@ -13758,10 +13921,15 @@ async function addKategoriFromAnggota() {
 
 async function saveKategoriIuran(id, val) {
   const v = parseUang(val);
+  const k = kategoriCache.find(x => x.id === id);
+  const _lama = k ? k.iuran_kas : null;
   const { error } = await db.from('kategori_anggota').update({ iuran_kas: v }).eq('id', id);
   if (error) { alert('Gagal simpan: ' + error.message); return; }
-  const k = kategoriCache.find(x => x.id === id);
   if (k) k.iuran_kas = v;
+  // [AUDIT] Catat perubahan nominal iuran kategori
+  if (typeof _auditLog === 'function') _auditLog('kategori_anggota', 'UPDATE',
+    { id, nama: k ? k.nama : null, iuran_kas: _lama }, { id, nama: k ? k.nama : null, iuran_kas: v },
+    'Ubah iuran kategori ' + (k ? k.nama : '#' + id));
 }
 
 async function deleteKategori(id) {
@@ -14733,16 +14901,25 @@ async function buatLaporanTahunan() {
   const gpT = _gpLaporanTotals(pop, gpRaw);
   const _mm = pop.mumi ? 1 : 0;
 
-  // Total gabungan (anak GP ikut kalau dicentang; bagian MUMI 0 kalau MUMI tidak dicentang)
-  const totalMasuk  = (kasMasukTot + qurbanMasuk + acaraMasuk) * _mm + gpT.gpMasuk;
+  // [SINKRON SALDO] Lipat uang anak GP ke Acara & Qurban (sama seperti laporan bulanan)
+  // agar "Sisa Dana Acara/Qurban" cocok dengan menu Saldo. GP hanya pemasukan.
+  const acaraAwalC   = (_mm?acaraAwal:0)  + gpT.gpAcaraAwal;
+  const acaraMasukC  = (_mm?acaraMasuk:0) + gpT.gpAcara;
+  const acaraKeluarC = (_mm?acaraKeluar:0);
+  const qurbanAwalC   = (_mm?qurbanAwal:0)  + gpT.gpQurbanAwal;
+  const qurbanMasukC  = (_mm?qurbanMasuk:0) + gpT.gpQurban;
+  const qurbanKeluarC = (_mm?qurbanKeluar:0);
+
+  // Total gabungan — hasilnya IDENTIK dengan rumus lama (…*_mm + gpMasuk), tanpa double-count.
+  const totalMasuk  = (kasMasukTot * _mm) + qurbanMasukC + acaraMasukC;
   const totalKeluar = (kasKeluarTot + qurbanKeluar + acaraKeluar) * _mm;
 
   laporanTahunanData = {
     thn, firstYear, lastYear,
     kasAwal, kasMasukTot, kasKeluarTot, kasAkhir,
     kasMasukKat, kasKeluarKat, kasPerBulan,
-    qurbanAwal: _mm?qurbanAwal:0, qurbanMasuk: _mm?qurbanMasuk:0, qurbanKeluar: _mm?qurbanKeluar:0, qurbanPerBulan,
-    acaraAwal: _mm?acaraAwal:0, acaraMasuk: _mm?acaraMasuk:0, acaraKeluar: _mm?acaraKeluar:0, acaraPerBulan,
+    qurbanAwal: qurbanAwalC, qurbanMasuk: qurbanMasukC, qurbanKeluar: qurbanKeluarC, qurbanPerBulan,
+    acaraAwal: acaraAwalC, acaraMasuk: acaraMasukC, acaraKeluar: acaraKeluarC, acaraPerBulan,
     totalMasuk, totalKeluar,
     pop,
     gpmtAcara: gpT.gpmtAcara, gpmtQurban: gpT.gpmtQurban,
@@ -15184,14 +15361,17 @@ function _auditSummary(e) {
     return 'Disimpan ulang (tidak ada perubahan nilai terdeteksi)';
   }
 
-  const row = e.aksi === 'DELETE' ? lama : baru;
+  const _aksiHapus = ['DELETE','PURGE','PURGE_ALL','REJECT'].includes(e.aksi);
+  const row = _aksiHapus ? (Object.keys(lama).length ? lama : baru) : baru;
   const bits = [];
   if (row.jumlah != null)      bits.push(IDR(row.jumlah));
   if (row.target_dana != null) bits.push('target ' + IDR(row.target_dana));
-  const ket = row.keterangan || row.nama || '';
+  const ket = row.keterangan || row.nama || row.judul || row.email || row.label || row.task || '';
   if (ket) bits.push(String(ket));
   if (row.tanggal) bits.push(String(row.tanggal));
-  return bits.join(' · ') || '(detail tidak tersedia)';
+  // Fallback terakhir: kalimat keterangan yang dikirim _auditLog (disimpan sbg _keterangan)
+  const _human = (baru && baru._keterangan) || '';
+  return bits.join(' · ') || String(_human) || '(detail tidak tersedia)';
 }
 
 // ─────────────── CATAT LOG MANUAL (untuk aksi yang tidak di-trigger DB) ───────────────
@@ -15255,10 +15435,21 @@ async function loadRiwayat(filter) {
   _renderRiwayat();
 }
 
+// Label aksi audit — dipakai badge layar & export. Mengenali aksi non-standar
+// (RESTORE/PURGE/REGISTER/APPROVE/dll) supaya tidak salah tampil jadi "Hapus".
+function _auditAksiInfo(a) {
+  switch (a) {
+    case 'INSERT': case 'CREATE': case 'REGISTER': return { teks: 'Tambah',  cls: 'st-done' };
+    case 'UPDATE': case 'APPROVE': case 'RESTORE':  return { teks: a === 'APPROVE' ? 'Setujui' : a === 'RESTORE' ? 'Pulihkan' : 'Ubah', cls: 'st-in_progress' };
+    case 'RESET_PASSWORD': case 'CHANGE_PASSWORD':  return { teks: 'Password', cls: 'st-in_progress' };
+    case 'DELETE': case 'PURGE': case 'PURGE_ALL': case 'REJECT':
+      return { teks: a === 'REJECT' ? 'Tolak' : (a === 'PURGE' || a === 'PURGE_ALL') ? 'Hapus Permanen' : 'Hapus', cls: 'st-cancelled' };
+    default: return { teks: a || '-', cls: 'st-in_progress' };
+  }
+}
+
 function _renderRiwayat() {
-  const badge = a => a === 'INSERT' ? '<span class="st-badge st-done">Tambah</span>'
-    : a === 'UPDATE' ? '<span class="st-badge st-in_progress">Ubah</span>'
-    : '<span class="st-badge st-cancelled">Hapus</span>';
+  const badge = a => { const _i = _auditAksiInfo(a); return '<span class="st-badge ' + _i.cls + '">' + _i.teks + '</span>'; };
   $('riwayatList').innerHTML = rwData.map((e, i) => {
     const sensitif = _auditIsSensitive(e);
     return `
@@ -15356,10 +15547,16 @@ function bukaDetailLog(idx) {
   }
 
   let detailHtml = '';
-  if (e.aksi === 'DELETE') {
-    detailHtml = tabelData(lama, '🗑️ Data yang Dihapus', '#dc2626');
-  } else if (e.aksi === 'INSERT') {
+  // Aksi bertipe hapus (DELETE/PURGE/PURGE_ALL/REJECT) → tampilkan snapshot data_lama.
+  const _aksiHapus = ['DELETE','PURGE','PURGE_ALL','REJECT'].includes(e.aksi);
+  const _aksiTambah = ['INSERT','CREATE','REGISTER'].includes(e.aksi);
+  if (_aksiHapus) {
+    detailHtml = tabelData(lama, '🗑️ Data (sebelum dihapus)', '#dc2626');
+  } else if (_aksiTambah) {
     detailHtml = tabelData(baru, '✅ Data yang Ditambahkan', '#16a34a');
+  } else if (e.aksi !== 'UPDATE' && Object.keys(lama).length === 0) {
+    // Aksi lain non-update tanpa data_lama (RESTORE, password, dll) → tampilkan data_baru saja
+    detailHtml = tabelData(baru, '📄 Detail', '#1a6644');
   } else {
     const semuaKey = [...new Set([...Object.keys(lama), ...Object.keys(baru)])];
     const perubahanRows = semuaKey.filter(k => JSON.stringify(lama[k]) !== JSON.stringify(baru[k])).map(k => {
@@ -15395,10 +15592,8 @@ function bukaDetailLog(idx) {
     detailHtml += tabelData(baru, '📄 Data Sesudah', '#1a6644');
   }
 
-  $('rwDetailAksi').innerHTML =
-    (e.aksi === 'INSERT' ? '<span class="st-badge st-done">Tambah</span>'
-    : e.aksi === 'UPDATE' ? '<span class="st-badge st-in_progress">Ubah</span>'
-    : '<span class="st-badge st-cancelled">Hapus</span>');
+  { const _i = _auditAksiInfo(e.aksi);
+    $('rwDetailAksi').innerHTML = '<span class="st-badge ' + _i.cls + '">' + _i.teks + '</span>'; }
   $('rwDetailJudul').textContent = TABEL_LABEL[e.tabel] || e.tabel;
   $('rwDetailMeta').textContent  = _fmtWaktu(e.waktu) + ' · oleh ' + (e.oleh_nama || '(tidak diketahui)');
   $('rwDetailBody').innerHTML    = detailHtml || '<p class="muted">Tidak ada data detail tersedia.</p>';
@@ -15653,7 +15848,7 @@ async function rwEksporPDF() {
   const WARNA = { INSERT:[220,252,231], UPDATE:[254,252,232], DELETE:[254,226,226] };
 
   const rows = rwData.map(e => {
-    const aksiLabel = e.aksi === 'INSERT' ? 'Tambah' : e.aksi === 'UPDATE' ? 'Ubah' : 'Hapus';
+    const aksiLabel = _auditAksiInfo(e.aksi).teks;
     const url = getUrl(e);
     return {
       waktu:   _fmtWaktu(e.waktu),
@@ -16167,6 +16362,8 @@ async function resetUserPassword(emailArg) {
   setMsg(msgId, '⏳ Mengirim email...');
   const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: 'https://kikysr27.github.io/mumimb3/' });
   if (error) { setMsg(msgId, '❌ Gagal: ' + error.message, true); return; }
+  // [AUDIT] Catat pengiriman link reset password oleh admin
+  if (typeof _auditLog === 'function') _auditLog('user', 'RESET_PASSWORD', null, { email }, 'Kirim link reset password ke ' + email);
   setMsg(msgId, '✅ Link reset password dikirim ke ' + email + '. Minta user cek email (termasuk folder Spam).');
   if (!fromBtn) $('resetUserEmail').value = '';
 }
@@ -16179,6 +16376,9 @@ async function changeMyPassword() {
   setMsg('myPassMsg', '⏳ Menyimpan...');
   const { error } = await db.auth.updateUser({ password: pass });
   if (error) { setMsg('myPassMsg', '❌ Gagal: ' + error.message, true); return; }
+  // [AUDIT] Catat ganti password sendiri (password TIDAK ikut dicatat)
+  if (typeof _auditLog === 'function') _auditLog('user', 'CHANGE_PASSWORD', null,
+    { email: currentProf?.email || null }, 'Ganti password sendiri');
   setMsg('myPassMsg', '✅ Password berhasil diganti. Gunakan password baru saat login berikutnya.');
   $('myNewPass').value = '';
 }
@@ -17820,14 +18020,18 @@ onLoggedIn = async function(user) {
 
 // ─────────────── BOOT ───────────────
 (async () => {
-  // Cek apakah ini redirect dari link reset password
-  const hashParams = new URLSearchParams(window.location.hash.replace('#', '?'));
-  const isRecovery = hashParams.get('type') === 'recovery';
+  // Cek apakah ini redirect dari link reset password (bisa di hash ATAU query).
+  const hash = window.location.hash || '';
+  const qs   = window.location.search || '';
+  const isRecovery = /type=recovery/.test(hash) || /type=recovery/.test(qs) || /[?&]code=/.test(qs);
 
   if (isRecovery) {
-    // Logout session lama dulu supaya PASSWORD_RECOVERY bisa tertangkap
-    await db.auth.signOut();
-    return; // Biarkan onAuthStateChange yang handle
+    // [FIX] JANGAN signOut di sini — dulu baris ini menghapus sesi recovery
+    // sehingga saat "Simpan Password" muncul "Auth session missing".
+    // Cukup pastikan sesi recovery terbentuk, lalu tampilkan modal "Buat Password Baru".
+    await _ensureRecoverySession();
+    showRecoveryModal();
+    return;
   }
 
   const { data } = await db.auth.getSession();
@@ -18433,10 +18637,8 @@ window._auditHapusAnggota = function(id, nama) {
       ].join(' ').toLowerCase();
       return haystack.includes(q);
     });
-    // Render filtered
-    const badge = a => a === 'INSERT' ? '<span class="st-badge st-done">Tambah</span>'
-      : a === 'UPDATE' ? '<span class="st-badge st-in_progress">Ubah</span>'
-      : '<span class="st-badge st-cancelled">Hapus</span>';
+    // Render filtered (pakai peta aksi terpusat agar aksi non-standar tampil benar)
+    const badge = a => { const _i = _auditAksiInfo(a); return '<span class="st-badge ' + _i.cls + '">' + _i.teks + '</span>'; };
     $('riwayatList').innerHTML = filtered.length
       ? filtered.map((e) => {
         const idxAsli = rwData.indexOf(e);
@@ -23131,6 +23333,9 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     if(group==='gpmt') p.ikut_gpmt = checked; else p.ikut_gpsd = checked;
     p.updated = new Date().toISOString();
     await saveProjects(projects);
+    if (typeof _auditLog === 'function') _auditLog('project', 'UPDATE', null,
+      { project: p.nama, group: group, diikutkan: checked },
+      (checked?'Ikutkan ':'Lepas ')+group.toUpperCase()+' pada project "'+(p.nama||'')+'"');
     await _prjRenderGpSection(id);
     showToast(checked ? ('🧒 '+group.toUpperCase()+' diikutkan ke project ini') : (group.toUpperCase()+' tidak diikutkan'), 'success', 1800);
   };
@@ -23160,6 +23365,9 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     });
     p.updated = new Date().toISOString();
     await saveProjects(projects);
+    if (typeof _auditLog === 'function') _auditLog('project_bayar_gp', 'INSERT', null,
+      { project: p.nama, nama: nama, jumlah: jml, tanggal: $('prjGpBayarTgl').value || null },
+      'Bayar anak GP di project "'+(p.nama||'')+'"');
     showToast('✅ Pembayaran anak GP dicatat!','success');
     await _prjRenderGpSection(id);
   };
@@ -23180,6 +23388,9 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
         pp._bayarGp = (pp._bayarGp||[]).filter(function(b){ return String(b.id)!==String(bayarId); });
         pp.updated = new Date().toISOString();
         await saveProjects(pr);
+        if (typeof _auditLog === 'function') _auditLog('project_bayar_gp', 'DELETE',
+          row ? { project: pp.nama, nama: row.nama, jumlah: row.jumlah } : { id: bayarId }, null,
+          'Hapus bayar anak GP di project "'+(pp.nama||'')+'"');
         _prjRenderGpSection(id);
       },
       '🧒'
@@ -23338,6 +23549,9 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     });
     p.updated = new Date().toISOString();
     saveProjects(projects);
+    if (typeof _auditLog === 'function') _auditLog('project_bayar', 'INSERT', null,
+      { project: p.nama, nama: nama, jumlah: jml, tanggal: $('prjBayarTgl').value || null, non_anggota: !!luar },
+      'Pemasukan project "'+(p.nama||'')+'"');
     showToast('✅ Pemasukan ditambahkan!');
     prjOpenDetail(prjId);
   };
@@ -23346,9 +23560,13 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     var projects=loadProjects();
     var p=projects.find(function(x){ return x.id===prjId; });
     if(!p || !p._bayar) return;
+    var _row = p._bayar.find(function(b){ return String(b.id)===String(bayarId); });
     p._bayar = p._bayar.filter(function(b){ return String(b.id)!==String(bayarId); });
     p.updated = new Date().toISOString();
     saveProjects(projects);
+    if (typeof _auditLog === 'function') _auditLog('project_bayar', 'DELETE',
+      _row ? { project: p.nama, nama: _row.nama, jumlah: _row.jumlah } : { id: bayarId }, null,
+      'Hapus pemasukan project "'+(p.nama||'')+'"');
     showToast('Pemasukan dihapus');
     prjOpenDetail(prjId);
   };
@@ -23380,6 +23598,9 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     });
     p.updated = new Date().toISOString();
     saveProjects(projects);
+    if (typeof _auditLog === 'function') _auditLog('project_keluar', 'INSERT', null,
+      { project: p.nama, keterangan: ket, jumlah: jml, kategori: $('prjKeluarKat').value || 'lain', tanggal: $('prjKeluarTgl').value || null },
+      'Pengeluaran project "'+(p.nama||'')+'"');
     showToast('✅ Pengeluaran project dicatat!');
     prjOpenDetail(prjId);
   };
@@ -23399,6 +23620,9 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
         pp._keluar = (pp._keluar||[]).filter(function(k){ return String(k.id)!==String(keluarId); });
         pp.updated = new Date().toISOString();
         await saveProjects(pr);
+        if (typeof _auditLog === 'function') _auditLog('project_keluar', 'DELETE',
+          row ? { project: pp.nama, keterangan: row.keterangan, jumlah: row.jumlah } : { id: keluarId }, null,
+          'Hapus pengeluaran project "'+(pp.nama||'')+'"');
         prjOpenDetail(prjId);
       },
       '💸'
@@ -23463,6 +23687,10 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     var tasks=loadTasks(prjId);
     tasks.push({id:uuid(),text:text,done:false,created:today(),desc:'',link:'',photos:[],assignee:'',deadline:''});
     saveTasks(prjId,tasks);
+    if (typeof _auditLog === 'function') {
+      var _pn = (loadProjects().find(function(x){return x.id===prjId;})||{}).nama || prjId;
+      _auditLog('project_task', 'INSERT', null, { project: _pn, task: text }, 'Tambah task di project "'+_pn+'"');
+    }
     inp.value='';
     showToast('✅ Task ditambahkan! Klik task untuk tambah detail.','success',3000);
     prjOpenDetail(prjId);
@@ -23472,12 +23700,19 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     var tasks=loadTasks(prjId);
     if(tasks[idx]) tasks[idx].done=val;
     saveTasks(prjId,tasks);
+    if (typeof _auditLog === 'function' && tasks[idx]) {
+      var _pn2 = (loadProjects().find(function(x){return x.id===prjId;})||{}).nama || prjId;
+      _auditLog('project_task', 'UPDATE', null, { project: _pn2, task: tasks[idx].text, selesai: !!val },
+        (val?'Tandai selesai':'Batal selesai')+' task di project "'+_pn2+'"');
+    }
     var allDone=tasks.length&&tasks.every(function(t){return t.done;});
     if(allDone){
       var projects=loadProjects();
       var p=projects.find(function(x){return x.id===prjId;});
       if(p&&p.status!=='done'&&p.status!=='cancelled'){
         p.status='done';saveProjects(projects);
+        if (typeof _auditLog === 'function') _auditLog('project', 'UPDATE', null,
+          { project: p.nama, status: 'done' }, 'Status project "'+(p.nama||'')+'" → Done (semua task selesai)');
         showToast('🎉 Semua task selesai! Status → Done','success',3000);
       }
     }
@@ -23490,6 +23725,10 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     if(!deletedTask) return;
     tasks.splice(idx,1);
     saveTasks(prjId,tasks);
+    if (typeof _auditLog === 'function') {
+      var _pn3 = (loadProjects().find(function(x){return x.id===prjId;})||{}).nama || prjId;
+      _auditLog('project_task', 'DELETE', { project: _pn3, task: deletedTask.text }, null, 'Hapus task di project "'+_pn3+'"');
+    }
     prjOpenDetail(prjId);
 
     var label = deletedTask.text || 'Task';
@@ -23610,6 +23849,12 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     tasks[_taskModalIdx].assignee  = ($id('taskModalAssignee').value||'').trim();
     tasks[_taskModalIdx].updated   = new Date().toISOString();
     saveTasks(_taskModalPrjId, tasks);
+    if (typeof _auditLog === 'function') {
+      var _pn4 = (loadProjects().find(function(x){return x.id===_taskModalPrjId;})||{}).nama || _taskModalPrjId;
+      _auditLog('project_task', 'UPDATE', null,
+        { project: _pn4, task: name, selesai: !!tasks[_taskModalIdx].done, deadline: _dl, assignee: tasks[_taskModalIdx].assignee || null },
+        'Edit detail task di project "'+_pn4+'"');
+    }
     showToast('✅ Detail task tersimpan!','success');
     closeTaskModal();
     prjOpenDetail(_taskModalPrjId);
@@ -23619,7 +23864,14 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   window.prjUpdateStatus = function(id,status){
     var projects=loadProjects();
     var p=projects.find(function(x){return x.id===id;});
-    if(p){ p.status=status; saveProjects(projects); showToast('Status diperbarui → '+STATUS_LABELS[status]); prjOpenDetail(id); }
+    if(p){
+      var _lama = p.status;
+      p.status=status; saveProjects(projects);
+      if (typeof _auditLog === 'function') _auditLog('project', 'UPDATE',
+        { project: p.nama, status: _lama }, { project: p.nama, status: status },
+        'Ubah status project "'+(p.nama||'')+'" → '+(STATUS_LABELS[status]||status));
+      showToast('Status diperbarui → '+STATUS_LABELS[status]); prjOpenDetail(id);
+    }
   };
 
   /* ─── DELETE ─────────────────────────────────────────── */
@@ -23634,6 +23886,9 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     projects = projects.filter(function(p){return p.id!==id;});
     saveProjects(projects);
     localStorage.removeItem(TASK_KEY+'_'+id);
+    if (typeof _auditLog === 'function') _auditLog('project', 'DELETE',
+      { nama: nama, status: deletedProject.status, budget: deletedProject.budget || null }, null,
+      'Hapus project "'+nama+'" (ada masa undo)');
     prjBackToList();
 
     showUndoToast(nama,
@@ -23798,6 +24053,10 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       });
     }
     saveProjects(projects);
+    if (typeof _auditLog === 'function') _auditLog('project', id?'UPDATE':'INSERT',
+      id ? { id: id } : null,
+      { nama: nama, status: $id('prjStatus').value, prioritas: $id('prjPrioritas').value, budget: $id('prjBudget').value || null },
+      (id?'Edit project "':'Buat project "')+nama+'"');
     var prjDescEl0 = $id('prjDeskripsi');
     if (prjDescEl0 && prjDescEl0._resetAutoSaveBaseline) prjDescEl0._resetAutoSaveBaseline();
     showToast(id?'✅ Project diperbarui!':'🎉 Project baru ditambahkan!','success');
@@ -24118,6 +24377,9 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
         console.warn('arsip Supabase warning:', error.message);
       }
     } catch(e) {}
+    // [AUDIT] Catat arsip snapshot saldo tahunan
+    if (typeof _auditLog === 'function') _auditLog('arsip_saldo', 'INSERT', null,
+      { tahun: tahun }, 'Arsip snapshot saldo tahun ' + tahun);
     const msgEl = document.getElementById('arsipSaldoMsg');
     if (msgEl) {
       msgEl.innerHTML = '<span style="color:#16a34a;">✅ Snapshot tahun ' + tahun + ' tersimpan!</span>';
@@ -24697,6 +24959,10 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     var restoredRow = (res.data && res.data[0]) || row;
     var restoredId  = restoredRow.id || row.id;
 
+    // [AUDIT] Catat pemulihan data dari tempat sampah
+    if (typeof _auditLog === 'function') _auditLog(e.tabel, 'RESTORE', null,
+      { label: e.label, tabel: e.tabel }, 'Pulihkan dari tempat sampah: ' + (e.label || e.tabel));
+
     // Optimistik: keluarkan dari tampilan tempat sampah dulu
     recycleData = recycleData.filter(function(x){ return x.id !== id; });
     renderRecycle();
@@ -24779,6 +25045,10 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
         // Konfirmasi: hapus dari DB
         var res = await db.from('recycle_bin').delete().eq('id', id);
         if(res.error){ showToast('Gagal: ' + res.error.message, 'error'); if(savedE){ recycleData.unshift(savedE); recycleData.sort(function(a,b){ return new Date(b.deleted_at)-new Date(a.deleted_at); }); } renderRecycle(); return; }
+        // [AUDIT] Catat hapus permanen dari tempat sampah
+        if (typeof _auditLog === 'function') _auditLog(savedE ? savedE.tabel : 'recycle_bin', 'PURGE',
+          savedE ? { label: savedE.label, tabel: savedE.tabel } : { id }, null,
+          'Hapus PERMANEN dari tempat sampah: ' + (savedE ? savedE.label : id));
         showToast('🗑️ Dihapus permanen', 'success');
       },
       '🗑️'
@@ -24807,6 +25077,10 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
         for(var i=0;i<savedIds.length;i+=100){
           await db.from('recycle_bin').delete().in('id', savedIds.slice(i, i+100));
         }
+        // [AUDIT] Catat pengosongan seluruh tempat sampah
+        if (typeof _auditLog === 'function') _auditLog('recycle_bin', 'PURGE_ALL', null,
+          { jumlah: savedIds.length, daftar: savedData.slice(0, 50).map(function(x){ return x.label; }) },
+          'Kosongkan tempat sampah (' + savedIds.length + ' item)');
         showToast('🗑️ Tempat sampah dikosongkan', 'success');
       },
       '🗑️'
