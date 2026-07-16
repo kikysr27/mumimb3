@@ -9,6 +9,11 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js" defer></script>
+<!-- Cloudflare Turnstile: proteksi form Login/Daftar/Lupa Password dari bot pendaftaran
+     massal. Gratis tanpa batas, lebih modern dari captcha klasik (checkbox tanpa puzzle
+     gambar untuk kebanyakan user). render=explicit → kita kendalikan sendiri kapan/dimana
+     widget muncul (lihat _tsOnReady). -->
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=_tsOnReady&render=explicit" async defer></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -1709,6 +1714,7 @@
                  display:flex;align-items:center;justify-content:center;border-radius:0 10px 10px 0;
                  box-shadow:none;transform:none;">👁️</button>
       </div>
+      <div id="captchaLogin" style="margin:12px 0;"></div>
       <button id="loginBtn" onclick="doLogin()">Masuk</button>
       <div id="loginMsg"></div>
 
@@ -1755,6 +1761,7 @@
                  box-shadow:none;transform:none;">👁️</button>
       </div>
 
+      <div id="captchaRegister" style="margin:12px 0;"></div>
       <button id="regBtn" onclick="doRegister()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">📨 Kirim Pendaftaran</button>
       <div id="regMsg"></div>
       <div style="text-align:center;margin-top:14px;">
@@ -1773,6 +1780,7 @@
       <label>Email Akun</label>
       <input id="forgotEmail" type="email" placeholder="cth: namakamu@gmail.com" autocomplete="off">
 
+      <div id="captchaForgot" style="margin:12px 0;"></div>
       <button id="forgotBtn" onclick="doForgotPassword()" style="background:linear-gradient(135deg,#d97706,#f59e0b);">📧 Kirim Link Reset Password</button>
       <div id="forgotMsg"></div>
       <div style="text-align:center;margin-top:14px;">
@@ -2383,6 +2391,39 @@
         </div>
       </div>
 
+      <!-- ═══════ MODAL: KELUARKAN ANGGOTA / ANAK GP ═══════ -->
+      <!-- Dipakai bersama oleh Anggota MUMI, GPMT, GPSD. Bukan hapus — status jadi
+           'tidak_aktif' + tercatat tanggal & alasan keluar, supaya bisa direkap
+           per bulan di Laporan (mis. "Juni: 2 anggota keluar - menikah, pindah kota"). -->
+      <div id="keluarModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:16px;">
+        <div style="background:#fff;border-radius:14px;padding:20px;max-width:360px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.3);">
+          <h2 style="margin:0 0 4px;font-size:17px;">👋 Keluarkan Anggota</h2>
+          <p class="muted" style="font-size:12px;margin-bottom:14px;">
+            <b id="keluarNamaTarget">-</b> akan ditandai <b>keluar</b> (jadi non-aktif, hilang dari Absensi &amp; pilihan pembayaran).
+            Data lama tetap tersimpan &amp; tercatat di Laporan bulan keluarnya.
+          </p>
+          <label>Alasan Keluar</label>
+          <select id="keluarAlasan" onchange="document.getElementById('keluarAlasanLainWrap').style.display=(this.value==='lainnya'?'block':'none')">
+            <option value="menikah">💍 Menikah</option>
+            <option value="pindah_domisili">🏠 Pindah Domisili / Kota</option>
+            <option value="meninggal">🕊️ Meninggal Dunia</option>
+            <option value="sudah_tidak_aktif">😴 Sudah Tidak Aktif / Sibuk</option>
+            <option value="lainnya">✏️ Lainnya (isi manual)</option>
+          </select>
+          <div id="keluarAlasanLainWrap" style="display:none;">
+            <label>Keterangan Lainnya</label>
+            <input type="text" id="keluarAlasanLain" placeholder="Tulis alasan lain...">
+          </div>
+          <label>Tanggal Keluar</label>
+          <input type="date" id="keluarTanggal">
+          <div id="keluarMsg" style="font-size:12px;margin:8px 0;"></div>
+          <div style="display:flex;gap:8px;margin-top:6px;">
+            <button class="secondary" onclick="document.getElementById('keluarModal').style.display='none'" style="flex:1;">Batal</button>
+            <button onclick="prosesKeluar()" style="flex:1;background:linear-gradient(135deg,#d97706,#f59e0b);">👋 Keluarkan</button>
+          </div>
+        </div>
+      </div>
+
       <!-- ═══════ BANNER BESAR: DATABASE KHUSUS GPMT & GPSD ═══════ -->
       <div style="margin-top:18px;background:linear-gradient(135deg,#4338ca,#7c3aed);border-radius:14px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 4px 16px rgba(76,29,149,0.28);">
         <div style="flex:1;min-width:200px;">
@@ -2426,6 +2467,12 @@
           <input type="text" id="gpmt_sekolah" placeholder="Cth: SMPN 1 Menteng">
           <label>Kelas di GPMT</label>
           <input type="text" id="gpmt_kelas" placeholder="Cth: Kelas 1 / 2 / 3">
+          <label>Status</label>
+          <select id="gpmt_status">
+            <option value="aktif">Aktif</option>
+            <option value="tidak_aktif">Tidak Aktif</option>
+          </select>
+          <p class="muted" style="font-size:11px;margin:-6px 0 8px;">Non-aktif = tidak muncul di daftar Absensi &amp; pilihan pembayaran Acara/Qurban/Project (sama seperti anggota MUMI non-aktif).</p>
           <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
             <button onclick="saveGP('gpmt')" style="flex:1;">💾 Simpan</button>
             <button class="secondary" onclick="resetGPForm('gpmt'); document.getElementById('gpmtForm').style.display='none';" style="flex:0 0 auto;width:auto;padding:10px 14px;">Batal</button>
@@ -2469,6 +2516,12 @@
           <input type="text" id="gpsd_sekolah" placeholder="Cth: SDN 01 Menteng">
           <label>Kelas di GPSD</label>
           <input type="text" id="gpsd_kelas" placeholder="Cth: Kelas 1 / 2 / 3">
+          <label>Status</label>
+          <select id="gpsd_status">
+            <option value="aktif">Aktif</option>
+            <option value="tidak_aktif">Tidak Aktif</option>
+          </select>
+          <p class="muted" style="font-size:11px;margin:-6px 0 8px;">Non-aktif = tidak muncul di daftar Absensi &amp; pilihan pembayaran Acara/Qurban/Project (sama seperti anggota MUMI non-aktif).</p>
           <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
             <button onclick="saveGP('gpsd')" style="flex:1;">💾 Simpan</button>
             <button class="secondary" onclick="resetGPForm('gpsd'); document.getElementById('gpsdForm').style.display='none';" style="flex:0 0 auto;width:auto;padding:10px 14px;">Batal</button>
@@ -3908,6 +3961,9 @@
           <span style="font-size:11px;color:#7a9585;font-weight:400;text-transform:none;letter-spacing:0;">Nonaktifkan jika anggota ini tidak perlu diabsen (contoh: bertugas di balik layar / luar kota)</span>
         </span>
       </label>
+      <!-- Keluarkan Anggota (dari MUMI) — beda dari status Tidak Aktif biasa:
+           tercatat alasan (menikah/pindah domisili/dll) + tanggal, direkap di Laporan. -->
+      <div id="edKeluarBox" style="margin-bottom:10px;"></div>
       <button onclick="saveAnggotaEdit()">💾 Simpan Perubahan</button>
       <div id="edMsg"></div>
     </div>
@@ -4004,6 +4060,12 @@
 // ════════════════════════════════════════════════════════════════════════════
 const SUPABASE_URL = 'https://ksmdsvjpzyptcmhowcjq.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_PqbtdOOyAdKlDqEhtTAMEA_229Ak1F8';
+
+// ── Cloudflare Turnstile SITE KEY (public, aman ditaruh di kode client) ──────
+// Ambil dari dash.cloudflare.com → Turnstile → widget-nya → Site Key.
+// JANGAN taruh Secret Key di sini — Secret Key diisi di Supabase Dashboard →
+// Authentication → Attack Protection → Captcha secret (bukan di file ini).
+const TURNSTILE_SITE_KEY = '0x4AAAAAAD2_zlI7dOkUslB2';
 
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -4535,6 +4597,41 @@ window.toggleSec = function(btn) {
 //   **teks tebal**             → bold (.desc-bold)
 //   [Label](https://url)       → link biru custom-named
 //   https://url                → link biru otomatis
+// ─── Sanitasi blok [[html]] (table/img) sebelum di-restore ke halaman ───
+// Isi blok ini berasal dari serialisasi DOM contenteditable (lihat penyimpan markdown,
+// tag table/img → c.outerHTML — dicari via "[[html]]"). TANPA sanitasi, siapa pun yang
+// login bisa menyisipkan atribut event handler (onerror, onload, dst.) atau URL javascript:
+// ke elemen itu (lewat paste HTML dari clipboard, atau langsung via DevTools browser),
+// lalu KODE ITU JALAN OTOMATIS di browser user LAIN (termasuk admin) yang membuka catatan/
+// deskripsi yang sama — stored XSS, bisa mencuri sesi & data user tsb. Whitelist ketat:
+// hanya tag yang PERNAH digenerate app (table & img beserta anak elemennya), atribut aman saja.
+const _SANITIZE_ALLOWED_TAGS = new Set(['table','thead','tbody','tfoot','tr','td','th','img','caption','colgroup','col']);
+const _SANITIZE_ALLOWED_ATTR = new Set(['src','alt','width','height','colspan','rowspan','align','valign','border','style']);
+function _sanitizeHtmlBlock(raw) {
+  try {
+    const doc = new DOMParser().parseFromString('<div>' + raw + '</div>', 'text/html');
+    const root = doc.body.firstElementChild;
+    if (!root) return '';
+    (function walk(node) {
+      [...node.children].forEach(el => {
+        const tag = el.tagName.toLowerCase();
+        if (!_SANITIZE_ALLOWED_TAGS.has(tag)) { el.remove(); return; }
+        [...el.attributes].forEach(attr => {
+          const name = attr.name.toLowerCase();
+          const val = attr.value.trim();
+          const isEventHandler = name.startsWith('on');
+          const isDangerousUrl = /^\s*(javascript|vbscript|data:text\/html)\s*:/i.test(val);
+          if (isEventHandler || isDangerousUrl || !_SANITIZE_ALLOWED_ATTR.has(name)) {
+            el.removeAttribute(attr.name);
+          }
+        });
+        walk(el);
+      });
+    })(root);
+    return root.innerHTML;
+  } catch (_) { return ''; } // gagal parse → buang, jangan pernah tampilkan mentah
+}
+
 function descToHTML(text){
   if(text === null || text === undefined || text === '') return '';
   // ─── Pre-process: extract raw HTML blocks ([[html]]...[[/html]]) ───
@@ -4659,9 +4756,10 @@ function descToHTML(text){
     var isLast = j === out.length - 1;
     if(!isBlock && !isLast && !nextIsBlock) html += '<br>';
   }
-  // ─── Restore raw HTML blocks (table, gambar, dll.) ───
+  // ─── Restore HTML blocks (table, gambar, dll.) — WAJIB lewat sanitasi ───
+  // Jangan pernah restore _htmlBlocks mentah di sini — lihat _sanitizeHtmlBlock di atas.
   html = html.replace(/HTMLBLK(\d+)/g, function(_, idx) {
-    return _htmlBlocks[parseInt(idx, 10)] || '';
+    return _sanitizeHtmlBlock(_htmlBlocks[parseInt(idx, 10)] || '');
   });
   return html;
 }
@@ -6594,6 +6692,48 @@ function toggleShowPass(inputId, btn) {
   }
 }
 
+// ── Turnstile: widget per-pane (login/register/forgot) ───────────────────────
+// Setiap pane auth punya widget sendiri (site key sama, instance beda) supaya
+// bisa reset independen saat pindah pane / gagal submit tanpa ganggu yang lain.
+const _TS_CONTAINER = { login: 'captchaLogin', register: 'captchaRegister', forgot: 'captchaForgot' };
+const _tsWidgets = {}; // {paneKey: widgetId}
+const _tsTokens  = {}; // {paneKey: token | null}
+
+function _tsRender(paneKey) {
+  if (typeof turnstile === 'undefined') return;      // library belum siap → _tsOnReady akan panggil ulang
+  if (_tsWidgets[paneKey] !== undefined) return;      // sudah pernah dirender, tidak perlu ulang
+  const containerId = _TS_CONTAINER[paneKey];
+  if (!$(containerId)) return;
+  try {
+    _tsWidgets[paneKey] = turnstile.render('#' + containerId, {
+      sitekey: TURNSTILE_SITE_KEY,
+      callback: (token) => { _tsTokens[paneKey] = token; },
+      'expired-callback': () => { _tsTokens[paneKey] = null; },
+      'error-callback': () => { _tsTokens[paneKey] = null; },
+    });
+  } catch (e) { console.warn('[Turnstile] gagal render ' + paneKey + ':', e.message || e); }
+}
+
+function _tsReset(paneKey) {
+  if (typeof turnstile !== 'undefined' && _tsWidgets[paneKey] !== undefined) {
+    try { turnstile.reset(_tsWidgets[paneKey]); } catch (_) {}
+  }
+  _tsTokens[paneKey] = null;
+}
+
+function _tsToken(paneKey) { return _tsTokens[paneKey] || null; }
+
+// Dipanggil otomatis oleh script Turnstile begitu library selesai dimuat
+// (lihat query param onload=_tsOnReady di <script src=".../api.js?...">).
+// Render captcha untuk pane yang SEDANG TAMPIL saat itu (biasanya 'login',
+// karena itu pane default saat halaman pertama kali dibuka).
+window._tsOnReady = function() {
+  for (const k in _TS_CONTAINER) {
+    const paneEl = $({ login: 'authLogin', register: 'authRegister', forgot: 'authForgot' }[k]);
+    if (paneEl && paneEl.style.display !== 'none') { _tsRender(k); break; }
+  }
+};
+
 // Pindah antar-halaman auth: 'login' | 'register' | 'forgot'
 function showAuthPane(pane) {
   const panes = { login: 'authLogin', register: 'authRegister', forgot: 'authForgot' };
@@ -6605,6 +6745,7 @@ function showAuthPane(pane) {
     const el = $(id);
     if (el) { el.className = ''; el.innerHTML = ''; }
   });
+  _tsRender(pane); // lazy-render captcha pane ini (no-op kalau sudah pernah/library belum siap)
 }
 
 // ── DAFTAR AKUN BARU (self-service) ──────────────────────────────────────────
@@ -6627,6 +6768,8 @@ async function doRegister() {
   if (!nama)            { setMsg('regMsg', 'Nama lengkap wajib diisi.', true); return; }
   if (pass.length < 6)  { setMsg('regMsg', 'Password minimal 6 karakter.', true); return; }
   if (pass !== pass2)   { setMsg('regMsg', 'Password dan ulangi password tidak sama.', true); return; }
+  const captchaToken = _tsToken('register');
+  if (!captchaToken) { setMsg('regMsg', 'Mohon selesaikan verifikasi captcha dulu.', true); return; }
 
   btn.disabled = true; btn.textContent = '⏳ Mengirim...';
   const resetBtn = () => { btn.disabled = false; btn.textContent = '📨 Kirim Pendaftaran'; };
@@ -6640,7 +6783,10 @@ async function doRegister() {
     });
   } catch (e) { resetBtn(); setMsg('regMsg', 'Gagal menyiapkan: ' + e.message, true); return; }
 
-  const { data: suData, error: suErr } = await tmp.auth.signUp({ email, password: pass });
+  const { data: suData, error: suErr } = await tmp.auth.signUp({
+    email, password: pass, options: { captchaToken }
+  });
+  _tsReset('register'); // token Turnstile sekali pakai — reset selalu, sukses maupun gagal
   if (suErr) {
     resetBtn();
     const low = (suErr.message || '').toLowerCase();
@@ -6715,11 +6861,14 @@ async function doForgotPassword() {
   const email = ($('forgotEmail').value || '').trim().toLowerCase();
   const btn   = $('forgotBtn');
   if (!email || !email.includes('@')) { setMsg('forgotMsg', 'Email tidak valid.', true); return; }
+  const captchaToken = _tsToken('forgot');
+  if (!captchaToken) { setMsg('forgotMsg', 'Mohon selesaikan verifikasi captcha dulu.', true); return; }
 
   btn.disabled = true; btn.textContent = '⏳ Mengirim...';
   setMsg('forgotMsg', '⏳ Mengirim email...');
 
-  const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: AUTH_REDIRECT_URL });
+  const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: AUTH_REDIRECT_URL, captchaToken });
+  _tsReset('forgot'); // token sekali pakai — reset selalu, sukses maupun gagal
 
   btn.disabled = false; btn.textContent = '📧 Kirim Link Reset Password';
   if (error) { setMsg('forgotMsg', '❌ Gagal: ' + error.message, true); return; }
@@ -6737,6 +6886,8 @@ async function doLogin() {
   const btn   = $('loginBtn');
   msgEl.className = ''; msgEl.innerHTML = '';
   if (!email || !pass) { setMsg('loginMsg', 'Email & password wajib diisi', true); return; }
+  const captchaToken = _tsToken('login');
+  if (!captchaToken) { setMsg('loginMsg', 'Mohon selesaikan verifikasi captcha dulu.', true); return; }
 
   // Feedback supaya tidak terasa "menggantung" di HP yang lambat
   btn.disabled = true; btn.textContent = '⏳ Memproses...';
@@ -6745,8 +6896,9 @@ async function doLogin() {
 
   let result;
   try {
-    result = await db.auth.signInWithPassword({ email, password: pass });
+    result = await db.auth.signInWithPassword({ email, password: pass, options: { captchaToken } });
   } catch (e) {
+    _tsReset('login');
     resetBtn();
     msgEl.className = 'err';
     msgEl.innerHTML = '❌ Gagal connect ke Supabase.<br><b>Error:</b> ' + (e.message || e) +
@@ -6754,6 +6906,7 @@ async function doLogin() {
     return;
   }
   const { data, error } = result;
+  _tsReset('login'); // token sekali pakai — reset selalu, sukses maupun gagal
   if (error) {
     resetBtn();
     msgEl.className = 'err';
@@ -6778,6 +6931,7 @@ async function doLogout() {
     Object.keys(localStorage)
       .filter(k => k.startsWith('sb-') || k.toLowerCase().includes('supabase'))
       .forEach(k => localStorage.removeItem(k));
+    localStorage.removeItem('mb3_lastActivity');   // reset jam idle auto-logout
     sessionStorage.clear();
   } catch (_) {}
   // replace(): muat ulang halaman bersih & buang history login lama
@@ -8089,6 +8243,13 @@ function renderListAnggotaFiltered() {
       ? ` <span style="font-weight:400;color:#7a9585;font-size:0.85em;">(${escapeHtml(a.nama_panggilan)})</span>`
       : '';
     const u = hitungUmur(a.tanggal_lahir);
+    // Badge + tombol "Keluarkan" — beda dari Hapus: data tetap ada, cuma non-aktif + tercatat alasan/tanggal.
+    const keluarBadge = a.alasan_keluar
+      ? `<div style="margin-top:5px;font-size:11px;color:#d97706;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:4px 8px;display:inline-block;">🚪 Keluar ${a.tanggal_keluar ? '(' + a.tanggal_keluar + ')' : ''}: ${escapeHtml(a.alasan_keluar)}</div>`
+      : '';
+    const keluarBtn = a.status === 'tidak_aktif'
+      ? (a.alasan_keluar ? `<button class="small secondary" onclick="batalkanKeluar('anggota',${a.id},'${escapeHtml(a.nama).replace(/'/g,"\\'")}')">↩️ Aktifkan</button>` : '')
+      : `<button class="small" style="background:#fef3c7;color:#92400e;" onclick="openKeluarModal('anggota',${a.id},'${escapeHtml(a.nama).replace(/'/g,"\\'")}')">👋 Keluarkan</button>`;
     return `<div class="list-item">
       <div class="left">
         <div class="name">${escapeHtml(a.nama)}${panggilan}${jkBadge}${peranBadge}${absenBadge}${sambungBadge}</div>
@@ -8096,9 +8257,11 @@ function renderListAnggotaFiltered() {
         <label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#1d4ed8;margin-top:5px;cursor:pointer;font-weight:600;">
           <input type="checkbox" ${a.sambung_kelompok ? 'checked' : ''} onchange="toggleSambungKelompok(${a.id}, this.checked)" style="accent-color:#1d4ed8;width:15px;height:15px;margin:0;"> 🔗 Sambung di Kelompok <span style="font-weight:400;color:#7a9585;">(auto izin saat absensi)</span>
         </label>
+        ${keluarBadge}
       </div>
-      <div style="display:flex;gap:4px;">
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">
         <button class="small secondary" onclick="openAnggotaEdit(${a.id})">Edit</button>
+        ${keluarBtn}
         <button class="small danger" onclick="deleteAnggota(${a.id})">Hapus</button>
       </div>
     </div>`;
@@ -8128,6 +8291,10 @@ async function toggleSambungKelompok(id, checked) {
 // Dua kelompok anak sekolah TERPISAH, masing-masing tabel sendiri (gpmt, gpsd).
 // Tiap anak punya flag ikut_kegiatan (acara/project/qurban) & ikut_absensi.
 const gpData = { gpmt: [], gpsd: [] };
+// Cache TERPISAH khusus roster pembayaran (Acara/Qurban/Project) — SENGAJA dipisah
+// dari gpData agar filter "hanya yang aktif" di roster ini tidak menyembunyikan
+// anak non-aktif dari daftar kelola anak GPMT/GPSD di menu Anggota (gpData tetap lengkap).
+const _gpRosterCache = { gpmt: [], gpsd: [] };
 let _gpSectionLoaded = false;
 
 // Buka/tutup seksi DATABASE KHUSUS GPMT & GPSD (default tersembunyi). Data dimuat
@@ -8202,13 +8369,23 @@ function renderGPList(group) {
     const sekolah = [a.jenjang_sekolah, a.nama_sekolah].filter(Boolean).map(escapeHtml).join(' · ');
     const kelas = a.kelas_gp ? ' · Kelas ' + escapeHtml(a.kelas_gp) : '';
     const panggilan = a.nama_panggilan ? ` <span style="font-weight:400;color:#7a9585;font-size:0.85em;">(${escapeHtml(a.nama_panggilan)})</span>` : '';
-    return `<div class="list-item">
+    const nonAktifBadge = a.status === 'tidak_aktif'
+      ? `<span style="font-size:10px;padding:2px 7px;border-radius:99px;background:#fee2e2;color:#dc2626;font-weight:700;margin-left:4px;">Tidak Aktif</span>` : '';
+    const keluarBadge = a.alasan_keluar
+      ? `<div style="margin-top:5px;font-size:11px;color:#d97706;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:4px 8px;display:inline-block;">🚪 Keluar ${a.tanggal_keluar ? '(' + a.tanggal_keluar + ')' : ''}: ${escapeHtml(a.alasan_keluar)}</div>`
+      : '';
+    const keluarBtn = a.status === 'tidak_aktif'
+      ? (a.alasan_keluar ? `<button class="small secondary" onclick="batalkanKeluar('${group}',${a.id},'${escapeHtml(a.nama).replace(/'/g,"\\'")}')">↩️ Aktifkan</button>` : '')
+      : `<button class="small" style="background:#fef3c7;color:#92400e;" onclick="openKeluarModal('${group}',${a.id},'${escapeHtml(a.nama).replace(/'/g,"\\'")}')">👋 Keluarkan</button>`;
+    return `<div class="list-item"${a.status === 'tidak_aktif' ? ' style="opacity:.6;"' : ''}>
       <div class="left">
-        <div class="name">${escapeHtml(a.nama)}${panggilan} <span style="font-size:11px;color:${a.jenis_kelamin==='laki-laki'?'#1d4ed8':a.jenis_kelamin==='perempuan'?'#be185d':'#7a9585'};font-weight:700;">${jk}</span></div>
+        <div class="name">${escapeHtml(a.nama)}${panggilan} <span style="font-size:11px;color:${a.jenis_kelamin==='laki-laki'?'#1d4ed8':a.jenis_kelamin==='perempuan'?'#be185d':'#7a9585'};font-weight:700;">${jk}</span>${nonAktifBadge}</div>
         <div class="meta">${sekolah || '—'}${kelas}${u!==null ? ' · 🎂 ' + u + ' th' : ''}</div>
+        ${keluarBadge}
       </div>
-      <div style="display:flex;gap:4px;flex-shrink:0;">
+      <div style="display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0;">
         <button class="small secondary" onclick="editGP('${group}', ${a.id})">Edit</button>
+        ${keluarBtn}
         <button class="small danger" onclick="deleteGP('${group}', ${a.id})">Hapus</button>
       </div>
     </div>`;
@@ -8227,6 +8404,7 @@ function resetGPForm(group) {
   if ($(group + '_editId')) $(group + '_editId').value = '';
   ['nama','panggilan','tempat','tgl','sekolah','kelas'].forEach(f => { const el = $(group + '_' + f); if (el) el.value = ''; });
   if ($(group + '_jenjang')) $(group + '_jenjang').selectedIndex = 0;
+  if ($(group + '_status')) $(group + '_status').value = 'aktif';
   document.querySelectorAll('input[name="' + group + '_jk"]').forEach(r => r.checked = false);
   const msg = $(group + '_msg'); if (msg) msg.textContent = '';
 }
@@ -8242,6 +8420,7 @@ function _gpReadForm(group) {
     jenjang_sekolah: $(group + '_jenjang').value || null,
     nama_sekolah: ($(group + '_sekolah').value || '').trim() || null,
     kelas_gp: ($(group + '_kelas').value || '').trim() || null,
+    status: $(group + '_status') ? ($(group + '_status').value || 'aktif') : 'aktif',
   };
 }
 
@@ -8262,6 +8441,14 @@ async function saveGP(group) {
       if (window.currentProf && currentProf.id) payload.dicatat_oleh = currentProf.id;
       ({ error } = await db.from(group).insert(payload));
     }
+    // [KOMPAT] Kolom `status` mungkin belum ada di database lama → simpan ulang tanpa itu,
+    // lalu ingatkan admin untuk jalankan ALTER TABLE (lihat _showGPSqlNotice).
+    if (error && _isMissingColErr(error) && /status/i.test(error.message || '')) {
+      delete payload.status;
+      if (editId) ({ error } = await db.from(group).update(payload).eq('id', parseInt(editId)));
+      else ({ error } = await db.from(group).insert(payload));
+      if (!error) setTimeout(() => alert('⚠️ Tersimpan, TAPI kolom "status" belum ada di tabel ' + group + ' sehingga status Aktif/Tidak Aktif belum tersimpan.\n\nJalankan di Supabase → SQL Editor:\nALTER TABLE ' + group + ' ADD COLUMN IF NOT EXISTS status text DEFAULT \'aktif\';'), 150);
+    }
     if (error) {
       if (_isMissingTableErr(error)) { _showGPSqlNotice(group); return; }
       throw error;
@@ -8270,7 +8457,8 @@ async function saveGP(group) {
     if (typeof _auditLog === 'function') {
       const _snap = { nama: payload.nama, nama_panggilan: payload.nama_panggilan || null,
                       jenis_kelamin: payload.jenis_kelamin || null, tanggal_lahir: payload.tanggal_lahir || null,
-                      nama_sekolah: payload.nama_sekolah || null, kelas_gp: payload.kelas_gp || null };
+                      nama_sekolah: payload.nama_sekolah || null, kelas_gp: payload.kelas_gp || null,
+                      status: payload.status || 'aktif' };
       if (editId) {
         _auditLog(group, 'UPDATE',
           _lamaGP ? { id: _lamaGP.id, nama: _lamaGP.nama } : { id: editId }, { id: editId, ..._snap },
@@ -8301,6 +8489,7 @@ function editGP(group, id) {
   if ($(group + '_jenjang')) $(group + '_jenjang').value = a.jenjang_sekolah || 'SD';
   $(group + '_sekolah').value = a.nama_sekolah || '';
   $(group + '_kelas').value = a.kelas_gp || '';
+  if ($(group + '_status')) $(group + '_status').value = (a.status === 'tidak_aktif') ? 'tidak_aktif' : 'aktif';
   document.querySelectorAll('input[name="' + group + '_jk"]').forEach(r => { r.checked = (r.value === a.jenis_kelamin); });
   const msg = $(group + '_msg'); if (msg) msg.textContent = '';
   if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -8356,6 +8545,9 @@ function _showGPSqlNotice(group) {
     '  kelas_gp text,\n' +
     '  ikut_kegiatan boolean DEFAULT false,\n' +
     '  ikut_absensi boolean DEFAULT true,\n' +
+    '  status text DEFAULT \'aktif\',\n' +
+    '  tanggal_keluar date,\n' +
+    '  alasan_keluar text,\n' +
     '  dicatat_oleh uuid,\n' +
     '  created_at timestamptz DEFAULT now()\n' +
     ');\n' +
@@ -9609,6 +9801,92 @@ async function deleteAnggota(id) {
   );
 }
 
+// ═══════════════════════ KELUARKAN ANGGOTA / ANAK GP ═══════════════════════
+// Dipakai bersama Anggota MUMI + GPMT + GPSD. BUKAN hapus — data lama tetap
+// ada (histori absensi/pembayaran aman), cuma status → 'tidak_aktif' dan
+// dicatat tanggal_keluar + alasan_keluar supaya bisa direkap per bulan
+// di Laporan Bulanan (mis. "Juni: 2 anggota keluar — menikah, pindah kota").
+const KELUAR_ALASAN_LABEL = {
+  menikah: '💍 Menikah',
+  pindah_domisili: '🏠 Pindah Domisili / Kota',
+  meninggal: '🕊️ Meninggal Dunia',
+  sudah_tidak_aktif: '😴 Sudah Tidak Aktif / Sibuk',
+  lainnya: '✏️ Lainnya',
+};
+window.KELUAR_ALASAN_LABEL = KELUAR_ALASAN_LABEL;
+
+let _keluarCtx = null;   // { tabel: 'anggota'|'gpmt'|'gpsd', id, nama }
+
+function openKeluarModal(tabel, id, nama) {
+  _keluarCtx = { tabel, id, nama };
+  const namaEl = $('keluarNamaTarget'); if (namaEl) namaEl.textContent = nama || ('#' + id);
+  if ($('keluarAlasan')) $('keluarAlasan').value = 'menikah';
+  if ($('keluarAlasanLain')) $('keluarAlasanLain').value = '';
+  if ($('keluarAlasanLainWrap')) $('keluarAlasanLainWrap').style.display = 'none';
+  if ($('keluarTanggal')) $('keluarTanggal').valueAsDate = new Date();
+  if ($('keluarMsg')) $('keluarMsg').textContent = '';
+  const m = $('keluarModal'); if (m) m.style.display = 'flex';
+}
+
+async function prosesKeluar() {
+  if (!_keluarCtx) return;
+  const { tabel, id, nama } = _keluarCtx;
+  const alasanKey = $('keluarAlasan') ? $('keluarAlasan').value : 'menikah';
+  const tanggal = $('keluarTanggal') ? $('keluarTanggal').value : '';
+  const alasanCustom = ($('keluarAlasanLain') ? $('keluarAlasanLain').value : '').trim();
+  if (!tanggal) { setMsg('keluarMsg', 'Tanggal keluar wajib diisi.', true); return; }
+  if (alasanKey === 'lainnya' && !alasanCustom) { setMsg('keluarMsg', 'Isi keterangan alasan lainnya.', true); return; }
+  const alasanText = alasanKey === 'lainnya' ? alasanCustom : (KELUAR_ALASAN_LABEL[alasanKey] || alasanKey).replace(/^\S+\s/, '');
+
+  setMsg('keluarMsg', '⏳ Menyimpan...');
+  const payload = { status: 'tidak_aktif', tanggal_keluar: tanggal, alasan_keluar: alasanText };
+  let { error } = await db.from(tabel).update(payload).eq('id', id);
+
+  // [KOMPAT] Kolom tanggal_keluar/alasan_keluar mungkin belum ada di database lama.
+  if (error && _isMissingColErr(error)) {
+    const { error: e2 } = await db.from(tabel).update({ status: 'tidak_aktif' }).eq('id', id);
+    if (e2) { setMsg('keluarMsg', 'Gagal: ' + e2.message, true); return; }
+    setMsg('keluarMsg', '');
+    const m = $('keluarModal'); if (m) m.style.display = 'none';
+    alert('⚠️ Status diubah ke Tidak Aktif, TAPI alasan & tanggal keluar BELUM tersimpan (kolom belum ada).\n\n' +
+      'Jalankan di Supabase → SQL Editor:\n' +
+      'ALTER TABLE ' + tabel + ' ADD COLUMN IF NOT EXISTS tanggal_keluar date;\n' +
+      'ALTER TABLE ' + tabel + ' ADD COLUMN IF NOT EXISTS alasan_keluar text;\n\n' +
+      'Lalu ulangi tindakan "Keluarkan" ini supaya alasan & tanggalnya ikut tersimpan.');
+    _refreshAfterKeluar(tabel);
+    return;
+  }
+  if (error) { setMsg('keluarMsg', 'Gagal: ' + error.message, true); return; }
+
+  if (typeof _auditLog === 'function') {
+    _auditLog(tabel, 'KELUAR',
+      { id, nama, status: 'aktif' },
+      { id, nama, status: 'tidak_aktif', tanggal_keluar: tanggal, alasan_keluar: alasanText },
+      (nama || 'Anggota') + ' keluar — ' + alasanText + ' (' + tanggal + ')');
+  }
+
+  const m = $('keluarModal'); if (m) m.style.display = 'none';
+  showToast('👋 "' + nama + '" ditandai keluar', 'success', 2000);
+  _refreshAfterKeluar(tabel);
+}
+
+function _refreshAfterKeluar(tabel) {
+  if (tabel === 'anggota') { anggotaFull = []; loadAnggota(); }
+  else { loadGP(tabel); }
+}
+
+// Batalkan status keluar (anggota/anak aktif lagi, mis. ternyata cuma pindah sementara).
+async function batalkanKeluar(tabel, id, nama) {
+  if (!(await askConfirm('Aktifkan lagi "' + (nama || '#' + id) + '"? Status kembali Aktif, riwayat keluar sebelumnya tetap tersimpan di Riwayat.'))) return;
+  const { error } = await db.from(tabel).update({ status: 'aktif', tanggal_keluar: null, alasan_keluar: null }).eq('id', id);
+  if (error) { showToast('Gagal: ' + error.message, 'error'); return; }
+  if (typeof _auditLog === 'function') {
+    _auditLog(tabel, 'UPDATE', { id, nama, status: 'tidak_aktif' }, { id, nama, status: 'aktif' }, 'Aktifkan kembali ' + (nama || '#' + id));
+  }
+  showToast('✅ "' + nama + '" aktif kembali', 'success', 2000);
+  _refreshAfterKeluar(tabel);
+}
+
 function openAnggotaEdit(id) {
   const a = anggotaFull.find(x => x.id === id);
   if (!a) return;
@@ -9636,6 +9914,19 @@ function openAnggotaEdit(id) {
   $('edTampilAbsensi').checked = (a.tampil_absensi !== false);
   // sambung_kelompok: default false jika belum ada
   if ($('edSambungKelompok')) $('edSambungKelompok').checked = (a.sambung_kelompok === true);
+  // Keluarkan Anggota — tombol/aksi cepat, tanpa perlu kembali ke daftar
+  const _ekBox = $('edKeluarBox');
+  if (_ekBox) {
+    const _namaAman = escapeHtml(a.nama || '').replace(/'/g, "\\'");
+    _ekBox.innerHTML = a.alasan_keluar
+      ? `<div style="padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;">
+          <div style="font-size:13px;font-weight:700;color:#92400e;">🚪 Anggota ini sudah KELUAR</div>
+          <div style="font-size:12px;color:#78350f;margin:2px 0 8px;">${a.tanggal_keluar ? 'Tanggal: ' + escapeHtml(a.tanggal_keluar) + ' · ' : ''}Alasan: ${escapeHtml(a.alasan_keluar)}</div>
+          <button type="button" class="secondary small" style="width:auto;padding:7px 12px;" onclick="closeAnggotaEdit();batalkanKeluar('anggota',${a.id},'${_namaAman}')">↩️ Aktifkan Lagi</button>
+        </div>`
+      : `<button type="button" class="secondary" style="background:#fef3c7;color:#92400e;" onclick="closeAnggotaEdit();openKeluarModal('anggota',${a.id},'${_namaAman}')">👋 Keluarkan Anggota dari MUMI</button>
+         <p class="muted" style="font-size:11px;margin-top:4px;">Beda dari sekadar ubah Status di atas — di sini alasan (menikah/pindah domisili/dll) &amp; tanggal keluarnya tercatat, lalu direkap otomatis di Laporan bulan itu.</p>`;
+  }
   $('edMsg').textContent = '';
   $('anggotaModal').style.display = 'flex';
   window.scrollTo(0, 0);
@@ -10396,8 +10687,10 @@ async function loadAbsensi(opts) {
   if ($('absIkutGpsd')) $('absIkutGpsd').checked = ikutGpsd;
   async function _appendGPRoster(group, label) {
     try {
-      const { data: gp } = await db.from(group).select('id, nama, nama_panggilan').order('nama');
-      (gp || []).forEach(k => {
+      const { data: gp } = await db.from(group).select('id, nama, nama_panggilan, status').order('nama');
+      // [STATUS] Sama seperti anggota MUMI: anak ber-status 'tidak_aktif' TIDAK
+      // muncul di daftar absensi (kolom status mungkin belum ada di DB lama → treat null sbg aktif).
+      (gp || []).filter(k => k.status !== 'tidak_aktif').forEach(k => {
         anggotaCache.push({
           id: group + '_' + k.id, nama: k.nama + ' (' + label + ')',
           _gp: true, _gpTipe: group, _gpId: k.id,
@@ -10710,10 +11003,14 @@ function _showGpAbsensiSqlNotice() {
 // anak GP yang baru ditambah langsung muncul di pilihan pembayaran tanpa reload.
 async function _ensureGpRoster(group) {
   try {
-    const { data } = await db.from(group).select('id, nama, nama_panggilan, jenis_kelamin').order('nama');
-    gpData[group] = data || [];
-  } catch (e) { if (!gpData[group]) gpData[group] = []; }
-  return gpData[group];
+    const { data } = await db.from(group).select('id, nama, nama_panggilan, jenis_kelamin, status').order('nama');
+    // [STATUS] Sama seperti anggota MUMI: anak ber-status 'tidak_aktif' tidak muncul
+    // di pilihan pembayaran Acara/Qurban/Project (kolom status mungkin belum ada di DB lama → null = aktif).
+    // Ditulis ke _gpRosterCache (BUKAN gpData) supaya daftar kelola GPMT/GPSD di menu
+    // Anggota tetap menampilkan SEMUA anak (termasuk yang non-aktif, agar bisa diedit).
+    _gpRosterCache[group] = (data || []).filter(k => k.status !== 'tidak_aktif');
+  } catch (e) { if (!_gpRosterCache[group]) _gpRosterCache[group] = []; }
+  return _gpRosterCache[group];
 }
 
 // Gabungkan roster GPMT/GPSD jadi satu array bertanda _g (sesuai grup yang diikutkan)
@@ -13425,6 +13722,56 @@ function _gpLaporanSectionHtml(d) {
     </tbody></table>`;
 }
 
+// HTML section "Anggota/Anak Keluar Bulan Ini" — dipakai laporan bulanan (HTML+PDF+CSV).
+// Kosong (tidak render apapun) kalau tidak ada yang keluar pada periode ini.
+function _keluarSectionHtml(d) {
+  const rows = d.keluarRows || [];
+  if (!rows.length) return '';
+  const body = rows.map(r => `<tr>
+    <td class="nm">${escapeHtml(r.nama || '-')}</td>
+    <td style="text-align:center;">${escapeHtml(r.sumber)}</td>
+    <td style="text-align:center;">${escapeHtml(r.tanggal || '-')}</td>
+    <td>${escapeHtml(r.alasan || '-')}</td>
+  </tr>`).join('');
+  return `
+    <div style="border-left:4px solid #dc2626;padding-left:10px;margin:14px 0 6px;">
+      <h2 style="font-size:14px;color:#dc2626;margin:0;">👋 Anggota/Anak Keluar Bulan Ini</h2>
+    </div>
+    <p class="muted" style="font-size:11px;margin:0 0 6px;">Anggota MUMI &amp; anak GPMT/GPSD yang ditandai keluar pada periode ini, beserta alasannya.</p>
+    <table class="rekap" style="margin-bottom:16px;">
+      <thead><tr><th class="nm">Nama</th><th style="text-align:center;">Sumber</th><th style="text-align:center;">Tanggal</th><th>Alasan</th></tr></thead>
+      <tbody>${body}</tbody>
+      <tfoot><tr style="background:#fef2f2;"><td colspan="4" style="font-weight:800;color:#dc2626;">Total ${rows.length} orang keluar bulan ini</td></tr></tfoot>
+    </table>`;
+}
+
+// Ambil daftar anggota MUMI + anak GPMT/GPSD yang KELUAR (tanggal_keluar) dalam
+// rentang tanggal tertentu — dipakai Laporan Bulanan untuk rekap "siapa keluar
+// bulan ini & alasannya" (mis. menikah, pindah domisili). Tahan banting kalau
+// kolom tanggal_keluar/alasan_keluar belum ada di database (installasi lama).
+async function _fetchKeluarBulan(first, last, pop) {
+  const rows = [];
+  const sumberList = [
+    { tabel: 'anggota', label: 'MUMI',  ikut: !pop || pop.mumi },
+    { tabel: 'gpmt',    label: 'GPMT',  ikut: !pop || pop.gpmt },
+    { tabel: 'gpsd',    label: 'GPSD',  ikut: !pop || pop.gpsd },
+  ];
+  for (const s of sumberList) {
+    if (!s.ikut) continue;
+    try {
+      const { data, error } = await db.from(s.tabel)
+        .select('nama, tanggal_keluar, alasan_keluar')
+        .gte('tanggal_keluar', first).lte('tanggal_keluar', last)
+        .order('tanggal_keluar');
+      if (error) continue;   // kolom belum ada di DB lama → lewati diam-diam
+      (data || []).forEach(r => rows.push({
+        nama: r.nama, sumber: s.label, tanggal: r.tanggal_keluar, alasan: r.alasan_keluar || '-',
+      }));
+    } catch (e) { /* tabel/kolom belum ada — lewati */ }
+  }
+  return rows.sort((a, b) => String(a.tanggal).localeCompare(String(b.tanggal)));
+}
+
 async function buatLaporan() {
   const bln = $('lapBulan').value;
   if (!bln) { $('laporanArea').innerHTML = '<div class="card"><p class="muted">Pilih bulan dulu.</p></div>'; return; }
@@ -13513,6 +13860,9 @@ async function buatLaporan() {
   const gpT = _gpLaporanTotals(pop, gpRaw);
   const _mm = pop.mumi ? 1 : 0;  // kalau MUMI tidak dicentang, bagian MUMI tidak dihitung
 
+  // ── Anggota/Anak yang KELUAR bulan ini (menikah, pindah domisili, dll) ──
+  const keluarRows = await _fetchKeluarBulan(firstThis, lastThis, pop);
+
   // ── [SINKRON SALDO] Lipat kontribusi anak GP ke bidang Acara & Qurban ──
   // Menu Saldo SELALU menggabungkan uang anak GP ke "Sisa Dana Acara/Qurban".
   // Agar Laporan cocok dengan Saldo, uang GP (yang sudah difilter populasi)
@@ -13570,6 +13920,7 @@ async function buatLaporan() {
     gpmtAcara: gpT.gpmtAcara, gpmtQurban: gpT.gpmtQurban,
     gpsdAcara: gpT.gpsdAcara, gpsdQurban: gpT.gpsdQurban,
     gpAcara: gpT.gpAcara, gpQurban: gpT.gpQurban, gpMasuk: gpT.gpMasuk, gpAwal: gpT.gpAwal,
+    keluarRows,
   });
 }
 
@@ -13685,6 +14036,7 @@ function renderLaporan(d) {
       </table>` : ''}
 
       ${_gpLaporanSectionHtml(d)}
+      ${_keluarSectionHtml(d)}
 
       <!-- ── GRAFIK ── -->
       <h2 style="font-size:13px;margin-top:4px;">Grafik Kas — 6 Bulan Terakhir</h2>
@@ -14667,6 +15019,23 @@ function cetakLaporan() {
     });
   }
 
+  // ── SECTION 3c: ANGGOTA/ANAK KELUAR BULAN INI ──
+  if ((d.keluarRows || []).length) {
+    y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 26) + 8;
+    if (y > 245) { doc.addPage(); y = 20; }
+    sectionHeader(y, 'Anggota/Anak Keluar Bulan Ini', [220, 38, 38]);
+    y += 6;
+    doc.autoTable({
+      startY: y, theme: 'grid',
+      head: [['Nama', 'Sumber', 'Tanggal', 'Alasan']],
+      body: d.keluarRows.map(r => [r.nama || '-', r.sumber, r.tanggal || '-', r.alasan || '-']),
+      foot: [['Total ' + d.keluarRows.length + ' orang keluar bulan ini', '', '', '']],
+      styles: { fontSize: 9, cellPadding: 2.5 },
+      headStyles: { fillColor: [220, 38, 38] },
+      footStyles: { fillColor: [254, 242, 242], textColor: [185, 28, 28], fontStyle: 'bold' },
+    });
+  }
+
   // ── SECTION 4: GRAFIK ──
   y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 26) + 10;
   if (chartBar) {
@@ -14788,6 +15157,11 @@ function exportLaporanCSV() {
   Object.entries(d.catMasuk).sort((a,b) => b[1]-a[1]).forEach(([k,v]) => rows.push([k, v]));
   rows.push([], ['RINCIAN PENGELUARAN PER KATEGORI'], ['Kategori', 'Jumlah']);
   Object.entries(d.catKeluar).sort((a,b) => b[1]-a[1]).forEach(([k,v]) => rows.push([k, v]));
+  if ((d.keluarRows || []).length) {
+    rows.push([], ['ANGGOTA/ANAK KELUAR BULAN INI'], ['Nama', 'Sumber', 'Tanggal', 'Alasan']);
+    d.keluarRows.forEach(r => rows.push([r.nama || '-', r.sumber, r.tanggal || '-', r.alasan || '-']));
+    rows.push(['Total', d.keluarRows.length + ' orang']);
+  }
   downloadCSV('laporan-keuangan-' + d.bulanNama + '-' + d.y + '.csv', rows);
 }
 
@@ -15254,7 +15628,14 @@ function _fmtWaktu(iso) {
 }
 
 // Field yang sengaja DISEMBUNYIKAN dari ringkasan otomatis (terlalu teknis / tidak relevan utk dibandingkan)
-const _AUDIT_SKIP_FIELD = new Set(['id', 'created_at', 'updated_at', 'kategori_id', 'sesi_id', 'user_id']);
+// [FIX BUG] "dicatat_oleh" = siapa yang PERTAMA KALI membuat baris ini — bukan
+// sesuatu yang diubah user saat edit. Banyak jalur edit (mis. _editTrxModal)
+// membangun snapshot "baru" hanya dari field form yang benar-benar diedit,
+// TANPA menyertakan dicatat_oleh — jadi kalau field ini TIDAK di-skip, ia selalu
+// terbaca "berubah dari <uuid> jadi kosong" walau sebenarnya tidak disentuh sama
+// sekali. Siapa yang MELAKUKAN aksi (edit/hapus/dll) sudah tercatat jelas di
+// "oleh_nama" pada baris Riwayat itu sendiri — jadi field ini aman diabaikan di sini.
+const _AUDIT_SKIP_FIELD = new Set(['id', 'created_at', 'updated_at', 'kategori_id', 'sesi_id', 'user_id', 'dicatat_oleh']);
 
 // Label field manusiawi — supaya ringkasan riwayat gampang dibaca tanpa perlu buka detail
 const _AUDIT_FIELD_LABEL = {
@@ -15318,7 +15699,9 @@ function _auditFmtObjInline(obj) {
   if (!entries.length) return '(kosong)';
   return entries.map(([k, v]) => {
     let val;
-    if (v === null || v === undefined || v === '') val = '(kosong)';
+    const _nm = _auditIsUserRefKey(k) ? _auditResolveUserName(v) : null;
+    if (_nm) val = _nm;
+    else if (v === null || v === undefined || v === '') val = '(kosong)';
     else if (Array.isArray(v)) val = _auditIsArrObj(v) ? (v.length + ' item') : (v.length ? v.join(', ') : '(kosong)');
     else if (typeof v === 'object') val = _auditFmtObjInline(v);
     else val = String(v);
@@ -15326,8 +15709,40 @@ function _auditFmtObjInline(obj) {
   }).join(', ');
 }
 
+// ─── Resolusi UUID pengguna → nama (biar Riwayat tidak menampilkan ID mentah) ───
+// Field seperti `dicatat_oleh` menyimpan UUID profil. Tanpa resolusi, Riwayat
+// menampilkan "30c932dc-6270-46c0-..." yang tidak berarti bagi user. Peta ini
+// diisi dari tabel profiles saat loadRiwayat(), lalu dipakai _auditFmtVal &
+// modal detail supaya yang tampil adalah NAMA orangnya.
+let _auditProfMap = {};
+const _AUDIT_USER_REF_FIELD = new Set([
+  'dicatat_oleh', 'oleh', 'oleh_id', 'oleh_nama', 'dibayar_oleh', 'diinput_oleh',
+  'created_by', 'updated_by', 'approved_by', 'profile_id', 'user_id',
+]);
+function _auditIsUuid(v) {
+  return typeof v === 'string' &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v.trim());
+}
+function _auditIsUserRefKey(k) {
+  const key = String(k || '').toLowerCase();
+  return _AUDIT_USER_REF_FIELD.has(key) || key.endsWith('_oleh') || key.endsWith('_by');
+}
+// UUID dikenal → nama; UUID tak dikenal (mis. user sudah dihapus) → teks pendek
+// yang tetap manusiawi + 8 char pertama utk jejak; bukan UUID → null (pakai nilai asli).
+function _auditResolveUserName(v) {
+  if (!_auditIsUuid(v)) return null;
+  const id = v.trim();
+  if (_auditProfMap[id]) return _auditProfMap[id];
+  return 'pengguna tak dikenal (' + id.slice(0, 8) + '…)';
+}
+
 function _auditFmtVal(k, v) {
   if (v === null || v === undefined || v === '') return '(kosong)';
+  // Field referensi pengguna (dicatat_oleh, *_oleh, *_by) → tampilkan NAMA, bukan UUID.
+  if (_auditIsUserRefKey(k)) {
+    const nm = _auditResolveUserName(v);
+    if (nm) return nm;
+  }
   if (k === 'jumlah' || k === 'target_dana') return IDR(v);
   if (Array.isArray(v)) {
     if (!v.length) return '(kosong)';
@@ -15431,6 +15846,15 @@ async function loadRiwayat(filter) {
     $('rwAksiBar').style.display = 'none';
     return;
   }
+  // Muat peta profil (id → nama) SEKALI sebelum render, untuk resolusi UUID
+  // pengguna (dicatat_oleh dll) supaya Riwayat menampilkan NAMA, bukan ID mentah.
+  try {
+    const { data: _profs } = await db.from('profiles').select('id, nama_lengkap');
+    _auditProfMap = {};
+    (_profs || []).forEach(p => {
+      if (p && p.id) _auditProfMap[p.id] = p.nama_lengkap || ('ID ' + String(p.id).slice(0, 8));
+    });
+  } catch (_) { /* kalau gagal (mis. akses), fallback tetap tampil ID pendek */ }
   $('rwAksiBar').style.display = 'flex';
   _renderRiwayat();
 }
@@ -15442,6 +15866,7 @@ function _auditAksiInfo(a) {
     case 'INSERT': case 'CREATE': case 'REGISTER': return { teks: 'Tambah',  cls: 'st-done' };
     case 'UPDATE': case 'APPROVE': case 'RESTORE':  return { teks: a === 'APPROVE' ? 'Setujui' : a === 'RESTORE' ? 'Pulihkan' : 'Ubah', cls: 'st-in_progress' };
     case 'RESET_PASSWORD': case 'CHANGE_PASSWORD':  return { teks: 'Password', cls: 'st-in_progress' };
+    case 'KELUAR': return { teks: '👋 Keluar', cls: 'st-cancelled' };
     case 'DELETE': case 'PURGE': case 'PURGE_ALL': case 'REJECT':
       return { teks: a === 'REJECT' ? 'Tolak' : (a === 'PURGE' || a === 'PURGE_ALL') ? 'Hapus Permanen' : 'Hapus', cls: 'st-cancelled' };
     default: return { teks: a || '-', cls: 'st-in_progress' };
@@ -15497,6 +15922,11 @@ function bukaDetailLog(idx) {
   function renderVal(k, val) {
     if (val === null || val === undefined)
       return '<span style="color:#9ca3af;font-style:italic;">null</span>';
+    // Field referensi pengguna (dicatat_oleh, *_oleh, *_by) → NAMA, bukan UUID.
+    if (_auditIsUserRefKey(k)) {
+      const nm = _auditResolveUserName(val);
+      if (nm) return escapeHtml(nm);
+    }
     if (typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://'))) {
       const safeUrl = escapeHtml(val);
       const uid = 'cekurl_' + Math.random().toString(36).slice(2);
@@ -16782,7 +17212,7 @@ async function scanStorageLangsung() {
             return `<div style="padding:8px;background:#fff;border-radius:6px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
               <div style="flex:1;min-width:0;">
                 <div style="font-size:11px;word-break:break-all;color:#374151;">${escapeHtml(f.name)}</div>
-                <div style="font-size:10px;color:#9ca3af;">${size} · <a href="${escapeHtml(pubUrl)}" target="_blank" style="color:#16a34a;">Lihat foto</a></div>
+                <div style="font-size:10px;color:#9ca3af;">${size} · <a href="javascript:void(0)" onclick="showFoto('${escapeHtml(pubUrl)}');return false;" style="color:#16a34a;">Lihat foto</a></div>
               </div>
               <button class="small danger" onclick="hapusSatuYatim('${escapeHtml(f.name)}', this)">Hapus</button>
             </div>`;
@@ -16802,12 +17232,14 @@ async function scanStorageLangsung() {
   if (terdaftar.length > 0) {
     html += `<details style="margin-top:8px;">
       <summary style="font-size:12px;color:#6b7280;cursor:pointer;">📋 ${terdaftar.length} file terdaftar di database (klik untuk lihat)</summary>
+      <p class="muted" style="font-size:11px;margin:6px 0;">File-file ini MASIH dipakai sebagai bukti pada suatu catatan. Menghapus di sini juga akan menghilangkan foto dari catatan tersebut (data transaksinya sendiri tetap aman, cuma fotonya hilang).</p>
       <div style="margin-top:6px;">
         ${terdaftar.map(f => {
           const size = fmt(f.metadata?.size || 0);
           const pubUrl = db.storage.from('bukti').getPublicUrl(f.name).data.publicUrl;
-          return `<div style="padding:6px 8px;font-size:11px;color:#374151;background:#f9fafb;border-radius:4px;margin-bottom:4px;word-break:break-all;">
-            ${escapeHtml(f.name)} · ${size} · <a href="${escapeHtml(pubUrl)}" target="_blank" style="color:#16a34a;">Lihat</a>
+          return `<div style="padding:6px 8px;font-size:11px;color:#374151;background:#f9fafb;border-radius:4px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:0;word-break:break-all;">${escapeHtml(f.name)} · ${size} · <a href="javascript:void(0)" onclick="showFoto('${escapeHtml(pubUrl)}');return false;" style="color:#16a34a;">Lihat</a></div>
+            <button class="small danger" onclick="hapusSatuTerdaftar('${escapeHtml(f.name)}', this)">Hapus</button>
           </div>`;
         }).join('')}
       </div>
@@ -16841,6 +17273,56 @@ async function hapusSatuYatim(fileName, btnEl) {
       if (error) { showToast('Gagal: ' + error.message, 'error'); if (rowEl) rowEl.style.opacity = '1'; if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Hapus'; } return; }
       if (!data || data.length === 0) { showToast('❌ RLS memblokir DELETE. Cek Storage Policies bucket "bukti".', 'error'); if (rowEl) rowEl.style.opacity = '1'; if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Hapus'; } return; }
       setMsg('scanStorageMsg', '✅ File "' + fileName + '" berhasil dihapus');
+      scanStorageLangsung(); // refresh
+    },
+    '🗑️'
+  );
+}
+
+// Hapus file yang MASIH terdaftar/dipakai sebagai bukti_url pada suatu catatan.
+// Beda dengan hapusSatuYatim: di sini kita cari dulu baris mana yang memakainya,
+// null-kan bukti_url-nya (record tetap aman, cuma fotonya hilang), baru hapus filenya.
+async function hapusSatuTerdaftar(fileName, btnEl) {
+  if (!(await askConfirm(
+    'Hapus foto "' + fileName + '"?\n\n' +
+    '⚠️ File ini MASIH DIPAKAI sebagai bukti pada sebuah catatan (transaksi/qurban/acara).\n' +
+    'Fotonya akan hilang dari catatan itu — datanya sendiri (jumlah, tanggal, dst) TETAP AMAN.\n\n' +
+    'Setelah dikonfirmasi akan ada waktu 10 detik untuk membatalkan.'
+  ))) return;
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⏳'; }
+
+  const label = 'Foto terdaftar: ' + fileName;
+  const rowEl = btnEl ? btnEl.closest('div') : null;
+  if (rowEl) rowEl.style.opacity = '0.35';
+
+  showUndoToast(
+    label,
+    // ── UNDO: batalkan ──
+    async function() {
+      if (rowEl) rowEl.style.opacity = '1';
+      if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Hapus'; }
+    },
+    // ── KONFIRMASI: null-kan bukti_url di tabel yang memakainya, lalu hapus file ──
+    async function() {
+      const sumber = ['transaksi', 'qurban_bayar', 'qurban_keluar', 'acara_bayar'];
+      let dikosongkanDari = null;
+      for (const tabel of sumber) {
+        const { data } = await db.from(tabel).select('id, bukti_url').ilike('bukti_url', '%' + fileName);
+        if (data && data.length) {
+          for (const row of data) {
+            await db.from(tabel).update({ bukti_url: null }).eq('id', row.id);
+          }
+          dikosongkanDari = tabel;
+          if (typeof _auditLog === 'function') {
+            _auditLog(tabel, 'UPDATE', { id: data[0].id, bukti_url: fileName }, { id: data[0].id, bukti_url: null },
+              'Hapus foto bukti: ' + fileName);
+          }
+        }
+      }
+      const { data: delData, error } = await db.storage.from('bukti').remove([fileName]);
+      if (error) { showToast('Gagal hapus file: ' + error.message, 'error'); scanStorageLangsung(); return; }
+      if (!delData || delData.length === 0) { showToast('❌ RLS memblokir DELETE. Cek Storage Policies bucket "bukti".', 'error'); scanStorageLangsung(); return; }
+      setMsg('scanStorageMsg', '✅ Foto "' + fileName + '" dihapus' + (dikosongkanDari ? ' (referensi di ' + dikosongkanDari + ' dikosongkan)' : ''));
       scanStorageLangsung(); // refresh
     },
     '🗑️'
@@ -17665,21 +18147,50 @@ showMenu = function() {
 // ═══════════════════════════════════════════════════════════════
 // ⑩ AUTO LOGOUT (30 menit tidak aktif)
 // ═══════════════════════════════════════════════════════════════
+// [FIX BUG] Timer 30 menit sebelumnya HANYA hidup di memori (setTimeout) — reset
+// ke NOL setiap kali halaman di-refresh. Karena sesi Supabase sendiri (persistSession)
+// bertahan jauh lebih lama, refresh berulang membuat auto-logout TIDAK PERNAH kena,
+// walau tab sudah "tidak aktif" berjam-jam — selalu auto-login lagi.
+// Sekarang waktu aktivitas terakhir disimpan di localStorage (bertahan lintas refresh),
+// dan BOOT mengecek waktu itu SEBELUM auto-login — kalau sudah lewat 30 menit,
+// sesi dipaksa keluar & login diminta ulang, walaupun baru saja di-refresh.
 let _autoLogoutTimer = null;
 const AUTO_LOGOUT_MS = 30 * 60 * 1000; // 30 menit
+const LAST_ACTIVITY_KEY = 'mb3_lastActivity';
+
+function markActivity() {
+  try { localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now())); } catch (e) {}
+}
+
+// Dipanggil dari BOOT sebelum auto-login. true = sesi sudah kadaluarsa (idle > 30 menit),
+// walaupun token Supabase-nya sendiri masih valid.
+function _isSesiKadaluarsaKarenaIdle() {
+  let last = 0;
+  try { last = parseInt(localStorage.getItem(LAST_ACTIVITY_KEY) || '0', 10); } catch (e) {}
+  if (!last) return false;   // belum pernah ada aktivitas tercatat (login pertama kali) → jangan blokir
+  return (Date.now() - last) > AUTO_LOGOUT_MS;
+}
+
+// PENTING: fungsi ini SENGAJA tidak menulis ke localStorage sendiri — cuma
+// menjadwalkan timer di-tab. Kalau ia menulis timestamp setiap dipanggil,
+// panggilan awal saat SCRIPT DIMUAT (baris paling bawah blok ini) akan
+// menganggap "refresh halaman" sebagai aktivitas — persis bug yang diperbaiki.
+// markActivity() HANYA dipanggil dari event interaksi ASLI (click/keydown/
+// touchstart/scroll), bukan dari sekadar memuat/refresh halaman.
 function resetAutoLogout() {
   clearTimeout(_autoLogoutTimer);
   _autoLogoutTimer = setTimeout(() => {
     if (document.getElementById('appView')?.style.display !== 'none') {
       showToast('Sesi berakhir karena tidak aktif. Silakan login kembali.', 'warn', 5000);
+      try { localStorage.removeItem(LAST_ACTIVITY_KEY); } catch (e) {}
       setTimeout(doLogout, 2000);
     }
   }, AUTO_LOGOUT_MS);
 }
 ['click','keydown','touchstart','scroll'].forEach(ev =>
-  document.addEventListener(ev, resetAutoLogout, {passive:true})
+  document.addEventListener(ev, () => { markActivity(); resetAutoLogout(); }, {passive:true})
 );
-resetAutoLogout();
+resetAutoLogout();   // hanya menjadwalkan timer sesi berjalan, TIDAK menandai aktivitas
 
 // ═══════════════════════════════════════════════════════════════
 // ⑪ BACKUP SEMUA DATA KE CSV
@@ -18034,7 +18545,24 @@ onLoggedIn = async function(user) {
     return;
   }
 
+  // [FIX BUG AUTO-LOGIN] Cek dulu apakah sesi sudah "kadaluarsa karena idle"
+  // (>30 menit sejak aktivitas terakhir, dicatat di localStorage — bertahan
+  // lintas refresh). Kalau iya, paksa keluar & JANGAN auto-login walau token
+  // Supabase-nya sendiri masih valid.
+  if (_isSesiKadaluarsaKarenaIdle()) {
+    try { await db.auth.signOut(); } catch (e) {}
+    try { localStorage.removeItem(LAST_ACTIVITY_KEY); } catch (e) {}
+    const lm = document.getElementById('loginMsg');
+    if (lm) { lm.className = 'muted'; lm.textContent = '🔒 Sesi berakhir karena tidak aktif. Silakan login kembali.'; }
+    return;
+  }
+
   const { data } = await db.auth.getSession();
+  // [PENTING] TIDAK memanggil markActivity() di sini — sekadar berhasil auto-login
+  // (halaman dimuat/di-refresh) BUKAN aktivitas asli. Kalau ditandai di sini, sesi
+  // bisa diperpanjang selamanya cuma dengan refresh tanpa klik apapun — sama saja
+  // dengan bug lama. Jam idle hanya boleh maju lewat klik/scroll/keyboard sungguhan
+  // (lihat event listener di bagian ⑩ AUTO LOGOUT).
   if (data.session?.user) await onLoggedIn(data.session.user);
 })();
 </script>
