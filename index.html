@@ -4566,7 +4566,7 @@ const parseUang = v => Math.round(parseFloat(v) || 0);
 const $   = id => document.getElementById(id);
 const setMsg = (id, text, isErr) => {
   const el = $(id);
-  if (el) { el.className = isErr ? 'err' : 'ok'; el.textContent = text; setTimeout(() => { if(el) el.textContent=''; }, 4000); }
+  if (el) { el.className = isErr ? 'err' : 'ok'; el.innerHTML = text; setTimeout(() => { if(el) el.innerHTML=''; }, 4000); }
   if (text && !text.startsWith('⏳') && typeof showToast !== 'undefined') showToast(text, isErr ? 'error' : 'success');
 };
 function escapeHtml(s) {
@@ -6667,6 +6667,36 @@ let iuranRows = [], iuranMeta = {}, kategoriCache = [], currentIuranId = null, i
 // WAJIB terdaftar di Supabase → Authentication → URL Configuration → Redirect URLs.
 const AUTH_REDIRECT_URL = 'https://kikysr27.github.io/mumimb3/';
 
+// ── Helper: ubah error mentah (Supabase/Auth/network) jadi pesan yang jelas ──
+// Sebelumnya error ditampilkan lewat `error.message` apa adanya. Kalau server
+// mengembalikan body tak terduga (mis. gagal verifikasi captcha di sisi
+// Supabase, token Turnstile kadaluarsa, atau rate-limit), `error.message`
+// bisa kosong / berupa object sehingga muncul sebagai teks "Gagal: {}" yang
+// tidak membantu. Fungsi ini SELALU mencoba mengeluarkan info yang berguna,
+// dan mencatat error asli ke console supaya gampang didiagnosis.
+function _authErrMsg(error) {
+  if (!error) return 'Terjadi kesalahan tidak diketahui.';
+  try { console.error('[Auth Error]', error); } catch (_) {}
+  let msg = error.message || error.error_description || error.msg || error.error || error.hint || '';
+  if (msg && typeof msg === 'object') { try { msg = JSON.stringify(msg); } catch (_) { msg = String(msg); } }
+  if (!msg || msg === '{}' || msg === '[object Object]') {
+    return 'Gagal terhubung / verifikasi ke server (respons kosong dari server' +
+      (error.status ? ', kode ' + error.status : '') + ').<br>Kemungkinan penyebab: ' +
+      '<br>• Verifikasi Cloudflare belum selesai saat tombol ditekan — tunggu sampai centang hijau, lalu coba lagi.' +
+      '<br>• Koneksi internet tidak stabil.' +
+      '<br>• Captcha Turnstile di Supabase (Authentication → Bot Protection) belum diisi Secret Key yang cocok dengan Site Key di kode ini.';
+  }
+  const low = String(msg).toLowerCase();
+  if (low.includes('captcha')) {
+    return 'Verifikasi captcha gagal / kadaluarsa: ' + escapeHtml(msg) +
+      '<br>Refresh halaman, lalu klik tombol secepatnya setelah centang Cloudflare muncul (token captcha hanya berlaku sekali & sebentar).';
+  }
+  if (low.includes('rate limit') || low.includes('security purposes') || error.status === 429) {
+    return 'Terlalu banyak percobaan dalam waktu singkat: ' + escapeHtml(msg) + '<br>Tunggu sekitar 1 menit lalu coba lagi.';
+  }
+  return escapeHtml(msg);
+}
+
 function toggleLoginPass() {
   const inp = document.getElementById('loginPass');
   const btn = document.getElementById('togglePassBtn');
@@ -6783,9 +6813,12 @@ async function doRegister() {
     });
   } catch (e) { resetBtn(); setMsg('regMsg', 'Gagal menyiapkan: ' + e.message, true); return; }
 
-  const { data: suData, error: suErr } = await tmp.auth.signUp({
-    email, password: pass, options: { captchaToken }
-  });
+  let suData, suErr;
+  try {
+    ({ data: suData, error: suErr } = await tmp.auth.signUp({
+      email, password: pass, options: { captchaToken }
+    }));
+  } catch (e) { suErr = e; }
   _tsReset('register'); // token Turnstile sekali pakai — reset selalu, sukses maupun gagal
   if (suErr) {
     resetBtn();
@@ -6793,7 +6826,7 @@ async function doRegister() {
     const hint = low.includes('already')
       ? '<br><br>Email ini sudah terdaftar. Kalau lupa password, pakai menu <b>🔑 Lupa password?</b>.'
       : (low.includes('password') ? '<br><br>Password terlalu lemah, coba yang lebih panjang.' : '');
-    setMsg('regMsg', '❌ Gagal daftar: ' + suErr.message + hint, true);
+    setMsg('regMsg', '❌ Gagal daftar: ' + _authErrMsg(suErr) + hint, true);
     return;
   }
 
@@ -6832,9 +6865,30 @@ async function doRegister() {
   }
   try { await tmp.auth.signOut(); } catch (_) {}
 
+  // Bug: sebuah TRIGGER di tabel `profiles` di Supabase mereferensikan kolom
+  // "akses" (mis. NEW.akses) padahal kolom yang benar bernama "akses_menu".
+  // Ini BUKAN bug di kode client — trigger-nya perlu diperbaiki langsung di
+  // Supabase (Database → Triggers / Functions), lalu ganti "NEW.akses" jadi
+  // "NEW.akses_menu" (atau nama kolom lain yang sesuai) di function trigger-nya.
+  if (pErr && /record ["'`]?new["'`]? has no field ["'`]?akses["'`]?/i.test(pErr.message || '')) {
+    resetBtn();
+    setMsg('regMsg',
+      '⚠️ Akun auth berhasil dibuat, tapi <b>trigger database</b> di tabel <code>profiles</code> masih ' +
+      'mereferensikan kolom lama bernama <code>akses</code> (seharusnya <code>akses_menu</code>).<br><br>' +
+      'Ini bukan bug di halaman ini — Admin Master perlu memperbaiki di Supabase → <b>Database → Triggers</b> ' +
+      '(atau Database → Functions, cari function yang dipakai trigger tabel <code>profiles</code>) dan ' +
+      'ganti semua <code>NEW.akses</code> menjadi <code>NEW.akses_menu</code>, lalu simpan.<br><br>' +
+      'Untuk menemukannya lewat SQL Editor, jalankan:<br>' +
+      '<code>SELECT tgname, pg_get_triggerdef(oid) FROM pg_trigger ' +
+      "WHERE tgrelid = 'profiles'::regclass AND NOT tgisinternal;</code><br><br>" +
+      'Setelah trigger diperbaiki, minta user daftar ulang (atau Admin Master bisa buatkan akun manual lewat menu Kelola Akses).',
+      true);
+    return;
+  }
+
   if (pErr) {
     resetBtn();
-    setMsg('regMsg', '⚠️ Akun auth dibuat, tapi pendaftaran gagal disimpan: ' + pErr.message +
+    setMsg('regMsg', '⚠️ Akun auth dibuat, tapi pendaftaran gagal disimpan: ' + _authErrMsg(pErr) +
       '<br><br>Hubungi Admin Master.', true);
     return;
   }
@@ -6867,11 +6921,16 @@ async function doForgotPassword() {
   btn.disabled = true; btn.textContent = '⏳ Mengirim...';
   setMsg('forgotMsg', '⏳ Mengirim email...');
 
-  const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: AUTH_REDIRECT_URL, captchaToken });
+  let error;
+  try {
+    ({ error } = await db.auth.resetPasswordForEmail(email, { redirectTo: AUTH_REDIRECT_URL, captchaToken }));
+  } catch (e) {
+    error = e; // network/CORS error yang di-throw, bukan dikembalikan sbg {error}
+  }
   _tsReset('forgot'); // token sekali pakai — reset selalu, sukses maupun gagal
 
   btn.disabled = false; btn.textContent = '📧 Kirim Link Reset Password';
-  if (error) { setMsg('forgotMsg', '❌ Gagal: ' + error.message, true); return; }
+  if (error) { setMsg('forgotMsg', '❌ Gagal: ' + _authErrMsg(error), true); return; }
 
   $('forgotEmail').value = '';
   setMsg('forgotMsg',
@@ -6915,7 +6974,7 @@ async function doLogin() {
       hint = '<br><br>Email/password salah, atau user admin belum dibuat di Supabase.';
     else if ((error.message||'').toLowerCase().includes('email not confirmed'))
       hint = '<br><br>Supabase → Authentication → Users → konfirmasi email user.';
-    msgEl.innerHTML = '❌ <b>Login gagal:</b> ' + error.message + hint;
+    msgEl.innerHTML = '❌ <b>Login gagal:</b> ' + _authErrMsg(error) + hint;
     return;
   }
   msgEl.textContent = 'Berhasil — memuat data...';
@@ -16790,8 +16849,15 @@ async function resetUserPassword(emailArg) {
   if (!email || !email.includes('@')) { setMsg(msgId, 'Email tidak valid.', true); return; }
   if (!(await askConfirm('Kirim link reset password ke ' + email + '?'))) return;
   setMsg(msgId, '⏳ Mengirim email...');
-  const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: 'https://kikysr27.github.io/mumimb3/' });
-  if (error) { setMsg(msgId, '❌ Gagal: ' + error.message, true); return; }
+  // Catatan: kalau "Enable CAPTCHA protection" aktif di Supabase, endpoint ini
+  // TETAP butuh captchaToken meski dipanggil oleh admin (tidak ada widget
+  // Turnstile di panel ini). Kalau muncul error terkait "captcha", tambahkan
+  // widget Turnstile di sini juga seperti pada form Lupa Password self-service.
+  let error;
+  try {
+    ({ error } = await db.auth.resetPasswordForEmail(email, { redirectTo: 'https://kikysr27.github.io/mumimb3/' }));
+  } catch (e) { error = e; }
+  if (error) { setMsg(msgId, '❌ Gagal: ' + _authErrMsg(error), true); return; }
   // [AUDIT] Catat pengiriman link reset password oleh admin
   if (typeof _auditLog === 'function') _auditLog('user', 'RESET_PASSWORD', null, { email }, 'Kirim link reset password ke ' + email);
   setMsg(msgId, '✅ Link reset password dikirim ke ' + email + '. Minta user cek email (termasuk folder Spam).');
@@ -16804,8 +16870,9 @@ async function changeMyPassword() {
   if (pass.length < 6) { setMsg('myPassMsg', 'Password minimal 6 karakter.', true); return; }
   if (!(await askConfirm('Ganti password akun Anda sekarang?'))) return;
   setMsg('myPassMsg', '⏳ Menyimpan...');
-  const { error } = await db.auth.updateUser({ password: pass });
-  if (error) { setMsg('myPassMsg', '❌ Gagal: ' + error.message, true); return; }
+  let error;
+  try { ({ error } = await db.auth.updateUser({ password: pass })); } catch (e) { error = e; }
+  if (error) { setMsg('myPassMsg', '❌ Gagal: ' + _authErrMsg(error), true); return; }
   // [AUDIT] Catat ganti password sendiri (password TIDAK ikut dicatat)
   if (typeof _auditLog === 'function') _auditLog('user', 'CHANGE_PASSWORD', null,
     { email: currentProf?.email || null }, 'Ganti password sendiri');
