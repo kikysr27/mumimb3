@@ -800,6 +800,19 @@
   [data-theme="dark"] .google-btn { background: #202b3a !important; color: #e8eef5 !important; border-color: #3a4a5e !important; }
   [data-theme="dark"] .google-btn:hover { background: #273244 !important; }
   [data-theme="dark"] .auth-divider span.line { background: #2b4538; }
+
+  /* ═══ TOMBOL GITHUB SIGN-IN (mengikuti pola tombol Google) ═══ */
+  .github-btn {
+    display: flex !important; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; border-radius: 10px; padding: 12px 16px; font-size: 14px; font-weight: 600;
+    cursor: pointer; text-transform: none !important; letter-spacing: 0 !important;
+    transition: background .15s, box-shadow .15s, transform .1s; margin-top: 10px;
+  }
+  .github-btn { background: #181717 !important; color: #fff !important; border: 1.5px solid #181717 !important; box-shadow: 0 1px 2px rgba(0,0,0,.2) !important; }
+  .github-btn:hover { background: #2b2b2b !important; }
+  .github-btn:active { background: #000 !important; transform: translateY(1px); }
+  .github-btn:disabled { opacity: .6; cursor: not-allowed; }
+  .github-btn svg { flex-shrink: 0; }
   input, select, textarea {
     width: 100%; padding: 11px 14px; border: 2px solid #d4e8dc;
     border-radius: 10px; font-size: 14px; margin-bottom: 10px;
@@ -1750,6 +1763,10 @@
         </svg>
         <span>Lanjutkan dengan Google</span>
       </button>
+      <button type="button" id="githubBtn" class="github-btn" onclick="signInWithOAuth('github')">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="#fff" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        <span>Lanjutkan dengan GitHub</span>
+      </button>
       <div id="googleMsg" style="margin-top:6px;"></div>
 
       <!-- Link: Lupa Password & Daftar Akun -->
@@ -1810,6 +1827,10 @@
         </svg>
         <span>Daftar dengan Google</span>
       </button>
+      <button type="button" id="githubBtnReg" class="github-btn" onclick="signInWithOAuth('github')">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="#fff" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        <span>Daftar dengan GitHub</span>
+      </button>
       <p class="muted" style="margin-top:8px;text-align:center;font-size:11.5px;">
         Pakai Google: tanpa isi password. Tetap perlu persetujuan <b>Admin Master</b>.
       </p>
@@ -1844,9 +1865,13 @@
         </svg>
         <span>Lanjutkan dengan Google</span>
       </button>
+      <button type="button" id="githubBtnForgot" class="github-btn" onclick="signInWithOAuth('github')">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="#fff" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        <span>Lanjutkan dengan GitHub</span>
+      </button>
       <div id="googleMsgForgot" style="margin-top:6px;"></div>
       <p class="muted" style="margin-top:8px;text-align:center;font-size:11.5px;">
-        Kalau akunmu didaftarkan pakai Google, tidak perlu reset — langsung masuk lewat tombol ini.
+        Kalau akunmu didaftarkan pakai Google/GitHub, tidak perlu reset — langsung masuk lewat tombol di atas.
       </p>
 
       <div style="text-align:center;margin-top:14px;">
@@ -7076,29 +7101,36 @@ async function doLogout() {
 //    • Authentication → URL Configuration → Redirect URLs: tambahkan URL app
 //      (mis. https://kikysr27.github.io/mumimb3/)
 // ─────────────────────────────────────────────────────────────
-async function signInWithGoogle() {
-  const btns = [document.getElementById('googleBtn'), document.getElementById('googleBtnReg'), document.getElementById('googleBtnForgot')].filter(Boolean);
+async function signInWithOAuth(provider) {
+  const btns = [
+    document.getElementById('googleBtn'), document.getElementById('githubBtn'),
+    document.getElementById('googleBtnReg'), document.getElementById('githubBtnReg'),
+    document.getElementById('googleBtnForgot'), document.getElementById('githubBtnForgot')
+  ].filter(Boolean);
   const msgId = (document.getElementById('authRegister') && document.getElementById('authRegister').style.display !== 'none') ? 'regMsg'
               : (document.getElementById('authForgot') && document.getElementById('authForgot').style.display !== 'none') ? 'googleMsgForgot'
               : 'googleMsg';
+  const label = { google: 'Google', github: 'GitHub' }[provider] || provider;
   try {
-    setMsg(msgId, '⏳ Mengalihkan ke Google...');
+    setMsg(msgId, `⏳ Mengalihkan ke ${label}...`);
     btns.forEach(b => { b.disabled = true; });
-    // Kembali ke halaman ini setelah user selesai memilih akun Google.
+    // Kembali ke halaman ini setelah user selesai memilih akun.
     const redirectTo = window.location.origin + window.location.pathname;
-    const { error } = await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
+    const { error } = await db.auth.signInWithOAuth({ provider, options: { redirectTo } });
     if (error) throw error;
-    // Kalau sukses, browser langsung diarahkan ke Google (baris di bawah tidak terpakai).
+    // Kalau sukses, browser langsung diarahkan ke provider (baris di bawah tidak terpakai).
   } catch (e) {
     const m = (e && e.message) ? e.message : String(e);
     let hint = '';
     if (/provider/i.test(m) || /not enabled/i.test(m)) {
-      hint = '<br><span style="font-size:11px;">Provider Google belum aktif. Minta Admin Master mengaktifkannya di Supabase → Authentication → Providers → Google.</span>';
+      hint = `<br><span style="font-size:11px;">Provider ${label} belum aktif. Minta Admin Master mengaktifkannya di Supabase → Authentication → Providers → ${label}.</span>`;
     }
-    setMsg(msgId, '❌ Gagal masuk dengan Google: ' + m + hint, true);
+    setMsg(msgId, `❌ Gagal masuk dengan ${label}: ` + m + hint, true);
     btns.forEach(b => { b.disabled = false; });
   }
 }
+// Kompatibilitas: tombol Google lama masih memanggil signInWithGoogle().
+async function signInWithGoogle() { return signInWithOAuth('google'); }
 
 // Tolak login: keluarkan sesi, balik ke halaman Masuk, tampilkan alasan.
 async function _blockLogin(html) {
