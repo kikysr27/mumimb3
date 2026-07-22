@@ -779,6 +779,27 @@
   }
 
   #loginView { max-width: 380px; margin: 60px auto; }
+
+  /* ═══ TOMBOL GOOGLE SIGN-IN (mengikuti panduan brand Google) ═══ */
+  .google-btn {
+    display: flex !important; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; background: #fff !important; color: #3c4043 !important;
+    border: 1.5px solid #dadce0 !important; border-radius: 10px;
+    padding: 12px 16px; font-size: 14px; font-weight: 600;
+    cursor: pointer; text-transform: none !important; letter-spacing: 0 !important;
+    box-shadow: 0 1px 2px rgba(60,64,67,.15) !important;
+    transition: background .15s, box-shadow .15s, transform .1s;
+  }
+  .google-btn:hover { background: #f7f8f8 !important; box-shadow: 0 2px 8px rgba(60,64,67,.22) !important; }
+  .google-btn:active { background: #eef0f1 !important; transform: translateY(1px); }
+  .google-btn:disabled { opacity: .6; cursor: not-allowed; }
+  .google-btn svg { flex-shrink: 0; }
+  .auth-divider { display: flex; align-items: center; gap: 10px; margin: 16px 0 12px; }
+  .auth-divider span.line { flex: 1; height: 1px; background: #d4e8dc; }
+  .auth-divider span.txt { font-size: 11px; font-weight: 700; letter-spacing: .6px; color: #7a9585; }
+  [data-theme="dark"] .google-btn { background: #202b3a !important; color: #e8eef5 !important; border-color: #3a4a5e !important; }
+  [data-theme="dark"] .google-btn:hover { background: #273244 !important; }
+  [data-theme="dark"] .auth-divider span.line { background: #2b4538; }
   input, select, textarea {
     width: 100%; padding: 11px 14px; border: 2px solid #d4e8dc;
     border-radius: 10px; font-size: 14px; margin-bottom: 10px;
@@ -1718,6 +1739,19 @@
       <button id="loginBtn" onclick="doLogin()">Masuk</button>
       <div id="loginMsg"></div>
 
+      <!-- ─── MASUK / DAFTAR DENGAN GOOGLE ─── -->
+      <div class="auth-divider"><span class="line"></span><span class="txt">ATAU</span><span class="line"></span></div>
+      <button type="button" id="googleBtn" class="google-btn" onclick="signInWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        <span>Lanjutkan dengan Google</span>
+      </button>
+      <div id="googleMsg" style="margin-top:6px;"></div>
+
       <!-- Link: Lupa Password & Daftar Akun -->
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap;">
         <button type="button" class="auth-link" onclick="showAuthPane('forgot')">🔑 Lupa password?</button>
@@ -1764,6 +1798,21 @@
       <div id="captchaRegister" style="margin:12px 0;"></div>
       <button id="regBtn" onclick="doRegister()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">📨 Kirim Pendaftaran</button>
       <div id="regMsg"></div>
+
+      <!-- ─── DAFTAR CEPAT DENGAN GOOGLE ─── -->
+      <div class="auth-divider"><span class="line"></span><span class="txt">ATAU DAFTAR CEPAT</span><span class="line"></span></div>
+      <button type="button" id="googleBtnReg" class="google-btn" onclick="signInWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        <span>Daftar dengan Google</span>
+      </button>
+      <p class="muted" style="margin-top:8px;text-align:center;font-size:11.5px;">
+        Pakai Google: tanpa isi password. Tetap perlu persetujuan <b>Admin Master</b>.
+      </p>
       <div style="text-align:center;margin-top:14px;">
         <button type="button" class="auth-link" onclick="showAuthPane('login')">← Kembali ke halaman Masuk</button>
       </div>
@@ -1783,6 +1832,23 @@
       <div id="captchaForgot" style="margin:12px 0;"></div>
       <button id="forgotBtn" onclick="doForgotPassword()" style="background:linear-gradient(135deg,#d97706,#f59e0b);">📧 Kirim Link Reset Password</button>
       <div id="forgotMsg"></div>
+
+      <!-- ─── ATAU: LANGSUNG MASUK DENGAN GOOGLE ─── -->
+      <div class="auth-divider"><span class="line"></span><span class="txt">ATAU</span><span class="line"></span></div>
+      <button type="button" id="googleBtnForgot" class="google-btn" onclick="signInWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        <span>Lanjutkan dengan Google</span>
+      </button>
+      <div id="googleMsgForgot" style="margin-top:6px;"></div>
+      <p class="muted" style="margin-top:8px;text-align:center;font-size:11.5px;">
+        Kalau akunmu didaftarkan pakai Google, tidak perlu reset — langsung masuk lewat tombol ini.
+      </p>
+
       <div style="text-align:center;margin-top:14px;">
         <button type="button" class="auth-link" onclick="showAuthPane('login')">← Kembali ke halaman Masuk</button>
       </div>
@@ -6997,6 +7063,43 @@ async function doLogout() {
   location.replace(location.pathname);
 }
 
+// ─────────────────────────────────────────────────────────────
+//  MASUK / DAFTAR DENGAN GOOGLE (Supabase OAuth)
+// ─────────────────────────────────────────────────────────────
+//  Satu tombol untuk dua fungsi: kalau akun Google belum terdaftar,
+//  Supabase otomatis membuatkan akun auth-nya. Baris `profiles` dibuat
+//  otomatis di onLoggedIn dengan status 'pending' → tetap lewat
+//  persetujuan Admin Master, sama seperti pendaftaran manual.
+//
+//  SETUP WAJIB di Supabase → Authentication → Providers → Google:
+//    • Enable Google, isi Client ID & Client Secret dari Google Cloud Console
+//    • Authentication → URL Configuration → Redirect URLs: tambahkan URL app
+//      (mis. https://kikysr27.github.io/mumimb3/)
+// ─────────────────────────────────────────────────────────────
+async function signInWithGoogle() {
+  const btns = [document.getElementById('googleBtn'), document.getElementById('googleBtnReg'), document.getElementById('googleBtnForgot')].filter(Boolean);
+  const msgId = (document.getElementById('authRegister') && document.getElementById('authRegister').style.display !== 'none') ? 'regMsg'
+              : (document.getElementById('authForgot') && document.getElementById('authForgot').style.display !== 'none') ? 'googleMsgForgot'
+              : 'googleMsg';
+  try {
+    setMsg(msgId, '⏳ Mengalihkan ke Google...');
+    btns.forEach(b => { b.disabled = true; });
+    // Kembali ke halaman ini setelah user selesai memilih akun Google.
+    const redirectTo = window.location.origin + window.location.pathname;
+    const { error } = await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
+    if (error) throw error;
+    // Kalau sukses, browser langsung diarahkan ke Google (baris di bawah tidak terpakai).
+  } catch (e) {
+    const m = (e && e.message) ? e.message : String(e);
+    let hint = '';
+    if (/provider/i.test(m) || /not enabled/i.test(m)) {
+      hint = '<br><span style="font-size:11px;">Provider Google belum aktif. Minta Admin Master mengaktifkannya di Supabase → Authentication → Providers → Google.</span>';
+    }
+    setMsg(msgId, '❌ Gagal masuk dengan Google: ' + m + hint, true);
+    btns.forEach(b => { b.disabled = false; });
+  }
+}
+
 // Tolak login: keluarkan sesi, balik ke halaman Masuk, tampilkan alasan.
 async function _blockLogin(html) {
   try { await db.auth.signOut(); } catch (_) {}
@@ -7011,6 +7114,37 @@ async function _blockLogin(html) {
 async function onLoggedIn(user) {
   const _isMaster = (user.email === 'admin@mumi.local');
   const { data: prof, error: profErr } = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
+
+  // ── AUTO-DAFTAR UNTUK LOGIN GOOGLE (OAuth) ──
+  // User Google yang baru pertama kali masuk belum punya baris `profiles`.
+  // Buatkan otomatis dengan status 'pending' supaya TETAP melewati persetujuan
+  // Admin Master — kebijakan sama persis dengan pendaftaran manual.
+  const _provider = (user.app_metadata && user.app_metadata.provider) || '';
+  if (!prof && !profErr && !_isMaster && _provider && _provider !== 'email') {
+    const _meta = user.user_metadata || {};
+    const _nama = _meta.full_name || _meta.name || (user.email || '').split('@')[0];
+    const _payload = {
+      id: user.id, nama_lengkap: _nama, jabatan: 'User',
+      akses_menu: {}, is_super: false, email: user.email || '', status: 'pending'
+    };
+    let e1 = (await db.from('profiles').upsert(_payload)).error;
+    if (e1 && /status/i.test(e1.message || '')) {
+      await _blockLogin('❌ Kolom <b>status</b> belum ada di tabel <code>profiles</code>.<br>' +
+        'Minta Admin Master jalankan di Supabase → SQL Editor:<br>' +
+        "<code>ALTER TABLE profiles ADD COLUMN IF NOT EXISTS status text DEFAULT 'approved';</code>");
+      return;
+    }
+    if (e1 && /email/i.test(e1.message || '')) { delete _payload.email; e1 = (await db.from('profiles').upsert(_payload)).error; }
+    if (e1) { await _blockLogin('❌ Gagal membuat profil dari akun Google: ' + escapeHtml(e1.message)); return; }
+    if (typeof _auditLog === 'function') {
+      _auditLog('user', 'REGISTER', null, { email: user.email, nama: _nama, via: 'google', status: 'pending' },
+        'Pendaftaran via Google: ' + user.email);
+    }
+    await _blockLogin('✅ <b>Akun Google berhasil didaftarkan!</b><br>Halo <b>' + escapeHtml(_nama) +
+      '</b> — akunmu sedang <b>menunggu persetujuan Admin Master</b> sebelum bisa masuk.');
+    return;
+  }
+
   // User yang profile-nya DIHAPUS = dinonaktifkan → blokir login (admin master selalu boleh masuk).
   // Hanya blokir kalau query sukses & memang tidak ada baris (bukan karena error jaringan/RLS) → aman.
   if (!prof && !profErr && !_isMaster) {
@@ -18612,11 +18746,21 @@ onLoggedIn = async function(user) {
     return;
   }
 
+  // [LOGIN GOOGLE] Redirect balik dari Google membawa token di hash
+  // (#access_token=...). Ini LOGIN BARU — jadi tandai aktivitas supaya TIDAK
+  // kena filter "sesi kadaluarsa karena idle" di bawah, lalu bersihkan hash
+  // biar URL rapi.
+  const isOAuthReturn = /access_token=/.test(hash) && !/type=recovery/.test(hash);
+  if (isOAuthReturn) {
+    try { localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now())); } catch (e) {}
+    try { history.replaceState(null, '', window.location.pathname); } catch (e) {}
+  }
+
   // [FIX BUG AUTO-LOGIN] Cek dulu apakah sesi sudah "kadaluarsa karena idle"
   // (>30 menit sejak aktivitas terakhir, dicatat di localStorage — bertahan
   // lintas refresh). Kalau iya, paksa keluar & JANGAN auto-login walau token
   // Supabase-nya sendiri masih valid.
-  if (_isSesiKadaluarsaKarenaIdle()) {
+  if (!isOAuthReturn && _isSesiKadaluarsaKarenaIdle()) {
     try { await db.auth.signOut(); } catch (e) {}
     try { localStorage.removeItem(LAST_ACTIVITY_KEY); } catch (e) {}
     const lm = document.getElementById('loginMsg');
