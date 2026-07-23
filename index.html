@@ -7216,7 +7216,33 @@ async function _daftarProfilOAuth(user, nama, provider) {
 // Popup sapaan singkat setiap kali berhasil login. Hilang otomatis
 // sendiri setelah 10 detik (tidak perlu diklik/ditutup manual).
 // ─────────────────────────────────────────────────────────────
+// Daftar kalimat sapaan — dipilih acak tiap login supaya tidak monoton.
+// Kombinasi motivasi + pengingat kepada Allah (syukur, sabar, sholat, dzikir, sedekah, dll).
+var _GREETING_MESSAGES = [
+  { icon: '🤲', judul: 'Assalamualaikum', pesan: 'Sudahkah Anda bersyukur hari ini?' },
+  { icon: '🌅', judul: 'Selamat datang kembali', pesan: 'Jangan lupa sholat 5 waktu tepat waktu, ya.' },
+  { icon: '💚', judul: 'Alhamdulillah', pesan: 'Nikmat sehat hari ini adalah karunia yang tak ternilai.' },
+  { icon: '📖', judul: 'Sudah tilawah hari ini?', pesan: 'Sempatkan baca Al-Qur\'an walau hanya satu ayat.' },
+  { icon: '🕌', judul: 'Assalamualaikum', pesan: 'Yuk, jaga sholat berjamaah di masjid kalau bisa.' },
+  { icon: '🌱', judul: 'Semangat pagi!', pesan: 'Setiap langkah kecil menuju kebaikan tetap dicatat pahalanya.' },
+  { icon: '🤍', judul: 'Selamat beraktivitas', pesan: 'Ingat, sebaik-baik manusia adalah yang paling bermanfaat bagi orang lain.' },
+  { icon: '🙏', judul: 'Sudahkah berdzikir?', pesan: 'Hati yang tenang lahir dari mengingat Allah.' },
+  { icon: '💪', judul: 'Tetap semangat', pesan: 'Allah tidak membebani seseorang di luar kesanggupannya.' },
+  { icon: '🌸', judul: 'Assalamualaikum', pesan: 'Sudahkah berterima kasih kepada orang tua hari ini?' },
+  { icon: '☀️', judul: 'Selamat datang', pesan: 'Awali hari dengan niat baik, insyaAllah dimudahkan.' },
+  { icon: '💛', judul: 'Sabar itu indah', pesan: 'Sesungguhnya bersama kesulitan ada kemudahan.' },
+  { icon: '🕋', judul: 'Assalamualaikum', pesan: 'Rindu ke Baitullah? Perbanyak doa dan usaha, ya.' },
+  { icon: '🤝', judul: 'Sudahkah bersedekah?', pesan: 'Sedekah tidak akan mengurangi harta, justru berkah.' },
+  { icon: '✨', judul: 'Semangat bekerja', pesan: 'Niatkan setiap pekerjaan sebagai ibadah, insyaAllah berpahala.' },
+  { icon: '🌙', judul: 'Selamat datang kembali', pesan: 'Jangan lupa istighfar, minimal 3x hari ini.' },
+  { icon: '🧡', judul: 'Assalamualaikum', pesan: 'Sudahkah memaafkan dan meminta maaf hari ini?' },
+  { icon: '🌾', judul: 'Terus berusaha', pesan: 'Rezeki sudah diatur, tugas kita hanyalah ikhtiar dan tawakal.' },
+  { icon: '💫', judul: 'Selamat datang', pesan: 'Senyum yang tulus juga bernilai sedekah, lho.' },
+  { icon: '🕊️', judul: 'Assalamualaikum', pesan: 'Sudahkah mendoakan kebaikan untuk sesama hari ini?' }
+];
+
 function _showGreetingPopup() {
+  var _pilih = _GREETING_MESSAGES[Math.floor(Math.random() * _GREETING_MESSAGES.length)];
   let modal = document.getElementById('greetingPopup');
   if (!modal) {
     modal = document.createElement('div');
@@ -7224,14 +7250,14 @@ function _showGreetingPopup() {
     modal.className = 'modal-overlay';
     modal.style.cssText = 'display:flex;align-items:center;justify-content:center;';
     modal.onclick = function (e) { if (e.target === modal) { modal.style.display = 'none'; } };
-    modal.innerHTML =
-      '<div class="modal-box" style="max-width:320px;text-align:center;">' +
-        '<div style="font-size:34px;margin-bottom:8px;">🤲</div>' +
-        '<div style="font-weight:800;font-size:16px;margin-bottom:6px;">Assalamualaikum</div>' +
-        '<div class="muted" style="font-size:13px;">Sudahkah Anda bersyukur hari ini?</div>' +
-      '</div>';
     document.body.appendChild(modal);
   }
+  modal.innerHTML =
+    '<div class="modal-box" style="max-width:320px;text-align:center;">' +
+      '<div style="font-size:34px;margin-bottom:8px;">' + _pilih.icon + '</div>' +
+      '<div style="font-weight:800;font-size:16px;margin-bottom:6px;">' + _pilih.judul + '</div>' +
+      '<div class="muted" style="font-size:13px;">' + _pilih.pesan + '</div>' +
+    '</div>';
   modal.style.display = 'flex';
   clearTimeout(window._greetingPopupTimer);
   window._greetingPopupTimer = setTimeout(function () {
