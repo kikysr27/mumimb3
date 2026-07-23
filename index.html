@@ -7143,6 +7143,102 @@ async function _blockLogin(html) {
   if (lb) { lb.disabled = false; lb.textContent = 'Masuk'; }
 }
 
+// ─────────────────────────────────────────────────────────────
+// Modal: konfirmasi/isi nama saat daftar pertama kali via Google/GitHub.
+// Google/GitHub kadang cuma kasih nama akun (bukan nama asli), jadi user
+// diberi kesempatan mengubahnya supaya jelas namanya di dalam sistem.
+// ─────────────────────────────────────────────────────────────
+function _showNamaOAuthModal(user, namaTebakan, provider) {
+  let modal = document.getElementById('namaOAuthModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'namaOAuthModal';
+    modal.className = 'modal-overlay';
+    modal.style.cssText = 'display:flex;align-items:center;justify-content:center;';
+    document.body.appendChild(modal);
+  }
+  const labelProvider = provider === 'github' ? 'GitHub' : 'Google';
+  modal.innerHTML =
+    '<div class="modal-box" style="max-width:380px;">' +
+      '<h2 style="margin-bottom:6px;">👋 Lengkapi Nama Anda</h2>' +
+      '<p class="muted" style="font-size:12px;margin-bottom:14px;">Akun ' + labelProvider + ' Anda berhasil terhubung. Nama di bawah akan ditampilkan di dalam sistem — ubah dulu kalau kurang sesuai.</p>' +
+      '<input id="namaOAuthInput" type="text" value="' + escapeHtml(namaTebakan) + '" placeholder="Nama lengkap" style="margin-bottom:14px;">' +
+      '<div id="namaOAuthMsg" style="margin-bottom:8px;font-size:12px;"></div>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<button type="button" id="namaOAuthBtnBatal" style="background:#f3f4f6;color:#6b7280;flex:1;">Batal</button>' +
+        '<button type="button" id="namaOAuthBtnLanjut" style="background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;flex:1;">Lanjutkan</button>' +
+      '</div>' +
+    '</div>';
+  modal.style.display = 'flex';
+  const inp = document.getElementById('namaOAuthInput');
+  setTimeout(() => { inp.focus(); inp.select(); }, 50);
+  document.getElementById('namaOAuthBtnBatal').onclick = async function () {
+    modal.style.display = 'none';
+    try { await db.auth.signOut(); } catch (_) {}
+  };
+  document.getElementById('namaOAuthBtnLanjut').onclick = async function () {
+    const nama = (inp.value || '').trim();
+    if (!nama) { setMsg('namaOAuthMsg', '⚠️ Nama tidak boleh kosong.', true); return; }
+    const btn = this;
+    btn.disabled = true; btn.textContent = 'Menyimpan...';
+    await _daftarProfilOAuth(user, nama, provider);
+    modal.style.display = 'none';
+    btn.disabled = false; btn.textContent = 'Lanjutkan';
+  };
+}
+
+// Buat baris `profiles` untuk user OAuth baru dengan nama yang sudah dikonfirmasi.
+// Status tetap 'pending' — melewati persetujuan Admin Master, sama seperti daftar manual.
+async function _daftarProfilOAuth(user, nama, provider) {
+  const _payload = {
+    id: user.id, nama_lengkap: nama, jabatan: 'User',
+    akses_menu: {}, is_super: false, email: user.email || '', status: 'pending'
+  };
+  let e1 = (await db.from('profiles').upsert(_payload)).error;
+  if (e1 && /status/i.test(e1.message || '')) {
+    await _blockLogin('❌ Kolom <b>status</b> belum ada di tabel <code>profiles</code>.<br>' +
+      'Minta Admin Master jalankan di Supabase → SQL Editor:<br>' +
+      "<code>ALTER TABLE profiles ADD COLUMN IF NOT EXISTS status text DEFAULT 'approved';</code>");
+    return;
+  }
+  if (e1 && /email/i.test(e1.message || '')) { delete _payload.email; e1 = (await db.from('profiles').upsert(_payload)).error; }
+  const labelProvider = provider === 'github' ? 'GitHub' : 'Google';
+  if (e1) { await _blockLogin('❌ Gagal membuat profil dari akun ' + labelProvider + ': ' + escapeHtml(e1.message)); return; }
+  if (typeof _auditLog === 'function') {
+    _auditLog('user', 'REGISTER', null, { email: user.email, nama: nama, via: provider, status: 'pending' },
+      'Pendaftaran via ' + labelProvider + ': ' + user.email);
+  }
+  await _blockLogin('✅ <b>Akun berhasil didaftarkan!</b><br>Halo <b>' + escapeHtml(nama) +
+    '</b> — akunmu sedang <b>menunggu persetujuan Admin Master</b> sebelum bisa masuk.');
+}
+
+// ─────────────────────────────────────────────────────────────
+// Popup sapaan singkat setiap kali berhasil login. Hilang otomatis
+// sendiri setelah 10 detik (tidak perlu diklik/ditutup manual).
+// ─────────────────────────────────────────────────────────────
+function _showGreetingPopup() {
+  let modal = document.getElementById('greetingPopup');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'greetingPopup';
+    modal.className = 'modal-overlay';
+    modal.style.cssText = 'display:flex;align-items:center;justify-content:center;';
+    modal.onclick = function (e) { if (e.target === modal) { modal.style.display = 'none'; } };
+    modal.innerHTML =
+      '<div class="modal-box" style="max-width:320px;text-align:center;">' +
+        '<div style="font-size:34px;margin-bottom:8px;">🤲</div>' +
+        '<div style="font-weight:800;font-size:16px;margin-bottom:6px;">Assalamualaikum</div>' +
+        '<div class="muted" style="font-size:13px;">Sudahkah Anda bersyukur hari ini?</div>' +
+      '</div>';
+    document.body.appendChild(modal);
+  }
+  modal.style.display = 'flex';
+  clearTimeout(window._greetingPopupTimer);
+  window._greetingPopupTimer = setTimeout(function () {
+    modal.style.display = 'none';
+  }, 10000);
+}
+
 async function onLoggedIn(user) {
   const _isMaster = (user.email === 'admin@mumi.local');
   const { data: prof, error: profErr } = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
@@ -7154,26 +7250,10 @@ async function onLoggedIn(user) {
   const _provider = (user.app_metadata && user.app_metadata.provider) || '';
   if (!prof && !profErr && !_isMaster && _provider && _provider !== 'email') {
     const _meta = user.user_metadata || {};
-    const _nama = _meta.full_name || _meta.name || (user.email || '').split('@')[0];
-    const _payload = {
-      id: user.id, nama_lengkap: _nama, jabatan: 'User',
-      akses_menu: {}, is_super: false, email: user.email || '', status: 'pending'
-    };
-    let e1 = (await db.from('profiles').upsert(_payload)).error;
-    if (e1 && /status/i.test(e1.message || '')) {
-      await _blockLogin('❌ Kolom <b>status</b> belum ada di tabel <code>profiles</code>.<br>' +
-        'Minta Admin Master jalankan di Supabase → SQL Editor:<br>' +
-        "<code>ALTER TABLE profiles ADD COLUMN IF NOT EXISTS status text DEFAULT 'approved';</code>");
-      return;
-    }
-    if (e1 && /email/i.test(e1.message || '')) { delete _payload.email; e1 = (await db.from('profiles').upsert(_payload)).error; }
-    if (e1) { await _blockLogin('❌ Gagal membuat profil dari akun Google: ' + escapeHtml(e1.message)); return; }
-    if (typeof _auditLog === 'function') {
-      _auditLog('user', 'REGISTER', null, { email: user.email, nama: _nama, via: 'google', status: 'pending' },
-        'Pendaftaran via Google: ' + user.email);
-    }
-    await _blockLogin('✅ <b>Akun Google berhasil didaftarkan!</b><br>Halo <b>' + escapeHtml(_nama) +
-      '</b> — akunmu sedang <b>menunggu persetujuan Admin Master</b> sebelum bisa masuk.');
+    const _namaTebakan = _meta.full_name || _meta.name || (user.email || '').split('@')[0];
+    // Minta konfirmasi/isi nama dulu supaya jelas namanya di dalam sistem
+    // (bukan cuma tebakan otomatis dari akun Google/GitHub).
+    _showNamaOAuthModal(user, _namaTebakan, _provider);
     return;
   }
 
@@ -7197,6 +7277,7 @@ async function onLoggedIn(user) {
 
   $('loginView').style.display = 'none';
   $('appView').style.display = 'block';
+  _showGreetingPopup();
   $('currentUser').textContent = `Login sebagai ${prof?.nama_lengkap || user.email} (${prof?.jabatan || 'Admin'})`;
   isSuper = prof?.is_super === true;
   // Admin master = admin utama bawaan (admin@mumi.local) ATAU user yang
