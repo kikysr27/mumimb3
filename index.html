@@ -1937,6 +1937,7 @@
         <div class="menu-card" onclick="openSection('acara')"><div class="ic">🎉</div><div class="lb">Acara</div><div class="sub">Event & progress</div></div>
         <div class="menu-card" onclick="openSection('kalender')"><div class="ic">📆</div><div class="lb">Kalender</div><div class="sub">Cari tanggal kosong</div></div>
         <div class="menu-card" onclick="openSection('catatan')"><div class="ic">📝</div><div class="lb">Catatan</div><div class="sub">Catatan bebas</div></div>
+        <div class="menu-card" onclick="openSection('evaluasi')"><div class="ic">🧭</div><div class="lb">Evaluasi</div><div class="sub">Evaluasi kegiatan</div></div>
         <div class="menu-card" onclick="openSection('laporan')"><div class="ic">📑</div><div class="lb">Laporan</div><div class="sub">Laporan & cetak PDF</div></div>
         <div class="menu-card" onclick="openSection('strukorg')"><div class="ic">🏛️</div><div class="lb">Struktur Org.</div><div class="sub">Bagan organisasi & PDF</div></div>
         <div class="menu-card" onclick="openSection('project')"><div class="ic">🗂️</div><div class="lb">Project</div><div class="sub">Kelola proyek & tim</div></div>
@@ -3032,6 +3033,57 @@
       </div>
     </div>
 
+    <div id="sec-evaluasi" class="section" style="display:none;">
+      <button class="back" onclick="goBack()">← Menu</button>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+          <h2 style="margin:0;">📝 Evaluasi</h2>
+          <button onclick="bukaEvaluasiBaru()" style="width:auto;padding:8px 14px;font-size:13px;">➕ Evaluasi Baru</button>
+        </div>
+        <p class="muted" style="font-size:12px;margin-bottom:10px;">
+          Evaluasi bebas dengan format lengkap (heading, bold, tabel, gambar, dll.) — sama seperti notulensi musyawarah atau deskripsi acara.
+        </p>
+        <input id="evaluasiSearch" type="text" placeholder="🔍 Cari judul evaluasi..." oninput="renderEvaluasiList()" style="margin-bottom:8px;">
+        <div id="evaluasiList"><p class="muted">Memuat evaluasi...</p></div>
+      </div>
+
+      <!-- Form edit/buat evaluasi -->
+      <div id="evaluasiFormCard" class="card" style="display:none;">
+        <button class="back" onclick="tutupFormEvaluasi()" style="margin-bottom:10px;">← Kembali ke Daftar</button>
+        <label>Judul Evaluasi</label>
+        <input id="evalJudul" type="text" placeholder="Cth: Ide acara perpisahan, Kontak vendor, Resep snack...">
+        <label>Isi Evaluasi</label>
+        <div class="desc-toolbar">
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('h1')" title="Judul Besar">H1</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('h2')" title="Sub Judul">H2</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('h3')" title="Sub-Sub">H3</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('bold')" title="Tebal"><b>B</b></button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('italic')" title="Miring"><i>I</i></button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('underline')" title="Garis Bawah" style="text-decoration:underline;">U</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('strikethrough')" title="Coret" style="text-decoration:line-through;">S</button>
+          <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('evalIsi'), this, 'fore')" title="Warna Huruf" style="border-bottom:3px solid #dc2626;">A▾</button>
+          <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('evalIsi'), this, 'hilite')" title="Warna Highlight" style="background:#fef08a;color:#422006;">🖍▾</button>
+          <button type="button" class="desc-toolbar-btn" data-table-btn onclick="window.showTablePicker(document.getElementById('evalIsi'), this)" title="Tabel">⊞ Tabel</button>
+          <button type="button" class="desc-toolbar-btn" onclick="window.pickImageForEditor(document.getElementById('evalIsi'))" title="Gambar">🖼️ Gambar</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('link')" title="Link">🔗 Link</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('ul')" title="Bullet">• List</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('ol')" title="Numbered">1. List</button>
+          <button type="button" class="desc-toolbar-btn" data-style-btn onclick="window.showStylePicker(document.getElementById('evalIsi'), this)" title="Style" style="background:#dbeafe;color:#1e3a8a;">Aa Style ▾</button>
+          <button type="button" class="desc-toolbar-btn" onclick="window.editorCopy(document.getElementById('evalIsi'))" title="Salin teks terpilih" style="background:#e0f2fe;color:#0369a1;">📋 Salin</button>
+          <button type="button" class="desc-toolbar-btn" onclick="window.editorCut(document.getElementById('evalIsi'))" title="Potong teks terpilih" style="background:#fef9c3;color:#713f12;">✂️ Potong</button>
+          <button type="button" class="desc-toolbar-btn" onclick="window.editorPaste(document.getElementById('evalIsi'))" title="Tempel dari clipboard" style="background:#f0fdf4;color:#166534;">📌 Tempel</button>
+        </div>
+        <div id="evalIsi" class="wysiwyg-editor" contenteditable="true" spellcheck="true" style="min-height:280px;max-height:600px;"
+             data-placeholder="Tulis evaluasi apa saja di sini. Pilih kata lalu klik tombol format di atas, atau klik kanan..."></div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <button onclick="simpanEvaluasi()" style="flex:1;">💾 Simpan Evaluasi</button>
+          <button id="evaluasiHapusBtn" class="danger" onclick="hapusEvaluasi()" style="flex:1;display:none;">🗑️ Hapus</button>
+        </div>
+        <div id="evalMsg" style="margin-top:6px;"></div>
+      </div>
+    </div>
+
+    
     <div id="sec-kalender" class="section" style="display:none;">
       <button class="back" onclick="goBack()">← Menu</button>
       <div class="card">
@@ -7371,6 +7423,7 @@ function openSection(name) {
     recycle: loadRecycle,
     kalender: loadKalender,
     catatan: loadCatatan,
+    evaluasi: loadEvaluasi,
   };
   if (loaders[name]) loaders[name]();
 }
@@ -7932,6 +7985,305 @@ async function hapusCatatan() {
     },
     '📝'
   );
+}
+
+let evaluasiCache = [];
+let currentEvaluasiId = null;
+const EVAL_LS_KEY = 'evaluasi_lokal_v1';
+
+async function loadEvaluasi() {
+  document.getElementById('evaluasiFormCard').style.display = 'none';
+  document.querySelector('#sec-evaluasi .card').style.display = 'block';
+  const listEl = document.getElementById('evaluasiList');
+  listEl.innerHTML = '<p class="muted">Memuat...</p>';
+  // Coba Supabase dulu
+  try {
+    const { data, error } = await db.from('evaluasi').select('*').order('updated_at', { ascending: false });
+    if (error) {
+      const msg = error.message || '';
+      if (msg.includes('evaluasi') || msg.includes('relation') || error.code === '42P01') {
+        // Tabel belum ada → pakai localStorage
+        evaluasiCache = _loadEvaluasiLocal();
+      } else { throw error; }
+    } else {
+      evaluasiCache = data || [];
+    }
+  } catch (e) {
+    console.warn('loadEvaluasi err:', e);
+    evaluasiCache = _loadEvaluasiLocal();
+  }
+  renderEvaluasiList();
+}
+
+function _loadEvaluasiLocal() {
+  try { return JSON.parse(localStorage.getItem(EVAL_LS_KEY) || '[]'); } catch(e) { return []; }
+}
+function _saveEvaluasiLocal(arr) {
+  try { localStorage.setItem(EVAL_LS_KEY, JSON.stringify(arr)); } catch(e) {}
+}
+
+function renderEvaluasiList() {
+  const q = (document.getElementById('evaluasiSearch')?.value || '').toLowerCase();
+  const list = evaluasiCache.filter(c => {
+    if (!q) return true;
+    return ((c.judul || '') + ' ' + (c.isi || '')).toLowerCase().includes(q);
+  });
+  const el = document.getElementById('evaluasiList');
+  if (!list.length) {
+    el.innerHTML = q
+      ? '<p class="muted" style="text-align:center;padding:14px;">🔍 Tidak ada evaluasi cocok dengan "' + escapeHtml(q) + '"</p>'
+      : '<p class="muted" style="text-align:center;padding:20px;">📝 Belum ada evaluasi. Klik <b>+ Evaluasi Baru</b> untuk mulai.</p>';
+    return;
+  }
+  el.innerHTML = list.map(c => {
+    const tgl = c.updated_at ? new Date(c.updated_at).toLocaleString('id-ID', { dateStyle:'long', timeStyle:'short' }) : '';
+    const preview = window.mdToPlainText(c.isi || '', 140);
+    return `<div onclick="bukaEvaluasi(${c.id})" style="padding:12px 14px;background:#fafdfb;border:1px solid #d4e8dc;border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;"
+      onmouseover="this.style.background='#f0f7f3'" onmouseout="this.style.background='#fafdfb'">
+      <div style="font-weight:700;font-size:14px;color:#1a6644;">📝 ${escapeHtml(c.judul || '(tanpa judul)')}</div>
+      ${preview ? `<div class="muted" style="font-size:12px;margin-top:4px;line-height:1.4;">${escapeHtml(preview)}${preview.length === 140 ? '...' : ''}</div>` : ''}
+      ${tgl ? `<div class="muted" style="font-size:10px;margin-top:4px;">⏰ ${tgl}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function bukaEvaluasiBaru() {
+  currentEvaluasiId = null;
+  document.querySelector('#sec-evaluasi .card').style.display = 'none';
+  const form = document.getElementById('evaluasiFormCard');
+  form.style.display = 'block';
+  document.getElementById('evalJudul').value = '';
+  const isiEl = document.getElementById('evalIsi');
+  isiEl.innerHTML = '<p><br></p>';
+  if (window.attachWysiwyg) window.attachWysiwyg(isiEl);
+  document.getElementById('evaluasiHapusBtn').style.display = 'none';
+  document.getElementById('evalMsg').textContent = '';
+  setTimeout(() => document.getElementById('evalJudul').focus(), 100);
+}
+
+function bukaEvaluasi(id) {
+  const c = evaluasiCache.find(x => x.id === id);
+  if (!c) return;
+  currentEvaluasiId = id;
+  document.querySelector('#sec-evaluasi .card').style.display = 'none';
+  const form = document.getElementById('evaluasiFormCard');
+  form.style.display = 'block';
+  document.getElementById('evalJudul').value = c.judul || '';
+  const isiEl = document.getElementById('evalIsi');
+  isiEl.innerHTML = window.markdownToEditableHtml(c.isi || '');
+  if (window.attachWysiwyg) window.attachWysiwyg(isiEl);
+  document.getElementById('evaluasiHapusBtn').style.display = 'block';
+  document.getElementById('evalMsg').textContent = '';
+}
+
+function tutupFormEvaluasi() {
+  document.getElementById('evaluasiFormCard').style.display = 'none';
+  document.querySelector('#sec-evaluasi .card').style.display = 'block';
+  currentEvaluasiId = null;
+}
+
+async function simpanEvaluasi() {
+  const judul = (document.getElementById('evalJudul').value || '').trim();
+  const isiEl = document.getElementById('evalIsi');
+  const isi = isiEl ? (window.htmlElementToMarkdown(isiEl) || '').trim() : '';
+  if (!judul && !isi) {
+    setMsg('evalMsg', 'Judul atau isi evaluasi tidak boleh kosong dua-duanya.', true);
+    return;
+  }
+  const payload = {
+    judul: judul || '(tanpa judul)',
+    isi: isi,
+    updated_at: new Date().toISOString(),
+  };
+  // Try Supabase
+  try {
+    const _editMode = !!currentEvaluasiId;
+    if (currentEvaluasiId) {
+      // Update
+      const { error } = await db.from('evaluasi').update(payload).eq('id', currentEvaluasiId);
+      if (error) throw error;
+    } else {
+      payload.created_at = new Date().toISOString();
+      if (window.currentProf?.id) payload.dibuat_oleh = currentProf.id;
+      const { data, error } = await db.from('evaluasi').insert(payload).select().single();
+      if (error) throw error;
+      currentEvaluasiId = data.id;
+    }
+    // [AUDIT] Catat simpan/edit evaluasi
+    if (typeof _auditLog === 'function') _auditLog('evaluasi', _editMode ? 'UPDATE' : 'INSERT', null,
+      { judul: payload.judul }, (_editMode ? 'Edit evaluasi: ' : 'Buat evaluasi: ') + payload.judul);
+    setMsg('evalMsg', '✅ Evaluasi tersimpan!', false);
+    await loadEvaluasi();
+    setTimeout(tutupFormEvaluasi, 800);
+  } catch (e) {
+    // Fallback localStorage
+    const arr = _loadEvaluasiLocal();
+    if (currentEvaluasiId) {
+      const idx = arr.findIndex(x => x.id === currentEvaluasiId);
+      if (idx >= 0) arr[idx] = { ...arr[idx], ...payload };
+    } else {
+      const id = 'l' + Date.now() + Math.floor(Math.random()*1000);
+      currentEvaluasiId = id;
+      arr.unshift({ id, ...payload, created_at: new Date().toISOString() });
+    }
+    _saveEvaluasiLocal(arr);
+    evaluasiCache = arr;
+    setMsg('evalMsg', '✅ Evaluasi tersimpan (lokal). Untuk sync antar device, buat tabel "evaluasi" di Supabase.', false);
+    renderEvaluasiList();
+    setTimeout(tutupFormEvaluasi, 1500);
+  }
+}
+
+async function hapusEvaluasi() {
+  if (!currentEvaluasiId) return;
+  const judulEvaluasi = ($('evalJudul') && $('evalJudul').value) || 'Evaluasi ini';
+
+  const idToDelete = currentEvaluasiId;
+  const isLocal = typeof idToDelete === 'string' && idToDelete.startsWith('l');
+
+  // Simpan data lengkap untuk undo sebelum apapun diubah
+  let savedRow = null;
+  if (!isLocal) {
+    const { data } = await db.from('evaluasi').select('*').eq('id', idToDelete).single();
+    savedRow = data;
+  } else {
+    savedRow = (_loadEvaluasiLocal() || []).find(x => x.id === idToDelete) || null;
+  }
+
+  // Optimistik: hapus dari cache lokal & tutup form TANPA reload dari DB
+  // (kalau reload dari DB, item muncul lagi karena belum benar-benar dihapus)
+  evaluasiCache = (evaluasiCache || []).filter(x => x.id !== idToDelete);
+  tutupFormEvaluasi();   // sembunyikan form, kembali ke list
+  renderEvaluasiList();  // render dari cache yang sudah dikurangi — item langsung hilang
+
+  showUndoToast(
+    judulEvaluasi,
+    async function() {
+      // ── UNDO: kembalikan ke cache & tampilan ──
+      if (savedRow) {
+        evaluasiCache = [savedRow, ...(evaluasiCache || [])];
+        if (isLocal) {
+          const arr = _loadEvaluasiLocal() || [];
+          arr.unshift(savedRow);
+          _saveEvaluasiLocal(arr);
+        }
+        renderEvaluasiList();
+      }
+      showToast('↩ Evaluasi dipulihkan', 'success');
+    },
+    async function() {
+      // ── KONFIRMASI: hapus dari DB — patch recycle_bin otomatis snapshot ──
+      try {
+        if (isLocal) {
+          const arr = (_loadEvaluasiLocal() || []).filter(x => x.id !== idToDelete);
+          _saveEvaluasiLocal(arr);
+        } else {
+          await db.from('evaluasi').delete().eq('id', idToDelete);
+        }
+        // [AUDIT] Catat hapus evaluasi (setelah konfirmasi)
+        if (typeof _auditLog === 'function') _auditLog('evaluasi', 'DELETE',
+          { judul: (savedRow && savedRow.judul) || judulEvaluasi }, null, 'Hapus evaluasi: ' + ((savedRow && savedRow.judul) || judulEvaluasi));
+      } catch(e) {
+        showToast('Gagal hapus: ' + e.message, 'error');
+        // Rollback cache kalau gagal
+        if (savedRow) { evaluasiCache = [savedRow, ...(evaluasiCache || [])]; renderEvaluasiList(); }
+      }
+    },
+    '📝'
+  );
+}
+
+
+
+// ─────────────── TOTAL ANGGOTA (MUMI + GPMT + GPSD) ───────────────
+async function renderTotalMumiGpmt(){
+  const sec = document.getElementById('sec-anggota');
+  if(!sec) return;
+  let card = document.getElementById('totalMumiGpmtCard');
+  if(!card){
+    card = document.createElement('div');
+    card.className = 'card';
+    card.id = 'totalMumiGpmtCard';
+    card.setAttribute('data-no-collapse','');
+    sec.appendChild(card); // paling bawah section Anggota
+  }
+  try { await loadGP('gpmt'); } catch(e){}
+  try { await loadGP('gpsd'); } catch(e){}
+
+  const mumiAll = ((typeof anggotaFull!=='undefined' && anggotaFull) ? anggotaFull : []);
+  const gpmtAll = ((typeof gpData!=='undefined' && gpData && gpData['gpmt']) || []);
+  const gpsdAll = ((typeof gpData!=='undefined' && gpData && gpData['gpsd']) || []);
+
+  const L = a => a.jenis_kelamin === 'laki-laki';
+  const P = a => a.jenis_kelamin === 'perempuan';
+
+  // MUMI: aktif = status 'aktif'. GP (gpmt/gpsd): aktif = bukan 'tidak_aktif'.
+  const mumiA = mumiAll.filter(a => a.status === 'aktif');
+  const mumiN = mumiAll.filter(a => a.status !== 'aktif');
+  const gpmtA = gpmtAll.filter(a => a.status !== 'tidak_aktif');
+  const gpmtN = gpmtAll.filter(a => a.status === 'tidak_aktif');
+  const gpsdA = gpsdAll.filter(a => a.status !== 'tidak_aktif');
+  const gpsdN = gpsdAll.filter(a => a.status === 'tidak_aktif');
+
+  const S = arr => ({ c: arr.filter(L).length, w: arr.filter(P).length, b: arr.filter(a=>!a.jenis_kelamin).length, t: arr.length });
+
+  // ── AKTIF SAJA ──
+  const aktifMG  = mumiA.concat(gpmtA);            // MUMI+GPMT aktif
+  const aktifMGS = mumiA.concat(gpmtA, gpsdA);     // MUMI+GPMT+GPSD aktif
+  // ── TOTAL (aktif + tidak aktif = semua status) ──
+  const allMG  = mumiAll.concat(gpmtAll);          // MUMI+GPMT semua
+  const allMGS = mumiAll.concat(gpmtAll, gpsdAll); // MUMI+GPMT+GPSD semua
+
+  const box3 = (d) => `
+    <div style="display:flex;gap:6px;text-align:center;">
+      <div style="flex:1;background:#eef2ff;border:1.5px solid #c7d2fe;border-radius:10px;padding:8px;">
+        <div style="font-size:19px;font-weight:800;color:#1d4ed8;">${d.c}</div>
+        <div style="font-size:10px;color:#3730a3;font-weight:700;">♂ Cowok</div></div>
+      <div style="flex:1;background:#fdf2f8;border:1.5px solid #fbcfe8;border-radius:10px;padding:8px;">
+        <div style="font-size:19px;font-weight:800;color:#be185d;">${d.w}</div>
+        <div style="font-size:10px;color:#9d174d;font-weight:700;">♀ Cewek</div></div>
+      <div style="flex:1;background:#f0f7f3;border:1.5px solid #d4e8dc;border-radius:10px;padding:8px;">
+        <div style="font-size:19px;font-weight:800;color:#1a6644;">${d.t}</div>
+        <div style="font-size:10px;color:#1a6644;font-weight:700;">Σ Total</div></div>
+    </div>`;
+
+  const head = (txt, color, bg) => `<div style="font-size:12px;font-weight:800;color:${color};background:${bg};border-radius:8px;padding:6px 10px;margin:12px 0 7px;">${txt}</div>`;
+  const sub  = (txt) => `<div style="font-size:12px;font-weight:700;color:#374151;margin:9px 0 4px;">▸ ${txt}</div>`;
+  const boxLabeled = (title, arr) => sub(title) + box3(S(arr));
+
+  const grpLine = (label, aArr, nArr) => {
+    const a = S(aArr), n = S(nArr);
+    return `<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;font-size:12px;color:#4a6056;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.05);">
+      <span style="font-weight:700;">${label}</span>
+      <span>
+        <span style="color:#166534;">✅ <b>${a.t}</b> <span style="color:#1d4ed8;">♂${a.c}</span>·<span style="color:#be185d;">♀${a.w}</span></span>
+        &nbsp; <span style="color:#b91c1c;">⛔ <b>${n.t}</b> <span style="color:#1d4ed8;">♂${n.c}</span>·<span style="color:#be185d;">♀${n.w}</span></span>
+      </span>
+    </div>`;
+  };
+
+  const belumTotal = S(allMGS).b;
+
+  card.innerHTML = `
+    <h2 style="margin-bottom:2px;">🧮 Total Anggota</h2>
+    <p class="muted" style="font-size:11px;margin-bottom:6px;">Rekap jumlah anggota per status &amp; jenis kelamin.</p>
+
+    ${head('✅ AKTIF SAJA', '#166534', '#dcfce7')}
+    ${boxLabeled('MUMI + GPMT (GPSD tidak dihitung)', aktifMG)}
+    ${boxLabeled('MUMI + GPMT + GPSD', aktifMGS)}
+
+    ${head('🌐 TOTAL (AKTIF + TIDAK AKTIF)', '#1e3a8a', '#dbeafe')}
+    ${boxLabeled('MUMI + GPMT (GPSD tidak dihitung)', allMG)}
+    ${boxLabeled('MUMI + GPMT + GPSD', allMGS)}
+
+    ${head('📋 Rincian per grup (aktif / tidak aktif)', '#334155', '#f1f5f9')}
+    <div style="background:#f7faf8;border-radius:8px;padding:4px 12px;">
+      ${grpLine('👥 MUMI', mumiA, mumiN)}
+      ${grpLine('🧒 GPMT', gpmtA, gpmtN)}
+      ${grpLine('👦 GPSD', gpsdA, gpsdN)}
+    </div>
+    ${belumTotal?`<p class="muted" style="font-size:11px;margin-top:8px;">⚠️ ${belumTotal} orang belum diisi jenis kelaminnya (tidak dihitung cowok/cewek).</p>`:''}
+  `;
 }
 
 // ─────────────── DASHBOARD ───────────────
@@ -8536,6 +8888,7 @@ async function loadAnggota() {
   renderListAnggotaFiltered();
   // Render statistik anggota
   renderAnggotaStat();
+  renderTotalMumiGpmt();
   // Sub GPMT & GPSD dimuat lazy saat banner-nya dibuka (lihat toggleGPSection)
   if (_gpSectionLoaded) { loadGP('gpmt'); loadGP('gpsd'); }
   // dropdown anggota di Kas Masuk
@@ -11834,6 +12187,7 @@ function renderAnalisaKehadiran() {
   const perluPerhatian = rows.filter(r => r.pct < 60 && (r.hadir + r.izin) > 0);
   const rajin          = rows.filter(r => r.pct >= 80 && !selaluHadir.find(x => x.nama === r.nama));
   const hadir1Kali     = rows.filter(r => (r.hadir + r.izin) === 1);
+  const fullIzin       = rows.filter(r => r.hadir === 0 && r.izin > 0);
 
   const adaDiData = new Set(rows.map(r => r.nama));
   const gaAdaRecord = rekapSemuaAnggota.filter(a => !adaDiData.has(a.nama));
@@ -11865,6 +12219,8 @@ function renderAnalisaKehadiran() {
         perluPerhatian, 'Kehadiran rendah. Pernah hadir/izin tapi di bawah 60%.')
     + kartu('Tidak Pernah Hadir / Izin Sama Sekali', '#dc2626', '#fef2f2', '&#128680;',
         tidakPernah, 'Tercatat di absensi tapi seluruhnya Tidak Hadir. Perlu tindak lanjut!')
+    + kartu('Full Izin — Tidak Pernah Hadir Beneran (Ga Pernah Nongol)', '#b45309', '#fffbeb', '&#128584;',
+        fullIzin, 'Selalu IZIN, TIDAK PERNAH benar-benar hadir (fisik) di pengajian. Dianggap hadir lewat izin, padahal aslinya tidak pernah datang. Bedakan dari yang tidak hadir tanpa izin.')
     + (gaAdaRecord.length ? kartu('Tidak Ada Rekam Absensi (Belum Pernah Diabsen)', '#7c3aed', '#f5f3ff', '&#128123;',
         gaAdaRecord.map(a => ({ nama: a.nama })),
         'Anggota aktif yang tidak muncul di data absensi periode ini sama sekali.') : '')
@@ -15080,6 +15436,7 @@ function cetakRekap() {
     const perluPerhatian = allRows.filter(r => r.pct < 60 && (r.hadir + r.izin) > 0);
     const rajin          = allRows.filter(r => r.pct >= 80 && !selaluHadir.find(x => x.nama === r.nama));
     const hadir1Kali     = allRows.filter(r => (r.hadir + r.izin) === 1);
+    const fullIzin       = allRows.filter(r => r.hadir === 0 && r.izin > 0);
     const adaDiData      = new Set(allRows.map(r => r.nama));
     const gaAdaRecord    = rekapSemuaAnggota.filter(a => !adaDiData.has(a.nama));
 
@@ -15135,6 +15492,9 @@ function cetakRekap() {
     seksiAnalisa('Tidak Pernah Hadir/Izin Sama Sekali', tidakPernah,
       r => r.nama,
       'Tercatat di absensi tapi seluruhnya Tidak Hadir. Perlu tindak lanjut!');
+    seksiAnalisa('Full Izin - Tidak Pernah Hadir Beneran (Ga Pernah Nongol)', fullIzin,
+      r => r.nama + ' (I:' + (r.izin||0) + ' X:' + r.tidak_hadir + ')',
+      'Selalu izin, tidak pernah benar-benar hadir (fisik). Dianggap hadir lewat izin padahal aslinya tidak pernah datang. Bedakan dari yang tidak hadir tanpa izin.');
     seksiAnalisa('Tidak Ada Rekam Absensi (Belum Pernah Diabsen)', gaAdaRecord,
       r => r.nama || r,
       'Anggota aktif yang tidak muncul di data absensi periode ini sama sekali.');
