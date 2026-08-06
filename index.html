@@ -3807,13 +3807,13 @@
           <div>
             <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">3️⃣ ☑ Satu orang satu hadiah</div>
             <div class="spin-hint" style="margin:0;">
-              <b>Dicentang</b> (default): kalau "Ali1" menang, tiket "Ali2", "Ali3", "Ali4" (tiket lain atas nama sama) otomatis ikut terhapus dari pool — jadi orang yang beli banyak tiket <b>tidak bisa menang berkali-kali</b>.<br>
-              <b>Tidak dicentang</b>: hanya tiket "Ali1" yang terhapus, sisanya ("Ali2","Ali3","Ali4") tetap ada di pool dan boleh ikut diundi lagi — jadi 1 orang <b>bisa menang lebih dari sekali</b> kalau punya banyak tiket.
+              <b>Dicentang</b> (default): kalau "Ali1" menang, tiket "Ali2", "Ali3", "Ali4" (nama sama) <b>tidak dihapus</b>, tapi otomatis <b>dilewati</b> di undian selanjutnya — jadi orang yang beli banyak tiket tidak bisa menang berkali-kali, walau tiketnya tetap kelihatan di daftar (ditandai 🏆 Sudah pernah menang).<br>
+              <b>Tidak dicentang</b>: semua tiket ("Ali1","Ali2","Ali3","Ali4") tetap boleh diundi lagi kapan saja — jadi 1 orang <b>bisa menang lebih dari sekali</b> kalau punya banyak tiket.
             </div>
           </div>
           <div>
             <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">🔄 Urutan kerjanya</div>
-            <div class="spin-hint" style="margin:0;">Pilih hadiah dari dropdown → klik "Undi sekarang" → nama keluar → muncul konfirmasi "orangnya ada di tempat atau tidak?". Kalau <b>ada</b> → sah menang, stok hadiah berkurang 1. Kalau <b>tidak ada</b> → stok tetap sama, tiketnya dilewati, tinggal undi ulang.</div>
+            <div class="spin-hint" style="margin:0;">Pilih hadiah dari dropdown → klik "Undi sekarang" → nama keluar → muncul konfirmasi "orangnya ada di tempat atau tidak?". Kalau <b>ada</b> → sah menang, stok hadiah berkurang 1 (tiket tetap ada di daftar, cuma dilewati di undian berikutnya kalau "Satu orang satu hadiah" dicentang). Kalau <b>tidak ada</b> → stok tetap sama, tiket tidak dihapus, cuma dilewati untuk sesi ini supaya bisa langsung diundi ulang.</div>
           </div>
         </div>
 
@@ -3877,7 +3877,7 @@ ALTER TABLE winners ADD COLUMN IF NOT EXISTS prize_name text;</code>
             <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinClearEntries()">Hapus semua</button>
           </div>
           <div class="spin-adv-panel show" id="spinAdvPanel">
-            <label class="spin-check-row"><input type="checkbox" id="spinOneWinPerPerson" checked> Satu orang satu hadiah (kalau dicentang, semua tiket atas nama yang sama otomatis ikut terhapus saat salah satunya menang)</label>
+            <label class="spin-check-row"><input type="checkbox" id="spinOneWinPerPerson" checked onchange="spinRenderEntries()"> Satu orang satu hadiah (nama yang sama dilewati di undian berikutnya setelah menang, tiket tidak dihapus)</label>
           </div>
           <div class="spin-panel" id="spinEntriList"><div class="spin-empty">Memuat…</div></div>
         </div>
@@ -26695,13 +26695,21 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   function spinRenderEntries(){
     const el = document.getElementById('spinEntriList');
     const selectedPrizeId = document.getElementById('spinPrizeSelect') ? document.getElementById('spinPrizeSelect').value : '';
+    const onePerPerson = document.getElementById('spinOneWinPerPerson') ? document.getElementById('spinOneWinPerPerson').checked : true;
     if(spinEntries.length===0){ el.innerHTML = '<div class="spin-empty">Belum ada entri. Klik "Tambah entri" untuk mulai.</div>'; spinUpdateCounts(); return; }
     el.innerHTML = spinEntries.map(e => {
       const excluded = spinIsExcluded(e.name, selectedPrizeId);
+      const skipped = spinSessionSkip.has(e.id);
+      const alreadyWon = onePerPerson && spinHasWon(spinBaseName(e.name));
+      const dimmed = excluded || skipped || alreadyWon;
+      let tag = '';
+      if(excluded) tag = '<span class="spin-row-excluded-tag">🚫 Tidak ikut undi hadiah ini</span>';
+      else if(alreadyWon) tag = '<span class="spin-row-excluded-tag">🏆 Sudah pernah menang — dilewati</span>';
+      else if(skipped) tag = '<span class="spin-row-excluded-tag">⏭ Dilewati sesi ini (tidak hadir)</span>';
       return `
-      <div class="spin-row" style="${excluded ? 'opacity:.55;' : ''}">
+      <div class="spin-row" style="${dimmed ? 'opacity:.55;' : ''}">
         ${e.image_url ? `<img class="spin-thumb" src="${escapeHtml(e.image_url)}">` : `<div class="spin-thumb spin-placeholder">🎫</div>`}
-        <div class="spin-row-name">${escapeHtml(e.name)}${excluded ? '<span class="spin-row-excluded-tag">🚫 Tidak ikut undi hadiah ini</span>' : ''}</div>
+        <div class="spin-row-name">${escapeHtml(e.name)}${tag}</div>
         <div class="spin-row-actions">
           <button class="spin-icon-btn" title="Tambah gambar" onclick="spinOpenImgModal('${e.id}')">🖼️</button>
           <button class="spin-icon-btn" title="Hapus" onclick="spinDeleteEntry('${e.id}')">✕</button>
@@ -26950,6 +26958,11 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
 
   // ---- undi ----
   function spinBaseName(s){ return s.replace(/\d+$/,'').trim(); }
+  let spinSessionSkip = new Set(); // id tiket yang dilewati sementara (misal: "tidak hadir"), tidak dihapus dari database
+
+  function spinHasWon(baseName){
+    return spinWinners.some(w => spinBaseName(w.name).toLowerCase() === baseName.toLowerCase());
+  }
 
   async function spinDrawWinner(){
     if(spinEntries.length===0) return;
@@ -26971,9 +26984,14 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     // supaya konfirmasi hadir/tidak & pengurangan stok akurat per orang.
     const onePerPerson = document.getElementById('spinOneWinPerPerson').checked;
 
-    const eligible = spinEntries.filter(e => !spinIsExcluded(e.name, prize.id));
+    const eligible = spinEntries.filter(e => {
+      if(spinIsExcluded(e.name, prize.id)) return false;
+      if(spinSessionSkip.has(e.id)) return false; // lagi dilewati sementara (misal: tadi "tidak hadir")
+      if(onePerPerson && spinHasWon(spinBaseName(e.name))) return false; // sudah pernah menang & mode 1 org 1 hadiah aktif
+      return true;
+    });
     if(eligible.length===0){
-      alert(`Tidak ada entri yang memenuhi syarat untuk hadiah "${prize.name}" — semua peserta yang tersisa masuk daftar pengecualian untuk hadiah ini (⚙️ Setting).`);
+      alert(`Tidak ada entri yang memenuhi syarat untuk hadiah "${prize.name}" — cek daftar pengecualian (⚙️ Setting) atau mungkin semua sisa peserta sudah pernah menang.`);
       return;
     }
 
@@ -26982,8 +27000,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
 
     await spinRunSpinAnimation(pick.name, eligible.map(e=>e.name));
 
-    // Simpan sementara — belum masuk winners & belum dihapus dari entri,
-    // menunggu konfirmasi apakah orangnya benar-benar ada di tempat.
+    // Simpan sementara — belum masuk winners, menunggu konfirmasi apakah orangnya benar-benar ada di tempat.
     spinPendingPicked = { pick, onePerPerson };
     spinPendingPrize = prize;
     spinShowPresenceConfirm(pick.name, prize.name);
@@ -26999,30 +27016,25 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   async function spinConfirmPresence(isPresent){
     document.getElementById('spinPresenceOverlay').classList.remove('show');
     if(!spinPendingPicked || !spinPendingPrize){ document.getElementById('spinDrawBtn').disabled = false; return; }
-    const { pick, onePerPerson } = spinPendingPicked;
+    const { pick } = spinPendingPicked;
     const prize = spinPendingPrize;
 
     if(isPresent){
-      // Sah menang: catat pemenang + kurangi stok hadiah 1 pcs, lalu hapus dari daftar entri.
+      // Sah menang: catat pemenang + kurangi stok hadiah 1 pcs.
+      // Tiket TIDAK dihapus dari entries — kalau "Satu orang satu hadiah" dicentang, dia (dan
+      // tiket duplikatnya) otomatis dilewati di undian berikutnya karena sudah tercatat di winners.
       await db.from('winners').insert({name: pick.name, image_url: pick.image_url||null, prize_name: prize.name});
       await db.from('spin_prizes').update({stock: Math.max(0, prize.stock - 1)}).eq('id', prize.id);
-
-      let idsToRemove = new Set([pick.id]);
-      if(onePerPerson){
-        const bn = spinBaseName(pick.name);
-        spinEntries.filter(e=>spinBaseName(e.name)===bn).forEach(e=>idsToRemove.add(e.id));
-      }
-      for(const id of idsToRemove){ await db.from('entries').delete().eq('id', id); }
 
       await spinLoadAll();
       spinShowTicket([{name: pick.name}], prize.name);
     } else {
-      // Tidak ada di tempat: stok TIDAK berkurang. Tiketnya dilewati (dihapus dari pool undian
-      // ini) supaya bisa langsung diundi ulang untuk hadiah yang sama.
-      await db.from('entries').delete().eq('id', pick.id);
-      await spinLoadAll();
+      // Tidak ada di tempat: stok TIDAK berkurang, tiket TIDAK dihapus, cuma dilewati sementara
+      // untuk sesi ini supaya bisa langsung diundi ulang tanpa kena nama yang sama lagi.
+      spinSessionSkip.add(pick.id);
+      spinRenderEntries();
       document.getElementById('spinDrawBtn').disabled = false;
-      alert(`"${pick.name}" tidak ada di tempat. Stok "${prize.name}" tetap (${prize.stock} pcs). Silakan klik "Undi sekarang" lagi untuk mengundi ulang.`);
+      alert(`"${pick.name}" tidak ada di tempat. Stok "${prize.name}" tetap (${prize.stock} pcs). Tiketnya tidak dihapus, hanya dilewati untuk undian berikutnya. Silakan klik "Undi sekarang" lagi.`);
     }
     spinPendingPicked = null;
     spinPendingPrize = null;
