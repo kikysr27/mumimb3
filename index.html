@@ -3877,7 +3877,7 @@ ALTER TABLE winners ADD COLUMN IF NOT EXISTS prize_name text;</code>
             <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinClearEntries()">Hapus semua</button>
           </div>
           <div class="spin-adv-panel show" id="spinAdvPanel">
-            <label class="spin-check-row"><input type="checkbox" id="spinOneWinPerPerson" checked onchange="spinRenderEntries()"> Satu orang satu hadiah (nama yang sama dilewati di undian berikutnya setelah menang, tiket tidak dihapus)</label>
+            <label class="spin-check-row"><input type="checkbox" id="spinOneWinPerPerson" checked onchange="spinToggleOneWinPerPerson()"> Satu orang satu hadiah (nama yang sama dilewati di undian berikutnya setelah menang, tiket tidak dihapus)</label>
           </div>
           <div class="spin-panel" id="spinEntriList"><div class="spin-empty">Memuat…</div></div>
         </div>
@@ -26648,11 +26648,12 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   let spinPendingPrize = null;  // {id, name, stock} hadiah yang sedang diundi
 
   async function spinLoadAll(){
-    const [e, w, s, p] = await Promise.all([
+    const [e, w, s, p, owp] = await Promise.all([
       db.from('entries').select('*').order('created_at', {ascending:true}),
       db.from('winners').select('*').order('drawn_at', {ascending:false}),
       db.from('spin_settings').select('data').eq('key','exclude_list').maybeSingle(),
-      db.from('spin_prizes').select('*').order('created_at', {ascending:true})
+      db.from('spin_prizes').select('*').order('created_at', {ascending:true}),
+      db.from('spin_settings').select('data').eq('key','one_win_per_person').maybeSingle()
     ]);
     const notice = document.getElementById('spinSqlNotice');
     if (notice) notice.style.display = (e.error || w.error) ? 'block' : 'none';
@@ -26662,10 +26663,25 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     // Kompatibel dengan format lama (array of string nama saja) -> ubah jadi {name, prizeIds:[]}
     spinExcluded = spinExcluded.map(x => typeof x === 'string' ? {name: x, prizeIds: []} : {name: x.name, prizeIds: Array.isArray(x.prizeIds) ? x.prizeIds : []});
     spinPrizes = p.data || [];
+    // Baca status checkbox "Satu orang satu hadiah" tersimpan (default: true/dicentang kalau belum pernah disimpan)
+    const owpChk = document.getElementById('spinOneWinPerPerson');
+    if(owpChk){
+      owpChk.checked = (!owp.error && owp.data && typeof owp.data.data === 'boolean') ? owp.data.data : true;
+    }
     spinRenderEntries();
     spinRenderHasil();
     spinRenderPrizeSelect();
     spinRenderPrizeList();
+  }
+
+  async function spinToggleOneWinPerPerson(){
+    const checked = document.getElementById('spinOneWinPerPerson').checked;
+    spinRenderEntries(); // langsung update tampilan tanpa nunggu network
+    const {error} = await db.from('spin_settings').upsert({key:'one_win_per_person', data: checked, updated_at: new Date().toISOString()});
+    if(error){
+      console.error('Gagal menyimpan setting one_win_per_person:', error);
+      alert('Gagal menyimpan pengaturan checkbox ke database: ' + error.message);
+    }
   }
 
   function spinSwitchTab(t){
