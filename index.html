@@ -3877,7 +3877,7 @@ ALTER TABLE winners ADD COLUMN IF NOT EXISTS prize_name text;</code>
             <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinClearEntries()">Hapus semua</button>
           </div>
           <div class="spin-adv-panel show" id="spinAdvPanel">
-            <label class="spin-check-row"><input type="checkbox" id="spinOneWinPerPerson" checked onchange="spinRenderEntries()"> Satu orang satu hadiah (nama yang sama dilewati di undian berikutnya setelah menang, tiket tidak dihapus)</label>
+            <label class="spin-check-row"><input type="checkbox" id="spinOneWinPerPerson" checked onchange="spinToggleOneWinPerPerson()"> Satu orang satu hadiah (nama yang sama dilewati di undian berikutnya setelah menang, tiket tidak dihapus)</label>
           </div>
           <div class="spin-panel" id="spinEntriList"><div class="spin-empty">Memuat…</div></div>
         </div>
@@ -26648,11 +26648,12 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   let spinPendingPrize = null;  // {id, name, stock} hadiah yang sedang diundi
 
   async function spinLoadAll(){
-    const [e, w, s, p] = await Promise.all([
+    const [e, w, s, p, owp] = await Promise.all([
       db.from('entries').select('*').order('created_at', {ascending:true}),
       db.from('winners').select('*').order('drawn_at', {ascending:false}),
       db.from('spin_settings').select('data').eq('key','exclude_list').maybeSingle(),
-      db.from('spin_prizes').select('*').order('created_at', {ascending:true})
+      db.from('spin_prizes').select('*').order('created_at', {ascending:true}),
+      db.from('spin_settings').select('data').eq('key','one_win_per_person').maybeSingle()
     ]);
     const notice = document.getElementById('spinSqlNotice');
     if (notice) notice.style.display = (e.error || w.error) ? 'block' : 'none';
@@ -26662,10 +26663,25 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     // Kompatibel dengan format lama (array of string nama saja) -> ubah jadi {name, prizeIds:[]}
     spinExcluded = spinExcluded.map(x => typeof x === 'string' ? {name: x, prizeIds: []} : {name: x.name, prizeIds: Array.isArray(x.prizeIds) ? x.prizeIds : []});
     spinPrizes = p.data || [];
+    // Baca status checkbox "Satu orang satu hadiah" tersimpan (default: true/dicentang kalau belum pernah disimpan)
+    const owpChk = document.getElementById('spinOneWinPerPerson');
+    if(owpChk){
+      owpChk.checked = (!owp.error && owp.data && typeof owp.data.data === 'boolean') ? owp.data.data : true;
+    }
     spinRenderEntries();
     spinRenderHasil();
     spinRenderPrizeSelect();
     spinRenderPrizeList();
+  }
+
+  async function spinToggleOneWinPerPerson(){
+    const checked = document.getElementById('spinOneWinPerPerson').checked;
+    spinRenderEntries(); // langsung update tampilan tanpa nunggu network
+    const {error} = await db.from('spin_settings').upsert({key:'one_win_per_person', data: checked, updated_at: new Date().toISOString()});
+    if(error){
+      console.error('Gagal menyimpan setting one_win_per_person:', error);
+      alert('Gagal menyimpan pengaturan checkbox ke database: ' + error.message);
+    }
   }
 
   function spinSwitchTab(t){
@@ -26678,7 +26694,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
 
   function spinUpdateCounts(){
     const onePerPerson = document.getElementById('spinOneWinPerPerson') ? document.getElementById('spinOneWinPerPerson').checked : true;
-    const belumMenang = onePerPerson ? spinEntries.filter(e => !spinHasWon(spinBaseName(e.name))).length : spinEntries.length;
+    const belumMenang = spinEntries.filter(e => !(spinExactWon(e.name) || (onePerPerson && spinHasWon(spinBaseName(e.name))))).length;
     document.getElementById('spinCountEntri').textContent = (belumMenang === spinEntries.length) ? String(spinEntries.length) : `${belumMenang}/${spinEntries.length}`;
     document.getElementById('spinCountHasil').textContent = spinWinners.length;
     document.getElementById('spinDrawBtn').disabled = spinEntries.length === 0;
@@ -26702,7 +26718,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     el.innerHTML = spinEntries.map(e => {
       const excluded = spinIsExcluded(e.name, selectedPrizeId);
       const skipped = spinSessionSkip.has(e.id);
-      const alreadyWon = onePerPerson && spinHasWon(spinBaseName(e.name));
+      const alreadyWon = spinExactWon(e.name) || (onePerPerson && spinHasWon(spinBaseName(e.name)));
       const dimmed = excluded || skipped || alreadyWon;
       let tag = '';
       if(excluded) tag = '<span class="spin-row-excluded-tag">🚫 Tidak ikut undi hadiah ini</span>';
@@ -26959,7 +26975,16 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   }
 
   // ---- undi ----
-  function spinBaseName(s){ return s.replace(/\d+$/,'').trim(); }
+  function spinBaseName(s){ return String(s||'').trim().replace(/\s*\d+$/,'').trim(); }
+  // Tiket yang PERSIS sama namanya dengan salah satu pemenang -> selalu dilewati,
+  // TIDAK peduli checkbox "Satu orang satu hadiah" dicentang atau tidak.
+  // Checkbox itu cuma mengatur apakah nama LAIN dengan base name sama (mis. Fachlani1 vs Fachlani4)
+  // dianggap "orang yang sama" atau tidak.
+  // SPIN_FIX_VERSION = v2-exact-vs-family-2026-08-06 (cari teks ini di View Page Source utk cek file sudah update)
+  function spinExactWon(name){
+    const n = String(name||'').trim().toLowerCase();
+    return spinWinners.some(w => String(w.name||'').trim().toLowerCase() === n);
+  }
   let spinSessionSkip = new Set(); // id tiket yang dilewati sementara (misal: "tidak hadir"), tidak dihapus dari database
 
   function spinHasWon(baseName){
@@ -26989,6 +27014,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     const eligible = spinEntries.filter(e => {
       if(spinIsExcluded(e.name, prize.id)) return false;
       if(spinSessionSkip.has(e.id)) return false; // lagi dilewati sementara (misal: tadi "tidak hadir")
+      if(spinExactWon(e.name)) return false; // tiket ini persis sudah pernah menang -> selalu dilewati, apa pun kondisi checkbox
       if(onePerPerson && spinHasWon(spinBaseName(e.name))) return false; // sudah pernah menang & mode 1 org 1 hadiah aktif
       return true;
     });
