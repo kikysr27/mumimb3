@@ -26959,7 +26959,13 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   }
 
   // ---- undi ----
-  function spinBaseName(s){ return s.replace(/\d+$/,'').trim(); }
+  // Buang nomor urut di depan (mis. "215. Gunawan3" -> "Gunawan3", kalau nama
+  // ke-input dengan format list bernomor) DAN angka duplikat di belakang
+  // (mis. "Gunawan3" -> "Gunawan") supaya "215. Gunawan3", "213. Gunawan1",
+  // "214. Gunawan2" semua dikenali sebagai orang yang sama: "Gunawan".
+  function spinBaseName(s){
+    return s.replace(/^\d+\.\s*/, '').replace(/\d+$/,'').trim();
+  }
   let spinSessionSkip = new Set(); // id tiket yang dilewati sementara (misal: "tidak hadir"), tidak dihapus dari database
 
   function spinHasWon(baseName){
