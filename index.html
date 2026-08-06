@@ -3794,6 +3794,29 @@
         </div>
         <p class="spin-subtitle">Entri &amp; hasil undian tersimpan otomatis di database, tidak hilang saat halaman ditutup.</p>
 
+        <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="document.getElementById('spinHelpPanel').classList.toggle('show')" style="margin-bottom:10px;">❓ Cara pakai Game Spin</button>
+        <div class="spin-adv-panel" id="spinHelpPanel" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <div>
+            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">1️⃣ 🎁 Kelola Hadiah</div>
+            <div class="spin-hint" style="margin:0;">Tambahkan menu doorprize di sini (Bakso, Geprek, Oli Motor, Nasi Uduk, dst) beserta jumlah stok pcs-nya. Ini yang jadi pilihan di dropdown "Hadiah yang akan diundi" sebelum spin.</div>
+          </div>
+          <div>
+            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">2️⃣ ⚙️ Setting — pengecualian per hadiah</div>
+            <div class="spin-hint" style="margin:0;">Tentukan siapa yang <b>tidak boleh menang hadiah tertentu</b> — cocok untuk orang yang menyumbang doorprize itu sendiri. Bisa pilih "Semua hadiah" (dilewati dari semua undian) atau centang hadiah spesifik saja (misal: hanya dilarang menang Bakso, tapi tetap boleh menang Geprek).</div>
+          </div>
+          <div>
+            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">3️⃣ ☑ Satu orang satu hadiah</div>
+            <div class="spin-hint" style="margin:0;">
+              <b>Dicentang</b> (default): kalau "Ali1" menang, tiket "Ali2", "Ali3", "Ali4" (tiket lain atas nama sama) otomatis ikut terhapus dari pool — jadi orang yang beli banyak tiket <b>tidak bisa menang berkali-kali</b>.<br>
+              <b>Tidak dicentang</b>: hanya tiket "Ali1" yang terhapus, sisanya ("Ali2","Ali3","Ali4") tetap ada di pool dan boleh ikut diundi lagi — jadi 1 orang <b>bisa menang lebih dari sekali</b> kalau punya banyak tiket.
+            </div>
+          </div>
+          <div>
+            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">🔄 Urutan kerjanya</div>
+            <div class="spin-hint" style="margin:0;">Pilih hadiah dari dropdown → klik "Undi sekarang" → nama keluar → muncul konfirmasi "orangnya ada di tempat atau tidak?". Kalau <b>ada</b> → sah menang, stok hadiah berkurang 1. Kalau <b>tidak ada</b> → stok tetap sama, tiketnya dilewati, tinggal undi ulang.</div>
+          </div>
+        </div>
+
         <div id="spinSqlNotice" class="spin-sql-notice">
           ⚠️ <strong>Tabel Supabase belum dibuat.</strong> Jalankan SQL ini di <a href="https://supabase.com/dashboard" target="_blank" style="color:#d97706;">Supabase Dashboard → SQL Editor</a>:<br>
           <code style="display:block;margin-top:6px;background:#fffbeb;padding:8px;border-radius:6px;font-size:11px;white-space:pre-wrap;word-break:break-all;">CREATE TABLE IF NOT EXISTS entries (
@@ -3852,11 +3875,9 @@ ALTER TABLE winners ADD COLUMN IF NOT EXISTS prize_name text;</code>
             <button class="spin-btn spin-btn-ghost" onclick="spinShuffleView()">🔀 Acak</button>
             <button class="spin-btn spin-btn-ghost" onclick="spinSortView()">↕ Menyortir</button>
             <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinClearEntries()">Hapus semua</button>
-            <label class="spin-check-row"><input type="checkbox" id="spinCanggihToggle" onchange="spinToggleAdv()"> Canggih</label>
           </div>
-          <div class="spin-adv-panel" id="spinAdvPanel">
-            <div class="spin-hint" style="margin:0;">Undi hadiah selalu 1 orang per klik (supaya konfirmasi hadir & stok akurat).</div>
-            <label class="spin-check-row"><input type="checkbox" id="spinOneWinPerPerson" checked> Satu orang satu hadiah (hapus semua tiket atas nama yang sama)</label>
+          <div class="spin-adv-panel show" id="spinAdvPanel">
+            <label class="spin-check-row"><input type="checkbox" id="spinOneWinPerPerson" checked> Satu orang satu hadiah (kalau dicentang, semua tiket atas nama yang sama otomatis ikut terhapus saat salah satunya menang)</label>
           </div>
           <div class="spin-panel" id="spinEntriList"><div class="spin-empty">Memuat…</div></div>
         </div>
@@ -26785,9 +26806,6 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     spinEntries = [...spinEntries].sort((a,b)=>a.name.localeCompare(b.name,'id'));
     spinRenderEntries();
   }
-  function spinToggleAdv(){
-    document.getElementById('spinAdvPanel').classList.toggle('show', document.getElementById('spinCanggihToggle').checked);
-  }
 
   // ---- tambah entri ----
   function spinOpenAddModal(){ document.getElementById('spinAddOverlay').classList.add('show'); }
@@ -26951,9 +26969,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
 
     // Saat mode hadiah aktif, undi dilakukan satu-satu (1 orang = 1 pcs hadiah ini),
     // supaya konfirmasi hadir/tidak & pengurangan stok akurat per orang.
-    const onePerPerson = document.getElementById('spinCanggihToggle').checked
-      ? document.getElementById('spinOneWinPerPerson').checked
-      : true;
+    const onePerPerson = document.getElementById('spinOneWinPerPerson').checked;
 
     const eligible = spinEntries.filter(e => !spinIsExcluded(e.name, prize.id));
     if(eligible.length===0){
