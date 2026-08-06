@@ -26829,7 +26829,13 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
 
   // ---- setting: nama yang dikecualikan dari undian ----
   async function spinSaveSettings(){
-    await db.from('spin_settings').upsert({key:'exclude_list', data: spinExcluded, updated_at: new Date().toISOString()});
+    const {error} = await db.from('spin_settings').upsert({key:'exclude_list', data: spinExcluded, updated_at: new Date().toISOString()});
+    if(error){
+      alert('Gagal menyimpan pengaturan pengecualian ke database: ' + error.message + '\n\nPastikan tabel spin_settings sudah dibuat (lihat SQL di bagian atas menu Spin).');
+      console.error('spinSaveSettings error:', error);
+      return false;
+    }
+    return true;
   }
 
   function spinOpenSettings(){
@@ -26881,14 +26887,16 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       }
     });
     document.getElementById('spinExcludeInput').value = '';
-    await spinSaveSettings();
+    const ok = await spinSaveSettings();
+    if(!ok){ await spinLoadAll(); spinRenderExcludePrizeChecks(); }
     spinRenderExcludeList();
     spinRenderEntries();
   }
 
   async function spinRemoveExclude(name){
     spinExcluded = spinExcluded.filter(e => e.name !== name);
-    await spinSaveSettings();
+    const ok = await spinSaveSettings();
+    if(!ok){ await spinLoadAll(); spinRenderExcludePrizeChecks(); }
     spinRenderExcludeList();
     spinRenderEntries();
   }
