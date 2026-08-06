@@ -26677,9 +26677,10 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   }
 
   function spinUpdateCounts(){
-    const onePerPerson = document.getElementById('spinOneWinPerPerson') ? document.getElementById('spinOneWinPerPerson').checked : true;
-    const belumMenang = onePerPerson ? spinEntries.filter(e => !spinHasWon(spinBaseName(e.name))).length : spinEntries.length;
-    document.getElementById('spinCountEntri').textContent = (belumMenang === spinEntries.length) ? String(spinEntries.length) : `${belumMenang}/${spinEntries.length}`;
+    // Yang sudah pernah menang selalu dikecualikan dari hitungan Entri,
+    // terlepas dari status checkbox "Satu orang satu hadiah".
+    const belumMenang = spinEntries.filter(e => !spinHasWon(spinBaseName(e.name))).length;
+    document.getElementById('spinCountEntri').textContent = String(belumMenang);
     document.getElementById('spinCountHasil').textContent = spinWinners.length;
     document.getElementById('spinDrawBtn').disabled = spinEntries.length === 0;
   }
@@ -26697,12 +26698,12 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   function spinRenderEntries(){
     const el = document.getElementById('spinEntriList');
     const selectedPrizeId = document.getElementById('spinPrizeSelect') ? document.getElementById('spinPrizeSelect').value : '';
-    const onePerPerson = document.getElementById('spinOneWinPerPerson') ? document.getElementById('spinOneWinPerPerson').checked : true;
     if(spinEntries.length===0){ el.innerHTML = '<div class="spin-empty">Belum ada entri. Klik "Tambah entri" untuk mulai.</div>'; spinUpdateCounts(); return; }
     el.innerHTML = spinEntries.map(e => {
       const excluded = spinIsExcluded(e.name, selectedPrizeId);
       const skipped = spinSessionSkip.has(e.id);
-      const alreadyWon = onePerPerson && spinHasWon(spinBaseName(e.name));
+      // Yang sudah pernah menang selalu dikecualikan, tidak tergantung checkbox.
+      const alreadyWon = spinHasWon(spinBaseName(e.name));
       const dimmed = excluded || skipped || alreadyWon;
       let tag = '';
       if(excluded) tag = '<span class="spin-row-excluded-tag">🚫 Tidak ikut undi hadiah ini</span>';
@@ -26831,28 +26832,77 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   }
 
   async function spinDeleteEntry(id){
-    await db.from('entries').delete().eq('id', id);
-    await spinLoadAll();
+    const entry = spinEntries.find(e => e.id === id);
+    if(!entry) return;
+    if(!(await askConfirm('Hapus entri "' + entry.name + '"?'))) return;
+
+    // Optimistic: hilangkan dari tampilan dulu, belum dihapus dari database
+    spinEntries = spinEntries.filter(e => e.id !== id);
+    spinRenderEntries();
+
+    showUndoToast(entry.name,
+      // ── UNDO: muat ulang dari database (belum jadi dihapus) ──
+      async function(){ await spinLoadAll(); },
+      // ── KONFIRMASI: hapus permanen dari database ──
+      async function(){ await db.from('entries').delete().eq('id', id); },
+      '🗑️'
+    );
   }
 
   async function spinClearEntries(){
-    if(!confirm('Hapus semua entri?')) return;
-    await db.from('entries').delete().neq('id','00000000-0000-0000-0000-000000000000');
-    await spinLoadAll();
+    if(spinEntries.length===0) return;
+    if(!(await askConfirm(`Hapus semua ${spinEntries.length} entri? Akan ada notifikasi urungkan sebelum dihapus permanen.`))) return;
+    const jumlah = spinEntries.length;
+
+    spinEntries = [];
+    spinRenderEntries();
+
+    showUndoToast(`${jumlah} entri`,
+      async function(){ await spinLoadAll(); },
+      async function(){ await db.from('entries').delete().neq('id','00000000-0000-0000-0000-000000000000'); },
+      '🗑️'
+    );
   }
+
   async function spinClearHasil(){
-    if(!confirm('Hapus semua hasil undian?')) return;
-    await db.from('winners').delete().neq('id','00000000-0000-0000-0000-000000000000');
-    await spinLoadAll();
+    if(spinWinners.length===0) return;
+    if(!(await askConfirm(`Hapus semua ${spinWinners.length} hasil undian? Akan ada notifikasi urungkan sebelum dihapus permanen.`))) return;
+    const jumlah = spinWinners.length;
+
+    spinWinners = [];
+    spinRenderHasil();
+
+    showUndoToast(`${jumlah} hasil undian`,
+      async function(){ await spinLoadAll(); },
+      async function(){ await db.from('winners').delete().neq('id','00000000-0000-0000-0000-000000000000'); },
+      '🗑️'
+    );
   }
 
   async function spinResetSemua(){
-    if(!confirm('Yakin ingin reset semua hasil spin? Semua entri undian dan riwayat pemenang akan dihapus permanen dan tidak bisa dikembalikan.')) return;
-    await Promise.all([
-      db.from('entries').delete().neq('id','00000000-0000-0000-0000-000000000000'),
-      db.from('winners').delete().neq('id','00000000-0000-0000-0000-000000000000')
-    ]);
-    await spinLoadAll();
+    if(!(await askConfirm(
+      'Reset semua hasil spin? Semua entri undian dan riwayat pemenang akan dihapus.\n\n⚠️ Akan ada waktu 10 detik untuk membatalkan (Urungkan) sebelum benar-benar dihapus permanen.',
+      '⚠️ Reset Semua'
+    ))) return;
+    const jmlEntri = spinEntries.length, jmlHasil = spinWinners.length;
+
+    spinEntries = [];
+    spinWinners = [];
+    spinRenderEntries();
+    spinRenderHasil();
+
+    showUndoToast(`Semua data spin (${jmlEntri} entri, ${jmlHasil} hasil)`,
+      // ── UNDO: muat ulang dari database (belum jadi dihapus) ──
+      async function(){ await spinLoadAll(); },
+      // ── KONFIRMASI: hapus permanen dari database ──
+      async function(){
+        await Promise.all([
+          db.from('entries').delete().neq('id','00000000-0000-0000-0000-000000000000'),
+          db.from('winners').delete().neq('id','00000000-0000-0000-0000-000000000000')
+        ]);
+      },
+      '🗑️'
+    );
   }
 
   // ---- setting: nama yang dikecualikan dari undian ----
@@ -26989,7 +27039,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     const eligible = spinEntries.filter(e => {
       if(spinIsExcluded(e.name, prize.id)) return false;
       if(spinSessionSkip.has(e.id)) return false; // lagi dilewati sementara (misal: tadi "tidak hadir")
-      if(onePerPerson && spinHasWon(spinBaseName(e.name))) return false; // sudah pernah menang & mode 1 org 1 hadiah aktif
+      if(spinHasWon(spinBaseName(e.name))) return false; // sudah pernah menang -> selalu dikecualikan, apapun status checkbox
       return true;
     });
     if(eligible.length===0){
