@@ -3765,7 +3765,7 @@
         #sec-spin .spin-prize-row .spin-prize-stock{font-size:12.5px;color:#8b93a3;min-width:70px;text-align:center;}
         #sec-spin .spin-prize-row .spin-prize-stock.zero{color:#ef4565;font-weight:700;}
         #sec-spin .spin-prize-row input[type=number]{width:56px;background:#0e1013;border:1px solid #262b33;border-radius:7px;color:#e9ebf0;padding:5px 6px;font-family:'Inter',sans-serif;text-align:center;}
-        .spin-modal{background:#171a20;border:1px solid #262b33;border-radius:16px;padding:22px;max-width:420px;width:100%;color:#e9ebf0;font-family:'Inter',system-ui,sans-serif;box-sizing:border-box;}
+        .spin-modal{background:#171a20;border:1px solid #262b33;border-radius:16px;padding:22px;max-width:420px;width:100%;color:#e9ebf0;font-family:'Inter',system-ui,sans-serif;box-sizing:border-box;max-height:88vh;overflow-y:auto;}
         .spin-modal h3{font-family:'Space Grotesk','Inter',sans-serif;margin:0 0 4px;font-size:17px;}
         .spin-modal p.spin-hint{color:#8b93a3;font-size:12.5px;margin:0 0 12px;}
         .spin-modal textarea,.spin-modal input[type=text]{width:100%;background:#0e1013;border:1px solid #262b33;border-radius:10px;color:#e9ebf0;padding:10px 12px;font-family:'Inter',sans-serif;font-size:13.5px;resize:vertical;box-sizing:border-box;}
@@ -3912,7 +3912,7 @@ ALTER TABLE winners ADD COLUMN IF NOT EXISTS prize_name text;</code>
             <button class="spin-btn spin-btn-primary spin-btn-sm" onclick="spinAddExclude()">＋ Tambah ke daftar</button>
           </div>
           <p class="spin-hint" style="margin-bottom:6px;">Daftar nama yang dikecualikan:</p>
-          <div id="spinExcludeList" style="display:flex;flex-wrap:wrap;gap:8px;min-height:34px;"></div>
+          <div id="spinExcludeList" style="display:flex;flex-wrap:wrap;gap:8px;min-height:34px;max-height:220px;overflow-y:auto;align-content:flex-start;"></div>
           <div class="spin-modal-actions">
             <button class="spin-btn spin-btn-ghost" onclick="spinCloseSettings()">Tutup</button>
           </div>
