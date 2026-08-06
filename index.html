@@ -4475,7 +4475,7 @@ ALTER TABLE winners ADD COLUMN IF NOT EXISTS prize_name text;</code>
 //  KONFIGURASI SUPABASE
 // ════════════════════════════════════════════════════════════════════════════
 const SUPABASE_URL = 'https://ksmdsvjpzyptcmhowcjq.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_PqbtdOOyAdKlDqEhtTAMEA_229Ak1F8';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzbWRzdmpwenlwdGNtaG93Y2pxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMzQyODgsImV4cCI6MjA5NDkxMDI4OH0.n4pYHmY0GpNePd84gXm4QwGfKm2_0YaypzFxhyPstBY';
 
 // ── Cloudflare Turnstile SITE KEY (public, aman ditaruh di kode client) ──────
 // Ambil dari dash.cloudflare.com → Turnstile → widget-nya → Site Key.
@@ -26980,6 +26980,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   // TIDAK peduli checkbox "Satu orang satu hadiah" dicentang atau tidak.
   // Checkbox itu cuma mengatur apakah nama LAIN dengan base name sama (mis. Fachlani1 vs Fachlani4)
   // dianggap "orang yang sama" atau tidak.
+  // SPIN_FIX_VERSION = v2-exact-vs-family-2026-08-06 (cari teks ini di View Page Source utk cek file sudah update)
   function spinExactWon(name){
     const n = String(name||'').trim().toLowerCase();
     return spinWinners.some(w => String(w.name||'').trim().toLowerCase() === n);
