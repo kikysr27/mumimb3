@@ -3841,6 +3841,7 @@ CREATE TABLE IF NOT EXISTS spin_prizes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   stock int NOT NULL DEFAULT 0,
+  initial_stock int NOT NULL DEFAULT 0,
   created_at timestamptz DEFAULT now()
 );
 ALTER TABLE entries ENABLE ROW LEVEL SECURITY;
@@ -3852,7 +3853,11 @@ CREATE POLICY "winners_all" ON winners FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "spin_settings_all" ON spin_settings FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "spin_prizes_all" ON spin_prizes FOR ALL USING (true) WITH CHECK (true);
 -- Kalau tabel winners sudah ada sebelumnya (bukan baru), tambahkan kolom ini:
-ALTER TABLE winners ADD COLUMN IF NOT EXISTS prize_name text;</code>
+ALTER TABLE winners ADD COLUMN IF NOT EXISTS prize_name text;
+-- Kalau tabel spin_prizes sudah ada sebelumnya (bukan baru), tambahkan kolom ini
+-- supaya stok bisa dikembalikan ke jumlah awal saat "Hapus semua hasil":
+ALTER TABLE spin_prizes ADD COLUMN IF NOT EXISTS initial_stock int NOT NULL DEFAULT 0;
+UPDATE spin_prizes SET initial_stock = stock WHERE initial_stock = 0 AND stock > 0;</code>
         </div>
 
         <div class="spin-tabs">
@@ -26642,7 +26647,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   let spinEntries = [];   // {id, name, image_url}
   let spinWinners = [];   // {id, name, image_url, prize_name, drawn_at}
   let spinExcluded = [];  // array nama yang tidak boleh menang
-  let spinPrizes = [];    // {id, name, stock}
+  let spinPrizes = [];    // {id, name, stock, initial_stock}
   let spinImgTargetId = null;
   let spinPendingPicked = null; // menyimpan hasil undi yg sedang menunggu konfirmasi hadir/tidak
   let spinPendingPrize = null;  // {id, name, stock} hadiah yang sedang diundi
@@ -26779,7 +26784,9 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     const name = document.getElementById('spinPrizeNameInput').value.trim();
     const stock = Math.max(0, parseInt(document.getElementById('spinPrizeStockInput').value||'0'));
     if(!name){ alert('Nama hadiah tidak boleh kosong.'); return; }
-    const {error} = await db.from('spin_prizes').insert({name, stock});
+    // initial_stock = jumlah awal (baseline). Dipakai untuk mengembalikan stok
+    // ke kondisi semula kalau semua hasil undian dihapus (lihat spinClearHasil).
+    const {error} = await db.from('spin_prizes').insert({name, stock, initial_stock: stock});
     if(error){ alert('Gagal menambah hadiah: '+error.message); return; }
     document.getElementById('spinPrizeNameInput').value = '';
     document.getElementById('spinPrizeStockInput').value = '1';
@@ -26787,9 +26794,13 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     spinRenderPrizeList();
   }
 
+  // Diubah manual lewat 🎁 Kelola Hadiah = admin sedang menentukan/mengoreksi
+  // jumlah AWAL hadiah tsb. Makanya stock & initial_stock diupdate bersamaan
+  // supaya jadi baseline baru — beda dengan pengurangan stok otomatis saat undi
+  // (spinConfirmPresence), yang cuma mengubah stock saja tanpa menyentuh baseline.
   async function spinUpdatePrizeStock(id, newStock){
     newStock = Math.max(0, parseInt(newStock||'0'));
-    await db.from('spin_prizes').update({stock:newStock}).eq('id', id);
+    await db.from('spin_prizes').update({stock:newStock, initial_stock:newStock}).eq('id', id);
     await spinLoadAll();
     spinRenderPrizeList();
   }
@@ -26808,8 +26819,8 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     el.innerHTML = spinPrizes.map(p => `
       <div class="spin-prize-row">
         <div class="spin-prize-name">🎁 ${escapeHtml(p.name)}</div>
-        <input type="number" min="0" value="${p.stock}" onchange="spinUpdatePrizeStock('${p.id}', this.value)">
-        <span class="spin-prize-stock ${p.stock<=0?'zero':''}">${p.stock<=0?'Habis':'pcs tersisa'}</span>
+        <input type="number" min="0" value="${p.stock}" onchange="spinUpdatePrizeStock('${p.id}', this.value)" title="Mengubah nilai ini juga mengubah jumlah awal (baseline) hadiah">
+        <span class="spin-prize-stock ${p.stock<=0?'zero':''}">${p.stock<=0?'Habis':'pcs tersisa'} · awal ${p.initial_stock ?? p.stock}</span>
         <button class="spin-icon-btn" title="Hapus" onclick="spinDeletePrize('${p.id}')">✕</button>
       </div>
     `).join('');
@@ -26860,18 +26871,32 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       '🎫'
     );
   }
+  // Kembalikan stok semua hadiah ke jumlah awal (initial_stock). Dipanggil
+  // setiap kali riwayat pemenang dihapus, supaya "Kelola Hadiah" cukup diisi
+  // sekali di awal acara — tidak perlu diinput ulang manual tiap reset.
+  async function spinResetStokKeAwal(){
+    const toReset = spinPrizes.filter(p => p.stock !== (p.initial_stock ?? p.stock));
+    if(toReset.length===0) return;
+    await Promise.all(toReset.map(p => db.from('spin_prizes').update({stock: p.initial_stock}).eq('id', p.id)));
+  }
+
   async function spinClearHasil(){
     if(spinWinners.length===0) return;
-    const ok = await askConfirm(`Hapus semua hasil undian (${spinWinners.length} pemenang)? Bisa diurungkan dalam 10 detik setelah ini.`, '🗑️ Hapus Semua Hasil');
+    const ok = await askConfirm(`Hapus semua hasil undian (${spinWinners.length} pemenang)? Stok tiap hadiah otomatis dikembalikan ke jumlah awal. Bisa diurungkan dalam 10 detik setelah ini.`, '🗑️ Hapus Semua Hasil');
     if(!ok) return;
     const backup = spinWinners.slice();
+    const prizeStockBackup = spinPrizes.map(p => ({id:p.id, stock:p.stock})); // stok sebelum direset, buat undo
     await db.from('winners').delete().neq('id','00000000-0000-0000-0000-000000000000');
+    await spinResetStokKeAwal();
     await spinLoadAll();
     showUndoToast(`Semua hasil (${backup.length} pemenang)`,
       async function(){
-        if(backup.length) await db.from('winners').insert(backup);
+        const tasks = [];
+        if(backup.length) tasks.push(db.from('winners').insert(backup));
+        prizeStockBackup.forEach(pb => tasks.push(db.from('spin_prizes').update({stock:pb.stock}).eq('id', pb.id)));
+        if(tasks.length) await Promise.all(tasks);
         await spinLoadAll();
-        showToast('↩️ Semua hasil dikembalikan', 'success', 2500);
+        showToast('↩️ Semua hasil & stok dikembalikan', 'success', 2500);
       },
       function(){},
       '🏆'
@@ -26880,23 +26905,26 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
 
   async function spinResetSemua(){
     if(spinEntries.length===0 && spinWinners.length===0) return;
-    const ok = await askConfirm(`Reset semua? ${spinEntries.length} entri dan ${spinWinners.length} riwayat pemenang akan dihapus. Bisa diurungkan dalam 10 detik setelah ini.`, '🔄 Reset Semua');
+    const ok = await askConfirm(`Reset semua? ${spinEntries.length} entri dan ${spinWinners.length} riwayat pemenang akan dihapus, stok hadiah dikembalikan ke jumlah awal. Bisa diurungkan dalam 10 detik setelah ini.`, '🔄 Reset Semua');
     if(!ok) return;
     const backupEntries = spinEntries.slice();
     const backupWinners = spinWinners.slice();
+    const prizeStockBackup = spinPrizes.map(p => ({id:p.id, stock:p.stock})); // stok sebelum direset, buat undo
     await Promise.all([
       db.from('entries').delete().neq('id','00000000-0000-0000-0000-000000000000'),
       db.from('winners').delete().neq('id','00000000-0000-0000-0000-000000000000')
     ]);
+    await spinResetStokKeAwal();
     await spinLoadAll();
     showUndoToast(`Reset semua (${backupEntries.length} entri, ${backupWinners.length} pemenang)`,
       async function(){
         const tasks = [];
         if(backupEntries.length) tasks.push(db.from('entries').insert(backupEntries));
         if(backupWinners.length) tasks.push(db.from('winners').insert(backupWinners));
-        await Promise.all(tasks);
+        prizeStockBackup.forEach(pb => tasks.push(db.from('spin_prizes').update({stock:pb.stock}).eq('id', pb.id)));
+        if(tasks.length) await Promise.all(tasks);
         await spinLoadAll();
-        showToast('↩️ Semua data dikembalikan', 'success', 2500);
+        showToast('↩️ Semua data & stok dikembalikan', 'success', 2500);
       },
       function(){},
       '🔄'
