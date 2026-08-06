@@ -3808,7 +3808,7 @@
             <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">3️⃣ ☑ Satu orang satu hadiah</div>
             <div class="spin-hint" style="margin:0;">
               <b>Dicentang</b> (default): kalau "Ali1" menang, tiket "Ali2", "Ali3", "Ali4" (nama sama) <b>tidak dihapus</b>, tapi otomatis <b>dilewati</b> di undian selanjutnya — jadi orang yang beli banyak tiket tidak bisa menang berkali-kali, walau tiketnya tetap kelihatan di daftar (ditandai 🏆 Sudah pernah menang).<br>
-              <b>Tidak dicentang</b>: semua tiket ("Ali1","Ali2","Ali3","Ali4") tetap boleh diundi lagi kapan saja — jadi 1 orang <b>bisa menang lebih dari sekali</b> kalau punya banyak tiket.
+              <b>Tidak dicentang</b>: tiket LAIN dengan nama sama ("Ali2","Ali3","Ali4") tetap boleh diundi lagi kapan saja — jadi 1 orang <b>bisa menang lebih dari sekali</b> kalau punya banyak tiket. Tapi tiket yang <b>persis sama</b> ("Ali1" yang barusan menang) tetap dilewati — 1 tiket tidak bisa menang 2x.
             </div>
           </div>
           <div>
@@ -26678,7 +26678,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
 
   function spinUpdateCounts(){
     const onePerPerson = document.getElementById('spinOneWinPerPerson') ? document.getElementById('spinOneWinPerPerson').checked : true;
-    const belumMenang = onePerPerson ? spinEntries.filter(e => !spinHasWon(spinBaseName(e.name))).length : spinEntries.length;
+    const belumMenang = spinEntries.filter(e => !spinIsAlreadyWon(e.name, onePerPerson)).length;
     document.getElementById('spinCountEntri').textContent = (belumMenang === spinEntries.length) ? String(spinEntries.length) : `${belumMenang}/${spinEntries.length}`;
     document.getElementById('spinCountHasil').textContent = spinWinners.length;
     document.getElementById('spinDrawBtn').disabled = spinEntries.length === 0;
@@ -26702,7 +26702,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     el.innerHTML = spinEntries.map(e => {
       const excluded = spinIsExcluded(e.name, selectedPrizeId);
       const skipped = spinSessionSkip.has(e.id);
-      const alreadyWon = onePerPerson && spinHasWon(spinBaseName(e.name));
+      const alreadyWon = spinIsAlreadyWon(e.name, onePerPerson);
       const dimmed = excluded || skipped || alreadyWon;
       let tag = '';
       if(excluded) tag = '<span class="spin-row-excluded-tag">🚫 Tidak ikut undi hadiah ini</span>';
@@ -26966,6 +26966,23 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     return spinWinners.some(w => spinBaseName(w.name).toLowerCase() === baseName.toLowerCase());
   }
 
+  // Tiket PERSIS ini (nama lengkap termasuk angka) sudah pernah menang?
+  // Ini beda dari spinHasWon() yang cocokkan nama DASAR (tanpa angka).
+  function spinHasWonExact(name){
+    return spinWinners.some(w => w.name.toLowerCase() === name.toLowerCase());
+  }
+
+  // Satu sumber kebenaran: apakah entri ini harus dilewati karena sudah menang?
+  // - Tiket yang PERSIS sudah menang: selalu dilewati, apapun status "satu orang satu hadiah".
+  //   (tiket itu sendiri sudah dapat hadiahnya, tidak boleh diundi ulang)
+  // - Tiket lain dengan NAMA DASAR sama (mis. Gunawan1 saat Gunawan3 menang):
+  //   dilewati HANYA kalau "satu orang satu hadiah" dicentang.
+  function spinIsAlreadyWon(name, onePerPerson){
+    if(spinHasWonExact(name)) return true;
+    if(onePerPerson && spinHasWon(spinBaseName(name))) return true;
+    return false;
+  }
+
   async function spinDrawWinner(){
     if(spinEntries.length===0) return;
 
@@ -26989,7 +27006,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     const eligible = spinEntries.filter(e => {
       if(spinIsExcluded(e.name, prize.id)) return false;
       if(spinSessionSkip.has(e.id)) return false; // lagi dilewati sementara (misal: tadi "tidak hadir")
-      if(onePerPerson && spinHasWon(spinBaseName(e.name))) return false; // sudah pernah menang & mode 1 org 1 hadiah aktif
+      if(spinIsAlreadyWon(e.name, onePerPerson)) return false; // tiket ini sendiri, atau (kalau mode aktif) orang yang sama, sudah pernah menang
       return true;
     });
     if(eligible.length===0){
