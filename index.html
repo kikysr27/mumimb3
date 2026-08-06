@@ -3857,7 +3857,7 @@ ALTER TABLE winners ADD COLUMN IF NOT EXISTS prize_name text;
 -- Kalau tabel spin_prizes sudah ada sebelumnya (bukan baru), tambahkan kolom ini
 -- supaya stok bisa dikembalikan ke jumlah awal saat "Hapus semua hasil":
 ALTER TABLE spin_prizes ADD COLUMN IF NOT EXISTS initial_stock int NOT NULL DEFAULT 0;
-UPDATE spin_prizes SET initial_stock = stock WHERE initial_stock = 0 AND stock > 0;</code>
+UPDATE spin_prizes SET initial_stock = stock;</code>
         </div>
 
         <div class="spin-tabs">
@@ -26874,20 +26874,36 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   // Kembalikan stok semua hadiah ke jumlah awal (initial_stock). Dipanggil
   // setiap kali riwayat pemenang dihapus, supaya "Kelola Hadiah" cukup diisi
   // sekali di awal acara — tidak perlu diinput ulang manual tiap reset.
+  // Return true kalau reset berhasil dijalankan, false kalau baseline belum
+  // tersedia (mis. migrasi SQL kolom initial_stock belum dijalankan) supaya
+  // pemanggil bisa kasih tahu admin, bukan diam-diam gagal.
   async function spinResetStokKeAwal(){
+    if(spinPrizes.length===0) return true;
+    // Kolom initial_stock belum ada di database (migrasi belum dijalankan) ->
+    // semua prize.initial_stock akan undefined/null. Jangan lanjut diam-diam,
+    // supaya bug "stok tidak balik ke awal" ketahuan sebabnya.
+    const missingBaseline = spinPrizes.every(p => p.initial_stock === undefined || p.initial_stock === null);
+    if(missingBaseline){
+      alert('⚠️ Stok hadiah TIDAK bisa dikembalikan ke jumlah awal karena kolom "initial_stock" belum ada di tabel spin_prizes.\n\nJalankan dulu SQL ini di Supabase Dashboard → SQL Editor:\n\nALTER TABLE spin_prizes ADD COLUMN IF NOT EXISTS initial_stock int NOT NULL DEFAULT 0;\nUPDATE spin_prizes SET initial_stock = stock;\n\nSetelah itu buka 🎁 Kelola Hadiah dan pastikan angka stok tiap hadiah sudah sesuai jumlah awal (isi ulang manual kalau perlu), baru fitur ini akan bekerja untuk seterusnya.');
+      return false;
+    }
     const toReset = spinPrizes.filter(p => p.stock !== (p.initial_stock ?? p.stock));
-    if(toReset.length===0) return;
+    if(toReset.length===0) return true;
     await Promise.all(toReset.map(p => db.from('spin_prizes').update({stock: p.initial_stock}).eq('id', p.id)));
+    return true;
   }
 
   async function spinClearHasil(){
     if(spinWinners.length===0) return;
     const ok = await askConfirm(`Hapus semua hasil undian (${spinWinners.length} pemenang)? Stok tiap hadiah otomatis dikembalikan ke jumlah awal. Bisa diurungkan dalam 10 detik setelah ini.`, '🗑️ Hapus Semua Hasil');
     if(!ok) return;
+    // Cek dulu baseline stok tersedia SEBELUM data dihapus, supaya kalau gagal
+    // (mis. migrasi belum jalan) tidak terjadi kondisi setengah-jalan.
+    const canReset = await spinResetStokKeAwal();
+    if(!canReset) return;
     const backup = spinWinners.slice();
     const prizeStockBackup = spinPrizes.map(p => ({id:p.id, stock:p.stock})); // stok sebelum direset, buat undo
     await db.from('winners').delete().neq('id','00000000-0000-0000-0000-000000000000');
-    await spinResetStokKeAwal();
     await spinLoadAll();
     showUndoToast(`Semua hasil (${backup.length} pemenang)`,
       async function(){
@@ -26907,6 +26923,8 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     if(spinEntries.length===0 && spinWinners.length===0) return;
     const ok = await askConfirm(`Reset semua? ${spinEntries.length} entri dan ${spinWinners.length} riwayat pemenang akan dihapus, stok hadiah dikembalikan ke jumlah awal. Bisa diurungkan dalam 10 detik setelah ini.`, '🔄 Reset Semua');
     if(!ok) return;
+    const canReset = await spinResetStokKeAwal();
+    if(!canReset) return;
     const backupEntries = spinEntries.slice();
     const backupWinners = spinWinners.slice();
     const prizeStockBackup = spinPrizes.map(p => ({id:p.id, stock:p.stock})); // stok sebelum direset, buat undo
@@ -26914,7 +26932,6 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       db.from('entries').delete().neq('id','00000000-0000-0000-0000-000000000000'),
       db.from('winners').delete().neq('id','00000000-0000-0000-0000-000000000000')
     ]);
-    await spinResetStokKeAwal();
     await spinLoadAll();
     showUndoToast(`Reset semua (${backupEntries.length} entri, ${backupWinners.length} pemenang)`,
       async function(){
