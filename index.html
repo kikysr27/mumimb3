@@ -26677,7 +26677,9 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   }
 
   function spinUpdateCounts(){
-    document.getElementById('spinCountEntri').textContent = spinEntries.length;
+    const onePerPerson = document.getElementById('spinOneWinPerPerson') ? document.getElementById('spinOneWinPerPerson').checked : true;
+    const belumMenang = onePerPerson ? spinEntries.filter(e => !spinHasWon(spinBaseName(e.name))).length : spinEntries.length;
+    document.getElementById('spinCountEntri').textContent = (belumMenang === spinEntries.length) ? String(spinEntries.length) : `${belumMenang}/${spinEntries.length}`;
     document.getElementById('spinCountHasil').textContent = spinWinners.length;
     document.getElementById('spinDrawBtn').disabled = spinEntries.length === 0;
   }
