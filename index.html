@@ -3758,8 +3758,13 @@
         #sec-spin .spin-draw-btn{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-size:15px;background:linear-gradient(135deg,#f5b942,#e0952b);color:#1a1204;border:none;border-radius:999px;padding:14px 30px;cursor:pointer;box-shadow:0 6px 24px #f5b94240;display:flex;align-items:center;gap:10px;max-width:480px;width:100%;justify-content:center;}
         #sec-spin .spin-draw-btn:disabled{opacity:.5;cursor:not-allowed;}
         #sec-spin .spin-draw-btn:active:not(:disabled){transform:scale(.98);}
-        #spinAddOverlay,#spinImgOverlay,#spinWinOverlay,#spinSettingsOverlay{position:fixed;inset:0;background:#05060899;backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;}
-        #spinAddOverlay.show,#spinImgOverlay.show,#spinWinOverlay.show,#spinSettingsOverlay.show{display:flex;}
+        #spinAddOverlay,#spinImgOverlay,#spinWinOverlay,#spinSettingsOverlay,#spinPrizeOverlay,#spinPresenceOverlay{position:fixed;inset:0;background:#05060899;backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+        #spinAddOverlay.show,#spinImgOverlay.show,#spinWinOverlay.show,#spinSettingsOverlay.show,#spinPrizeOverlay.show,#spinPresenceOverlay.show{display:flex;}
+        #sec-spin .spin-prize-row{display:flex;align-items:center;gap:8px;background:#1d2129;border:1px solid #262b33;border-radius:10px;padding:8px 10px;}
+        #sec-spin .spin-prize-row .spin-prize-name{flex:1;font-size:13.5px;font-weight:600;}
+        #sec-spin .spin-prize-row .spin-prize-stock{font-size:12.5px;color:#8b93a3;min-width:70px;text-align:center;}
+        #sec-spin .spin-prize-row .spin-prize-stock.zero{color:#ef4565;font-weight:700;}
+        #sec-spin .spin-prize-row input[type=number]{width:56px;background:#0e1013;border:1px solid #262b33;border-radius:7px;color:#e9ebf0;padding:5px 6px;font-family:'Inter',sans-serif;text-align:center;}
         .spin-modal{background:#171a20;border:1px solid #262b33;border-radius:16px;padding:22px;max-width:420px;width:100%;color:#e9ebf0;font-family:'Inter',system-ui,sans-serif;box-sizing:border-box;}
         .spin-modal h3{font-family:'Space Grotesk','Inter',sans-serif;margin:0 0 4px;font-size:17px;}
         .spin-modal p.spin-hint{color:#8b93a3;font-size:12.5px;margin:0 0 12px;}
@@ -3782,6 +3787,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
           <h1 class="spin-title"><span class="spin-dot"></span>Game Spin — Undian Doorprize</h1>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinOpenPrizeModal()">🎁 Kelola Hadiah</button>
             <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinOpenSettings()">⚙️ Setting</button>
             <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinResetSemua()">🔄 Reset Semua</button>
           </div>
@@ -3800,6 +3806,7 @@ CREATE TABLE IF NOT EXISTS winners (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   image_url text,
+  prize_name text,
   drawn_at timestamptz DEFAULT now()
 );
 CREATE TABLE IF NOT EXISTS spin_settings (
@@ -3807,12 +3814,22 @@ CREATE TABLE IF NOT EXISTS spin_settings (
   data jsonb NOT NULL DEFAULT '[]'::jsonb,
   updated_at timestamptz DEFAULT now()
 );
+CREATE TABLE IF NOT EXISTS spin_prizes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  stock int NOT NULL DEFAULT 0,
+  created_at timestamptz DEFAULT now()
+);
 ALTER TABLE entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE winners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE spin_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE spin_prizes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "entries_all" ON entries FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "winners_all" ON winners FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "spin_settings_all" ON spin_settings FOR ALL USING (true) WITH CHECK (true);</code>
+CREATE POLICY "spin_settings_all" ON spin_settings FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "spin_prizes_all" ON spin_prizes FOR ALL USING (true) WITH CHECK (true);
+-- Kalau tabel winners sudah ada sebelumnya (bukan baru), tambahkan kolom ini:
+ALTER TABLE winners ADD COLUMN IF NOT EXISTS prize_name text;</code>
         </div>
 
         <div class="spin-tabs">
@@ -3821,6 +3838,15 @@ CREATE POLICY "spin_settings_all" ON spin_settings FOR ALL USING (true) WITH CHE
         </div>
 
         <div id="spinEntriView">
+          <div class="spin-adv-panel show" id="spinPrizePanel" style="margin-bottom:12px;">
+            <div class="spin-adv-field" style="flex:1;min-width:220px;">
+              🎁 Hadiah yang akan diundi:
+              <select id="spinPrizeSelect" onchange="spinUpdatePrizeHint()" style="flex:1;background:#0e1013;border:1px solid #262b33;border-radius:7px;color:#e9ebf0;padding:6px 8px;font-family:'Inter',sans-serif;min-width:160px;">
+                <option value="">— pilih hadiah —</option>
+              </select>
+            </div>
+            <div class="spin-hint" id="spinPrizeStockHint" style="margin:0;">Belum ada hadiah. Klik "🎁 Kelola Hadiah" untuk menambah.</div>
+          </div>
           <div class="spin-toolbar">
             <button class="spin-btn spin-btn-primary" onclick="spinOpenAddModal()">＋ Tambah entri</button>
             <button class="spin-btn spin-btn-ghost" onclick="spinShuffleView()">🔀 Acak</button>
@@ -3829,8 +3855,8 @@ CREATE POLICY "spin_settings_all" ON spin_settings FOR ALL USING (true) WITH CHE
             <label class="spin-check-row"><input type="checkbox" id="spinCanggihToggle" onchange="spinToggleAdv()"> Canggih</label>
           </div>
           <div class="spin-adv-panel" id="spinAdvPanel">
-            <div class="spin-adv-field">Jumlah pemenang per undi <input type="number" id="spinDrawCount" value="1" min="1"></div>
-            <label class="spin-check-row"><input type="checkbox" id="spinOneWinPerPerson" checked> Satu orang satu hadiah</label>
+            <div class="spin-hint" style="margin:0;">Undi hadiah selalu 1 orang per klik (supaya konfirmasi hadir & stok akurat).</div>
+            <label class="spin-check-row"><input type="checkbox" id="spinOneWinPerPerson" checked> Satu orang satu hadiah (hapus semua tiket atas nama yang sama)</label>
           </div>
           <div class="spin-panel" id="spinEntriList"><div class="spin-empty">Memuat…</div></div>
         </div>
@@ -3895,6 +3921,40 @@ CREATE POLICY "spin_settings_all" ON spin_settings FOR ALL USING (true) WITH CHE
         <div class="spin-ticket" id="spinTicketCard">
           <div class="spin-eyebrow">Undian sedang berjalan</div>
           <div class="spin-name-display" id="spinNameDisplay">—</div>
+        </div>
+      </div>
+
+      <!-- Modal: kelola hadiah / menu doorprize + stok -->
+      <div id="spinPrizeOverlay">
+        <div class="spin-modal" style="max-width:460px;">
+          <h3>🎁 Kelola Hadiah</h3>
+          <p class="spin-hint">Tambahkan menu/hadiah doorprize beserta jumlah stoknya (misal: Bakso 10 pcs, Geprek 5 pcs). Stok otomatis berkurang 1 setiap kali ada pemenang yang <b>dikonfirmasi hadir</b>. Kalau ternyata orangnya tidak ada, stok tidak berkurang.</p>
+          <div style="display:flex;gap:6px;margin-bottom:10px;">
+            <input type="text" id="spinPrizeNameInput" placeholder="Nama hadiah, misal: Bakso" style="flex:2;">
+            <input type="number" id="spinPrizeStockInput" placeholder="Stok" min="0" value="1" style="flex:1;background:#0e1013;border:1px solid #262b33;border-radius:10px;color:#e9ebf0;padding:10px 12px;">
+          </div>
+          <div class="spin-modal-actions" style="justify-content:flex-start;margin-top:0;margin-bottom:14px;">
+            <button class="spin-btn spin-btn-primary spin-btn-sm" onclick="spinAddPrize()">＋ Tambah hadiah</button>
+          </div>
+          <p class="spin-hint" style="margin-bottom:6px;">Daftar hadiah &amp; sisa stok:</p>
+          <div id="spinPrizeList" style="display:flex;flex-direction:column;gap:8px;min-height:34px;max-height:280px;overflow-y:auto;"></div>
+          <div class="spin-modal-actions">
+            <button class="spin-btn spin-btn-ghost" onclick="spinClosePrizeModal()">Tutup</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay: konfirmasi apakah pemenang hadir/ada di tempat -->
+      <div id="spinPresenceOverlay">
+        <div class="spin-ticket" style="border-style:solid;border-color:#5865f2;">
+          <div class="spin-eyebrow" id="spinPresencePrize">Hadiah</div>
+          <div class="spin-winner-name" id="spinPresenceName">—</div>
+          <div class="spin-ticket-no" style="margin-top:10px;">Apakah orang ini ada di tempat sekarang?</div>
+          <div class="spin-modal-actions" style="justify-content:center;margin-top:18px;">
+            <button class="spin-btn spin-btn-danger" onclick="spinConfirmPresence(false)">✕ Tidak ada</button>
+            <button class="spin-btn spin-btn-primary" onclick="spinConfirmPresence(true)">✓ Ada, sah menang</button>
+          </div>
+          <p class="spin-hint" style="margin-top:12px;">Kalau "Tidak ada", stok hadiah tetap sama dan nama ini dilewati — silakan undi ulang.</p>
         </div>
       </div>
     </div>
@@ -26556,23 +26616,30 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   // ═══════════════════════ GAME SPIN — UNDIAN DOORPRIZE ═══════════════════════
   // Pakai client `db` (Supabase) yang sama dengan modul lain di app ini.
   let spinEntries = [];   // {id, name, image_url}
-  let spinWinners = [];   // {id, name, image_url, drawn_at}
+  let spinWinners = [];   // {id, name, image_url, prize_name, drawn_at}
   let spinExcluded = [];  // array nama yang tidak boleh menang
+  let spinPrizes = [];    // {id, name, stock}
   let spinImgTargetId = null;
+  let spinPendingPicked = null; // menyimpan hasil undi yg sedang menunggu konfirmasi hadir/tidak
+  let spinPendingPrize = null;  // {id, name, stock} hadiah yang sedang diundi
 
   async function spinLoadAll(){
-    const [e, w, s] = await Promise.all([
+    const [e, w, s, p] = await Promise.all([
       db.from('entries').select('*').order('created_at', {ascending:true}),
       db.from('winners').select('*').order('drawn_at', {ascending:false}),
-      db.from('spin_settings').select('data').eq('key','exclude_list').maybeSingle()
+      db.from('spin_settings').select('data').eq('key','exclude_list').maybeSingle(),
+      db.from('spin_prizes').select('*').order('created_at', {ascending:true})
     ]);
     const notice = document.getElementById('spinSqlNotice');
     if (notice) notice.style.display = (e.error || w.error) ? 'block' : 'none';
     spinEntries = e.data || [];
     spinWinners = w.data || [];
     spinExcluded = (!s.error && s.data && Array.isArray(s.data.data)) ? s.data.data : [];
+    spinPrizes = p.data || [];
     spinRenderEntries();
     spinRenderHasil();
+    spinRenderPrizeSelect();
+    spinRenderPrizeList();
   }
 
   function spinSwitchTab(t){
@@ -26618,10 +26685,84 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     el.innerHTML = spinWinners.map((w) => `
       <div class="spin-row">
         ${w.image_url ? `<img class="spin-thumb" src="${escapeHtml(w.image_url)}">` : `<div class="spin-thumb spin-placeholder">🏆</div>`}
-        <div class="spin-row-name">${escapeHtml(w.name)}</div>
+        <div class="spin-row-name">${escapeHtml(w.name)}${w.prize_name ? ` <span style="color:#f5b942;font-weight:600;">— 🎁 ${escapeHtml(w.prize_name)}</span>` : ''}</div>
         <div class="spin-row-time">${new Date(w.drawn_at).toLocaleString('id-ID')}</div>
       </div>`).join('');
     spinUpdateCounts();
+  }
+
+  // ---- hadiah / menu doorprize + stok ----
+  function spinRenderPrizeSelect(){
+    const sel = document.getElementById('spinPrizeSelect');
+    const hint = document.getElementById('spinPrizeStockHint');
+    const prev = sel.value;
+    if(spinPrizes.length===0){
+      sel.innerHTML = '<option value="">— pilih hadiah —</option>';
+      hint.textContent = 'Belum ada hadiah. Klik "🎁 Kelola Hadiah" untuk menambah.';
+      hint.style.color = '';
+      return;
+    }
+    sel.innerHTML = '<option value="">— pilih hadiah —</option>' + spinPrizes.map(p =>
+      `<option value="${p.id}" ${p.stock<=0?'disabled':''}>${escapeHtml(p.name)} (sisa ${p.stock})${p.stock<=0?' — HABIS':''}</option>`
+    ).join('');
+    if(spinPrizes.some(p=>p.id===prev)) sel.value = prev;
+    spinUpdatePrizeHint();
+  }
+
+  function spinUpdatePrizeHint(){
+    const sel = document.getElementById('spinPrizeSelect');
+    const hint = document.getElementById('spinPrizeStockHint');
+    const p = spinPrizes.find(x=>x.id===sel.value);
+    if(!p){ hint.textContent = 'Pilih hadiah dulu sebelum mengundi.'; hint.style.color = '#f5b942'; return; }
+    hint.textContent = `Sisa stok "${p.name}": ${p.stock} pcs`;
+    hint.style.color = p.stock<=0 ? '#ef4565' : '#8b93a3';
+  }
+
+  function spinOpenPrizeModal(){ spinRenderPrizeList(); document.getElementById('spinPrizeOverlay').classList.add('show'); }
+  function spinClosePrizeModal(){
+    document.getElementById('spinPrizeOverlay').classList.remove('show');
+    document.getElementById('spinPrizeNameInput').value = '';
+    document.getElementById('spinPrizeStockInput').value = '1';
+  }
+
+  async function spinAddPrize(){
+    const name = document.getElementById('spinPrizeNameInput').value.trim();
+    const stock = Math.max(0, parseInt(document.getElementById('spinPrizeStockInput').value||'0'));
+    if(!name){ alert('Nama hadiah tidak boleh kosong.'); return; }
+    const {error} = await db.from('spin_prizes').insert({name, stock});
+    if(error){ alert('Gagal menambah hadiah: '+error.message); return; }
+    document.getElementById('spinPrizeNameInput').value = '';
+    document.getElementById('spinPrizeStockInput').value = '1';
+    await spinLoadAll();
+    spinRenderPrizeList();
+  }
+
+  async function spinUpdatePrizeStock(id, newStock){
+    newStock = Math.max(0, parseInt(newStock||'0'));
+    await db.from('spin_prizes').update({stock:newStock}).eq('id', id);
+    await spinLoadAll();
+    spinRenderPrizeList();
+  }
+
+  async function spinDeletePrize(id){
+    if(!confirm('Hapus hadiah ini dari daftar?')) return;
+    await db.from('spin_prizes').delete().eq('id', id);
+    await spinLoadAll();
+    spinRenderPrizeList();
+  }
+
+  function spinRenderPrizeList(){
+    const el = document.getElementById('spinPrizeList');
+    if(!el) return;
+    if(spinPrizes.length===0){ el.innerHTML = '<div class="spin-empty" style="padding:6px 0;font-size:12.5px;">Belum ada hadiah. Tambahkan di atas.</div>'; return; }
+    el.innerHTML = spinPrizes.map(p => `
+      <div class="spin-prize-row">
+        <div class="spin-prize-name">🎁 ${escapeHtml(p.name)}</div>
+        <input type="number" min="0" value="${p.stock}" onchange="spinUpdatePrizeStock('${p.id}', this.value)">
+        <span class="spin-prize-stock ${p.stock<=0?'zero':''}">${p.stock<=0?'Habis':'pcs tersisa'}</span>
+        <button class="spin-icon-btn" title="Hapus" onclick="spinDeletePrize('${p.id}')">✕</button>
+      </div>
+    `).join('');
   }
 
   // ---- toolbar actions ----
@@ -26733,9 +26874,25 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
 
   async function spinDrawWinner(){
     if(spinEntries.length===0) return;
-    const adv = document.getElementById('spinCanggihToggle').checked;
-    const count = adv ? Math.max(1, parseInt(document.getElementById('spinDrawCount').value||'1')) : 1;
-    const onePerPerson = adv ? document.getElementById('spinOneWinPerPerson').checked : true;
+
+    // Wajib pilih hadiah dulu sebelum bisa spin
+    const prizeSel = document.getElementById('spinPrizeSelect');
+    const prizeId = prizeSel.value;
+    const prize = spinPrizes.find(p => p.id === prizeId);
+    if(!prize){
+      alert('Pilih hadiah/menu doorprize dulu sebelum mengundi (misal: Bakso, Geprek, Oli Motor, Nasi Uduk).');
+      return;
+    }
+    if(prize.stock <= 0){
+      alert(`Stok "${prize.name}" sudah habis. Pilih hadiah lain atau tambah stoknya di 🎁 Kelola Hadiah.`);
+      return;
+    }
+
+    // Saat mode hadiah aktif, undi dilakukan satu-satu (1 orang = 1 pcs hadiah ini),
+    // supaya konfirmasi hadir/tidak & pengurangan stok akurat per orang.
+    const onePerPerson = document.getElementById('spinCanggihToggle').checked
+      ? document.getElementById('spinOneWinPerPerson').checked
+      : true;
 
     const eligible = spinEntries.filter(e => !spinIsExcluded(e.name));
     if(eligible.length===0){
@@ -26744,38 +26901,54 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     }
 
     document.getElementById('spinDrawBtn').disabled = true;
-    let pool = [...eligible];
-    const picked = [];
+    const pick = eligible[Math.floor(Math.random()*eligible.length)];
 
-    for(let i=0; i<count && pool.length>0; i++){
-      const pick = pool[Math.floor(Math.random()*pool.length)];
-      picked.push(pick);
+    await spinRunSpinAnimation(pick.name, eligible.map(e=>e.name));
+
+    // Simpan sementara — belum masuk winners & belum dihapus dari entri,
+    // menunggu konfirmasi apakah orangnya benar-benar ada di tempat.
+    spinPendingPicked = { pick, onePerPerson };
+    spinPendingPrize = prize;
+    spinShowPresenceConfirm(pick.name, prize.name);
+  }
+
+  function spinShowPresenceConfirm(name, prizeName){
+    document.getElementById('spinWinOverlay').classList.remove('show');
+    document.getElementById('spinPresencePrize').textContent = '🎁 ' + prizeName;
+    document.getElementById('spinPresenceName').textContent = name;
+    document.getElementById('spinPresenceOverlay').classList.add('show');
+  }
+
+  async function spinConfirmPresence(isPresent){
+    document.getElementById('spinPresenceOverlay').classList.remove('show');
+    if(!spinPendingPicked || !spinPendingPrize){ document.getElementById('spinDrawBtn').disabled = false; return; }
+    const { pick, onePerPerson } = spinPendingPicked;
+    const prize = spinPendingPrize;
+
+    if(isPresent){
+      // Sah menang: catat pemenang + kurangi stok hadiah 1 pcs, lalu hapus dari daftar entri.
+      await db.from('winners').insert({name: pick.name, image_url: pick.image_url||null, prize_name: prize.name});
+      await db.from('spin_prizes').update({stock: Math.max(0, prize.stock - 1)}).eq('id', prize.id);
+
+      let idsToRemove = new Set([pick.id]);
       if(onePerPerson){
         const bn = spinBaseName(pick.name);
-        pool = pool.filter(e => spinBaseName(e.name) !== bn);
-      } else {
-        pool = pool.filter(e => e.id !== pick.id);
-      }
-    }
-
-    await spinRunSpinAnimation(picked[picked.length-1].name, eligible.map(e=>e.name));
-
-    const winnerRows = picked.map(p => ({name:p.name, image_url:p.image_url||null}));
-    await db.from('winners').insert(winnerRows);
-
-    let idsToRemove = new Set(picked.map(p=>p.id));
-    if(onePerPerson){
-      picked.forEach(p=>{
-        const bn = spinBaseName(p.name);
         spinEntries.filter(e=>spinBaseName(e.name)===bn).forEach(e=>idsToRemove.add(e.id));
-      });
-    }
-    for(const id of idsToRemove){
-      await db.from('entries').delete().eq('id', id);
-    }
+      }
+      for(const id of idsToRemove){ await db.from('entries').delete().eq('id', id); }
 
-    await spinLoadAll();
-    spinShowTicket(picked);
+      await spinLoadAll();
+      spinShowTicket([{name: pick.name}], prize.name);
+    } else {
+      // Tidak ada di tempat: stok TIDAK berkurang. Tiketnya dilewati (dihapus dari pool undian
+      // ini) supaya bisa langsung diundi ulang untuk hadiah yang sama.
+      await db.from('entries').delete().eq('id', pick.id);
+      await spinLoadAll();
+      document.getElementById('spinDrawBtn').disabled = false;
+      alert(`"${pick.name}" tidak ada di tempat. Stok "${prize.name}" tetap (${prize.stock} pcs). Silakan klik "Undi sekarang" lagi untuk mengundi ulang.`);
+    }
+    spinPendingPicked = null;
+    spinPendingPrize = null;
   }
 
   function spinRunSpinAnimation(finalName, names){
@@ -26799,16 +26972,17 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     });
   }
 
-  function spinShowTicket(picked){
+  function spinShowTicket(picked, prizeName){
     const overlay = document.getElementById('spinWinOverlay');
     const names = picked.map(p=>escapeHtml(p.name)).join(' &nbsp;•&nbsp; ');
+    overlay.classList.add('show');
     overlay.innerHTML = `
       <div class="spin-ticket">
-        <div class="spin-eyebrow">Pemenang</div>
+        <div class="spin-eyebrow">Pemenang${prizeName ? ' — 🎁 '+escapeHtml(prizeName) : ''}</div>
         <div class="spin-winner-name">${names}</div>
         <div class="spin-ticket-no">Diundi ${new Date().toLocaleString('id-ID')}</div>
         <div class="spin-modal-actions" style="justify-content:center;margin-top:18px;">
-          <button class="spin-btn spin-btn-primary" onclick="document.getElementById('spinWinOverlay').classList.remove('show')">Tutup</button>
+          <button class="spin-btn spin-btn-primary" onclick="document.getElementById('spinWinOverlay').classList.remove('show');document.getElementById('spinDrawBtn').disabled=false;">Tutup</button>
         </div>
       </div>`;
   }
