@@ -3722,6 +3722,13 @@
         @keyframes spinTitleShine{0%{background-position:0% center;}100%{background-position:200% center;}}
         @keyframes spinTitleFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
         @keyframes spinDotPulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.35);opacity:.7;}}
+        #spinConfettiLayer{position:fixed;inset:0;z-index:10000;pointer-events:none;overflow:hidden;}
+        #spinConfettiLayer .spin-confetti-piece{position:absolute;top:-24px;width:9px;height:14px;opacity:0;animation:spinConfettiFall linear forwards;}
+        @keyframes spinConfettiFall{0%{opacity:1;transform:translateY(0) rotate(0deg);}100%{opacity:.95;transform:translateY(108vh) rotate(720deg);}}
+        #spinConfettiLayer .spin-confetti-balloon{position:absolute;bottom:-80px;font-size:38px;opacity:0;animation:spinBalloonRise linear forwards;filter:drop-shadow(0 6px 10px #00000055);}
+        @keyframes spinBalloonRise{0%{opacity:0;transform:translateY(0) translateX(0);}8%{opacity:1;}100%{opacity:0;transform:translateY(-112vh) translateX(var(--spinBalloonDrift,20px));}}
+        @keyframes spinReactionFall{0%{opacity:0;transform:translateY(-30px) translateX(0) rotate(0deg);}12%{opacity:1;}100%{opacity:0;transform:translateY(60vh) translateX(var(--spinBalloonDrift,20px)) rotate(20deg);}}
+        @keyframes spinNoticePop{from{transform:translateX(-50%) translateY(12px);opacity:0;}to{transform:translateX(-50%) translateY(0);opacity:1;}}
         #sec-spin .spin-subtitle{color:#8b93a3;font-size:13px;margin:0 0 18px;}
         #sec-spin .spin-sql-notice{display:none;background:#fef3c7;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#92400e;}
         #sec-spin .spin-tabs{display:flex;gap:26px;border-bottom:1px solid #262b33;margin-bottom:16px;}
@@ -27526,11 +27533,73 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     spinShowPresenceConfirm(pick.name, prize.name);
   }
 
+  function spinFireReaction(emojiList, opts){
+    opts = opts || {};
+    let layer = document.getElementById('spinConfettiLayer');
+    if(!layer){
+      layer = document.createElement('div');
+      layer.id = 'spinConfettiLayer';
+      document.body.appendChild(layer);
+    }
+    const count = opts.count || 16;
+    for(let i=0;i<count;i++){
+      const b = document.createElement('div');
+      b.className = 'spin-confetti-balloon';
+      b.textContent = emojiList[Math.floor(Math.random()*emojiList.length)];
+      b.style.left = (10 + Math.random()*80) + 'vw';
+      b.style.setProperty('--spinBalloonDrift', (Math.random()*80-40) + 'px');
+      b.style.animationName = opts.fall ? 'spinReactionFall' : 'spinBalloonRise';
+      b.style.animationTimingFunction = 'ease-in-out';
+      b.style.animationDuration = (opts.duration || (2.4 + Math.random()*1.2)) + 's';
+      b.style.animationDelay = (Math.random()*0.35) + 's';
+      b.style.fontSize = (opts.size || 34) + 'px';
+      layer.appendChild(b);
+    }
+    clearTimeout(spinConfettiClearTimer);
+    spinConfettiClearTimer = setTimeout(() => { layer.innerHTML = ''; }, ((opts.duration||3.6)*1000) + 800);
+  }
+
+  function spinFireConfetti(){
+    let layer = document.getElementById('spinConfettiLayer');
+    if(!layer){
+      layer = document.createElement('div');
+      layer.id = 'spinConfettiLayer';
+      document.body.appendChild(layer);
+    }
+    layer.innerHTML = '';
+    const colors = ['#f5b942','#ef4565','#5865f2','#22c55e','#ffd76a','#ff8fab','#38bdf8'];
+    for(let i=0;i<70;i++){
+      const p = document.createElement('div');
+      p.className = 'spin-confetti-piece';
+      p.style.left = (Math.random()*100) + 'vw';
+      p.style.background = colors[Math.floor(Math.random()*colors.length)];
+      p.style.animationDuration = (2.2 + Math.random()*1.6) + 's';
+      p.style.animationDelay = (Math.random()*0.5) + 's';
+      p.style.borderRadius = Math.random() < 0.5 ? '50%' : '2px';
+      layer.appendChild(p);
+    }
+    const balloons = ['🎈','🎉','🎊'];
+    for(let i=0;i<10;i++){
+      const b = document.createElement('div');
+      b.className = 'spin-confetti-balloon';
+      b.textContent = balloons[Math.floor(Math.random()*balloons.length)];
+      b.style.left = (Math.random()*90) + 'vw';
+      b.style.setProperty('--spinBalloonDrift', (Math.random()*80-40) + 'px');
+      b.style.animationDuration = (3 + Math.random()*1.5) + 's';
+      b.style.animationDelay = (Math.random()*0.4) + 's';
+      layer.appendChild(b);
+    }
+    clearTimeout(spinConfettiClearTimer);
+    spinConfettiClearTimer = setTimeout(() => { layer.innerHTML = ''; }, 4200);
+  }
+  let spinConfettiClearTimer = null;
+
   function spinShowPresenceConfirm(name, prizeName){
     document.getElementById('spinWinOverlay').classList.remove('show');
     document.getElementById('spinPresencePrize').textContent = '🎁 ' + prizeName;
     document.getElementById('spinPresenceName').textContent = name;
     document.getElementById('spinPresenceOverlay').classList.add('show');
+    spinFireConfetti();
   }
 
   async function spinConfirmPresence(isPresent){
@@ -27546,6 +27615,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       await db.from('winners').insert({name: pick.name, image_url: pick.image_url||null, prize_name: prize.name});
       await db.from('spin_prizes').update({stock: Math.max(0, prize.stock - 1)}).eq('id', prize.id);
 
+      spinFireReaction(['👏','🎉','😄','🙌','⭐'], {count:18});
       await spinLoadAll();
       spinShowTicket([{name: pick.name}], prize.name);
     } else {
@@ -27554,10 +27624,19 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       spinSessionSkip.add(pick.id);
       spinRenderEntries();
       document.getElementById('spinDrawBtn').disabled = false;
-      alert(`"${pick.name}" tidak ada di tempat. Stok "${prize.name}" tetap (${prize.stock} pcs). Tiketnya tidak dihapus, hanya dilewati untuk undian berikutnya. Silakan klik "Undi sekarang" lagi.`);
+      spinFireReaction(['😢','😞','💔'], {count:10, fall:true, duration:2.6, size:30});
+      spinShowNotAvailableNotice(pick.name, prize.name, prize.stock);
     }
     spinPendingPicked = null;
     spinPendingPrize = null;
+  }
+
+  function spinShowNotAvailableNotice(name, prizeName, stock){
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:10001;background:#1d1418;border:1.5px solid #4a2230;color:#fca5b8;padding:12px 18px;border-radius:12px;font-family:Inter,sans-serif;font-size:13.5px;max-width:min(92vw,420px);text-align:center;box-shadow:0 10px 30px #000000aa;animation:spinNoticePop .25s ease;';
+    el.innerHTML = `😢 <b>${escapeHtml(name)}</b> tidak ada di tempat. Stok "${escapeHtml(prizeName)}" tetap (${stock} pcs), tiket dilewati — klik "Undi sekarang" lagi.`;
+    document.body.appendChild(el);
+    setTimeout(() => { el.style.transition = 'opacity .3s'; el.style.opacity = '0'; setTimeout(()=>el.remove(), 320); }, 3200);
   }
 
   function spinRunSpinAnimation(finalName, names){
