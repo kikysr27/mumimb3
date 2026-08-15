@@ -1937,9 +1937,11 @@
         <div class="menu-card" onclick="openSection('acara')"><div class="ic">🎉</div><div class="lb">Acara</div><div class="sub">Event & progress</div></div>
         <div class="menu-card" onclick="openSection('kalender')"><div class="ic">📆</div><div class="lb">Kalender</div><div class="sub">Cari tanggal kosong</div></div>
         <div class="menu-card" onclick="openSection('catatan')"><div class="ic">📝</div><div class="lb">Catatan</div><div class="sub">Catatan bebas</div></div>
+        <div class="menu-card" onclick="openSection('evaluasi')"><div class="ic">🧭</div><div class="lb">Evaluasi</div><div class="sub">Evaluasi kegiatan</div></div>
         <div class="menu-card" onclick="openSection('laporan')"><div class="ic">📑</div><div class="lb">Laporan</div><div class="sub">Laporan & cetak PDF</div></div>
         <div class="menu-card" onclick="openSection('strukorg')"><div class="ic">🏛️</div><div class="lb">Struktur Org.</div><div class="sub">Bagan organisasi & PDF</div></div>
         <div class="menu-card" onclick="openSection('project')"><div class="ic">🗂️</div><div class="lb">Project</div><div class="sub">Kelola proyek & tim</div></div>
+        <div class="menu-card" onclick="openSection('spin')"><div class="ic">🎡</div><div class="lb">Game Spin</div><div class="sub">Undian doorprize</div></div>
         <div class="menu-card" id="menuRiwayat" onclick="openSection('riwayat')" style="display:none;"><div class="ic">🕵️</div><div class="lb">Riwayat</div><div class="sub">Log perubahan</div></div>
         <div class="menu-card" id="menuFoto" onclick="openSection('foto')" style="display:none;"><div class="ic">🗑️</div><div class="lb">Kelola Foto</div><div class="sub">Backup & hapus foto</div></div>
         <div class="menu-card" id="menuAkses" onclick="openSection('akses')" style="display:none;"><div class="ic">🔑</div><div class="lb">Kelola Akses</div><div class="sub">Atur hak user</div></div>
@@ -3032,6 +3034,57 @@
       </div>
     </div>
 
+    <div id="sec-evaluasi" class="section" style="display:none;">
+      <button class="back" onclick="goBack()">← Menu</button>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+          <h2 style="margin:0;">📝 Evaluasi</h2>
+          <button onclick="bukaEvaluasiBaru()" style="width:auto;padding:8px 14px;font-size:13px;">➕ Evaluasi Baru</button>
+        </div>
+        <p class="muted" style="font-size:12px;margin-bottom:10px;">
+          Evaluasi bebas dengan format lengkap (heading, bold, tabel, gambar, dll.) — sama seperti notulensi musyawarah atau deskripsi acara.
+        </p>
+        <input id="evaluasiSearch" type="text" placeholder="🔍 Cari judul evaluasi..." oninput="renderEvaluasiList()" style="margin-bottom:8px;">
+        <div id="evaluasiList"><p class="muted">Memuat evaluasi...</p></div>
+      </div>
+
+      <!-- Form edit/buat evaluasi -->
+      <div id="evaluasiFormCard" class="card" style="display:none;">
+        <button class="back" onclick="tutupFormEvaluasi()" style="margin-bottom:10px;">← Kembali ke Daftar</button>
+        <label>Judul Evaluasi</label>
+        <input id="evalJudul" type="text" placeholder="Cth: Ide acara perpisahan, Kontak vendor, Resep snack...">
+        <label>Isi Evaluasi</label>
+        <div class="desc-toolbar">
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('h1')" title="Judul Besar">H1</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('h2')" title="Sub Judul">H2</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('h3')" title="Sub-Sub">H3</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('bold')" title="Tebal"><b>B</b></button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('italic')" title="Miring"><i>I</i></button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('underline')" title="Garis Bawah" style="text-decoration:underline;">U</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('strikethrough')" title="Coret" style="text-decoration:line-through;">S</button>
+          <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('evalIsi'), this, 'fore')" title="Warna Huruf" style="border-bottom:3px solid #dc2626;">A▾</button>
+          <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('evalIsi'), this, 'hilite')" title="Warna Highlight" style="background:#fef08a;color:#422006;">🖍▾</button>
+          <button type="button" class="desc-toolbar-btn" data-table-btn onclick="window.showTablePicker(document.getElementById('evalIsi'), this)" title="Tabel">⊞ Tabel</button>
+          <button type="button" class="desc-toolbar-btn" onclick="window.pickImageForEditor(document.getElementById('evalIsi'))" title="Gambar">🖼️ Gambar</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('link')" title="Link">🔗 Link</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('ul')" title="Bullet">• List</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('ol')" title="Numbered">1. List</button>
+          <button type="button" class="desc-toolbar-btn" data-style-btn onclick="window.showStylePicker(document.getElementById('evalIsi'), this)" title="Style" style="background:#dbeafe;color:#1e3a8a;">Aa Style ▾</button>
+          <button type="button" class="desc-toolbar-btn" onclick="window.editorCopy(document.getElementById('evalIsi'))" title="Salin teks terpilih" style="background:#e0f2fe;color:#0369a1;">📋 Salin</button>
+          <button type="button" class="desc-toolbar-btn" onclick="window.editorCut(document.getElementById('evalIsi'))" title="Potong teks terpilih" style="background:#fef9c3;color:#713f12;">✂️ Potong</button>
+          <button type="button" class="desc-toolbar-btn" onclick="window.editorPaste(document.getElementById('evalIsi'))" title="Tempel dari clipboard" style="background:#f0fdf4;color:#166534;">📌 Tempel</button>
+        </div>
+        <div id="evalIsi" class="wysiwyg-editor" contenteditable="true" spellcheck="true" style="min-height:280px;max-height:600px;"
+             data-placeholder="Tulis evaluasi apa saja di sini. Pilih kata lalu klik tombol format di atas, atau klik kanan..."></div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <button onclick="simpanEvaluasi()" style="flex:1;">💾 Simpan Evaluasi</button>
+          <button id="evaluasiHapusBtn" class="danger" onclick="hapusEvaluasi()" style="flex:1;display:none;">🗑️ Hapus</button>
+        </div>
+        <div id="evalMsg" style="margin-top:6px;"></div>
+      </div>
+    </div>
+
+    
     <div id="sec-kalender" class="section" style="display:none;">
       <button class="back" onclick="goBack()">← Menu</button>
       <div class="card">
@@ -3655,6 +3708,398 @@
         </div>
         <div id="recycleMsg"></div>
         <div id="recycleList"><p class="muted">Memuat...</p></div>
+      </div>
+    </div>
+
+    <!-- ═══ GAME SPIN — UNDIAN DOORPRIZE ═══ -->
+    <div id="sec-spin" class="section" style="display:none;">
+      <button class="back" onclick="goBack()">← Menu</button>
+
+      <style>
+        #sec-spin .spin-card{background:radial-gradient(ellipse at top,#1a1d24 0%,#0e1013 60%);border:1px solid #262b33;border-radius:16px;padding:20px 16px 90px;position:relative;overflow:hidden;color:#e9ebf0;font-family:'Inter',system-ui,sans-serif;}
+        #sec-spin .spin-title{font-family:'Space Grotesk','Inter',sans-serif;font-weight:800;font-size:clamp(28px,5vw,44px);letter-spacing:-.01em;margin:6px 0 18px;display:flex;align-items:center;justify-content:center;gap:16px;text-align:center;background:linear-gradient(90deg,#f5b942,#ffd76a,#f5b942);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:spinTitleShine 3.5s linear infinite,spinTitleFloat 2.6s ease-in-out infinite;text-shadow:0 0 30px #f5b94233;}
+        #sec-spin .spin-title .spin-dot{width:14px;height:14px;border-radius:50%;background:#f5b942;box-shadow:0 0 18px #f5b942,0 0 34px #f5b94288;flex-shrink:0;animation:spinDotPulse 1.4s ease-in-out infinite;}
+        @keyframes spinTitleShine{0%{background-position:0% center;}100%{background-position:200% center;}}
+        @keyframes spinTitleFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+        @keyframes spinDotPulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.35);opacity:.7;}}
+        #spinConfettiLayer{position:fixed;inset:0;z-index:2147483000;pointer-events:none;overflow:hidden;}
+        #spinConfettiLayer .spin-confetti-piece{position:absolute;top:-24px;width:9px;height:14px;opacity:0;animation:spinConfettiFall linear forwards;}
+        @keyframes spinConfettiFall{0%{opacity:1;transform:translateY(0) rotate(0deg);}100%{opacity:.95;transform:translateY(108vh) rotate(720deg);}}
+        #spinConfettiLayer .spin-confetti-balloon{position:absolute;bottom:-80px;font-size:38px;opacity:0;animation:spinBalloonRise linear forwards;filter:drop-shadow(0 6px 10px #00000055);}
+        #spinConfettiLayer .spin-confetti-balloon.spin-fall{bottom:auto;top:-40px;}
+        @keyframes spinBalloonRise{0%{opacity:0;transform:translateY(0) translateX(0);}8%{opacity:1;}100%{opacity:0;transform:translateY(-112vh) translateX(var(--spinBalloonDrift,20px));}}
+        @keyframes spinReactionFall{0%{opacity:0;transform:translateY(-30px) translateX(0) rotate(0deg);}12%{opacity:1;}100%{opacity:0;transform:translateY(60vh) translateX(var(--spinBalloonDrift,20px)) rotate(20deg);}}
+        @keyframes spinNoticePop{from{transform:translateX(-50%) translateY(12px);opacity:0;}to{transform:translateX(-50%) translateY(0);opacity:1;}}
+        #sec-spin .spin-subtitle{color:#8b93a3;font-size:13px;margin:0 0 18px;}
+        #sec-spin .spin-sql-notice{display:none;background:#fef3c7;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#92400e;}
+        #sec-spin .spin-tabs{display:flex;gap:26px;border-bottom:1px solid #262b33;margin-bottom:16px;}
+        #sec-spin .spin-tab{background:none;border:none;color:#8b93a3;font-family:'Space Grotesk','Inter',sans-serif;font-weight:600;font-size:15px;padding:8px 2px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:2px solid transparent;transition:color .15s;}
+        #sec-spin .spin-tab.active{color:#e9ebf0;border-color:#5865f2;}
+        #sec-spin .spin-badge{background:#2c313b;color:#8b93a3;font-size:12px;font-weight:600;border-radius:999px;padding:2px 9px;min-width:20px;text-align:center;}
+        #sec-spin .spin-tab.active .spin-badge{background:#5865f2;color:#fff;}
+        #sec-spin .spin-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+        #sec-spin button.spin-btn{font-family:'Inter',sans-serif;font-weight:600;font-size:13px;border:none;border-radius:10px;padding:9px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:transform .1s, filter .15s;}
+        #sec-spin button.spin-btn:active{transform:scale(.97);}
+        #sec-spin .spin-btn-primary{background:#5865f2;color:#fff;}
+        #sec-spin .spin-btn-primary:hover{filter:brightness(1.1);}
+        #sec-spin .spin-btn-ghost{background:#1d2129;color:#e9ebf0;border:1px solid #262b33;}
+        #sec-spin .spin-btn-ghost:hover{border-color:#3a4150;}
+        #sec-spin .spin-btn-danger{background:#2a1620;color:#ef4565;border:1px solid #4a2230;}
+        #sec-spin .spin-btn-danger:hover{background:#341824;}
+        #sec-spin .spin-btn-sm{padding:6px 10px;font-size:12px;border-radius:8px;}
+        #sec-spin .spin-check-row{display:flex;align-items:center;gap:8px;font-size:13px;color:#8b93a3;margin-left:2px;}
+        #sec-spin .spin-check-row input{accent-color:#5865f2;width:15px;height:15px;}
+        #sec-spin .spin-adv-panel{display:none;background:#1d2129;border:1px solid #262b33;border-radius:12px;padding:12px 14px;margin-bottom:14px;gap:14px;flex-wrap:wrap;align-items:center;}
+        #sec-spin .spin-adv-panel.show{display:flex;}
+        #sec-spin .spin-adv-field{display:flex;align-items:center;gap:8px;font-size:13px;color:#8b93a3;}
+        #sec-spin .spin-adv-field input[type=number]{width:56px;background:#0e1013;border:1px solid #262b33;border-radius:7px;color:#e9ebf0;padding:5px 8px;font-family:'Inter',sans-serif;}
+        #sec-spin .spin-panel{background:#171a20;border:1px solid #262b33;border-radius:14px;min-height:280px;max-height:50vh;overflow-y:auto;padding:6px;}
+        #sec-spin .spin-empty{color:#8b93a3;font-size:13px;text-align:center;padding:50px 20px;}
+        #sec-spin .spin-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;border-bottom:1px solid #ffffff08;}
+        #sec-spin .spin-row:last-child{border-bottom:none;}
+        #sec-spin .spin-row:hover{background:#ffffff05;}
+        #sec-spin .spin-thumb{width:28px;height:28px;border-radius:7px;object-fit:cover;background:#2c313b;flex-shrink:0;}
+        #sec-spin .spin-thumb.spin-placeholder{display:flex;align-items:center;justify-content:center;color:#8b93a3;font-size:11px;}
+        #sec-spin .spin-row-name{flex:1;font-size:14px;}
+        #sec-spin .spin-row-time{color:#8b93a3;font-size:11px;flex-shrink:0;}
+        #sec-spin .spin-row-actions{display:flex;gap:6px;}
+        #sec-spin .spin-icon-btn{background:none;border:none;color:#8b93a3;cursor:pointer;padding:4px;border-radius:6px;font-size:13px;line-height:1;}
+        #sec-spin .spin-icon-btn:hover{color:#e9ebf0;background:#ffffff0c;}
+        #sec-spin .spin-draw-bar{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;padding:16px;background:linear-gradient(to top,#0e1013 60%,transparent);}
+        #sec-spin .spin-draw-btn{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-size:15px;background:linear-gradient(135deg,#f5b942,#e0952b);color:#1a1204;border:none;border-radius:999px;padding:14px 30px;cursor:pointer;box-shadow:0 6px 24px #f5b94240;display:flex;align-items:center;gap:10px;max-width:480px;width:100%;justify-content:center;}
+        #sec-spin .spin-draw-btn:disabled{opacity:.5;cursor:not-allowed;}
+        #sec-spin .spin-draw-btn:active:not(:disabled){transform:scale(.98);}
+        #spinAddOverlay,#spinImgOverlay,#spinWinOverlay,#spinSettingsOverlay,#spinPrizeOverlay,#spinPresenceOverlay,#spinGroupOverlay,#spinAssignGroupOverlay{position:fixed;inset:0;background:#05060899;backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+        #spinAddOverlay.show,#spinImgOverlay.show,#spinWinOverlay.show,#spinSettingsOverlay.show,#spinPrizeOverlay.show,#spinPresenceOverlay.show,#spinGroupOverlay.show,#spinAssignGroupOverlay.show{display:flex;}
+        #sec-spin .spin-group-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:#26314a;color:#8fb3ff;margin-left:6px;white-space:nowrap;cursor:pointer;border:1px solid #33436b;}
+        #sec-spin .spin-group-badge:hover{filter:brightness(1.25);}
+        #sec-spin .spin-group-badge-empty{background:transparent;border:1px dashed #3a4152;color:#6b7280;}
+        #sec-spin .spin-group-row{background:#1d2129;border:1px solid #262b33;border-radius:10px;padding:10px 12px;}
+        #sec-spin .spin-group-row .spin-group-toprow{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+        #sec-spin .spin-group-row .spin-group-name-input{flex:1;background:#0e1013;border:1px solid #262b33;border-radius:7px;color:#e9ebf0;padding:6px 8px;font-family:'Inter',sans-serif;font-weight:700;font-size:13.5px;min-width:0;}
+        #sec-spin .spin-group-row .spin-group-pct-badge{background:#262b33;color:#f5b942;font-weight:700;font-size:12.5px;padding:3px 9px;border-radius:999px;flex-shrink:0;min-width:44px;text-align:center;}
+        #sec-spin .spin-group-row input[type=range]{flex:1;accent-color:#5865f2;height:4px;}
+        #sec-spin .spin-group-row .spin-group-slider-row{display:flex;align-items:center;gap:10px;}
+        #sec-spin .spin-prize-row{display:flex;align-items:center;gap:8px;background:#1d2129;border:1px solid #262b33;border-radius:10px;padding:8px 10px;}
+        #sec-spin .spin-prize-row .spin-prize-name{flex:1;font-size:13.5px;font-weight:600;}
+        #sec-spin .spin-prize-row .spin-prize-stock{font-size:12.5px;color:#8b93a3;min-width:70px;text-align:center;}
+        #sec-spin .spin-prize-row .spin-prize-stock.zero{color:#ef4565;font-weight:700;}
+        #sec-spin .spin-prize-row input[type=number]{width:56px;background:#0e1013;border:1px solid #262b33;border-radius:7px;color:#e9ebf0;padding:5px 6px;font-family:'Inter',sans-serif;text-align:center;}
+        .spin-modal{background:#171a20;border:1px solid #262b33;border-radius:16px;padding:22px;max-width:420px;width:100%;color:#e9ebf0;font-family:'Inter',system-ui,sans-serif;box-sizing:border-box;max-height:88vh;overflow-y:auto;}
+        .spin-modal h3{font-family:'Space Grotesk','Inter',sans-serif;margin:0 0 4px;font-size:17px;}
+        .spin-modal p.spin-hint{color:#8b93a3;font-size:12.5px;margin:0 0 12px;}
+        .spin-modal textarea,.spin-modal input[type=text]{width:100%;background:#0e1013;border:1px solid #262b33;border-radius:10px;color:#e9ebf0;padding:10px 12px;font-family:'Inter',sans-serif;font-size:13.5px;resize:vertical;box-sizing:border-box;}
+        .spin-modal textarea{min-height:150px;}
+        .spin-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px;}
+        .spin-ticket{width:100%;max-width:360px;background:linear-gradient(160deg,#1d2129,#14171d);border:1.5px dashed #7a5c1f;border-radius:18px;padding:30px 22px;text-align:center;position:relative;animation:spinPop .35s ease;box-sizing:border-box;}
+        @keyframes spinPop{from{transform:scale(.85);opacity:0;}to{transform:scale(1);opacity:1;}}
+        .spin-ticket .spin-eyebrow{color:#f5b942;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+        .spin-ticket .spin-winner-name{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-size:clamp(22px,7vw,32px);margin:14px 0 6px;color:#fff;text-shadow:0 0 24px #f5b94255;word-break:break-word;}
+        .spin-ticket .spin-ticket-no{color:#8b93a3;font-size:12px;}
+        .spin-name-display{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-size:clamp(20px,6vw,28px);color:#8b93a3;}
+        .spin-exclude-chip{display:inline-flex;align-items:center;gap:6px;background:#2a1620;border:1px solid #4a2230;color:#ef4565;font-size:12.5px;padding:5px 6px 5px 10px;border-radius:999px;}
+        .spin-exclude-chip button{background:none;border:none;color:#ef4565;cursor:pointer;font-size:13px;padding:2px;line-height:1;}
+        .spin-row-excluded-tag{color:#ef4565;font-size:11px;font-weight:600;margin-left:6px;white-space:nowrap;}
+        @media (max-width:480px){ #sec-spin .spin-title{font-size:clamp(22px,7vw,30px);gap:10px;} #sec-spin .spin-draw-btn{padding:13px 20px;} }
+        #sec-spin .spin-card.spin-ctrl-hidden .spin-admin-ctrl{display:none !important;}
+        #sec-spin .spin-toggle-ctrl-btn{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:#1a1d24;border:1px solid #2c313b;color:#6b7280;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;opacity:.5;transition:opacity .15s;}
+        #sec-spin .spin-toggle-ctrl-btn:hover{opacity:1;color:#e9ebf0;}
+        #sec-spin .spin-card{position:relative;}
+      </style>
+
+      <div class="spin-card" id="spinCard">
+        <button class="spin-toggle-ctrl-btn" id="spinToggleCtrlBtn" onclick="spinToggleAdminControls()" title="Tampilkan/sembunyikan tombol admin">👁️</button>
+        <h1 class="spin-title" id="spinMainTitle"><span class="spin-dot"></span><span id="spinMainTitleText">Game Spin — Undian Doorprize</span><span class="spin-dot"></span></h1>
+        <div style="display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:10px;">
+          <div class="spin-admin-ctrl" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinOpenPrizeModal()">🎁 Kelola Hadiah</button>
+            <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinOpenGroupModal()">👥 Kelola Grup</button>
+            <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinOpenSettings()">⚙️ Setting</button>
+            <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinResetSemua()">🔄 Reset Semua</button>
+          </div>
+        </div>
+        <p class="spin-subtitle spin-admin-ctrl">Entri &amp; hasil undian tersimpan otomatis di database, tidak hilang saat halaman ditutup.</p>
+
+        <button class="spin-btn spin-btn-ghost spin-btn-sm spin-admin-ctrl" onclick="document.getElementById('spinHelpPanel').classList.toggle('show')" style="margin-bottom:10px;">❓ Cara pakai Game Spin</button>
+        <div class="spin-adv-panel" id="spinHelpPanel" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <div>
+            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">1️⃣ 🎁 Kelola Hadiah</div>
+            <div class="spin-hint" style="margin:0;">Tambahkan menu doorprize di sini (Bakso, Geprek, Oli Motor, Nasi Uduk, dst) beserta jumlah stok pcs-nya. Ini yang jadi pilihan di dropdown "Hadiah yang akan diundi" sebelum spin.</div>
+          </div>
+          <div>
+            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">👥 Kelola Grup — persentase peluang menang</div>
+            <div class="spin-hint" style="margin:0;">Bikin grup bebas sesuai kebutuhan (misal: Miskin, Standar, Menengah, Kaya — atau nama lain, tidak wajib pakai 4 ini). Tiap grup diset persentase peluang menang saat undian (misal Grup A 50%, Grup B 30%, sisanya 20% dibagi rata ke peserta tanpa grup). Lalu di daftar entri, pilih grup untuk tiap peserta lewat dropdown 👥 di sampingnya. Pengaturan ini tetap tunduk sama aturan di ⚙️ Setting (pengecualian per hadiah) dan ☑ Satu orang satu hadiah — grup cuma mengatur SIAPA yang lebih besar peluangnya dipilih dari antara peserta yang memang masih berhak diundi.</div>
+          </div>
+          <div>
+            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">2️⃣ ⚙️ Setting — pengecualian per hadiah</div>
+            <div class="spin-hint" style="margin:0;">Tentukan siapa yang <b>tidak boleh menang hadiah tertentu</b> — cocok untuk orang yang menyumbang doorprize itu sendiri. Bisa pilih "Semua hadiah" (dilewati dari semua undian) atau centang hadiah spesifik saja (misal: hanya dilarang menang Bakso, tapi tetap boleh menang Geprek).</div>
+          </div>
+          <div>
+            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">3️⃣ ☑ Satu orang satu hadiah</div>
+            <div class="spin-hint" style="margin:0;">
+              <b>Dicentang</b> (default): kalau "Ali1" menang, tiket "Ali2", "Ali3", "Ali4" (nama sama) <b>tidak dihapus</b>, tapi otomatis <b>dilewati</b> di undian selanjutnya — jadi orang yang beli banyak tiket tidak bisa menang berkali-kali, walau tiketnya tetap kelihatan di daftar (ditandai 🏆 Sudah pernah menang).<br>
+              <b>Tidak dicentang</b>: tiket LAIN dengan nama sama ("Ali2","Ali3","Ali4") tetap boleh diundi lagi kapan saja — jadi 1 orang <b>bisa menang lebih dari sekali</b> kalau punya banyak tiket. Tapi tiket yang <b>persis sama</b> ("Ali1" yang barusan menang) tetap dilewati — 1 tiket tidak bisa menang 2x.
+            </div>
+          </div>
+          <div>
+            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">🔄 Urutan kerjanya</div>
+            <div class="spin-hint" style="margin:0;">Pilih hadiah dari dropdown → klik "Undi sekarang" → nama keluar → muncul konfirmasi "orangnya ada di tempat atau tidak?". Kalau <b>ada</b> → sah menang, stok hadiah berkurang 1 (tiket tetap ada di daftar, cuma dilewati di undian berikutnya kalau "Satu orang satu hadiah" dicentang). Kalau <b>tidak ada</b> → stok tetap sama, tiket tidak dihapus, cuma dilewati untuk sesi ini supaya bisa langsung diundi ulang.</div>
+          </div>
+        </div>
+
+        <div id="spinSqlNotice" class="spin-sql-notice">
+          ⚠️ <strong>Tabel Supabase belum dibuat.</strong> Jalankan SQL ini di <a href="https://supabase.com/dashboard" target="_blank" style="color:#d97706;">Supabase Dashboard → SQL Editor</a>:<br>
+          <code style="display:block;margin-top:6px;background:#fffbeb;padding:8px;border-radius:6px;font-size:11px;white-space:pre-wrap;word-break:break-all;">CREATE TABLE IF NOT EXISTS entries (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  image_url text,
+  created_at timestamptz DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS winners (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  image_url text,
+  prize_name text,
+  drawn_at timestamptz DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS spin_settings (
+  key text PRIMARY KEY,
+  data jsonb NOT NULL DEFAULT '[]'::jsonb,
+  updated_at timestamptz DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS spin_prizes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  stock int NOT NULL DEFAULT 0,
+  initial_stock int NOT NULL DEFAULT 0,
+  created_at timestamptz DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS spin_groups (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  percent numeric NOT NULL DEFAULT 0,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE winners ENABLE ROW LEVEL SECURITY;
+ALTER TABLE spin_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE spin_prizes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE spin_groups ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "entries_all" ON entries FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "winners_all" ON winners FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "spin_settings_all" ON spin_settings FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "spin_prizes_all" ON spin_prizes FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "spin_groups_all" ON spin_groups FOR ALL USING (true) WITH CHECK (true);
+-- Kalau tabel winners sudah ada sebelumnya (bukan baru), tambahkan kolom ini:
+ALTER TABLE winners ADD COLUMN IF NOT EXISTS prize_name text;
+-- Kalau tabel spin_prizes sudah ada sebelumnya (bukan baru), tambahkan kolom ini
+-- supaya stok bisa dikembalikan ke jumlah awal saat "Hapus semua hasil":
+ALTER TABLE spin_prizes ADD COLUMN IF NOT EXISTS initial_stock int NOT NULL DEFAULT 0;
+UPDATE spin_prizes SET initial_stock = stock;
+-- WAJIB untuk fitur Grup Peserta (kelompok + persen peluang menang):
+ALTER TABLE entries ADD COLUMN IF NOT EXISTS group_id uuid REFERENCES spin_groups(id) ON DELETE SET NULL;</code>
+        </div>
+
+        <div class="spin-tabs">
+          <button class="spin-tab active" id="spinTabEntri" onclick="spinSwitchTab('entri')">Entri <span class="spin-badge" id="spinCountEntri">0</span></button>
+          <button class="spin-tab" id="spinTabHasil" onclick="spinSwitchTab('hasil')">Hasil <span class="spin-badge" id="spinCountHasil">0</span></button>
+        </div>
+
+        <div id="spinEntriView">
+          <div class="spin-adv-panel show" id="spinPrizePanel" style="margin-bottom:12px;">
+            <div class="spin-adv-field" style="flex:1;min-width:220px;">
+              🎁 Hadiah yang akan diundi:
+              <select id="spinPrizeSelect" onchange="spinUpdatePrizeHint(); spinRenderEntries();" style="flex:1;background:#0e1013;border:1px solid #262b33;border-radius:7px;color:#e9ebf0;padding:6px 8px;font-family:'Inter',sans-serif;min-width:160px;">
+                <option value="">— pilih hadiah —</option>
+              </select>
+            </div>
+            <div class="spin-hint" id="spinPrizeStockHint" style="margin:0;">Belum ada hadiah. Klik "🎁 Kelola Hadiah" untuk menambah.</div>
+          </div>
+          <div class="spin-adv-panel show spin-admin-ctrl" id="spinGroupFilterPanel" style="margin-bottom:12px;">
+            <div class="spin-adv-field" style="flex:1;min-width:220px;">
+              👥 Filter grup:
+              <select id="spinGroupFilterSelect" onchange="spinRenderEntries()" style="flex:1;background:#0e1013;border:1px solid #262b33;border-radius:7px;color:#e9ebf0;padding:6px 8px;font-family:'Inter',sans-serif;min-width:160px;">
+                <option value="">Semua peserta</option>
+                <option value="__none__">Tanpa grup</option>
+              </select>
+            </div>
+            <div class="spin-hint" id="spinGroupHint" style="margin:0;">Belum ada grup. Klik "👥 Kelola Grup" untuk menambah &amp; atur persentase menang.</div>
+          </div>
+          <div class="spin-toolbar spin-admin-ctrl">
+            <button class="spin-btn spin-btn-primary" onclick="spinOpenAddModal()">＋ Tambah entri</button>
+            <button class="spin-btn spin-btn-ghost" onclick="spinShuffleView()">🔀 Acak</button>
+            <button class="spin-btn spin-btn-ghost" onclick="spinSortView()">↕ Menyortir</button>
+            <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinClearEntries()">Hapus semua</button>
+          </div>
+          <div class="spin-adv-panel show spin-admin-ctrl" id="spinAdvPanel">
+            <label class="spin-check-row"><input type="checkbox" id="spinOneWinPerPerson" checked onchange="spinRenderEntries(); spinSaveOnePerPerson();"> Satu orang satu hadiah (nama yang sama dilewati di undian berikutnya setelah menang, tiket tidak dihapus)</label>
+          </div>
+          <div class="spin-panel" id="spinEntriList"><div class="spin-empty">Memuat…</div></div>
+        </div>
+
+        <div id="spinHasilView" style="display:none;">
+          <div class="spin-toolbar spin-admin-ctrl">
+            <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinClearHasil()">Hapus semua hasil</button>
+          </div>
+          <div class="spin-panel" id="spinHasilList"><div class="spin-empty">Memuat…</div></div>
+        </div>
+
+        <div class="spin-draw-bar" id="spinDrawBar">
+          <button class="spin-draw-btn" id="spinDrawBtn" onclick="spinDrawWinner()">🎉 Undi sekarang</button>
+        </div>
+      </div>
+
+      <!-- Modal tambah entri -->
+      <div id="spinAddOverlay">
+        <div class="spin-modal">
+          <h3>Tambah entri</h3>
+          <p class="spin-hint">Tempel satu nama per baris. Setiap baris jadi satu tiket undian.</p>
+          <textarea id="spinBulkInput" placeholder="Ali&#10;Beatriz&#10;Charles"></textarea>
+          <div style="margin-top:10px;">
+            <div class="spin-hint" style="margin:0 0 4px;">👥 Masukkan semua nama di atas ke grup (opsional):</div>
+            <select id="spinBulkGroupSelect" style="width:100%;background:#0e1013;border:1px solid #262b33;border-radius:10px;color:#e9ebf0;padding:9px 10px;font-family:'Inter',sans-serif;font-size:13.5px;">
+              <option value="">Tanpa grup</option>
+            </select>
+          </div>
+          <div class="spin-modal-actions">
+            <button class="spin-btn spin-btn-ghost" onclick="spinCloseAddModal()">Batal</button>
+            <button class="spin-btn spin-btn-primary" onclick="spinSubmitBulkAdd()">Tambahkan</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal gambar -->
+      <div id="spinImgOverlay">
+        <div class="spin-modal">
+          <h3>Tambahkan gambar</h3>
+          <p class="spin-hint">Tempel URL gambar untuk entri ini (opsional).</p>
+          <input type="text" id="spinImgUrlInput" placeholder="https://...">
+          <div class="spin-modal-actions">
+            <button class="spin-btn spin-btn-ghost" onclick="spinCloseImgModal()">Batal</button>
+            <button class="spin-btn spin-btn-primary" onclick="spinSubmitImg()">Simpan</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal setting: nama yang dikecualikan dari undian -->
+      <div id="spinSettingsOverlay">
+        <div class="spin-modal" style="max-width:440px;">
+          <h3>⚙️ Pengaturan Spin</h3>
+
+          <div style="background:#0e1013;border:1px solid #262b33;border-radius:12px;padding:12px 14px;margin-bottom:16px;">
+            <div style="font-weight:700;color:#e9ebf0;font-size:13px;margin-bottom:8px;">🖥️ Judul tampilan (untuk TV besar)</div>
+            <div class="spin-hint" style="margin:0 0 8px;">Judul selalu tampil di layar — hanya namanya yang bisa diganti.</div>
+            <input type="text" id="spinTitleTextInput" placeholder="Nama judul, misal: Doorprize Acara Tahunan" style="width:100%;margin-bottom:8px;box-sizing:border-box;">
+            <div class="spin-modal-actions" style="justify-content:flex-start;margin-top:0;">
+              <button class="spin-btn spin-btn-primary spin-btn-sm" onclick="spinSaveTitleSettings()">💾 Simpan judul</button>
+            </div>
+          </div>
+
+          <p class="spin-hint">Nama di bawah ini akan dilewati saat undian — cocok untuk orang yang menyumbang doorprize-nya sendiri, jadi tidak mungkin dia yang menang <b>hadiah itu</b>. Pilih hadiah mana saja yang dikecualikan; kalau tidak dicentang satupun (atau pilih "Semua hadiah"), dia dilewati dari semua undian.</p>
+          <textarea id="spinExcludeInput" placeholder="Giso&#10;Nama lain"></textarea>
+          <div class="spin-hint" style="margin:10px 0 4px;font-weight:700;color:#e9ebf0;">Dikecualikan dari hadiah:</div>
+          <label class="spin-check-row" style="margin-bottom:6px;"><input type="checkbox" id="spinExcludeAllPrize" checked onchange="spinToggleExcludeAllPrize()"> Semua hadiah</label>
+          <div id="spinExcludePrizeChecks" style="display:none;flex-direction:column;gap:4px;margin-bottom:8px;max-height:120px;overflow-y:auto;"></div>
+          <div class="spin-modal-actions" style="justify-content:flex-start;margin-top:8px;margin-bottom:14px;">
+            <button class="spin-btn spin-btn-primary spin-btn-sm" onclick="spinAddExclude()">＋ Tambah ke daftar</button>
+          </div>
+          <p class="spin-hint" style="margin-bottom:6px;">Daftar nama yang dikecualikan:</p>
+          <div id="spinExcludeList" style="display:flex;flex-wrap:wrap;gap:8px;min-height:34px;max-height:220px;overflow-y:auto;align-content:flex-start;"></div>
+          <div class="spin-modal-actions">
+            <button class="spin-btn spin-btn-ghost" onclick="spinCloseSettings()">Tutup</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay hasil undian -->
+      <div id="spinWinOverlay">
+        <div class="spin-ticket" id="spinTicketCard">
+          <div class="spin-eyebrow">Undian sedang berjalan</div>
+          <div class="spin-name-display" id="spinNameDisplay">—</div>
+        </div>
+      </div>
+
+      <!-- Modal: kelola hadiah / menu doorprize + stok -->
+      <div id="spinPrizeOverlay">
+        <div class="spin-modal" style="max-width:460px;">
+          <h3>🎁 Kelola Hadiah</h3>
+          <p class="spin-hint">Tambahkan menu/hadiah doorprize beserta jumlah stoknya (misal: Bakso 10 pcs, Geprek 5 pcs). Stok otomatis berkurang 1 setiap kali ada pemenang yang <b>dikonfirmasi hadir</b>. Kalau ternyata orangnya tidak ada, stok tidak berkurang.</p>
+          <div style="display:flex;gap:6px;margin-bottom:10px;">
+            <input type="text" id="spinPrizeNameInput" placeholder="Nama hadiah, misal: Bakso" style="flex:2;">
+            <input type="number" id="spinPrizeStockInput" placeholder="Stok" min="0" value="1" style="flex:1;background:#0e1013;border:1px solid #262b33;border-radius:10px;color:#e9ebf0;padding:10px 12px;">
+          </div>
+          <div class="spin-modal-actions" style="justify-content:flex-start;margin-top:0;margin-bottom:14px;">
+            <button class="spin-btn spin-btn-primary spin-btn-sm" onclick="spinAddPrize()">＋ Tambah hadiah</button>
+          </div>
+          <p class="spin-hint" style="margin-bottom:6px;">Daftar hadiah &amp; sisa stok:</p>
+          <div id="spinPrizeList" style="display:flex;flex-direction:column;gap:8px;min-height:34px;max-height:280px;overflow-y:auto;"></div>
+          <div class="spin-modal-actions">
+            <button class="spin-btn spin-btn-ghost" onclick="spinClosePrizeModal()">Tutup</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal: kelola grup peserta + persentase peluang menang -->
+      <div id="spinGroupOverlay">
+        <div class="spin-modal" style="max-width:460px;">
+          <h3>👥 Kelola Grup Peserta</h3>
+          <p class="spin-hint">Atur persentase peluang menang tiap grup pakai slider — geser aja, gak perlu ngetik. Peserta tanpa grup berbagi sisa persen yang belum dipakai grup manapun.</p>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinQuickPreset()">⚡ Buat cepat: Miskin/Standar/Menengah/Kaya</button>
+            <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinEqualizeGroups()">➗ Bagi rata semua grup</button>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <input type="text" id="spinGroupNameInput" placeholder="Ketik nama grup baru di sini, misal: Menengah" style="width:100%;background:#0e1013;border:1.5px solid #3a4150;border-radius:10px;color:#e9ebf0;padding:11px 12px;font-family:'Inter',sans-serif;font-size:13.5px;box-sizing:border-box;margin-bottom:8px;">
+            <button class="spin-btn spin-btn-primary" style="width:100%;justify-content:center;" onclick="spinAddGroup()">＋ Tambah Grup Ini</button>
+          </div>
+
+          <div id="spinGroupTotalBarWrap" style="margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:#8b93a3;margin-bottom:4px;">
+              <span id="spinGroupTotalLabel">Total: 0%</span>
+              <span id="spinGroupRemainLabel">Sisa untuk tanpa grup: 100%</span>
+            </div>
+            <div style="height:8px;border-radius:999px;background:#0e1013;overflow:hidden;display:flex;">
+              <div id="spinGroupTotalBar" style="height:100%;background:#5865f2;width:0%;transition:width .15s;"></div>
+            </div>
+          </div>
+
+          <p class="spin-hint" style="margin-bottom:6px;">Daftar grup &amp; persentase menang:</p>
+          <div id="spinGroupList" style="display:flex;flex-direction:column;gap:10px;min-height:34px;max-height:280px;overflow-y:auto;"></div>
+          <div class="spin-modal-actions">
+            <button class="spin-btn spin-btn-ghost" onclick="spinCloseGroupModal()">Tutup</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal kecil: pilih grup untuk satu peserta -->
+      <div id="spinAssignGroupOverlay">
+        <div class="spin-modal" style="max-width:360px;">
+          <h3>👥 Atur Grup Peserta</h3>
+          <p class="spin-hint" id="spinAssignGroupName">—</p>
+          <select id="spinAssignGroupSelect" style="width:100%;background:#0e1013;border:1px solid #262b33;border-radius:10px;color:#e9ebf0;padding:10px 12px;font-family:'Inter',sans-serif;font-size:13.5px;">
+            <option value="">Tanpa grup</option>
+          </select>
+          <div class="spin-modal-actions">
+            <button class="spin-btn spin-btn-ghost" onclick="spinCloseAssignGroupModal()">Batal</button>
+            <button class="spin-btn spin-btn-primary" onclick="spinSubmitAssignGroup()">Simpan</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay: konfirmasi apakah pemenang hadir/ada di tempat -->
+      <div id="spinPresenceOverlay">
+        <div class="spin-ticket" style="border-style:solid;border-color:#5865f2;">
+          <div class="spin-eyebrow" id="spinPresencePrize">Hadiah</div>
+          <div class="spin-winner-name" id="spinPresenceName">—</div>
+          <div class="spin-ticket-no" style="margin-top:10px;">Apakah orang ini ada di tempat sekarang?</div>
+          <div class="spin-modal-actions" style="justify-content:center;margin-top:18px;">
+            <button class="spin-btn spin-btn-danger" onclick="spinConfirmPresence(false)">✕ Tidak ada</button>
+            <button class="spin-btn spin-btn-primary" onclick="spinConfirmPresence(true)">✓ Ada, sah menang</button>
+          </div>
+          <p class="spin-hint" style="margin-top:12px;">Kalau "Tidak ada", stok hadiah tetap sama dan nama ini dilewati — silakan undi ulang.</p>
+        </div>
       </div>
     </div>
 
@@ -7371,6 +7816,8 @@ function openSection(name) {
     recycle: loadRecycle,
     kalender: loadKalender,
     catatan: loadCatatan,
+    evaluasi: loadEvaluasi,
+    spin: spinLoadAll,
   };
   if (loaders[name]) loaders[name]();
 }
@@ -7932,6 +8379,305 @@ async function hapusCatatan() {
     },
     '📝'
   );
+}
+
+let evaluasiCache = [];
+let currentEvaluasiId = null;
+const EVAL_LS_KEY = 'evaluasi_lokal_v1';
+
+async function loadEvaluasi() {
+  document.getElementById('evaluasiFormCard').style.display = 'none';
+  document.querySelector('#sec-evaluasi .card').style.display = 'block';
+  const listEl = document.getElementById('evaluasiList');
+  listEl.innerHTML = '<p class="muted">Memuat...</p>';
+  // Coba Supabase dulu
+  try {
+    const { data, error } = await db.from('evaluasi').select('*').order('updated_at', { ascending: false });
+    if (error) {
+      const msg = error.message || '';
+      if (msg.includes('evaluasi') || msg.includes('relation') || error.code === '42P01') {
+        // Tabel belum ada → pakai localStorage
+        evaluasiCache = _loadEvaluasiLocal();
+      } else { throw error; }
+    } else {
+      evaluasiCache = data || [];
+    }
+  } catch (e) {
+    console.warn('loadEvaluasi err:', e);
+    evaluasiCache = _loadEvaluasiLocal();
+  }
+  renderEvaluasiList();
+}
+
+function _loadEvaluasiLocal() {
+  try { return JSON.parse(localStorage.getItem(EVAL_LS_KEY) || '[]'); } catch(e) { return []; }
+}
+function _saveEvaluasiLocal(arr) {
+  try { localStorage.setItem(EVAL_LS_KEY, JSON.stringify(arr)); } catch(e) {}
+}
+
+function renderEvaluasiList() {
+  const q = (document.getElementById('evaluasiSearch')?.value || '').toLowerCase();
+  const list = evaluasiCache.filter(c => {
+    if (!q) return true;
+    return ((c.judul || '') + ' ' + (c.isi || '')).toLowerCase().includes(q);
+  });
+  const el = document.getElementById('evaluasiList');
+  if (!list.length) {
+    el.innerHTML = q
+      ? '<p class="muted" style="text-align:center;padding:14px;">🔍 Tidak ada evaluasi cocok dengan "' + escapeHtml(q) + '"</p>'
+      : '<p class="muted" style="text-align:center;padding:20px;">📝 Belum ada evaluasi. Klik <b>+ Evaluasi Baru</b> untuk mulai.</p>';
+    return;
+  }
+  el.innerHTML = list.map(c => {
+    const tgl = c.updated_at ? new Date(c.updated_at).toLocaleString('id-ID', { dateStyle:'long', timeStyle:'short' }) : '';
+    const preview = window.mdToPlainText(c.isi || '', 140);
+    return `<div onclick="bukaEvaluasi(${c.id})" style="padding:12px 14px;background:#fafdfb;border:1px solid #d4e8dc;border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;"
+      onmouseover="this.style.background='#f0f7f3'" onmouseout="this.style.background='#fafdfb'">
+      <div style="font-weight:700;font-size:14px;color:#1a6644;">📝 ${escapeHtml(c.judul || '(tanpa judul)')}</div>
+      ${preview ? `<div class="muted" style="font-size:12px;margin-top:4px;line-height:1.4;">${escapeHtml(preview)}${preview.length === 140 ? '...' : ''}</div>` : ''}
+      ${tgl ? `<div class="muted" style="font-size:10px;margin-top:4px;">⏰ ${tgl}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function bukaEvaluasiBaru() {
+  currentEvaluasiId = null;
+  document.querySelector('#sec-evaluasi .card').style.display = 'none';
+  const form = document.getElementById('evaluasiFormCard');
+  form.style.display = 'block';
+  document.getElementById('evalJudul').value = '';
+  const isiEl = document.getElementById('evalIsi');
+  isiEl.innerHTML = '<p><br></p>';
+  if (window.attachWysiwyg) window.attachWysiwyg(isiEl);
+  document.getElementById('evaluasiHapusBtn').style.display = 'none';
+  document.getElementById('evalMsg').textContent = '';
+  setTimeout(() => document.getElementById('evalJudul').focus(), 100);
+}
+
+function bukaEvaluasi(id) {
+  const c = evaluasiCache.find(x => x.id === id);
+  if (!c) return;
+  currentEvaluasiId = id;
+  document.querySelector('#sec-evaluasi .card').style.display = 'none';
+  const form = document.getElementById('evaluasiFormCard');
+  form.style.display = 'block';
+  document.getElementById('evalJudul').value = c.judul || '';
+  const isiEl = document.getElementById('evalIsi');
+  isiEl.innerHTML = window.markdownToEditableHtml(c.isi || '');
+  if (window.attachWysiwyg) window.attachWysiwyg(isiEl);
+  document.getElementById('evaluasiHapusBtn').style.display = 'block';
+  document.getElementById('evalMsg').textContent = '';
+}
+
+function tutupFormEvaluasi() {
+  document.getElementById('evaluasiFormCard').style.display = 'none';
+  document.querySelector('#sec-evaluasi .card').style.display = 'block';
+  currentEvaluasiId = null;
+}
+
+async function simpanEvaluasi() {
+  const judul = (document.getElementById('evalJudul').value || '').trim();
+  const isiEl = document.getElementById('evalIsi');
+  const isi = isiEl ? (window.htmlElementToMarkdown(isiEl) || '').trim() : '';
+  if (!judul && !isi) {
+    setMsg('evalMsg', 'Judul atau isi evaluasi tidak boleh kosong dua-duanya.', true);
+    return;
+  }
+  const payload = {
+    judul: judul || '(tanpa judul)',
+    isi: isi,
+    updated_at: new Date().toISOString(),
+  };
+  // Try Supabase
+  try {
+    const _editMode = !!currentEvaluasiId;
+    if (currentEvaluasiId) {
+      // Update
+      const { error } = await db.from('evaluasi').update(payload).eq('id', currentEvaluasiId);
+      if (error) throw error;
+    } else {
+      payload.created_at = new Date().toISOString();
+      if (window.currentProf?.id) payload.dibuat_oleh = currentProf.id;
+      const { data, error } = await db.from('evaluasi').insert(payload).select().single();
+      if (error) throw error;
+      currentEvaluasiId = data.id;
+    }
+    // [AUDIT] Catat simpan/edit evaluasi
+    if (typeof _auditLog === 'function') _auditLog('evaluasi', _editMode ? 'UPDATE' : 'INSERT', null,
+      { judul: payload.judul }, (_editMode ? 'Edit evaluasi: ' : 'Buat evaluasi: ') + payload.judul);
+    setMsg('evalMsg', '✅ Evaluasi tersimpan!', false);
+    await loadEvaluasi();
+    setTimeout(tutupFormEvaluasi, 800);
+  } catch (e) {
+    // Fallback localStorage
+    const arr = _loadEvaluasiLocal();
+    if (currentEvaluasiId) {
+      const idx = arr.findIndex(x => x.id === currentEvaluasiId);
+      if (idx >= 0) arr[idx] = { ...arr[idx], ...payload };
+    } else {
+      const id = 'l' + Date.now() + Math.floor(Math.random()*1000);
+      currentEvaluasiId = id;
+      arr.unshift({ id, ...payload, created_at: new Date().toISOString() });
+    }
+    _saveEvaluasiLocal(arr);
+    evaluasiCache = arr;
+    setMsg('evalMsg', '✅ Evaluasi tersimpan (lokal). Untuk sync antar device, buat tabel "evaluasi" di Supabase.', false);
+    renderEvaluasiList();
+    setTimeout(tutupFormEvaluasi, 1500);
+  }
+}
+
+async function hapusEvaluasi() {
+  if (!currentEvaluasiId) return;
+  const judulEvaluasi = ($('evalJudul') && $('evalJudul').value) || 'Evaluasi ini';
+
+  const idToDelete = currentEvaluasiId;
+  const isLocal = typeof idToDelete === 'string' && idToDelete.startsWith('l');
+
+  // Simpan data lengkap untuk undo sebelum apapun diubah
+  let savedRow = null;
+  if (!isLocal) {
+    const { data } = await db.from('evaluasi').select('*').eq('id', idToDelete).single();
+    savedRow = data;
+  } else {
+    savedRow = (_loadEvaluasiLocal() || []).find(x => x.id === idToDelete) || null;
+  }
+
+  // Optimistik: hapus dari cache lokal & tutup form TANPA reload dari DB
+  // (kalau reload dari DB, item muncul lagi karena belum benar-benar dihapus)
+  evaluasiCache = (evaluasiCache || []).filter(x => x.id !== idToDelete);
+  tutupFormEvaluasi();   // sembunyikan form, kembali ke list
+  renderEvaluasiList();  // render dari cache yang sudah dikurangi — item langsung hilang
+
+  showUndoToast(
+    judulEvaluasi,
+    async function() {
+      // ── UNDO: kembalikan ke cache & tampilan ──
+      if (savedRow) {
+        evaluasiCache = [savedRow, ...(evaluasiCache || [])];
+        if (isLocal) {
+          const arr = _loadEvaluasiLocal() || [];
+          arr.unshift(savedRow);
+          _saveEvaluasiLocal(arr);
+        }
+        renderEvaluasiList();
+      }
+      showToast('↩ Evaluasi dipulihkan', 'success');
+    },
+    async function() {
+      // ── KONFIRMASI: hapus dari DB — patch recycle_bin otomatis snapshot ──
+      try {
+        if (isLocal) {
+          const arr = (_loadEvaluasiLocal() || []).filter(x => x.id !== idToDelete);
+          _saveEvaluasiLocal(arr);
+        } else {
+          await db.from('evaluasi').delete().eq('id', idToDelete);
+        }
+        // [AUDIT] Catat hapus evaluasi (setelah konfirmasi)
+        if (typeof _auditLog === 'function') _auditLog('evaluasi', 'DELETE',
+          { judul: (savedRow && savedRow.judul) || judulEvaluasi }, null, 'Hapus evaluasi: ' + ((savedRow && savedRow.judul) || judulEvaluasi));
+      } catch(e) {
+        showToast('Gagal hapus: ' + e.message, 'error');
+        // Rollback cache kalau gagal
+        if (savedRow) { evaluasiCache = [savedRow, ...(evaluasiCache || [])]; renderEvaluasiList(); }
+      }
+    },
+    '📝'
+  );
+}
+
+
+
+// ─────────────── TOTAL ANGGOTA (MUMI + GPMT + GPSD) ───────────────
+async function renderTotalMumiGpmt(){
+  const sec = document.getElementById('sec-anggota');
+  if(!sec) return;
+  let card = document.getElementById('totalMumiGpmtCard');
+  if(!card){
+    card = document.createElement('div');
+    card.className = 'card';
+    card.id = 'totalMumiGpmtCard';
+    card.setAttribute('data-no-collapse','');
+    sec.appendChild(card); // paling bawah section Anggota
+  }
+  try { await loadGP('gpmt'); } catch(e){}
+  try { await loadGP('gpsd'); } catch(e){}
+
+  const mumiAll = ((typeof anggotaFull!=='undefined' && anggotaFull) ? anggotaFull : []);
+  const gpmtAll = ((typeof gpData!=='undefined' && gpData && gpData['gpmt']) || []);
+  const gpsdAll = ((typeof gpData!=='undefined' && gpData && gpData['gpsd']) || []);
+
+  const L = a => a.jenis_kelamin === 'laki-laki';
+  const P = a => a.jenis_kelamin === 'perempuan';
+
+  // MUMI: aktif = status 'aktif'. GP (gpmt/gpsd): aktif = bukan 'tidak_aktif'.
+  const mumiA = mumiAll.filter(a => a.status === 'aktif');
+  const mumiN = mumiAll.filter(a => a.status !== 'aktif');
+  const gpmtA = gpmtAll.filter(a => a.status !== 'tidak_aktif');
+  const gpmtN = gpmtAll.filter(a => a.status === 'tidak_aktif');
+  const gpsdA = gpsdAll.filter(a => a.status !== 'tidak_aktif');
+  const gpsdN = gpsdAll.filter(a => a.status === 'tidak_aktif');
+
+  const S = arr => ({ c: arr.filter(L).length, w: arr.filter(P).length, b: arr.filter(a=>!a.jenis_kelamin).length, t: arr.length });
+
+  // ── AKTIF SAJA ──
+  const aktifMG  = mumiA.concat(gpmtA);            // MUMI+GPMT aktif
+  const aktifMGS = mumiA.concat(gpmtA, gpsdA);     // MUMI+GPMT+GPSD aktif
+  // ── TOTAL (aktif + tidak aktif = semua status) ──
+  const allMG  = mumiAll.concat(gpmtAll);          // MUMI+GPMT semua
+  const allMGS = mumiAll.concat(gpmtAll, gpsdAll); // MUMI+GPMT+GPSD semua
+
+  const box3 = (d) => `
+    <div style="display:flex;gap:6px;text-align:center;">
+      <div style="flex:1;background:#eef2ff;border:1.5px solid #c7d2fe;border-radius:10px;padding:8px;">
+        <div style="font-size:19px;font-weight:800;color:#1d4ed8;">${d.c}</div>
+        <div style="font-size:10px;color:#3730a3;font-weight:700;">♂ Cowok</div></div>
+      <div style="flex:1;background:#fdf2f8;border:1.5px solid #fbcfe8;border-radius:10px;padding:8px;">
+        <div style="font-size:19px;font-weight:800;color:#be185d;">${d.w}</div>
+        <div style="font-size:10px;color:#9d174d;font-weight:700;">♀ Cewek</div></div>
+      <div style="flex:1;background:#f0f7f3;border:1.5px solid #d4e8dc;border-radius:10px;padding:8px;">
+        <div style="font-size:19px;font-weight:800;color:#1a6644;">${d.t}</div>
+        <div style="font-size:10px;color:#1a6644;font-weight:700;">Σ Total</div></div>
+    </div>`;
+
+  const head = (txt, color, bg) => `<div style="font-size:12px;font-weight:800;color:${color};background:${bg};border-radius:8px;padding:6px 10px;margin:12px 0 7px;">${txt}</div>`;
+  const sub  = (txt) => `<div style="font-size:12px;font-weight:700;color:#374151;margin:9px 0 4px;">▸ ${txt}</div>`;
+  const boxLabeled = (title, arr) => sub(title) + box3(S(arr));
+
+  const grpLine = (label, aArr, nArr) => {
+    const a = S(aArr), n = S(nArr);
+    return `<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;font-size:12px;color:#4a6056;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.05);">
+      <span style="font-weight:700;">${label}</span>
+      <span>
+        <span style="color:#166534;">✅ <b>${a.t}</b> <span style="color:#1d4ed8;">♂${a.c}</span>·<span style="color:#be185d;">♀${a.w}</span></span>
+        &nbsp; <span style="color:#b91c1c;">⛔ <b>${n.t}</b> <span style="color:#1d4ed8;">♂${n.c}</span>·<span style="color:#be185d;">♀${n.w}</span></span>
+      </span>
+    </div>`;
+  };
+
+  const belumTotal = S(allMGS).b;
+
+  card.innerHTML = `
+    <h2 style="margin-bottom:2px;">🧮 Total Anggota</h2>
+    <p class="muted" style="font-size:11px;margin-bottom:6px;">Rekap jumlah anggota per status &amp; jenis kelamin.</p>
+
+    ${head('✅ AKTIF SAJA', '#166534', '#dcfce7')}
+    ${boxLabeled('MUMI + GPMT (GPSD tidak dihitung)', aktifMG)}
+    ${boxLabeled('MUMI + GPMT + GPSD', aktifMGS)}
+
+    ${head('🌐 TOTAL (AKTIF + TIDAK AKTIF)', '#1e3a8a', '#dbeafe')}
+    ${boxLabeled('MUMI + GPMT (GPSD tidak dihitung)', allMG)}
+    ${boxLabeled('MUMI + GPMT + GPSD', allMGS)}
+
+    ${head('📋 Rincian per grup (aktif / tidak aktif)', '#334155', '#f1f5f9')}
+    <div style="background:#f7faf8;border-radius:8px;padding:4px 12px;">
+      ${grpLine('👥 MUMI', mumiA, mumiN)}
+      ${grpLine('🧒 GPMT', gpmtA, gpmtN)}
+      ${grpLine('👦 GPSD', gpsdA, gpsdN)}
+    </div>
+    ${belumTotal?`<p class="muted" style="font-size:11px;margin-top:8px;">⚠️ ${belumTotal} orang belum diisi jenis kelaminnya (tidak dihitung cowok/cewek).</p>`:''}
+  `;
 }
 
 // ─────────────── DASHBOARD ───────────────
@@ -8536,6 +9282,7 @@ async function loadAnggota() {
   renderListAnggotaFiltered();
   // Render statistik anggota
   renderAnggotaStat();
+  renderTotalMumiGpmt();
   // Sub GPMT & GPSD dimuat lazy saat banner-nya dibuka (lihat toggleGPSection)
   if (_gpSectionLoaded) { loadGP('gpmt'); loadGP('gpsd'); }
   // dropdown anggota di Kas Masuk
@@ -11834,6 +12581,7 @@ function renderAnalisaKehadiran() {
   const perluPerhatian = rows.filter(r => r.pct < 60 && (r.hadir + r.izin) > 0);
   const rajin          = rows.filter(r => r.pct >= 80 && !selaluHadir.find(x => x.nama === r.nama));
   const hadir1Kali     = rows.filter(r => (r.hadir + r.izin) === 1);
+  const fullIzin       = rows.filter(r => r.hadir === 0 && r.izin > 0);
 
   const adaDiData = new Set(rows.map(r => r.nama));
   const gaAdaRecord = rekapSemuaAnggota.filter(a => !adaDiData.has(a.nama));
@@ -11865,6 +12613,8 @@ function renderAnalisaKehadiran() {
         perluPerhatian, 'Kehadiran rendah. Pernah hadir/izin tapi di bawah 60%.')
     + kartu('Tidak Pernah Hadir / Izin Sama Sekali', '#dc2626', '#fef2f2', '&#128680;',
         tidakPernah, 'Tercatat di absensi tapi seluruhnya Tidak Hadir. Perlu tindak lanjut!')
+    + kartu('Full Izin — Tidak Pernah Hadir Beneran (Ga Pernah Nongol)', '#b45309', '#fffbeb', '&#128584;',
+        fullIzin, 'Selalu IZIN, TIDAK PERNAH benar-benar hadir (fisik) di pengajian. Dianggap hadir lewat izin, padahal aslinya tidak pernah datang. Bedakan dari yang tidak hadir tanpa izin.')
     + (gaAdaRecord.length ? kartu('Tidak Ada Rekam Absensi (Belum Pernah Diabsen)', '#7c3aed', '#f5f3ff', '&#128123;',
         gaAdaRecord.map(a => ({ nama: a.nama })),
         'Anggota aktif yang tidak muncul di data absensi periode ini sama sekali.') : '')
@@ -15080,6 +15830,7 @@ function cetakRekap() {
     const perluPerhatian = allRows.filter(r => r.pct < 60 && (r.hadir + r.izin) > 0);
     const rajin          = allRows.filter(r => r.pct >= 80 && !selaluHadir.find(x => x.nama === r.nama));
     const hadir1Kali     = allRows.filter(r => (r.hadir + r.izin) === 1);
+    const fullIzin       = allRows.filter(r => r.hadir === 0 && r.izin > 0);
     const adaDiData      = new Set(allRows.map(r => r.nama));
     const gaAdaRecord    = rekapSemuaAnggota.filter(a => !adaDiData.has(a.nama));
 
@@ -15135,6 +15886,9 @@ function cetakRekap() {
     seksiAnalisa('Tidak Pernah Hadir/Izin Sama Sekali', tidakPernah,
       r => r.nama,
       'Tercatat di absensi tapi seluruhnya Tidak Hadir. Perlu tindak lanjut!');
+    seksiAnalisa('Full Izin - Tidak Pernah Hadir Beneran (Ga Pernah Nongol)', fullIzin,
+      r => r.nama + ' (I:' + (r.izin||0) + ' X:' + r.tidak_hadir + ')',
+      'Selalu izin, tidak pernah benar-benar hadir (fisik). Dianggap hadir lewat izin padahal aslinya tidak pernah datang. Bedakan dari yang tidak hadir tanpa izin.');
     seksiAnalisa('Tidak Ada Rekam Absensi (Belum Pernah Diabsen)', gaAdaRecord,
       r => r.nama || r,
       'Anggota aktif yang tidak muncul di data absensi periode ini sama sekali.');
@@ -26000,6 +26754,965 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     }, 800);
     setTimeout(function() { clearInterval(_touchInterval); }, 8000);
   })();
+  </script>
+
+  <script>
+  // ═══════════════════════ GAME SPIN — UNDIAN DOORPRIZE ═══════════════════════
+  // Pakai client `db` (Supabase) yang sama dengan modul lain di app ini.
+  let spinEntries = [];   // {id, name, image_url}
+  let spinWinners = [];   // {id, name, image_url, prize_name, drawn_at}
+  let spinExcluded = [];  // array nama yang tidak boleh menang
+  let spinPrizes = [];    // {id, name, stock, initial_stock}
+  let spinGroups = [];    // {id, name, percent}  -- grup peserta & persentase peluang menang
+  let spinImgTargetId = null;
+  let spinAssignGroupTargetId = null; // id entri yang sedang diatur grupnya lewat modal kecil
+  let spinPendingPicked = null; // menyimpan hasil undi yg sedang menunggu konfirmasi hadir/tidak
+  let spinPendingPrize = null;  // {id, name, stock} hadiah yang sedang diundi
+
+  async function spinLoadAll(){
+    const [e, w, s, p, opp, g, ts, ch] = await Promise.all([
+      db.from('entries').select('*').order('created_at', {ascending:true}),
+      db.from('winners').select('*').order('drawn_at', {ascending:false}),
+      db.from('spin_settings').select('data').eq('key','exclude_list').maybeSingle(),
+      db.from('spin_prizes').select('*').order('created_at', {ascending:true}),
+      db.from('spin_settings').select('data').eq('key','one_per_person').maybeSingle(),
+      db.from('spin_groups').select('*').order('created_at', {ascending:true}),
+      db.from('spin_settings').select('data').eq('key','title_settings').maybeSingle(),
+      db.from('spin_settings').select('data').eq('key','controls_hidden').maybeSingle()
+    ]);
+    const notice = document.getElementById('spinSqlNotice');
+    if (notice) notice.style.display = (e.error || w.error) ? 'block' : 'none';
+    spinEntries = e.data || [];
+    spinWinners = w.data || [];
+    spinExcluded = (!s.error && s.data && Array.isArray(s.data.data)) ? s.data.data : [];
+    // Kompatibel dengan format lama (array of string nama saja) -> ubah jadi {name, prizeIds:[]}
+    spinExcluded = spinExcluded.map(x => typeof x === 'string' ? {name: x, prizeIds: []} : {name: x.name, prizeIds: Array.isArray(x.prizeIds) ? x.prizeIds : []});
+    spinPrizes = p.data || [];
+    spinGroups = g.data || []; // kalau error (kolom/tabel belum dibuat), dianggap kosong -> semua peserta setara
+    // Baca centang terakhir "satu orang satu hadiah" dari database (default: tercentang kalau belum pernah disimpan)
+    const oppChk = document.getElementById('spinOneWinPerPerson');
+    if(oppChk){
+      oppChk.checked = (!opp.error && opp.data && typeof opp.data.data === 'object' && opp.data.data !== null && 'value' in opp.data.data)
+        ? !!opp.data.data.value
+        : true;
+    }
+    // Judul tampilan — selalu muncul, cuma namanya yang bisa diganti
+    const titleData = (!ts.error && ts.data && typeof ts.data.data === 'object' && ts.data.data !== null) ? ts.data.data : null;
+    spinTitleSettings = {
+      text: (titleData && typeof titleData.text === 'string' && titleData.text.trim()) ? titleData.text : 'Game Spin — Undian Doorprize'
+    };
+    spinApplyTitleSettings();
+    // Tombol admin (Kelola Hadiah/Grup/Setting/Reset/Acak/Menyortir/dll) - default disembunyikan,
+    // tetap tersembunyi walau di-refresh, kecuali pernah diklik tombol mata 👁️ untuk menampilkan.
+    spinControlsHidden = (!ch.error && ch.data && typeof ch.data.data === 'object' && ch.data.data !== null && 'value' in ch.data.data)
+      ? !!ch.data.data.value
+      : true;
+    spinApplyControlsVisibility();
+    spinRenderEntries();
+    spinRenderHasil();
+    spinRenderPrizeSelect();
+    spinRenderPrizeList();
+    spinRenderGroupSelects();
+    spinRenderGroupList();
+  }
+
+  let spinTitleSettings = {text:'Game Spin — Undian Doorprize'};
+  let spinControlsHidden = true;
+
+  function spinApplyControlsVisibility(){
+    const card = document.getElementById('spinCard');
+    if(card) card.classList.toggle('spin-ctrl-hidden', spinControlsHidden);
+    const btn = document.getElementById('spinToggleCtrlBtn');
+    if(btn) btn.textContent = spinControlsHidden ? '👁️' : '🙈';
+  }
+
+  async function spinToggleAdminControls(){
+    spinControlsHidden = !spinControlsHidden;
+    spinApplyControlsVisibility();
+    const {error} = await db.from('spin_settings').upsert({key:'controls_hidden', data: {value: spinControlsHidden}, updated_at: new Date().toISOString()});
+    if(error) console.error('spinToggleAdminControls error:', error);
+  }
+
+  // Judul selalu tampil — cuma teksnya yang bisa diganti lewat ⚙️ Setting
+  function spinApplyTitleSettings(){
+    const textEl = document.getElementById('spinMainTitleText');
+    if(textEl) textEl.textContent = spinTitleSettings.text;
+    const inp = document.getElementById('spinTitleTextInput');
+    if(inp) inp.value = spinTitleSettings.text;
+  }
+
+  async function spinSaveTitleSettings(){
+    const text = document.getElementById('spinTitleTextInput').value.trim() || 'Game Spin — Undian Doorprize';
+    const {error} = await db.from('spin_settings').upsert({key:'title_settings', data: {text}, updated_at: new Date().toISOString()});
+    if(error){
+      alert('Gagal menyimpan pengaturan judul: ' + error.message);
+      console.error('spinSaveTitleSettings error:', error);
+      return;
+    }
+    spinTitleSettings = {text};
+    spinApplyTitleSettings();
+  }
+
+  function spinSwitchTab(t){
+    document.getElementById('spinTabEntri').classList.toggle('active', t==='entri');
+    document.getElementById('spinTabHasil').classList.toggle('active', t==='hasil');
+    document.getElementById('spinEntriView').style.display = t==='entri' ? 'block':'none';
+    document.getElementById('spinHasilView').style.display = t==='hasil' ? 'block':'none';
+    document.getElementById('spinDrawBar').style.display = t==='entri' ? 'flex':'none';
+  }
+
+  function spinUpdateCounts(){
+    const onePerPerson = document.getElementById('spinOneWinPerPerson') ? document.getElementById('spinOneWinPerPerson').checked : true;
+    const belumMenang = spinEntries.filter(e => !spinIsAlreadyWon(e.name, onePerPerson)).length;
+    document.getElementById('spinCountEntri').textContent = (belumMenang === spinEntries.length) ? String(spinEntries.length) : `${belumMenang}/${spinEntries.length}`;
+    document.getElementById('spinCountHasil').textContent = spinWinners.length;
+    document.getElementById('spinDrawBtn').disabled = spinEntries.length === 0;
+  }
+
+  // spinExcluded item: {name, prizeIds:[]}  -> prizeIds kosong ([]) artinya dikecualikan dari SEMUA hadiah
+  function spinIsExcluded(name, prizeId){
+    const bn = spinBaseName(name).toLowerCase();
+    const entry = spinExcluded.find(x => x.name.toLowerCase() === bn);
+    if(!entry) return false;
+    if(!entry.prizeIds || entry.prizeIds.length===0) return true; // dikecualikan dari semua hadiah
+    if(!prizeId) return false; // belum pilih hadiah spesifik & entry bukan "semua" -> jangan tandai dulu
+    return entry.prizeIds.includes(prizeId);
+  }
+
+  function spinRenderEntries(){
+    const el = document.getElementById('spinEntriList');
+    const selectedPrizeId = document.getElementById('spinPrizeSelect') ? document.getElementById('spinPrizeSelect').value : '';
+    const onePerPerson = document.getElementById('spinOneWinPerPerson') ? document.getElementById('spinOneWinPerPerson').checked : true;
+    const groupFilter = document.getElementById('spinGroupFilterSelect') ? document.getElementById('spinGroupFilterSelect').value : '';
+    if(spinEntries.length===0){ el.innerHTML = '<div class="spin-empty">Belum ada entri. Klik "Tambah entri" untuk mulai.</div>'; spinUpdateCounts(); return; }
+    let list = spinEntries;
+    if(groupFilter==='__none__') list = list.filter(e=>!e.group_id);
+    else if(groupFilter) list = list.filter(e=>e.group_id===groupFilter);
+    if(list.length===0){ el.innerHTML = '<div class="spin-empty">Tidak ada peserta di grup ini.</div>'; spinUpdateCounts(); return; }
+    el.innerHTML = list.map(e => {
+      const excluded = spinIsExcluded(e.name, selectedPrizeId);
+      const skipped = spinSessionSkip.has(e.id);
+      const alreadyWon = spinIsAlreadyWon(e.name, onePerPerson);
+      const dimmed = excluded || skipped || alreadyWon;
+      let tag = '';
+      if(excluded) tag = '<span class="spin-row-excluded-tag">🚫 Tidak ikut undi hadiah ini</span>';
+      else if(alreadyWon) tag = '<span class="spin-row-excluded-tag">🏆 Sudah pernah menang — dilewati</span>';
+      else if(skipped) tag = '<span class="spin-row-excluded-tag">⏭ Dilewati sesi ini (tidak hadir)</span>';
+      const groupName = spinGroupLabel(e.group_id);
+      const groupBadge = groupName
+        ? `<span class="spin-group-badge spin-admin-ctrl" title="Klik untuk atur grup" onclick="spinOpenAssignGroupModal('${e.id}', ${JSON.stringify(e.name)})">👥 ${escapeHtml(groupName)}</span>`
+        : `<span class="spin-group-badge spin-group-badge-empty spin-admin-ctrl" title="Klik untuk atur grup" onclick="spinOpenAssignGroupModal('${e.id}', ${JSON.stringify(e.name)})">+ grup</span>`;
+      return `
+      <div class="spin-row" style="${dimmed ? 'opacity:.55;' : ''}">
+        ${e.image_url ? `<img class="spin-thumb" src="${escapeHtml(e.image_url)}">` : `<div class="spin-thumb spin-placeholder">🎫</div>`}
+        <div class="spin-row-name">${escapeHtml(e.name)}${groupBadge}${tag}</div>
+        <div class="spin-row-actions">
+          <button class="spin-icon-btn" title="Tambah gambar" onclick="spinOpenImgModal('${e.id}')">🖼️</button>
+          <button class="spin-icon-btn" title="Hapus" onclick="spinDeleteEntry('${e.id}')">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+    spinUpdateCounts();
+  }
+
+  function spinRenderHasil(){
+    const el = document.getElementById('spinHasilList');
+    if(spinWinners.length===0){ el.innerHTML = '<div class="spin-empty">Belum ada pemenang.</div>'; spinUpdateCounts(); return; }
+    el.innerHTML = spinWinners.map((w) => `
+      <div class="spin-row">
+        ${w.image_url ? `<img class="spin-thumb" src="${escapeHtml(w.image_url)}">` : `<div class="spin-thumb spin-placeholder">🏆</div>`}
+        <div class="spin-row-name">${escapeHtml(w.name)}${w.prize_name ? ` <span style="color:#f5b942;font-weight:600;">— 🎁 ${escapeHtml(w.prize_name)}</span>` : ''}</div>
+        <div class="spin-row-time">${new Date(w.drawn_at).toLocaleString('id-ID')}</div>
+      </div>`).join('');
+    spinUpdateCounts();
+  }
+
+  // ---- hadiah / menu doorprize + stok ----
+  function spinRenderPrizeSelect(){
+    const sel = document.getElementById('spinPrizeSelect');
+    const hint = document.getElementById('spinPrizeStockHint');
+    const prev = sel.value;
+    if(spinPrizes.length===0){
+      sel.innerHTML = '<option value="">— pilih hadiah —</option>';
+      hint.textContent = 'Belum ada hadiah. Klik "🎁 Kelola Hadiah" untuk menambah.';
+      hint.style.color = '';
+      return;
+    }
+    sel.innerHTML = '<option value="">— pilih hadiah —</option>' + spinPrizes.map(p =>
+      `<option value="${p.id}" ${p.stock<=0?'disabled':''}>${escapeHtml(p.name)} (sisa ${p.stock})${p.stock<=0?' — HABIS':''}</option>`
+    ).join('');
+    if(spinPrizes.some(p=>p.id===prev)) sel.value = prev;
+    spinUpdatePrizeHint();
+  }
+
+  function spinUpdatePrizeHint(){
+    const sel = document.getElementById('spinPrizeSelect');
+    const hint = document.getElementById('spinPrizeStockHint');
+    const p = spinPrizes.find(x=>x.id===sel.value);
+    if(!p){ hint.textContent = 'Pilih hadiah dulu sebelum mengundi.'; hint.style.color = '#f5b942'; return; }
+    hint.textContent = `Sisa stok "${p.name}": ${p.stock} pcs`;
+    hint.style.color = p.stock<=0 ? '#ef4565' : '#8b93a3';
+  }
+
+  function spinOpenPrizeModal(){ spinRenderPrizeList(); document.getElementById('spinPrizeOverlay').classList.add('show'); }
+  function spinClosePrizeModal(){
+    document.getElementById('spinPrizeOverlay').classList.remove('show');
+    document.getElementById('spinPrizeNameInput').value = '';
+    document.getElementById('spinPrizeStockInput').value = '1';
+  }
+
+  async function spinAddPrize(){
+    const name = document.getElementById('spinPrizeNameInput').value.trim();
+    const stock = Math.max(0, parseInt(document.getElementById('spinPrizeStockInput').value||'0'));
+    if(!name){ alert('Nama hadiah tidak boleh kosong.'); return; }
+    // initial_stock = jumlah awal (baseline). Dipakai untuk mengembalikan stok
+    // ke kondisi semula kalau semua hasil undian dihapus (lihat spinClearHasil).
+    const {error} = await db.from('spin_prizes').insert({name, stock, initial_stock: stock});
+    if(error){ alert('Gagal menambah hadiah: '+error.message); return; }
+    document.getElementById('spinPrizeNameInput').value = '';
+    document.getElementById('spinPrizeStockInput').value = '1';
+    await spinLoadAll();
+    spinRenderPrizeList();
+  }
+
+  // Diubah manual lewat 🎁 Kelola Hadiah = admin sedang menentukan/mengoreksi
+  // jumlah AWAL hadiah tsb. Makanya stock & initial_stock diupdate bersamaan
+  // supaya jadi baseline baru — beda dengan pengurangan stok otomatis saat undi
+  // (spinConfirmPresence), yang cuma mengubah stock saja tanpa menyentuh baseline.
+  async function spinUpdatePrizeStock(id, newStock){
+    newStock = Math.max(0, parseInt(newStock||'0'));
+    await db.from('spin_prizes').update({stock:newStock, initial_stock:newStock}).eq('id', id);
+    await spinLoadAll();
+    spinRenderPrizeList();
+  }
+
+  async function spinDeletePrize(id){
+    if(!confirm('Hapus hadiah ini dari daftar?')) return;
+    await db.from('spin_prizes').delete().eq('id', id);
+    await spinLoadAll();
+    spinRenderPrizeList();
+  }
+
+  function spinRenderPrizeList(){
+    const el = document.getElementById('spinPrizeList');
+    if(!el) return;
+    if(spinPrizes.length===0){ el.innerHTML = '<div class="spin-empty" style="padding:6px 0;font-size:12.5px;">Belum ada hadiah. Tambahkan di atas.</div>'; return; }
+    el.innerHTML = spinPrizes.map(p => `
+      <div class="spin-prize-row">
+        <div class="spin-prize-name">🎁 ${escapeHtml(p.name)}</div>
+        <input type="number" min="0" value="${p.stock}" onchange="spinUpdatePrizeStock('${p.id}', this.value)" title="Mengubah nilai ini juga mengubah jumlah awal (baseline) hadiah">
+        <span class="spin-prize-stock ${p.stock<=0?'zero':''}">${p.stock<=0?'Habis':'pcs tersisa'} · awal ${p.initial_stock ?? p.stock}</span>
+        <button class="spin-icon-btn" title="Hapus" onclick="spinDeletePrize('${p.id}')">✕</button>
+      </div>
+    `).join('');
+  }
+
+  // ---- grup peserta & persentase peluang menang ----
+  function spinOpenGroupModal(){ spinRenderGroupList(); document.getElementById('spinGroupOverlay').classList.add('show'); }
+  function spinCloseGroupModal(){
+    document.getElementById('spinGroupOverlay').classList.remove('show');
+    document.getElementById('spinGroupNameInput').value = '';
+  }
+
+  async function spinAddGroup(){
+    const nameInput = document.getElementById('spinGroupNameInput');
+    const name = nameInput.value.trim();
+    if(!name){ alert('Isi nama grup dulu, misal: Miskin, Standar, Menengah, Kaya (bebas, tidak wajib 4 nama ini).'); nameInput.focus(); return; }
+    const {error} = await db.from('spin_groups').insert({name, percent: 0});
+    if(error){
+      alert('Gagal menambah grup: ' + error.message + '\n\nPastikan tabel spin_groups & kolom entries.group_id sudah dibuat (lihat SQL di bagian atas menu Spin).');
+      return;
+    }
+    nameInput.value = '';
+    await spinLoadAll();
+    spinRenderGroupList();
+  }
+
+  // ⚡ Sekali klik: langsung bikin 4 grup umum dengan persentase awal 25% rata (bisa digeser lagi setelahnya).
+  // Kalau grup dengan nama itu sudah ada, dilewati (tidak dobel).
+  async function spinQuickPreset(){
+    const preset = ['Miskin','Standar','Menengah','Kaya'];
+    const existingNames = spinGroups.map(g=>g.name.toLowerCase());
+    const toInsert = preset.filter(n => !existingNames.includes(n.toLowerCase())).map(n => ({name:n, percent:25}));
+    if(toInsert.length===0){ alert('Grup Miskin/Standar/Menengah/Kaya sudah ada semua.'); return; }
+    const {error} = await db.from('spin_groups').insert(toInsert);
+    if(error){
+      alert('Gagal membuat grup cepat: ' + error.message + '\n\nPastikan tabel spin_groups & kolom entries.group_id sudah dibuat (lihat SQL di bagian atas menu Spin).');
+      return;
+    }
+    await spinLoadAll();
+    spinRenderGroupList();
+  }
+
+  // ➗ Sekali klik: bagi rata persentase ke SEMUA grup yang ada sekarang (100 / jumlah grup).
+  async function spinEqualizeGroups(){
+    if(spinGroups.length===0){ alert('Belum ada grup untuk dibagi rata.'); return; }
+    const equal = Math.round((100 / spinGroups.length) * 10) / 10;
+    await Promise.all(spinGroups.map(g => db.from('spin_groups').update({percent: equal}).eq('id', g.id)));
+    await spinLoadAll();
+    spinRenderGroupList();
+  }
+
+  async function spinUpdateGroupPercent(id, val){
+    let p = parseFloat(val);
+    if(isNaN(p)) p = 0;
+    p = Math.max(0, Math.min(100, p));
+    // Update tampilan badge persen secara instan (tanpa nunggu round-trip database) biar slider terasa responsif
+    const badge = document.querySelector(`.spin-group-pct-badge[data-gid="${id}"]`);
+    if(badge) badge.textContent = p + '%';
+    const g = spinGroups.find(x=>x.id===id);
+    if(g) g.percent = p;
+    spinUpdateGroupTotalBar();
+    clearTimeout(spinGroupSaveDebounce[id]);
+    spinGroupSaveDebounce[id] = setTimeout(async () => {
+      await db.from('spin_groups').update({percent: p}).eq('id', id);
+    }, 250);
+  }
+  let spinGroupSaveDebounce = {};
+
+  async function spinRenameGroup(id, val){
+    const name = val.trim();
+    if(!name) return;
+    await db.from('spin_groups').update({name}).eq('id', id);
+    await spinLoadAll();
+    spinRenderGroupList();
+  }
+
+  async function spinDeleteGroup(id){
+    const grp = spinGroups.find(g=>g.id===id);
+    if(!grp) return;
+    const ok = await askConfirm(`Hapus grup "${grp.name}"? Peserta yang ada di grup ini akan jadi "Tanpa grup" (bukan dihapus).`, '🗑️ Hapus Grup');
+    if(!ok) return;
+    await db.from('spin_groups').delete().eq('id', id);
+    await spinLoadAll();
+    spinRenderGroupList();
+  }
+
+  function spinUpdateGroupTotalBar(){
+    const bar = document.getElementById('spinGroupTotalBar');
+    const totalLabel = document.getElementById('spinGroupTotalLabel');
+    const remainLabel = document.getElementById('spinGroupRemainLabel');
+    if(!bar) return;
+    const total = spinGroups.reduce((sum,g)=>sum+(parseFloat(g.percent)||0),0);
+    bar.style.width = Math.min(100, total) + '%';
+    bar.style.background = total > 100 ? '#ef4565' : '#5865f2';
+    totalLabel.textContent = `Total grup: ${total}%`;
+    remainLabel.textContent = total > 100
+      ? `⚠️ Lebih ${(total-100).toFixed(1).replace(/\.0$/,'')}% — otomatis dinormalkan saat undian`
+      : `Sisa untuk tanpa grup: ${(100-total).toFixed(1).replace(/\.0$/,'')}%`;
+  }
+
+  function spinRenderGroupList(){
+    const el = document.getElementById('spinGroupList');
+    if(!el) return;
+    if(spinGroups.length===0){
+      el.innerHTML = '<div class="spin-empty" style="padding:6px 0;font-size:12.5px;">Belum ada grup. Klik "⚡ Buat cepat" di atas, atau tambahkan manual.</div>';
+      spinUpdateGroupTotalBar();
+      return;
+    }
+    el.innerHTML = spinGroups.map(g => {
+      const isBlank = !g.name || !g.name.trim();
+      return `
+      <div class="spin-group-row" style="${isBlank ? 'border-color:#ef4565;' : ''}">
+        <div class="spin-group-toprow">
+          <input type="text" class="spin-group-name-input" style="${isBlank ? 'border-color:#ef4565;' : ''}" value="${escapeHtml(g.name||'')}" placeholder="⚠️ Belum ada nama — isi di sini" onchange="spinRenameGroup('${g.id}', this.value)">
+          <span class="spin-group-pct-badge" data-gid="${g.id}" title="Persentase peluang menang grup ini">${g.percent}%</span>
+          <button class="spin-icon-btn" style="width:auto;flex:0 0 auto;" title="Hapus grup" onclick="spinDeleteGroup('${g.id}')">✕</button>
+        </div>
+        ${isBlank ? `<div class="spin-hint" style="color:#ef4565;margin:0 0 6px;">⚠️ Grup ini belum ada namanya — ketik nama lalu klik di luar kotak buat simpan, atau hapus (✕) kalau ini cuma data percobaan.</div>` : ''}
+        <div class="spin-group-slider-row">
+          <input type="range" min="0" max="100" step="1" value="${g.percent}" oninput="spinUpdateGroupPercent('${g.id}', this.value)">
+        </div>
+      </div>`;
+    }).join('');
+    spinUpdateGroupTotalBar();
+  }
+
+  // Isi ulang semua elemen <select> yang menampilkan daftar grup (filter, tambah entri, ganti grup per-peserta)
+  function spinRenderGroupSelects(){
+    const opts = '<option value="">Tanpa grup</option>' + spinGroups.map(g => `<option value="${g.id}">${escapeHtml(g.name)} (${g.percent}%)</option>`).join('');
+    const bulkSel = document.getElementById('spinBulkGroupSelect');
+    if(bulkSel){ const prev = bulkSel.value; bulkSel.innerHTML = opts; if(spinGroups.some(g=>g.id===prev)) bulkSel.value = prev; }
+    const assignSel = document.getElementById('spinAssignGroupSelect');
+    if(assignSel){ const prev = assignSel.value; assignSel.innerHTML = opts; if(spinGroups.some(g=>g.id===prev)) assignSel.value = prev; }
+    const filterSel = document.getElementById('spinGroupFilterSelect');
+    if(filterSel){
+      const prev = filterSel.value;
+      filterSel.innerHTML = '<option value="">Semua peserta</option><option value="__none__">Tanpa grup</option>' +
+        spinGroups.map(g => `<option value="${g.id}">${escapeHtml(g.name)} (${g.percent}%)</option>`).join('');
+      if(prev==='' || prev==='__none__' || spinGroups.some(g=>g.id===prev)) filterSel.value = prev;
+    }
+    const hint = document.getElementById('spinGroupHint');
+    if(hint) hint.textContent = spinGroups.length===0
+      ? 'Belum ada grup. Klik "👥 Kelola Grup" untuk menambah & atur persentase menang.'
+      : `${spinGroups.length} grup tersedia. Klik badge 👥 di samping nama peserta untuk atur grupnya.`;
+  }
+
+  function spinGroupLabel(groupId){
+    if(!groupId) return null;
+    const g = spinGroups.find(x=>x.id===groupId);
+    return g ? g.name : null;
+  }
+
+  function spinOpenAssignGroupModal(id, name){
+    spinAssignGroupTargetId = id;
+    document.getElementById('spinAssignGroupName').textContent = name;
+    const entry = spinEntries.find(e=>e.id===id);
+    document.getElementById('spinAssignGroupSelect').value = (entry && entry.group_id) ? entry.group_id : '';
+    document.getElementById('spinAssignGroupOverlay').classList.add('show');
+  }
+  function spinCloseAssignGroupModal(){
+    document.getElementById('spinAssignGroupOverlay').classList.remove('show');
+    spinAssignGroupTargetId = null;
+  }
+  async function spinSubmitAssignGroup(){
+    if(!spinAssignGroupTargetId) return;
+    const val = document.getElementById('spinAssignGroupSelect').value || null;
+    const {error} = await db.from('entries').update({group_id: val}).eq('id', spinAssignGroupTargetId);
+    if(error){
+      alert('Gagal mengatur grup peserta: ' + error.message + '\n\nPastikan kolom entries.group_id sudah dibuat (lihat SQL di bagian atas menu Spin).');
+      return;
+    }
+    spinCloseAssignGroupModal();
+    await spinLoadAll();
+  }
+
+  // ---- toolbar actions ----
+  function spinShuffleView(){
+    spinEntries = spinEntries.map(v => ({v, r: Math.random()})).sort((a,b)=>a.r-b.r).map(o=>o.v);
+    spinRenderEntries();
+  }
+  function spinSortView(){
+    spinEntries = [...spinEntries].sort((a,b)=>a.name.localeCompare(b.name,'id'));
+    spinRenderEntries();
+  }
+
+  // ---- tambah entri ----
+  function spinOpenAddModal(){ document.getElementById('spinAddOverlay').classList.add('show'); }
+  function spinCloseAddModal(){ document.getElementById('spinAddOverlay').classList.remove('show'); document.getElementById('spinBulkInput').value=''; const gs=document.getElementById('spinBulkGroupSelect'); if(gs) gs.value=''; }
+  async function spinSubmitBulkAdd(){
+    const lines = document.getElementById('spinBulkInput').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if(lines.length===0){ spinCloseAddModal(); return; }
+    const groupSel = document.getElementById('spinBulkGroupSelect');
+    const groupId = (groupSel && groupSel.value) ? groupSel.value : null;
+    const rows = lines.map(name => groupId ? {name, group_id: groupId} : {name});
+    const {error} = await db.from('entries').insert(rows);
+    if(error){ alert('Gagal menambah entri: '+error.message); return; }
+    spinCloseAddModal();
+    await spinLoadAll();
+  }
+
+  async function spinDeleteEntry(id){
+    await db.from('entries').delete().eq('id', id);
+    await spinLoadAll();
+  }
+
+  async function spinClearEntries(){
+    if(spinEntries.length===0) return;
+    const ok = await askConfirm(`Hapus semua entri (${spinEntries.length} tiket)? Bisa diurungkan dalam 10 detik setelah ini.`, '🗑️ Hapus Semua Entri');
+    if(!ok) return;
+    const backup = spinEntries.slice();
+    await db.from('entries').delete().neq('id','00000000-0000-0000-0000-000000000000');
+    await spinLoadAll();
+    showUndoToast(`Semua entri (${backup.length} tiket)`,
+      async function(){ // onUndo — kembalikan persis seperti semula (id, gambar, waktu dibuat)
+        if(backup.length) await db.from('entries').insert(backup);
+        await spinLoadAll();
+        showToast('↩️ Semua entri dikembalikan', 'success', 2500);
+      },
+      function(){ /* sudah terhapus permanen dari database, tidak ada aksi tambahan */ },
+      '🎫'
+    );
+  }
+  // Kembalikan stok semua hadiah ke jumlah awal (initial_stock). Dipanggil
+  // setiap kali riwayat pemenang dihapus, supaya "Kelola Hadiah" cukup diisi
+  // sekali di awal acara — tidak perlu diinput ulang manual tiap reset.
+  // Return true kalau reset berhasil dijalankan, false kalau baseline belum
+  // tersedia (mis. migrasi SQL kolom initial_stock belum dijalankan) supaya
+  // pemanggil bisa kasih tahu admin, bukan diam-diam gagal.
+  async function spinResetStokKeAwal(){
+    if(spinPrizes.length===0) return true;
+    // Kolom initial_stock belum ada di database (migrasi belum dijalankan) ->
+    // semua prize.initial_stock akan undefined/null. Jangan lanjut diam-diam,
+    // supaya bug "stok tidak balik ke awal" ketahuan sebabnya.
+    const missingBaseline = spinPrizes.every(p => p.initial_stock === undefined || p.initial_stock === null);
+    if(missingBaseline){
+      alert('⚠️ Stok hadiah TIDAK bisa dikembalikan ke jumlah awal karena kolom "initial_stock" belum ada di tabel spin_prizes.\n\nJalankan dulu SQL ini di Supabase Dashboard → SQL Editor:\n\nALTER TABLE spin_prizes ADD COLUMN IF NOT EXISTS initial_stock int NOT NULL DEFAULT 0;\nUPDATE spin_prizes SET initial_stock = stock;\n\nSetelah itu buka 🎁 Kelola Hadiah dan pastikan angka stok tiap hadiah sudah sesuai jumlah awal (isi ulang manual kalau perlu), baru fitur ini akan bekerja untuk seterusnya.');
+      return false;
+    }
+    const toReset = spinPrizes.filter(p => p.stock !== (p.initial_stock ?? p.stock));
+    if(toReset.length===0) return true;
+    await Promise.all(toReset.map(p => db.from('spin_prizes').update({stock: p.initial_stock}).eq('id', p.id)));
+    return true;
+  }
+
+  async function spinClearHasil(){
+    if(spinWinners.length===0) return;
+    const ok = await askConfirm(`Hapus semua hasil undian (${spinWinners.length} pemenang)? Stok tiap hadiah otomatis dikembalikan ke jumlah awal. Bisa diurungkan dalam 10 detik setelah ini.`, '🗑️ Hapus Semua Hasil');
+    if(!ok) return;
+    // Cek dulu baseline stok tersedia SEBELUM data dihapus, supaya kalau gagal
+    // (mis. migrasi belum jalan) tidak terjadi kondisi setengah-jalan.
+    const canReset = await spinResetStokKeAwal();
+    if(!canReset) return;
+    const backup = spinWinners.slice();
+    const prizeStockBackup = spinPrizes.map(p => ({id:p.id, stock:p.stock})); // stok sebelum direset, buat undo
+    await db.from('winners').delete().neq('id','00000000-0000-0000-0000-000000000000');
+    await spinLoadAll();
+    showUndoToast(`Semua hasil (${backup.length} pemenang)`,
+      async function(){
+        const tasks = [];
+        if(backup.length) tasks.push(db.from('winners').insert(backup));
+        prizeStockBackup.forEach(pb => tasks.push(db.from('spin_prizes').update({stock:pb.stock}).eq('id', pb.id)));
+        if(tasks.length) await Promise.all(tasks);
+        await spinLoadAll();
+        showToast('↩️ Semua hasil & stok dikembalikan', 'success', 2500);
+      },
+      function(){},
+      '🏆'
+    );
+  }
+
+  async function spinResetSemua(){
+    if(spinEntries.length===0 && spinWinners.length===0) return;
+    const ok = await askConfirm(`Reset semua? ${spinEntries.length} entri dan ${spinWinners.length} riwayat pemenang akan dihapus, stok hadiah dikembalikan ke jumlah awal. Bisa diurungkan dalam 10 detik setelah ini.`, '🔄 Reset Semua');
+    if(!ok) return;
+    const canReset = await spinResetStokKeAwal();
+    if(!canReset) return;
+    const backupEntries = spinEntries.slice();
+    const backupWinners = spinWinners.slice();
+    const prizeStockBackup = spinPrizes.map(p => ({id:p.id, stock:p.stock})); // stok sebelum direset, buat undo
+    await Promise.all([
+      db.from('entries').delete().neq('id','00000000-0000-0000-0000-000000000000'),
+      db.from('winners').delete().neq('id','00000000-0000-0000-0000-000000000000')
+    ]);
+    await spinLoadAll();
+    showUndoToast(`Reset semua (${backupEntries.length} entri, ${backupWinners.length} pemenang)`,
+      async function(){
+        const tasks = [];
+        if(backupEntries.length) tasks.push(db.from('entries').insert(backupEntries));
+        if(backupWinners.length) tasks.push(db.from('winners').insert(backupWinners));
+        prizeStockBackup.forEach(pb => tasks.push(db.from('spin_prizes').update({stock:pb.stock}).eq('id', pb.id)));
+        if(tasks.length) await Promise.all(tasks);
+        await spinLoadAll();
+        showToast('↩️ Semua data & stok dikembalikan', 'success', 2500);
+      },
+      function(){},
+      '🔄'
+    );
+  }
+
+  // ---- setting: nama yang dikecualikan dari undian ----
+  async function spinSaveSettings(){
+    const {error} = await db.from('spin_settings').upsert({key:'exclude_list', data: spinExcluded, updated_at: new Date().toISOString()});
+    if(error){
+      alert('Gagal menyimpan pengaturan pengecualian ke database: ' + error.message + '\n\nPastikan tabel spin_settings sudah dibuat (lihat SQL di bagian atas menu Spin).');
+      console.error('spinSaveSettings error:', error);
+      return false;
+    }
+    return true;
+  }
+
+  // Simpan status centang "satu orang satu hadiah" ke database supaya tetap
+  // kebaca sama waktu halaman di-refresh (bukan cuma keingat di browser doang).
+  async function spinSaveOnePerPerson(){
+    const checked = document.getElementById('spinOneWinPerPerson').checked;
+    const {error} = await db.from('spin_settings').upsert({key:'one_per_person', data: {value: checked}, updated_at: new Date().toISOString()});
+    if(error){
+      console.error('spinSaveOnePerPerson error:', error);
+    }
+  }
+
+  function spinOpenSettings(){
+    spinRenderExcludePrizeChecks();
+    spinRenderExcludeList();
+    document.getElementById('spinExcludeAllPrize').checked = true;
+    document.getElementById('spinExcludePrizeChecks').style.display = 'none';
+    document.getElementById('spinTitleTextInput').value = spinTitleSettings.text;
+    document.getElementById('spinSettingsOverlay').classList.add('show');
+  }
+  function spinCloseSettings(){
+    document.getElementById('spinSettingsOverlay').classList.remove('show');
+    document.getElementById('spinExcludeInput').value = '';
+  }
+
+  function spinToggleExcludeAllPrize(){
+    const allChecked = document.getElementById('spinExcludeAllPrize').checked;
+    document.getElementById('spinExcludePrizeChecks').style.display = allChecked ? 'none' : 'flex';
+  }
+
+  function spinRenderExcludePrizeChecks(){
+    const el = document.getElementById('spinExcludePrizeChecks');
+    if(spinPrizes.length===0){ el.innerHTML = '<div class="spin-hint" style="margin:0;">Belum ada hadiah — tambah dulu di 🎁 Kelola Hadiah.</div>'; return; }
+    el.innerHTML = spinPrizes.map(p => `
+      <label class="spin-check-row"><input type="checkbox" class="spin-exclude-prize-chk" value="${p.id}"> ${escapeHtml(p.name)}</label>
+    `).join('');
+  }
+
+  async function spinAddExclude(){
+    const lines = document.getElementById('spinExcludeInput').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if(lines.length===0) return;
+
+    const useAll = document.getElementById('spinExcludeAllPrize').checked;
+    const chosenPrizeIds = useAll ? [] : Array.from(document.querySelectorAll('.spin-exclude-prize-chk:checked')).map(c=>c.value);
+    if(!useAll && chosenPrizeIds.length===0){
+      alert('Pilih minimal satu hadiah, atau centang "Semua hadiah".');
+      return;
+    }
+
+    lines.forEach(n => {
+      const existing = spinExcluded.find(e => e.name.toLowerCase() === n.toLowerCase());
+      if(!existing){
+        spinExcluded.push({name: n, prizeIds: chosenPrizeIds});
+      } else if(useAll){
+        existing.prizeIds = []; // jadikan "semua hadiah" (override)
+      } else {
+        existing.prizeIds = existing.prizeIds && existing.prizeIds.length
+          ? Array.from(new Set([...existing.prizeIds, ...chosenPrizeIds]))
+          : chosenPrizeIds; // kalau sebelumnya "semua" (kosong), tetap fokus ke pilihan baru agar tidak diam-diam melebar
+      }
+    });
+    document.getElementById('spinExcludeInput').value = '';
+    const ok = await spinSaveSettings();
+    if(!ok){ await spinLoadAll(); spinRenderExcludePrizeChecks(); }
+    spinRenderExcludeList();
+    spinRenderEntries();
+  }
+
+  async function spinRemoveExclude(name){
+    spinExcluded = spinExcluded.filter(e => e.name !== name);
+    const ok = await spinSaveSettings();
+    if(!ok){ await spinLoadAll(); spinRenderExcludePrizeChecks(); }
+    spinRenderExcludeList();
+    spinRenderEntries();
+  }
+
+  function spinRenderExcludeList(){
+    const el = document.getElementById('spinExcludeList');
+    if(spinExcluded.length===0){ el.innerHTML = '<div class="spin-empty" style="padding:6px 0;font-size:12.5px;">Belum ada nama yang dikecualikan.</div>'; return; }
+    el.innerHTML = spinExcluded.map(e => {
+      let scopeLabel;
+      if(!e.prizeIds || e.prizeIds.length===0){
+        scopeLabel = 'Semua hadiah';
+      } else {
+        const names = e.prizeIds.map(id => { const p = spinPrizes.find(x=>x.id===id); return p ? p.name : null; }).filter(Boolean);
+        scopeLabel = names.length ? names.join(', ') : 'Hadiah tertentu';
+      }
+      return `
+      <span class="spin-exclude-chip">🚫 ${escapeHtml(e.name)} <span style="opacity:.75;font-size:11px;">(${escapeHtml(scopeLabel)})</span> <button onclick='spinRemoveExclude(${JSON.stringify(e.name)})' title="Hapus">✕</button></span>
+    `;
+    }).join('');
+  }
+
+  // ---- gambar ----
+  function spinOpenImgModal(id){ spinImgTargetId = id; document.getElementById('spinImgOverlay').classList.add('show'); }
+  function spinCloseImgModal(){ document.getElementById('spinImgOverlay').classList.remove('show'); document.getElementById('spinImgUrlInput').value=''; spinImgTargetId=null; }
+  async function spinSubmitImg(){
+    const url = document.getElementById('spinImgUrlInput').value.trim();
+    if(spinImgTargetId){
+      await db.from('entries').update({image_url:url}).eq('id', spinImgTargetId);
+    }
+    spinCloseImgModal();
+    await spinLoadAll();
+  }
+
+  // ---- undi ----
+  // Buang nomor urut di depan (mis. "215. Gunawan3" -> "Gunawan3", kalau nama
+  // ke-input dengan format list bernomor) DAN angka duplikat di belakang
+  // (mis. "Gunawan3" -> "Gunawan") supaya "215. Gunawan3", "213. Gunawan1",
+  // "214. Gunawan2" semua dikenali sebagai orang yang sama: "Gunawan".
+  function spinBaseName(s){
+    return s.replace(/^\d+\.\s*/, '').replace(/\d+$/,'').trim();
+  }
+  let spinSessionSkip = new Set(); // id tiket yang dilewati sementara (misal: "tidak hadir"), tidak dihapus dari database
+
+  function spinHasWon(baseName){
+    return spinWinners.some(w => spinBaseName(w.name).toLowerCase() === baseName.toLowerCase());
+  }
+
+  // Tiket PERSIS ini (nama lengkap termasuk angka) sudah pernah menang?
+  // Ini beda dari spinHasWon() yang cocokkan nama DASAR (tanpa angka).
+  function spinHasWonExact(name){
+    return spinWinners.some(w => w.name.toLowerCase() === name.toLowerCase());
+  }
+
+  // Satu sumber kebenaran: apakah entri ini harus dilewati karena sudah menang?
+  // - Tiket yang PERSIS sudah menang: selalu dilewati, apapun status "satu orang satu hadiah".
+  //   (tiket itu sendiri sudah dapat hadiahnya, tidak boleh diundi ulang)
+  // - Tiket lain dengan NAMA DASAR sama (mis. Gunawan1 saat Gunawan3 menang):
+  //   dilewati HANYA kalau "satu orang satu hadiah" dicentang.
+  function spinIsAlreadyWon(name, onePerPerson){
+    if(spinHasWonExact(name)) return true;
+    if(onePerPerson && spinHasWon(spinBaseName(name))) return true;
+    return false;
+  }
+
+  // Pilih 1 pemenang secara acak dari daftar `eligible` (yang SUDAH difilter oleh aturan
+  // pengecualian/⚙️Setting, sesi "tidak hadir", dan "satu orang satu hadiah" di spinDrawWinner).
+  // Grup dengan persentase lebih tinggi punya peluang lebih besar dipilih, tapi tidak pernah
+  // melanggar aturan lain di atas karena hanya memilih dari dalam `eligible`.
+  function spinWeightedPick(eligible){
+    if(!eligible || eligible.length===0) return null;
+    if(spinGroups.length===0) return eligible[Math.floor(Math.random()*eligible.length)];
+
+    // Kelompokkan peserta yang berhak diundi berdasarkan grupnya ('' = tanpa grup)
+    const buckets = {};
+    eligible.forEach(e => {
+      const key = e.group_id || '';
+      (buckets[key] = buckets[key] || []).push(e);
+    });
+    const bucketKeys = Object.keys(buckets);
+
+    const percentMap = {};
+    spinGroups.forEach(g => { percentMap[g.id] = Math.max(0, parseFloat(g.percent) || 0); });
+
+    // Total persentase grup yang PUNYA peserta di daftar eligible saat ini
+    let definedTotal = 0;
+    bucketKeys.forEach(k => { if(k && percentMap.hasOwnProperty(k)) definedTotal += percentMap[k]; });
+    const noGroupRemaining = Math.max(0, 100 - definedTotal); // sisa % dibagi rata ke peserta tanpa grup
+
+    let weights = {}, totalWeight = 0;
+    bucketKeys.forEach(k => {
+      const w = (k === '') ? noGroupRemaining : (percentMap.hasOwnProperty(k) ? percentMap[k] : 0);
+      weights[k] = w;
+      totalWeight += w;
+    });
+    // Kalau semua bobot 0 (mis. semua grup diset 0% dan tidak ada peserta tanpa grup), jangan macet — bagi rata per bucket.
+    if(totalWeight <= 0){
+      bucketKeys.forEach(k => { weights[k] = 1; });
+      totalWeight = bucketKeys.length;
+    }
+
+    let r = Math.random() * totalWeight;
+    let chosenKey = bucketKeys[bucketKeys.length - 1];
+    for(const k of bucketKeys){
+      if(r < weights[k]){ chosenKey = k; break; }
+      r -= weights[k];
+    }
+    const bucket = buckets[chosenKey];
+    return bucket[Math.floor(Math.random()*bucket.length)];
+  }
+
+  async function spinDrawWinner(){
+    if(spinEntries.length===0) return;
+
+    // Wajib pilih hadiah dulu sebelum bisa spin
+    const prizeSel = document.getElementById('spinPrizeSelect');
+    const prizeId = prizeSel.value;
+    const prize = spinPrizes.find(p => p.id === prizeId);
+    if(!prize){
+      alert('Pilih hadiah/menu doorprize dulu sebelum mengundi (misal: Bakso, Geprek, Oli Motor, Nasi Uduk).');
+      return;
+    }
+    if(prize.stock <= 0){
+      alert(`Stok "${prize.name}" sudah habis. Pilih hadiah lain atau tambah stoknya di 🎁 Kelola Hadiah.`);
+      return;
+    }
+
+    // Saat mode hadiah aktif, undi dilakukan satu-satu (1 orang = 1 pcs hadiah ini),
+    // supaya konfirmasi hadir/tidak & pengurangan stok akurat per orang.
+    const onePerPerson = document.getElementById('spinOneWinPerPerson').checked;
+
+    const eligible = spinEntries.filter(e => {
+      if(spinIsExcluded(e.name, prize.id)) return false;
+      if(spinSessionSkip.has(e.id)) return false; // lagi dilewati sementara (misal: tadi "tidak hadir")
+      if(spinIsAlreadyWon(e.name, onePerPerson)) return false; // tiket ini sendiri, atau (kalau mode aktif) orang yang sama, sudah pernah menang
+      return true;
+    });
+    if(eligible.length===0){
+      alert(`Tidak ada entri yang memenuhi syarat untuk hadiah "${prize.name}" — cek daftar pengecualian (⚙️ Setting) atau mungkin semua sisa peserta sudah pernah menang.`);
+      return;
+    }
+
+    document.getElementById('spinDrawBtn').disabled = true;
+    const pick = spinWeightedPick(eligible);
+
+    await spinRunSpinAnimation(pick.name, eligible.map(e=>e.name));
+
+    // Simpan sementara — belum masuk winners, menunggu konfirmasi apakah orangnya benar-benar ada di tempat.
+    spinPendingPicked = { pick, onePerPerson };
+    spinPendingPrize = prize;
+    spinShowPresenceConfirm(pick.name, prize.name);
+  }
+
+  function spinGetConfettiLayer(){
+    let layer = document.getElementById('spinConfettiLayer');
+    if(!layer){
+      layer = document.createElement('div');
+      layer.id = 'spinConfettiLayer';
+      layer.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;z-index:2147483000;pointer-events:none;overflow:hidden;';
+      document.body.appendChild(layer);
+    }
+    return layer;
+  }
+
+  // Animasi ditulis pakai Web Animations API (element.animate) langsung dari JS —
+  // TIDAK bergantung pada @keyframes/class di CSS, supaya tidak mudah bentrok/gagal
+  // kalau ada aturan CSS lain di halaman yang tidak sengaja menimpanya.
+  function spinFireReaction(emojiList, opts){
+    opts = opts || {};
+    const layer = spinGetConfettiLayer();
+    const count = opts.count || 18;
+    const fall = !!opts.fall;
+    const vh = window.innerHeight || 800;
+    const vw = window.innerWidth || 400;
+    let created = 0;
+    for(let i=0;i<count;i++){
+      const b = document.createElement('div');
+      b.textContent = emojiList[Math.floor(Math.random()*emojiList.length)];
+      const size = opts.size || 52;
+      const dur = (opts.duration || (2.4 + Math.random()*1.2)) * 1000;
+      const delay = Math.random()*350;
+      const leftPx = (10 + Math.random()*80)/100 * vw;
+      const drift = (Math.random()*80-40);
+      const startTop = fall ? -60 : (vh + 60);
+      const endTop = fall ? (vh*0.65) : -(vh*1.1);
+      b.style.cssText = `position:absolute;left:${leftPx}px;top:${startTop}px;font-size:${size}px;opacity:0;line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4));`;
+      layer.appendChild(b);
+      created++;
+      try{
+        const anim = b.animate([
+          { top: startTop+'px', transform:'translateX(0px) rotate(0deg)', opacity:0 },
+          { top: startTop+'px', transform:'translateX(0px) rotate(0deg)', opacity:1, offset:0.1 },
+          { top: endTop+'px', transform:`translateX(${drift}px) rotate(${fall?20:0}deg)`, opacity:0 }
+        ], { duration: dur, delay, easing:'ease-in-out', fill:'forwards' });
+        anim.onfinish = () => b.remove();
+      }catch(err){
+        // Fallback kalau Web Animations API tidak tersedia: tampilkan statis lalu hapus manual
+        b.style.top = (fall ? vh*0.4 : vh*0.4) + 'px';
+        b.style.opacity = '1';
+        setTimeout(()=>b.remove(), dur+delay);
+      }
+    }
+    console.log('[spinFireReaction] emoji dibuat:', created, 'fall:', fall);
+  }
+
+  function spinFireConfetti(){
+    const layer = spinGetConfettiLayer();
+    layer.innerHTML = '';
+    const vh = window.innerHeight || 800;
+    const vw = window.innerWidth || 400;
+    const colors = ['#f5b942','#ef4565','#5865f2','#22c55e','#ffd76a','#ff8fab','#38bdf8'];
+    for(let i=0;i<70;i++){
+      const p = document.createElement('div');
+      const dur = (2.2 + Math.random()*1.6) * 1000;
+      const delay = Math.random()*500;
+      const isCircle = Math.random() < 0.5;
+      const leftPx = Math.random()*vw;
+      p.style.cssText = `position:absolute;left:${leftPx}px;top:-24px;width:13px;height:20px;opacity:0;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:${isCircle?'50%':'2px'};`;
+      layer.appendChild(p);
+      try{
+        const anim = p.animate([
+          { top:'-24px', transform:'rotate(0deg)', opacity:1 },
+          { top:(vh*1.08)+'px', transform:'rotate(720deg)', opacity:.95 }
+        ], { duration:dur, delay, easing:'linear', fill:'forwards' });
+        anim.onfinish = () => p.remove();
+      }catch(err){ setTimeout(()=>p.remove(), dur+delay); }
+    }
+    const balloons = ['🎈','🎉','🎊'];
+    for(let i=0;i<16;i++){
+      const b = document.createElement('div');
+      b.textContent = balloons[Math.floor(Math.random()*balloons.length)];
+      const dur = (3 + Math.random()*1.5) * 1000;
+      const delay = Math.random()*400;
+      const leftPx = (Math.random()*90)/100 * vw;
+      const drift = (Math.random()*80-40);
+      const startTop = vh + 80;
+      const endTop = -(vh*1.12);
+      b.style.cssText = `position:absolute;left:${leftPx}px;top:${startTop}px;font-size:52px;opacity:0;line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4));`;
+      layer.appendChild(b);
+      try{
+        const anim = b.animate([
+          { top: startTop+'px', transform:'translateX(0px)', opacity:0 },
+          { top: startTop+'px', transform:'translateX(0px)', opacity:1, offset:0.08 },
+          { top: endTop+'px', transform:`translateX(${drift}px)`, opacity:0 }
+        ], { duration:dur, delay, easing:'ease-in-out', fill:'forwards' });
+        anim.onfinish = () => b.remove();
+      }catch(err){ setTimeout(()=>b.remove(), dur+delay); }
+    }
+    console.log('[spinFireConfetti] confetti+balon dibuat');
+  }
+
+
+  function spinShowPresenceConfirm(name, prizeName){
+    document.getElementById('spinWinOverlay').classList.remove('show');
+    document.getElementById('spinPresencePrize').textContent = '🎁 ' + prizeName;
+    document.getElementById('spinPresenceName').textContent = name;
+    document.getElementById('spinPresenceOverlay').classList.add('show');
+    spinFireConfetti();
+  }
+
+  async function spinConfirmPresence(isPresent){
+    document.getElementById('spinPresenceOverlay').classList.remove('show');
+    if(!spinPendingPicked || !spinPendingPrize){ document.getElementById('spinDrawBtn').disabled = false; return; }
+    const { pick } = spinPendingPicked;
+    const prize = spinPendingPrize;
+
+    if(isPresent){
+      // Sah menang: catat pemenang + kurangi stok hadiah 1 pcs.
+      // Tiket TIDAK dihapus dari entries — kalau "Satu orang satu hadiah" dicentang, dia (dan
+      // tiket duplikatnya) otomatis dilewati di undian berikutnya karena sudah tercatat di winners.
+      await db.from('winners').insert({name: pick.name, image_url: pick.image_url||null, prize_name: prize.name});
+      await db.from('spin_prizes').update({stock: Math.max(0, prize.stock - 1)}).eq('id', prize.id);
+
+      await spinLoadAll();
+      spinShowTicket([{name: pick.name}], prize.name);
+      spinFireReaction(['👏','🎉','😄','🙌','⭐'], {count:24, size:50});
+    } else {
+      // Tidak ada di tempat: stok TIDAK berkurang, tiket TIDAK dihapus, cuma dilewati sementara
+      // untuk sesi ini supaya bisa langsung diundi ulang tanpa kena nama yang sama lagi.
+      spinSessionSkip.add(pick.id);
+      spinRenderEntries();
+      document.getElementById('spinDrawBtn').disabled = false;
+      spinFireReaction(['😢','😞','💔'], {count:14, fall:true, duration:2.6, size:46});
+      spinShowNotAvailableNotice(pick.name, prize.name, prize.stock);
+    }
+    spinPendingPicked = null;
+    spinPendingPrize = null;
+  }
+
+  function spinShowNotAvailableNotice(name, prizeName, stock){
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:10001;background:#1d1418;border:1.5px solid #4a2230;color:#fca5b8;padding:12px 18px;border-radius:12px;font-family:Inter,sans-serif;font-size:13.5px;max-width:min(92vw,420px);text-align:center;box-shadow:0 10px 30px #000000aa;animation:spinNoticePop .25s ease;';
+    el.innerHTML = `😢 <b>${escapeHtml(name)}</b> tidak ada di tempat. Stok "${escapeHtml(prizeName)}" tetap (${stock} pcs), tiket dilewati — klik "Undi sekarang" lagi.`;
+    document.body.appendChild(el);
+    setTimeout(() => { el.style.transition = 'opacity .3s'; el.style.opacity = '0'; setTimeout(()=>el.remove(), 320); }, 3200);
+  }
+
+  function spinRunSpinAnimation(finalName, names){
+    return new Promise(resolve=>{
+      const overlay = document.getElementById('spinWinOverlay');
+      overlay.classList.add('show');
+      overlay.innerHTML = `<div class="spin-ticket"><div class="spin-eyebrow">Mengundi…</div><div class="spin-name-display" id="spinNameDisplay">—</div></div>`;
+      const nameEl = document.getElementById('spinNameDisplay');
+      let elapsed = 0;
+      const total = 1400;
+      const step = 70;
+      const timer = setInterval(()=>{
+        nameEl.textContent = names.length ? names[Math.floor(Math.random()*names.length)] : finalName;
+        elapsed += step;
+        if(elapsed >= total){
+          clearInterval(timer);
+          nameEl.textContent = finalName;
+          resolve();
+        }
+      }, step);
+    });
+  }
+
+  function spinShowTicket(picked, prizeName){
+    const overlay = document.getElementById('spinWinOverlay');
+    const names = picked.map(p=>escapeHtml(p.name)).join(' &nbsp;•&nbsp; ');
+    overlay.classList.add('show');
+    overlay.innerHTML = `
+      <div class="spin-ticket">
+        <div class="spin-eyebrow">Pemenang${prizeName ? ' — 🎁 '+escapeHtml(prizeName) : ''}</div>
+        <div class="spin-winner-name">${names}</div>
+        <div class="spin-ticket-no">Diundi ${new Date().toLocaleString('id-ID')}</div>
+        <div class="spin-modal-actions" style="justify-content:center;margin-top:18px;">
+          <button class="spin-btn spin-btn-primary" onclick="document.getElementById('spinWinOverlay').classList.remove('show');document.getElementById('spinDrawBtn').disabled=false;">Tutup</button>
+        </div>
+      </div>`;
+  }
   </script>
 
 </html>
