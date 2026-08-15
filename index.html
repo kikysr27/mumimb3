@@ -3762,9 +3762,12 @@
         #spinAddOverlay.show,#spinImgOverlay.show,#spinWinOverlay.show,#spinSettingsOverlay.show,#spinPrizeOverlay.show,#spinPresenceOverlay.show,#spinGroupOverlay.show,#spinAssignGroupOverlay.show{display:flex;}
         #sec-spin .spin-group-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:#26314a;color:#8fb3ff;margin-left:6px;white-space:nowrap;cursor:pointer;border:1px solid #33436b;}
         #sec-spin .spin-group-badge:hover{filter:brightness(1.25);}
-        #sec-spin .spin-group-row{display:flex;align-items:center;gap:8px;background:#1d2129;border:1px solid #262b33;border-radius:10px;padding:8px 10px;}
-        #sec-spin .spin-group-row .spin-group-name{flex:1;font-size:13.5px;font-weight:600;}
-        #sec-spin .spin-group-row input[type=number]{width:64px;background:#0e1013;border:1px solid #262b33;border-radius:7px;color:#e9ebf0;padding:5px 6px;font-family:'Inter',sans-serif;text-align:center;}
+        #sec-spin .spin-group-row{background:#1d2129;border:1px solid #262b33;border-radius:10px;padding:10px 12px;}
+        #sec-spin .spin-group-row .spin-group-toprow{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+        #sec-spin .spin-group-row .spin-group-name-input{flex:1;background:#0e1013;border:1px solid #262b33;border-radius:7px;color:#e9ebf0;padding:6px 8px;font-family:'Inter',sans-serif;font-weight:700;font-size:13.5px;min-width:0;}
+        #sec-spin .spin-group-row .spin-group-pct-badge{background:#262b33;color:#f5b942;font-weight:700;font-size:12.5px;padding:3px 9px;border-radius:999px;flex-shrink:0;min-width:44px;text-align:center;}
+        #sec-spin .spin-group-row input[type=range]{flex:1;accent-color:#5865f2;height:4px;}
+        #sec-spin .spin-group-row .spin-group-slider-row{display:flex;align-items:center;gap:10px;}
         #sec-spin .spin-prize-row{display:flex;align-items:center;gap:8px;background:#1d2129;border:1px solid #262b33;border-radius:10px;padding:8px 10px;}
         #sec-spin .spin-prize-row .spin-prize-name{flex:1;font-size:13.5px;font-weight:600;}
         #sec-spin .spin-prize-row .spin-prize-stock{font-size:12.5px;color:#8b93a3;min-width:70px;text-align:center;}
@@ -4013,17 +4016,30 @@ ALTER TABLE entries ADD COLUMN IF NOT EXISTS group_id uuid REFERENCES spin_group
       <div id="spinGroupOverlay">
         <div class="spin-modal" style="max-width:460px;">
           <h3>👥 Kelola Grup Peserta</h3>
-          <p class="spin-hint">Bikin grup bebas (misal: Miskin, Standar, Menengah, Kaya — atau nama lain sesuai acara). Atur persentase peluang menang tiap grup saat undian. Peserta tanpa grup akan berbagi sisa persentase yang belum dipakai grup manapun. Pengaturan ini tetap mengikuti aturan pengecualian &amp; "satu orang satu hadiah" di ⚙️ Setting.</p>
+          <p class="spin-hint">Atur persentase peluang menang tiap grup pakai slider — geser aja, gak perlu ngetik. Peserta tanpa grup berbagi sisa persen yang belum dipakai grup manapun.</p>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinQuickPreset()">⚡ Buat cepat: Miskin/Standar/Menengah/Kaya</button>
+            <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinEqualizeGroups()">➗ Bagi rata semua grup</button>
+          </div>
+
           <div style="display:flex;gap:6px;margin-bottom:10px;">
-            <input type="text" id="spinGroupNameInput" placeholder="Nama grup, misal: Menengah" style="flex:2;">
-            <input type="number" id="spinGroupPercentInput" placeholder="%" min="0" max="100" step="0.1" value="0" style="flex:1;background:#0e1013;border:1px solid #262b33;border-radius:10px;color:#e9ebf0;padding:10px 12px;">
+            <input type="text" id="spinGroupNameInput" placeholder="Nama grup baru, misal: Menengah" style="flex:1;">
+            <button class="spin-btn spin-btn-primary spin-btn-sm" onclick="spinAddGroup()">＋ Tambah</button>
           </div>
-          <div class="spin-modal-actions" style="justify-content:flex-start;margin-top:0;margin-bottom:10px;">
-            <button class="spin-btn spin-btn-primary spin-btn-sm" onclick="spinAddGroup()">＋ Tambah grup</button>
+
+          <div id="spinGroupTotalBarWrap" style="margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:#8b93a3;margin-bottom:4px;">
+              <span id="spinGroupTotalLabel">Total: 0%</span>
+              <span id="spinGroupRemainLabel">Sisa untuk tanpa grup: 100%</span>
+            </div>
+            <div style="height:8px;border-radius:999px;background:#0e1013;overflow:hidden;display:flex;">
+              <div id="spinGroupTotalBar" style="height:100%;background:#5865f2;width:0%;transition:width .15s;"></div>
+            </div>
           </div>
-          <div class="spin-hint" id="spinGroupTotalHint" style="margin-bottom:8px;">Belum ada grup.</div>
+
           <p class="spin-hint" style="margin-bottom:6px;">Daftar grup &amp; persentase menang:</p>
-          <div id="spinGroupList" style="display:flex;flex-direction:column;gap:8px;min-height:34px;max-height:280px;overflow-y:auto;"></div>
+          <div id="spinGroupList" style="display:flex;flex-direction:column;gap:10px;min-height:34px;max-height:280px;overflow-y:auto;"></div>
           <div class="spin-modal-actions">
             <button class="spin-btn spin-btn-ghost" onclick="spinCloseGroupModal()">Tutup</button>
           </div>
@@ -26916,20 +26932,43 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   function spinCloseGroupModal(){
     document.getElementById('spinGroupOverlay').classList.remove('show');
     document.getElementById('spinGroupNameInput').value = '';
-    document.getElementById('spinGroupPercentInput').value = '0';
   }
 
   async function spinAddGroup(){
-    const name = document.getElementById('spinGroupNameInput').value.trim();
-    const percent = parseFloat(document.getElementById('spinGroupPercentInput').value) || 0;
-    if(!name){ alert('Isi nama grup dulu, misal: Miskin, Standar, Menengah, Kaya (bebas, tidak wajib 4 nama ini).'); return; }
-    const {error} = await db.from('spin_groups').insert({name, percent: Math.max(0, Math.min(100, percent))});
+    const nameInput = document.getElementById('spinGroupNameInput');
+    const name = nameInput.value.trim();
+    if(!name){ alert('Isi nama grup dulu, misal: Miskin, Standar, Menengah, Kaya (bebas, tidak wajib 4 nama ini).'); nameInput.focus(); return; }
+    const {error} = await db.from('spin_groups').insert({name, percent: 0});
     if(error){
       alert('Gagal menambah grup: ' + error.message + '\n\nPastikan tabel spin_groups & kolom entries.group_id sudah dibuat (lihat SQL di bagian atas menu Spin).');
       return;
     }
-    document.getElementById('spinGroupNameInput').value = '';
-    document.getElementById('spinGroupPercentInput').value = '0';
+    nameInput.value = '';
+    await spinLoadAll();
+    spinRenderGroupList();
+  }
+
+  // ⚡ Sekali klik: langsung bikin 4 grup umum dengan persentase awal 25% rata (bisa digeser lagi setelahnya).
+  // Kalau grup dengan nama itu sudah ada, dilewati (tidak dobel).
+  async function spinQuickPreset(){
+    const preset = ['Miskin','Standar','Menengah','Kaya'];
+    const existingNames = spinGroups.map(g=>g.name.toLowerCase());
+    const toInsert = preset.filter(n => !existingNames.includes(n.toLowerCase())).map(n => ({name:n, percent:25}));
+    if(toInsert.length===0){ alert('Grup Miskin/Standar/Menengah/Kaya sudah ada semua.'); return; }
+    const {error} = await db.from('spin_groups').insert(toInsert);
+    if(error){
+      alert('Gagal membuat grup cepat: ' + error.message + '\n\nPastikan tabel spin_groups & kolom entries.group_id sudah dibuat (lihat SQL di bagian atas menu Spin).');
+      return;
+    }
+    await spinLoadAll();
+    spinRenderGroupList();
+  }
+
+  // ➗ Sekali klik: bagi rata persentase ke SEMUA grup yang ada sekarang (100 / jumlah grup).
+  async function spinEqualizeGroups(){
+    if(spinGroups.length===0){ alert('Belum ada grup untuk dibagi rata.'); return; }
+    const equal = Math.round((100 / spinGroups.length) * 10) / 10;
+    await Promise.all(spinGroups.map(g => db.from('spin_groups').update({percent: equal}).eq('id', g.id)));
     await spinLoadAll();
     spinRenderGroupList();
   }
@@ -26938,10 +26977,18 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     let p = parseFloat(val);
     if(isNaN(p)) p = 0;
     p = Math.max(0, Math.min(100, p));
-    await db.from('spin_groups').update({percent: p}).eq('id', id);
-    await spinLoadAll();
-    spinRenderGroupList();
+    // Update tampilan badge persen secara instan (tanpa nunggu round-trip database) biar slider terasa responsif
+    const badge = document.querySelector(`.spin-group-pct-badge[data-gid="${id}"]`);
+    if(badge) badge.textContent = p + '%';
+    const g = spinGroups.find(x=>x.id===id);
+    if(g) g.percent = p;
+    spinUpdateGroupTotalBar();
+    clearTimeout(spinGroupSaveDebounce[id]);
+    spinGroupSaveDebounce[id] = setTimeout(async () => {
+      await db.from('spin_groups').update({percent: p}).eq('id', id);
+    }, 250);
   }
+  let spinGroupSaveDebounce = {};
 
   async function spinRenameGroup(id, val){
     const name = val.trim();
@@ -26961,32 +27008,44 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     spinRenderGroupList();
   }
 
+  function spinUpdateGroupTotalBar(){
+    const bar = document.getElementById('spinGroupTotalBar');
+    const totalLabel = document.getElementById('spinGroupTotalLabel');
+    const remainLabel = document.getElementById('spinGroupRemainLabel');
+    if(!bar) return;
+    const total = spinGroups.reduce((sum,g)=>sum+(parseFloat(g.percent)||0),0);
+    bar.style.width = Math.min(100, total) + '%';
+    bar.style.background = total > 100 ? '#ef4565' : '#5865f2';
+    totalLabel.textContent = `Total grup: ${total}%`;
+    remainLabel.textContent = total > 100
+      ? `⚠️ Lebih ${(total-100).toFixed(1).replace(/\.0$/,'')}% — otomatis dinormalkan saat undian`
+      : `Sisa untuk tanpa grup: ${(100-total).toFixed(1).replace(/\.0$/,'')}%`;
+  }
+
   function spinRenderGroupList(){
     const el = document.getElementById('spinGroupList');
-    const totalEl = document.getElementById('spinGroupTotalHint');
     if(!el) return;
     if(spinGroups.length===0){
-      el.innerHTML = '<div class="spin-empty" style="padding:6px 0;font-size:12.5px;">Belum ada grup. Tambahkan di atas — misal Miskin, Standar, Menengah, Kaya, atau nama lain sesuai acaramu.</div>';
-      if(totalEl) totalEl.textContent = 'Belum ada grup — semua peserta punya peluang sama rata.';
+      el.innerHTML = '<div class="spin-empty" style="padding:6px 0;font-size:12.5px;">Belum ada grup. Klik "⚡ Buat cepat" di atas, atau tambahkan manual.</div>';
+      spinUpdateGroupTotalBar();
       return;
     }
-    el.innerHTML = spinGroups.map(g => `
-      <div class="spin-group-row">
-        <input type="text" class="spin-prize-name" value="${escapeHtml(g.name)}" style="flex:1;background:#0e1013;border:1px solid #262b33;border-radius:7px;color:#e9ebf0;padding:5px 8px;font-family:'Inter',sans-serif;font-weight:600;font-size:13.5px;" onchange="spinRenameGroup('${g.id}', this.value)">
-        <input type="number" min="0" max="100" step="0.1" value="${g.percent}" onchange="spinUpdateGroupPercent('${g.id}', this.value)" title="Persentase peluang menang untuk grup ini">
-        <span class="spin-prize-stock">%</span>
-        <button class="spin-icon-btn" title="Hapus grup" onclick="spinDeleteGroup('${g.id}')">✕</button>
-      </div>
-    `).join('');
-    const total = spinGroups.reduce((sum,g)=>sum+(parseFloat(g.percent)||0),0);
-    if(totalEl){
-      if(total > 100){
-        totalEl.innerHTML = `⚠️ Total persentase grup <b>${total}%</b> melebihi 100% — sistem otomatis menormalkan proporsinya saat undian (grup tanpa peserta tersisa akan otomatis dilewati, sisa % dibagi ke grup lain yang masih ada pesertanya).`;
-      } else {
-        const sisa = (100 - total).toFixed(1).replace(/\.0$/,'');
-        totalEl.innerHTML = `Total persentase grup: <b>${total}%</b>. Sisa <b>${sisa}%</b> dibagi rata ke peserta tanpa grup.`;
-      }
-    }
+    el.innerHTML = spinGroups.map(g => {
+      const isBlank = !g.name || !g.name.trim();
+      return `
+      <div class="spin-group-row" style="${isBlank ? 'border-color:#ef4565;' : ''}">
+        <div class="spin-group-toprow">
+          <input type="text" class="spin-group-name-input" style="${isBlank ? 'border-color:#ef4565;' : ''}" value="${escapeHtml(g.name||'')}" placeholder="⚠️ Belum ada nama — isi di sini" onchange="spinRenameGroup('${g.id}', this.value)">
+          <button class="spin-icon-btn" title="Hapus grup" onclick="spinDeleteGroup('${g.id}')">✕</button>
+        </div>
+        ${isBlank ? `<div class="spin-hint" style="color:#ef4565;margin:0 0 6px;">⚠️ Grup ini belum ada namanya — ketik nama lalu klik di luar kotak buat simpan, atau hapus (✕) kalau ini cuma data percobaan.</div>` : ''}
+        <div class="spin-group-slider-row">
+          <input type="range" min="0" max="100" step="1" value="${g.percent}" oninput="spinUpdateGroupPercent('${g.id}', this.value)">
+          <span class="spin-group-pct-badge" data-gid="${g.id}">${g.percent}%</span>
+        </div>
+      </div>`;
+    }).join('');
+    spinUpdateGroupTotalBar();
   }
 
   // Isi ulang semua elemen <select> yang menampilkan daftar grup (filter, tambah entri, ganti grup per-peserta)
