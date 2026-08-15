@@ -3946,8 +3946,6 @@ ALTER TABLE entries ADD COLUMN IF NOT EXISTS group_id uuid REFERENCES spin_group
 
         <div class="spin-draw-bar" id="spinDrawBar">
           <button class="spin-draw-btn" id="spinDrawBtn" onclick="spinDrawWinner()">🎉 Undi sekarang</button>
-          <button type="button" onclick="spinFireReaction(['👏','🎉','😄','🙌','⭐'],{count:18})" style="margin-left:8px;padding:8px 12px;border-radius:10px;border:1px solid #2a2f38;background:#171a20;color:#9aa3b2;font-size:12px;cursor:pointer;" title="Coba animasi 'menang' tanpa harus undi beneran">🧪 Tes menang</button>
-          <button type="button" onclick="spinFireReaction(['😢','😞','💔'],{count:10,fall:true,duration:2.6,size:30})" style="margin-left:6px;padding:8px 12px;border-radius:10px;border:1px solid #2a2f38;background:#171a20;color:#9aa3b2;font-size:12px;cursor:pointer;" title="Coba animasi 'tidak ada' tanpa harus undi beneran">🧪 Tes tidak ada</button>
         </div>
       </div>
 
@@ -27553,7 +27551,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   function spinFireReaction(emojiList, opts){
     opts = opts || {};
     const layer = spinGetConfettiLayer();
-    const count = opts.count || 16;
+    const count = opts.count || 18;
     const fall = !!opts.fall;
     const vh = window.innerHeight || 800;
     const vw = window.innerWidth || 400;
@@ -27561,7 +27559,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     for(let i=0;i<count;i++){
       const b = document.createElement('div');
       b.textContent = emojiList[Math.floor(Math.random()*emojiList.length)];
-      const size = opts.size || 34;
+      const size = opts.size || 52;
       const dur = (opts.duration || (2.4 + Math.random()*1.2)) * 1000;
       const delay = Math.random()*350;
       const leftPx = (10 + Math.random()*80)/100 * vw;
@@ -27600,7 +27598,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       const delay = Math.random()*500;
       const isCircle = Math.random() < 0.5;
       const leftPx = Math.random()*vw;
-      p.style.cssText = `position:absolute;left:${leftPx}px;top:-24px;width:9px;height:14px;opacity:0;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:${isCircle?'50%':'2px'};`;
+      p.style.cssText = `position:absolute;left:${leftPx}px;top:-24px;width:13px;height:20px;opacity:0;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:${isCircle?'50%':'2px'};`;
       layer.appendChild(p);
       try{
         const anim = p.animate([
@@ -27611,7 +27609,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       }catch(err){ setTimeout(()=>p.remove(), dur+delay); }
     }
     const balloons = ['🎈','🎉','🎊'];
-    for(let i=0;i<10;i++){
+    for(let i=0;i<16;i++){
       const b = document.createElement('div');
       b.textContent = balloons[Math.floor(Math.random()*balloons.length)];
       const dur = (3 + Math.random()*1.5) * 1000;
@@ -27620,7 +27618,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       const drift = (Math.random()*80-40);
       const startTop = vh + 80;
       const endTop = -(vh*1.12);
-      b.style.cssText = `position:absolute;left:${leftPx}px;top:${startTop}px;font-size:38px;opacity:0;line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4));`;
+      b.style.cssText = `position:absolute;left:${leftPx}px;top:${startTop}px;font-size:52px;opacity:0;line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4));`;
       layer.appendChild(b);
       try{
         const anim = b.animate([
@@ -27658,14 +27656,14 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
 
       await spinLoadAll();
       spinShowTicket([{name: pick.name}], prize.name);
-      spinFireReaction(['👏','🎉','😄','🙌','⭐'], {count:18});
+      spinFireReaction(['👏','🎉','😄','🙌','⭐'], {count:24, size:50});
     } else {
       // Tidak ada di tempat: stok TIDAK berkurang, tiket TIDAK dihapus, cuma dilewati sementara
       // untuk sesi ini supaya bisa langsung diundi ulang tanpa kena nama yang sama lagi.
       spinSessionSkip.add(pick.id);
       spinRenderEntries();
       document.getElementById('spinDrawBtn').disabled = false;
-      spinFireReaction(['😢','😞','💔'], {count:10, fall:true, duration:2.6, size:30});
+      spinFireReaction(['😢','😞','💔'], {count:14, fall:true, duration:2.6, size:46});
       spinShowNotAvailableNotice(pick.name, prize.name, prize.stock);
     }
     spinPendingPicked = null;
