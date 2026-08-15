@@ -3717,8 +3717,11 @@
 
       <style>
         #sec-spin .spin-card{background:radial-gradient(ellipse at top,#1a1d24 0%,#0e1013 60%);border:1px solid #262b33;border-radius:16px;padding:20px 16px 90px;position:relative;overflow:hidden;color:#e9ebf0;font-family:'Inter',system-ui,sans-serif;}
-        #sec-spin .spin-title{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.01em;margin:0 0 4px;display:flex;align-items:center;gap:10px;}
-        #sec-spin .spin-title .spin-dot{width:9px;height:9px;border-radius:50%;background:#f5b942;box-shadow:0 0 10px #f5b942;flex-shrink:0;}
+        #sec-spin .spin-title{font-family:'Space Grotesk','Inter',sans-serif;font-weight:800;font-size:clamp(28px,5vw,44px);letter-spacing:-.01em;margin:6px 0 18px;display:flex;align-items:center;justify-content:center;gap:16px;text-align:center;background:linear-gradient(90deg,#f5b942,#ffd76a,#f5b942);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:spinTitleShine 3.5s linear infinite,spinTitleFloat 2.6s ease-in-out infinite;text-shadow:0 0 30px #f5b94233;}
+        #sec-spin .spin-title .spin-dot{width:14px;height:14px;border-radius:50%;background:#f5b942;box-shadow:0 0 18px #f5b942,0 0 34px #f5b94288;flex-shrink:0;animation:spinDotPulse 1.4s ease-in-out infinite;}
+        @keyframes spinTitleShine{0%{background-position:0% center;}100%{background-position:200% center;}}
+        @keyframes spinTitleFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+        @keyframes spinDotPulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.35);opacity:.7;}}
         #sec-spin .spin-subtitle{color:#8b93a3;font-size:13px;margin:0 0 18px;}
         #sec-spin .spin-sql-notice{display:none;background:#fef3c7;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#92400e;}
         #sec-spin .spin-tabs{display:flex;gap:26px;border-bottom:1px solid #262b33;margin-bottom:16px;}
@@ -3789,7 +3792,7 @@
         .spin-exclude-chip{display:inline-flex;align-items:center;gap:6px;background:#2a1620;border:1px solid #4a2230;color:#ef4565;font-size:12.5px;padding:5px 6px 5px 10px;border-radius:999px;}
         .spin-exclude-chip button{background:none;border:none;color:#ef4565;cursor:pointer;font-size:13px;padding:2px;line-height:1;}
         .spin-row-excluded-tag{color:#ef4565;font-size:11px;font-weight:600;margin-left:6px;white-space:nowrap;}
-        @media (max-width:480px){ #sec-spin .spin-title{font-size:18px;} #sec-spin .spin-draw-btn{padding:13px 20px;} }
+        @media (max-width:480px){ #sec-spin .spin-title{font-size:clamp(22px,7vw,30px);gap:10px;} #sec-spin .spin-draw-btn{padding:13px 20px;} }
         #sec-spin .spin-card.spin-ctrl-hidden .spin-admin-ctrl{display:none !important;}
         #sec-spin .spin-toggle-ctrl-btn{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:#1a1d24;border:1px solid #2c313b;color:#6b7280;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;opacity:.5;transition:opacity .15s;}
         #sec-spin .spin-toggle-ctrl-btn:hover{opacity:1;color:#e9ebf0;}
@@ -3798,8 +3801,8 @@
 
       <div class="spin-card" id="spinCard">
         <button class="spin-toggle-ctrl-btn" id="spinToggleCtrlBtn" onclick="spinToggleAdminControls()" title="Tampilkan/sembunyikan tombol admin">👁️</button>
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-          <h1 class="spin-title" id="spinMainTitle"><span class="spin-dot"></span><span id="spinMainTitleText">Game Spin — Undian Doorprize</span></h1>
+        <h1 class="spin-title" id="spinMainTitle"><span class="spin-dot"></span><span id="spinMainTitleText">Game Spin — Undian Doorprize</span><span class="spin-dot"></span></h1>
+        <div style="display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:10px;">
           <div class="spin-admin-ctrl" style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinOpenPrizeModal()">🎁 Kelola Hadiah</button>
             <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinOpenGroupModal()">👥 Kelola Grup</button>
