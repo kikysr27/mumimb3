@@ -3722,7 +3722,7 @@
         @keyframes spinTitleShine{0%{background-position:0% center;}100%{background-position:200% center;}}
         @keyframes spinTitleFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
         @keyframes spinDotPulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.35);opacity:.7;}}
-        #spinConfettiLayer{position:fixed;inset:0;z-index:10000;pointer-events:none;overflow:hidden;}
+        #spinConfettiLayer{position:fixed;inset:0;z-index:2147483000;pointer-events:none;overflow:hidden;}
         #spinConfettiLayer .spin-confetti-piece{position:absolute;top:-24px;width:9px;height:14px;opacity:0;animation:spinConfettiFall linear forwards;}
         @keyframes spinConfettiFall{0%{opacity:1;transform:translateY(0) rotate(0deg);}100%{opacity:.95;transform:translateY(108vh) rotate(720deg);}}
         #spinConfettiLayer .spin-confetti-balloon{position:absolute;bottom:-80px;font-size:38px;opacity:0;animation:spinBalloonRise linear forwards;filter:drop-shadow(0 6px 10px #00000055);}
@@ -27542,21 +27542,19 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       document.body.appendChild(layer);
     }
     const count = opts.count || 16;
+    const animName = opts.fall ? 'spinReactionFall' : 'spinBalloonRise';
     for(let i=0;i<count;i++){
       const b = document.createElement('div');
       b.className = 'spin-confetti-balloon';
       b.textContent = emojiList[Math.floor(Math.random()*emojiList.length)];
-      b.style.left = (10 + Math.random()*80) + 'vw';
+      const dur = (opts.duration || (2.4 + Math.random()*1.2));
+      const delay = (Math.random()*0.35);
       b.style.setProperty('--spinBalloonDrift', (Math.random()*80-40) + 'px');
-      b.style.animationName = opts.fall ? 'spinReactionFall' : 'spinBalloonRise';
-      b.style.animationTimingFunction = 'ease-in-out';
-      b.style.animationDuration = (opts.duration || (2.4 + Math.random()*1.2)) + 's';
-      b.style.animationDelay = (Math.random()*0.35) + 's';
-      b.style.fontSize = (opts.size || 34) + 'px';
+      b.style.cssText += `left:${10 + Math.random()*80}vw;font-size:${opts.size||34}px;animation:${animName} ${dur}s ease-in-out ${delay}s 1 forwards;`;
       layer.appendChild(b);
     }
     clearTimeout(spinConfettiClearTimer);
-    spinConfettiClearTimer = setTimeout(() => { layer.innerHTML = ''; }, ((opts.duration||3.6)*1000) + 800);
+    spinConfettiClearTimer = setTimeout(() => { layer.innerHTML = ''; }, ((opts.duration||3.6)*1000) + 900);
   }
 
   function spinFireConfetti(){
@@ -27571,11 +27569,10 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     for(let i=0;i<70;i++){
       const p = document.createElement('div');
       p.className = 'spin-confetti-piece';
-      p.style.left = (Math.random()*100) + 'vw';
-      p.style.background = colors[Math.floor(Math.random()*colors.length)];
-      p.style.animationDuration = (2.2 + Math.random()*1.6) + 's';
-      p.style.animationDelay = (Math.random()*0.5) + 's';
-      p.style.borderRadius = Math.random() < 0.5 ? '50%' : '2px';
+      const dur = (2.2 + Math.random()*1.6);
+      const delay = (Math.random()*0.5);
+      const radius = Math.random() < 0.5 ? '50%' : '2px';
+      p.style.cssText += `left:${Math.random()*100}vw;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:${radius};animation:spinConfettiFall ${dur}s linear ${delay}s 1 forwards;`;
       layer.appendChild(p);
     }
     const balloons = ['🎈','🎉','🎊'];
@@ -27583,10 +27580,10 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       const b = document.createElement('div');
       b.className = 'spin-confetti-balloon';
       b.textContent = balloons[Math.floor(Math.random()*balloons.length)];
-      b.style.left = (Math.random()*90) + 'vw';
+      const dur = (3 + Math.random()*1.5);
+      const delay = (Math.random()*0.4);
       b.style.setProperty('--spinBalloonDrift', (Math.random()*80-40) + 'px');
-      b.style.animationDuration = (3 + Math.random()*1.5) + 's';
-      b.style.animationDelay = (Math.random()*0.4) + 's';
+      b.style.cssText += `left:${Math.random()*90}vw;animation:spinBalloonRise ${dur}s ease-in-out ${delay}s 1 forwards;`;
       layer.appendChild(b);
     }
     clearTimeout(spinConfettiClearTimer);
