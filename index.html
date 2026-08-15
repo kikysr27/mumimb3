@@ -3904,7 +3904,7 @@ ALTER TABLE entries ADD COLUMN IF NOT EXISTS group_id uuid REFERENCES spin_group
             </div>
             <div class="spin-hint" id="spinPrizeStockHint" style="margin:0;">Belum ada hadiah. Klik "🎁 Kelola Hadiah" untuk menambah.</div>
           </div>
-          <div class="spin-adv-panel show" id="spinGroupFilterPanel" style="margin-bottom:12px;">
+          <div class="spin-adv-panel show spin-admin-ctrl" id="spinGroupFilterPanel" style="margin-bottom:12px;">
             <div class="spin-adv-field" style="flex:1;min-width:220px;">
               👥 Filter grup:
               <select id="spinGroupFilterSelect" onchange="spinRenderEntries()" style="flex:1;background:#0e1013;border:1px solid #262b33;border-radius:7px;color:#e9ebf0;padding:6px 8px;font-family:'Inter',sans-serif;min-width:160px;">
