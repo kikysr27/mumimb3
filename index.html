@@ -3762,6 +3762,7 @@
         #spinAddOverlay.show,#spinImgOverlay.show,#spinWinOverlay.show,#spinSettingsOverlay.show,#spinPrizeOverlay.show,#spinPresenceOverlay.show,#spinGroupOverlay.show,#spinAssignGroupOverlay.show{display:flex;}
         #sec-spin .spin-group-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:#26314a;color:#8fb3ff;margin-left:6px;white-space:nowrap;cursor:pointer;border:1px solid #33436b;}
         #sec-spin .spin-group-badge:hover{filter:brightness(1.25);}
+        #sec-spin .spin-group-badge-empty{background:transparent;border:1px dashed #3a4152;color:#6b7280;}
         #sec-spin .spin-group-row{background:#1d2129;border:1px solid #262b33;border-radius:10px;padding:10px 12px;}
         #sec-spin .spin-group-row .spin-group-toprow{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
         #sec-spin .spin-group-row .spin-group-name-input{flex:1;background:#0e1013;border:1px solid #262b33;border-radius:7px;color:#e9ebf0;padding:6px 8px;font-family:'Inter',sans-serif;font-weight:700;font-size:13.5px;min-width:0;}
@@ -3789,21 +3790,26 @@
         .spin-exclude-chip button{background:none;border:none;color:#ef4565;cursor:pointer;font-size:13px;padding:2px;line-height:1;}
         .spin-row-excluded-tag{color:#ef4565;font-size:11px;font-weight:600;margin-left:6px;white-space:nowrap;}
         @media (max-width:480px){ #sec-spin .spin-title{font-size:18px;} #sec-spin .spin-draw-btn{padding:13px 20px;} }
+        #sec-spin .spin-card.spin-ctrl-hidden .spin-admin-ctrl{display:none !important;}
+        #sec-spin .spin-toggle-ctrl-btn{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:#1a1d24;border:1px solid #2c313b;color:#6b7280;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;opacity:.5;transition:opacity .15s;}
+        #sec-spin .spin-toggle-ctrl-btn:hover{opacity:1;color:#e9ebf0;}
+        #sec-spin .spin-card{position:relative;}
       </style>
 
-      <div class="spin-card">
+      <div class="spin-card" id="spinCard">
+        <button class="spin-toggle-ctrl-btn" id="spinToggleCtrlBtn" onclick="spinToggleAdminControls()" title="Tampilkan/sembunyikan tombol admin">👁️</button>
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-          <h1 class="spin-title"><span class="spin-dot"></span>Game Spin — Undian Doorprize</h1>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <h1 class="spin-title" id="spinMainTitle"><span class="spin-dot"></span><span id="spinMainTitleText">Game Spin — Undian Doorprize</span></h1>
+          <div class="spin-admin-ctrl" style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinOpenPrizeModal()">🎁 Kelola Hadiah</button>
             <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinOpenGroupModal()">👥 Kelola Grup</button>
             <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinOpenSettings()">⚙️ Setting</button>
             <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinResetSemua()">🔄 Reset Semua</button>
           </div>
         </div>
-        <p class="spin-subtitle">Entri &amp; hasil undian tersimpan otomatis di database, tidak hilang saat halaman ditutup.</p>
+        <p class="spin-subtitle spin-admin-ctrl">Entri &amp; hasil undian tersimpan otomatis di database, tidak hilang saat halaman ditutup.</p>
 
-        <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="document.getElementById('spinHelpPanel').classList.toggle('show')" style="margin-bottom:10px;">❓ Cara pakai Game Spin</button>
+        <button class="spin-btn spin-btn-ghost spin-btn-sm spin-admin-ctrl" onclick="document.getElementById('spinHelpPanel').classList.toggle('show')" style="margin-bottom:10px;">❓ Cara pakai Game Spin</button>
         <div class="spin-adv-panel" id="spinHelpPanel" style="flex-direction:column;align-items:stretch;gap:10px;">
           <div>
             <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">1️⃣ 🎁 Kelola Hadiah</div>
@@ -3908,20 +3914,20 @@ ALTER TABLE entries ADD COLUMN IF NOT EXISTS group_id uuid REFERENCES spin_group
             </div>
             <div class="spin-hint" id="spinGroupHint" style="margin:0;">Belum ada grup. Klik "👥 Kelola Grup" untuk menambah &amp; atur persentase menang.</div>
           </div>
-          <div class="spin-toolbar">
+          <div class="spin-toolbar spin-admin-ctrl">
             <button class="spin-btn spin-btn-primary" onclick="spinOpenAddModal()">＋ Tambah entri</button>
             <button class="spin-btn spin-btn-ghost" onclick="spinShuffleView()">🔀 Acak</button>
             <button class="spin-btn spin-btn-ghost" onclick="spinSortView()">↕ Menyortir</button>
             <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinClearEntries()">Hapus semua</button>
           </div>
-          <div class="spin-adv-panel show" id="spinAdvPanel">
+          <div class="spin-adv-panel show spin-admin-ctrl" id="spinAdvPanel">
             <label class="spin-check-row"><input type="checkbox" id="spinOneWinPerPerson" checked onchange="spinRenderEntries(); spinSaveOnePerPerson();"> Satu orang satu hadiah (nama yang sama dilewati di undian berikutnya setelah menang, tiket tidak dihapus)</label>
           </div>
           <div class="spin-panel" id="spinEntriList"><div class="spin-empty">Memuat…</div></div>
         </div>
 
         <div id="spinHasilView" style="display:none;">
-          <div class="spin-toolbar">
+          <div class="spin-toolbar spin-admin-ctrl">
             <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinClearHasil()">Hapus semua hasil</button>
           </div>
           <div class="spin-panel" id="spinHasilList"><div class="spin-empty">Memuat…</div></div>
@@ -3968,6 +3974,16 @@ ALTER TABLE entries ADD COLUMN IF NOT EXISTS group_id uuid REFERENCES spin_group
       <div id="spinSettingsOverlay">
         <div class="spin-modal" style="max-width:440px;">
           <h3>⚙️ Pengaturan Spin</h3>
+
+          <div style="background:#0e1013;border:1px solid #262b33;border-radius:12px;padding:12px 14px;margin-bottom:16px;">
+            <div style="font-weight:700;color:#e9ebf0;font-size:13px;margin-bottom:8px;">🖥️ Judul tampilan (untuk TV besar)</div>
+            <div class="spin-hint" style="margin:0 0 8px;">Judul selalu tampil di layar — hanya namanya yang bisa diganti.</div>
+            <input type="text" id="spinTitleTextInput" placeholder="Nama judul, misal: Doorprize Acara Tahunan" style="width:100%;margin-bottom:8px;box-sizing:border-box;">
+            <div class="spin-modal-actions" style="justify-content:flex-start;margin-top:0;">
+              <button class="spin-btn spin-btn-primary spin-btn-sm" onclick="spinSaveTitleSettings()">💾 Simpan judul</button>
+            </div>
+          </div>
+
           <p class="spin-hint">Nama di bawah ini akan dilewati saat undian — cocok untuk orang yang menyumbang doorprize-nya sendiri, jadi tidak mungkin dia yang menang <b>hadiah itu</b>. Pilih hadiah mana saja yang dikecualikan; kalau tidak dicentang satupun (atau pilih "Semua hadiah"), dia dilewati dari semua undian.</p>
           <textarea id="spinExcludeInput" placeholder="Giso&#10;Nama lain"></textarea>
           <div class="spin-hint" style="margin:10px 0 4px;font-weight:700;color:#e9ebf0;">Dikecualikan dari hadiah:</div>
@@ -26743,13 +26759,15 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   let spinPendingPrize = null;  // {id, name, stock} hadiah yang sedang diundi
 
   async function spinLoadAll(){
-    const [e, w, s, p, opp, g] = await Promise.all([
+    const [e, w, s, p, opp, g, ts, ch] = await Promise.all([
       db.from('entries').select('*').order('created_at', {ascending:true}),
       db.from('winners').select('*').order('drawn_at', {ascending:false}),
       db.from('spin_settings').select('data').eq('key','exclude_list').maybeSingle(),
       db.from('spin_prizes').select('*').order('created_at', {ascending:true}),
       db.from('spin_settings').select('data').eq('key','one_per_person').maybeSingle(),
-      db.from('spin_groups').select('*').order('created_at', {ascending:true})
+      db.from('spin_groups').select('*').order('created_at', {ascending:true}),
+      db.from('spin_settings').select('data').eq('key','title_settings').maybeSingle(),
+      db.from('spin_settings').select('data').eq('key','controls_hidden').maybeSingle()
     ]);
     const notice = document.getElementById('spinSqlNotice');
     if (notice) notice.style.display = (e.error || w.error) ? 'block' : 'none';
@@ -26767,12 +26785,61 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
         ? !!opp.data.data.value
         : true;
     }
+    // Judul tampilan — selalu muncul, cuma namanya yang bisa diganti
+    const titleData = (!ts.error && ts.data && typeof ts.data.data === 'object' && ts.data.data !== null) ? ts.data.data : null;
+    spinTitleSettings = {
+      text: (titleData && typeof titleData.text === 'string' && titleData.text.trim()) ? titleData.text : 'Game Spin — Undian Doorprize'
+    };
+    spinApplyTitleSettings();
+    // Tombol admin (Kelola Hadiah/Grup/Setting/Reset/Acak/Menyortir/dll) - default disembunyikan,
+    // tetap tersembunyi walau di-refresh, kecuali pernah diklik tombol mata 👁️ untuk menampilkan.
+    spinControlsHidden = (!ch.error && ch.data && typeof ch.data.data === 'object' && ch.data.data !== null && 'value' in ch.data.data)
+      ? !!ch.data.data.value
+      : true;
+    spinApplyControlsVisibility();
     spinRenderEntries();
     spinRenderHasil();
     spinRenderPrizeSelect();
     spinRenderPrizeList();
     spinRenderGroupSelects();
     spinRenderGroupList();
+  }
+
+  let spinTitleSettings = {text:'Game Spin — Undian Doorprize'};
+  let spinControlsHidden = true;
+
+  function spinApplyControlsVisibility(){
+    const card = document.getElementById('spinCard');
+    if(card) card.classList.toggle('spin-ctrl-hidden', spinControlsHidden);
+    const btn = document.getElementById('spinToggleCtrlBtn');
+    if(btn) btn.textContent = spinControlsHidden ? '👁️' : '🙈';
+  }
+
+  async function spinToggleAdminControls(){
+    spinControlsHidden = !spinControlsHidden;
+    spinApplyControlsVisibility();
+    const {error} = await db.from('spin_settings').upsert({key:'controls_hidden', data: {value: spinControlsHidden}, updated_at: new Date().toISOString()});
+    if(error) console.error('spinToggleAdminControls error:', error);
+  }
+
+  // Judul selalu tampil — cuma teksnya yang bisa diganti lewat ⚙️ Setting
+  function spinApplyTitleSettings(){
+    const textEl = document.getElementById('spinMainTitleText');
+    if(textEl) textEl.textContent = spinTitleSettings.text;
+    const inp = document.getElementById('spinTitleTextInput');
+    if(inp) inp.value = spinTitleSettings.text;
+  }
+
+  async function spinSaveTitleSettings(){
+    const text = document.getElementById('spinTitleTextInput').value.trim() || 'Game Spin — Undian Doorprize';
+    const {error} = await db.from('spin_settings').upsert({key:'title_settings', data: {text}, updated_at: new Date().toISOString()});
+    if(error){
+      alert('Gagal menyimpan pengaturan judul: ' + error.message);
+      console.error('spinSaveTitleSettings error:', error);
+      return;
+    }
+    spinTitleSettings = {text};
+    spinApplyTitleSettings();
   }
 
   function spinSwitchTab(t){
@@ -26821,7 +26888,9 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       else if(alreadyWon) tag = '<span class="spin-row-excluded-tag">🏆 Sudah pernah menang — dilewati</span>';
       else if(skipped) tag = '<span class="spin-row-excluded-tag">⏭ Dilewati sesi ini (tidak hadir)</span>';
       const groupName = spinGroupLabel(e.group_id);
-      const groupBadge = `<span class="spin-group-badge" title="Klik untuk atur grup" onclick="spinOpenAssignGroupModal('${e.id}', ${JSON.stringify(e.name)})">👥 ${groupName ? escapeHtml(groupName) : 'Tanpa grup'}</span>`;
+      const groupBadge = groupName
+        ? `<span class="spin-group-badge spin-admin-ctrl" title="Klik untuk atur grup" onclick="spinOpenAssignGroupModal('${e.id}', ${JSON.stringify(e.name)})">👥 ${escapeHtml(groupName)}</span>`
+        : `<span class="spin-group-badge spin-group-badge-empty spin-admin-ctrl" title="Klik untuk atur grup" onclick="spinOpenAssignGroupModal('${e.id}', ${JSON.stringify(e.name)})">+ grup</span>`;
       return `
       <div class="spin-row" style="${dimmed ? 'opacity:.55;' : ''}">
         ${e.image_url ? `<img class="spin-thumb" src="${escapeHtml(e.image_url)}">` : `<div class="spin-thumb spin-placeholder">🎫</div>`}
@@ -27247,6 +27316,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     spinRenderExcludeList();
     document.getElementById('spinExcludeAllPrize').checked = true;
     document.getElementById('spinExcludePrizeChecks').style.display = 'none';
+    document.getElementById('spinTitleTextInput').value = spinTitleSettings.text;
     document.getElementById('spinSettingsOverlay').classList.add('show');
   }
   function spinCloseSettings(){
