@@ -3946,6 +3946,8 @@ ALTER TABLE entries ADD COLUMN IF NOT EXISTS group_id uuid REFERENCES spin_group
 
         <div class="spin-draw-bar" id="spinDrawBar">
           <button class="spin-draw-btn" id="spinDrawBtn" onclick="spinDrawWinner()">🎉 Undi sekarang</button>
+          <button type="button" onclick="spinFireReaction(['👏','🎉','😄','🙌','⭐'],{count:18})" style="margin-left:8px;padding:8px 12px;border-radius:10px;border:1px solid #2a2f38;background:#171a20;color:#9aa3b2;font-size:12px;cursor:pointer;" title="Coba animasi 'menang' tanpa harus undi beneran">🧪 Tes menang</button>
+          <button type="button" onclick="spinFireReaction(['😢','😞','💔'],{count:10,fall:true,duration:2.6,size:30})" style="margin-left:6px;padding:8px 12px;border-radius:10px;border:1px solid #2a2f38;background:#171a20;color:#9aa3b2;font-size:12px;cursor:pointer;" title="Coba animasi 'tidak ada' tanpa harus undi beneran">🧪 Tes tidak ada</button>
         </div>
       </div>
 
