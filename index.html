@@ -3797,6 +3797,7 @@
         .spin-ticket .spin-winner-name{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-size:clamp(22px,7vw,32px);margin:14px 0 6px;color:#fff;text-shadow:0 0 24px #f5b94255;word-break:break-word;}
         .spin-ticket .spin-ticket-no{color:#8b93a3;font-size:12px;}
         .spin-name-display{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-size:clamp(20px,6vw,28px);color:#8b93a3;}
+        @keyframes spinNamePop{0%{opacity:.35;transform:scale(.94);}100%{opacity:1;transform:scale(1);}}
         .spin-exclude-chip{display:inline-flex;align-items:center;gap:6px;background:#2a1620;border:1px solid #4a2230;color:#ef4565;font-size:12.5px;padding:5px 6px 5px 10px;border-radius:999px;}
         .spin-exclude-chip button{background:none;border:none;color:#ef4565;cursor:pointer;font-size:13px;padding:2px;line-height:1;}
         .spin-row-excluded-tag{color:#ef4565;font-size:11px;font-weight:600;margin-left:6px;white-space:nowrap;}
@@ -3961,9 +3962,12 @@ ALTER TABLE entries ADD COLUMN IF NOT EXISTS group_id uuid REFERENCES spin_group
               <option value="">Tanpa grup</option>
             </select>
           </div>
-          <div class="spin-modal-actions">
-            <button class="spin-btn spin-btn-ghost" onclick="spinCloseAddModal()">Batal</button>
-            <button class="spin-btn spin-btn-primary" onclick="spinSubmitBulkAdd()">Tambahkan</button>
+          <div class="spin-modal-actions" style="justify-content:space-between;">
+            <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinResetGrupEntri()">🔄 Reset Grup &amp; Entri</button>
+            <div style="display:flex;gap:8px;">
+              <button class="spin-btn spin-btn-ghost" onclick="spinCloseAddModal()">Batal</button>
+              <button class="spin-btn spin-btn-primary" onclick="spinSubmitBulkAdd()">Tambahkan</button>
+            </div>
           </div>
         </div>
       </div>
@@ -3996,6 +4000,11 @@ ALTER TABLE entries ADD COLUMN IF NOT EXISTS group_id uuid REFERENCES spin_group
           </div>
 
           <p class="spin-hint">Nama di bawah ini akan dilewati saat undian — cocok untuk orang yang menyumbang doorprize-nya sendiri, jadi tidak mungkin dia yang menang <b>hadiah itu</b>. Pilih hadiah mana saja yang dikecualikan; kalau tidak dicentang satupun (atau pilih "Semua hadiah"), dia dilewati dari semua undian.</p>
+
+          <div style="background:#0e1013;border:1px solid #262b33;border-radius:12px;padding:12px 14px;margin-bottom:16px;">
+            <label class="spin-check-row" style="margin:0;"><input type="checkbox" id="spinShowWonTag" onchange="spinSaveShowWonTag()"> Tampilkan label "🏆 Sudah pernah menang" di daftar entri</label>
+            <div class="spin-hint" style="margin:6px 0 0;">Kalau dimatikan (default), label itu disembunyikan dari daftar entri utama supaya tampilan lebih rapi/profesional saat dilihat banyak orang — peserta yang sudah menang tetap otomatis dilewati di undian seperti biasa, cuma labelnya yang tidak ditampilkan.</div>
+          </div>
           <textarea id="spinExcludeInput" placeholder="Giso&#10;Nama lain"></textarea>
           <div class="spin-hint" style="margin:10px 0 4px;font-weight:700;color:#e9ebf0;">Dikecualikan dari hadiah:</div>
           <label class="spin-check-row" style="margin-bottom:6px;"><input type="checkbox" id="spinExcludeAllPrize" checked onchange="spinToggleExcludeAllPrize()"> Semua hadiah</label>
@@ -4067,7 +4076,8 @@ ALTER TABLE entries ADD COLUMN IF NOT EXISTS group_id uuid REFERENCES spin_group
 
           <p class="spin-hint" style="margin-bottom:6px;">Daftar grup &amp; persentase menang:</p>
           <div id="spinGroupList" style="display:flex;flex-direction:column;gap:10px;min-height:34px;max-height:280px;overflow-y:auto;"></div>
-          <div class="spin-modal-actions">
+          <div class="spin-modal-actions" style="justify-content:space-between;">
+            <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinResetGrupEntri()">🔄 Reset Grup &amp; Entri</button>
             <button class="spin-btn spin-btn-ghost" onclick="spinCloseGroupModal()">Tutup</button>
           </div>
         </div>
@@ -26769,8 +26779,10 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   let spinPendingPicked = null; // menyimpan hasil undi yg sedang menunggu konfirmasi hadir/tidak
   let spinPendingPrize = null;  // {id, name, stock} hadiah yang sedang diundi
 
+  let spinShowWonTag = false; // default: label "Sudah pernah menang" DISEMBUNYIKAN dari daftar entri (biar lebih rapi/profesional), bisa dinyalakan lewat menu Setting
+
   async function spinLoadAll(){
-    const [e, w, s, p, opp, g, ts, ch] = await Promise.all([
+    const [e, w, s, p, opp, g, ts, ch, wt] = await Promise.all([
       db.from('entries').select('*').order('created_at', {ascending:true}),
       db.from('winners').select('*').order('drawn_at', {ascending:false}),
       db.from('spin_settings').select('data').eq('key','exclude_list').maybeSingle(),
@@ -26778,7 +26790,8 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       db.from('spin_settings').select('data').eq('key','one_per_person').maybeSingle(),
       db.from('spin_groups').select('*').order('created_at', {ascending:true}),
       db.from('spin_settings').select('data').eq('key','title_settings').maybeSingle(),
-      db.from('spin_settings').select('data').eq('key','controls_hidden').maybeSingle()
+      db.from('spin_settings').select('data').eq('key','controls_hidden').maybeSingle(),
+      db.from('spin_settings').select('data').eq('key','show_won_tag').maybeSingle()
     ]);
     const notice = document.getElementById('spinSqlNotice');
     if (notice) notice.style.display = (e.error || w.error) ? 'block' : 'none';
@@ -26789,6 +26802,11 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     spinExcluded = spinExcluded.map(x => typeof x === 'string' ? {name: x, prizeIds: []} : {name: x.name, prizeIds: Array.isArray(x.prizeIds) ? x.prizeIds : []});
     spinPrizes = p.data || [];
     spinGroups = g.data || []; // kalau error (kolom/tabel belum dibuat), dianggap kosong -> semua peserta setara
+    spinShowWonTag = (!wt.error && wt.data && typeof wt.data.data === 'object' && wt.data.data !== null && 'value' in wt.data.data)
+      ? !!wt.data.data.value
+      : false; // default: disembunyikan
+    const wonTagChk = document.getElementById('spinShowWonTag');
+    if(wonTagChk) wonTagChk.checked = spinShowWonTag;
     // Baca centang terakhir "satu orang satu hadiah" dari database (default: tercentang kalau belum pernah disimpan)
     const oppChk = document.getElementById('spinOneWinPerPerson');
     if(oppChk){
@@ -26896,7 +26914,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       const dimmed = excluded || skipped || alreadyWon;
       let tag = '';
       if(excluded) tag = '<span class="spin-row-excluded-tag">🚫 Tidak ikut undi hadiah ini</span>';
-      else if(alreadyWon) tag = '<span class="spin-row-excluded-tag">🏆 Sudah pernah menang — dilewati</span>';
+      else if(alreadyWon) tag = spinShowWonTag ? '<span class="spin-row-excluded-tag">🏆 Sudah pernah menang — dilewati</span>' : '';
       else if(skipped) tag = '<span class="spin-row-excluded-tag">⏭ Dilewati sesi ini (tidak hadir)</span>';
       const groupName = spinGroupLabel(e.group_id);
       const groupBadge = groupName
@@ -27272,6 +27290,35 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     );
   }
 
+  // Reset khusus sistem grup + entri (TIDAK menyentuh riwayat pemenang & stok hadiah).
+  // Dipanggil dari tombol di modal "Kelola Grup Peserta" maupun modal "Tambah entri".
+  async function spinResetGrupEntri(){
+    if(spinEntries.length===0 && spinGroups.length===0){ alert('Belum ada entri maupun grup untuk direset.'); return; }
+    const ok = await askConfirm(`Reset grup & entri? ${spinEntries.length} entri peserta dan ${spinGroups.length} grup akan dihapus. Riwayat pemenang & stok hadiah TIDAK ikut terhapus. Bisa diurungkan dalam 10 detik setelah ini.`, '🔄 Reset Grup & Entri');
+    if(!ok) return;
+    const backupEntries = spinEntries.slice();
+    const backupGroups = spinGroups.slice();
+    // Hapus entri dulu baru grup (urutan aman meski FK-nya ON DELETE SET NULL).
+    await db.from('entries').delete().neq('id','00000000-0000-0000-0000-000000000000');
+    await db.from('spin_groups').delete().neq('id','00000000-0000-0000-0000-000000000000');
+    await spinLoadAll();
+    spinRenderGroupList();
+    spinRenderEntries();
+    showUndoToast(`Reset grup & entri (${backupEntries.length} entri, ${backupGroups.length} grup)`,
+      async function(){
+        // Insert grup DULU baru entri, supaya entries.group_id yang mengacu ke grup tidak gagal (FK).
+        if(backupGroups.length) await db.from('spin_groups').insert(backupGroups);
+        if(backupEntries.length) await db.from('entries').insert(backupEntries);
+        await spinLoadAll();
+        spinRenderGroupList();
+        spinRenderEntries();
+        showToast('↩️ Grup & entri dikembalikan', 'success', 2500);
+      },
+      function(){},
+      '👥'
+    );
+  }
+
   async function spinResetSemua(){
     if(spinEntries.length===0 && spinWinners.length===0) return;
     const ok = await askConfirm(`Reset semua? ${spinEntries.length} entri dan ${spinWinners.length} riwayat pemenang akan dihapus, stok hadiah dikembalikan ke jumlah awal. Bisa diurungkan dalam 10 detik setelah ini.`, '🔄 Reset Semua');
@@ -27322,12 +27369,26 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     }
   }
 
+  // Tampil/sembunyi label "🏆 Sudah pernah menang" di daftar entri utama — supaya lebih rapi/profesional
+  // saat layar ditampilkan ke banyak orang. Peserta yang sudah menang tetap DILEWATI otomatis di undian
+  // (logikanya tidak berubah), cuma labelnya yang disembunyikan dari tampilan.
+  async function spinSaveShowWonTag(){
+    const checked = document.getElementById('spinShowWonTag').checked;
+    spinShowWonTag = checked;
+    spinRenderEntries();
+    const {error} = await db.from('spin_settings').upsert({key:'show_won_tag', data: {value: checked}, updated_at: new Date().toISOString()});
+    if(error){
+      console.error('spinSaveShowWonTag error:', error);
+    }
+  }
+
   function spinOpenSettings(){
     spinRenderExcludePrizeChecks();
     spinRenderExcludeList();
     document.getElementById('spinExcludeAllPrize').checked = true;
     document.getElementById('spinExcludePrizeChecks').style.display = 'none';
     document.getElementById('spinTitleTextInput').value = spinTitleSettings.text;
+    document.getElementById('spinShowWonTag').checked = spinShowWonTag;
     document.getElementById('spinSettingsOverlay').classList.add('show');
   }
   function spinCloseSettings(){
@@ -27684,18 +27745,39 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       overlay.classList.add('show');
       overlay.innerHTML = `<div class="spin-ticket"><div class="spin-eyebrow">Mengundi…</div><div class="spin-name-display" id="spinNameDisplay">—</div></div>`;
       const nameEl = document.getElementById('spinNameDisplay');
-      let elapsed = 0;
-      const total = 1400;
-      const step = 70;
-      const timer = setInterval(()=>{
-        nameEl.textContent = names.length ? names[Math.floor(Math.random()*names.length)] : finalName;
-        elapsed += step;
-        if(elapsed >= total){
-          clearInterval(timer);
-          nameEl.textContent = finalName;
+      // Total durasi dalam MILIDETIK ASLI (performance.now), bukan hitungan frame —
+      // jadi kecepatannya SAMA di HP maupun laptop/desktop, tidak peduli refresh rate layar.
+      const total = 1800;
+      const startTime = performance.now();
+      let lastTickAt = 0;
+      let nextDelay = 55; // mulai cepat...
+
+      function popName(text){
+        nameEl.textContent = text;
+        // retrigger animasi CSS supaya tiap pergantian nama terasa halus (fade+scale),
+        // bukan "kedip" instan yang kelihatan kasar di layar cepat/refresh rate tinggi.
+        nameEl.style.animation = 'none';
+        void nameEl.offsetWidth; // paksa reflow
+        nameEl.style.animation = 'spinNamePop .18s ease-out';
+      }
+
+      function tick(now){
+        const elapsed = now - startTime;
+        if(elapsed - lastTickAt >= nextDelay){
+          lastTickAt = elapsed;
+          const progress = Math.min(1, elapsed / total);
+          // makin dekat ke akhir, jeda antar nama makin panjang -> efek "mengerem" seperti mesin slot
+          nextDelay = 55 + Math.pow(progress, 2.2) * 260;
+          popName(names.length ? names[Math.floor(Math.random()*names.length)] : finalName);
+        }
+        if(elapsed < total){
+          requestAnimationFrame(tick);
+        } else {
+          popName(finalName);
           resolve();
         }
-      }, step);
+      }
+      requestAnimationFrame(tick);
     });
   }
 
