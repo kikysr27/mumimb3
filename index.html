@@ -27536,63 +27536,104 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     spinShowPresenceConfirm(pick.name, prize.name);
   }
 
-  function spinFireReaction(emojiList, opts){
-    opts = opts || {};
+  function spinGetConfettiLayer(){
     let layer = document.getElementById('spinConfettiLayer');
     if(!layer){
       layer = document.createElement('div');
       layer.id = 'spinConfettiLayer';
+      layer.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;z-index:2147483000;pointer-events:none;overflow:hidden;';
       document.body.appendChild(layer);
     }
+    return layer;
+  }
+
+  // Animasi ditulis pakai Web Animations API (element.animate) langsung dari JS —
+  // TIDAK bergantung pada @keyframes/class di CSS, supaya tidak mudah bentrok/gagal
+  // kalau ada aturan CSS lain di halaman yang tidak sengaja menimpanya.
+  function spinFireReaction(emojiList, opts){
+    opts = opts || {};
+    const layer = spinGetConfettiLayer();
     const count = opts.count || 16;
-    const animName = opts.fall ? 'spinReactionFall' : 'spinBalloonRise';
+    const fall = !!opts.fall;
+    const vh = window.innerHeight || 800;
+    const vw = window.innerWidth || 400;
+    let created = 0;
     for(let i=0;i<count;i++){
       const b = document.createElement('div');
-      b.className = 'spin-confetti-balloon' + (opts.fall ? ' spin-fall' : '');
       b.textContent = emojiList[Math.floor(Math.random()*emojiList.length)];
-      const dur = (opts.duration || (2.4 + Math.random()*1.2));
-      const delay = (Math.random()*0.35);
-      b.style.setProperty('--spinBalloonDrift', (Math.random()*80-40) + 'px');
-      b.style.cssText += `left:${10 + Math.random()*80}vw;font-size:${opts.size||34}px;animation:${animName} ${dur}s ease-in-out ${delay}s 1 forwards;`;
+      const size = opts.size || 34;
+      const dur = (opts.duration || (2.4 + Math.random()*1.2)) * 1000;
+      const delay = Math.random()*350;
+      const leftPx = (10 + Math.random()*80)/100 * vw;
+      const drift = (Math.random()*80-40);
+      const startTop = fall ? -60 : (vh + 60);
+      const endTop = fall ? (vh*0.65) : -(vh*1.1);
+      b.style.cssText = `position:absolute;left:${leftPx}px;top:${startTop}px;font-size:${size}px;opacity:0;line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4));`;
       layer.appendChild(b);
+      created++;
+      try{
+        const anim = b.animate([
+          { top: startTop+'px', transform:'translateX(0px) rotate(0deg)', opacity:0 },
+          { top: startTop+'px', transform:'translateX(0px) rotate(0deg)', opacity:1, offset:0.1 },
+          { top: endTop+'px', transform:`translateX(${drift}px) rotate(${fall?20:0}deg)`, opacity:0 }
+        ], { duration: dur, delay, easing:'ease-in-out', fill:'forwards' });
+        anim.onfinish = () => b.remove();
+      }catch(err){
+        // Fallback kalau Web Animations API tidak tersedia: tampilkan statis lalu hapus manual
+        b.style.top = (fall ? vh*0.4 : vh*0.4) + 'px';
+        b.style.opacity = '1';
+        setTimeout(()=>b.remove(), dur+delay);
+      }
     }
-    clearTimeout(spinConfettiClearTimer);
-    spinConfettiClearTimer = setTimeout(() => { layer.innerHTML = ''; }, ((opts.duration||3.6)*1000) + 900);
+    console.log('[spinFireReaction] emoji dibuat:', created, 'fall:', fall);
   }
 
   function spinFireConfetti(){
-    let layer = document.getElementById('spinConfettiLayer');
-    if(!layer){
-      layer = document.createElement('div');
-      layer.id = 'spinConfettiLayer';
-      document.body.appendChild(layer);
-    }
+    const layer = spinGetConfettiLayer();
     layer.innerHTML = '';
+    const vh = window.innerHeight || 800;
+    const vw = window.innerWidth || 400;
     const colors = ['#f5b942','#ef4565','#5865f2','#22c55e','#ffd76a','#ff8fab','#38bdf8'];
     for(let i=0;i<70;i++){
       const p = document.createElement('div');
-      p.className = 'spin-confetti-piece';
-      const dur = (2.2 + Math.random()*1.6);
-      const delay = (Math.random()*0.5);
-      const radius = Math.random() < 0.5 ? '50%' : '2px';
-      p.style.cssText += `left:${Math.random()*100}vw;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:${radius};animation:spinConfettiFall ${dur}s linear ${delay}s 1 forwards;`;
+      const dur = (2.2 + Math.random()*1.6) * 1000;
+      const delay = Math.random()*500;
+      const isCircle = Math.random() < 0.5;
+      const leftPx = Math.random()*vw;
+      p.style.cssText = `position:absolute;left:${leftPx}px;top:-24px;width:9px;height:14px;opacity:0;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:${isCircle?'50%':'2px'};`;
       layer.appendChild(p);
+      try{
+        const anim = p.animate([
+          { top:'-24px', transform:'rotate(0deg)', opacity:1 },
+          { top:(vh*1.08)+'px', transform:'rotate(720deg)', opacity:.95 }
+        ], { duration:dur, delay, easing:'linear', fill:'forwards' });
+        anim.onfinish = () => p.remove();
+      }catch(err){ setTimeout(()=>p.remove(), dur+delay); }
     }
     const balloons = ['🎈','🎉','🎊'];
     for(let i=0;i<10;i++){
       const b = document.createElement('div');
-      b.className = 'spin-confetti-balloon';
       b.textContent = balloons[Math.floor(Math.random()*balloons.length)];
-      const dur = (3 + Math.random()*1.5);
-      const delay = (Math.random()*0.4);
-      b.style.setProperty('--spinBalloonDrift', (Math.random()*80-40) + 'px');
-      b.style.cssText += `left:${Math.random()*90}vw;animation:spinBalloonRise ${dur}s ease-in-out ${delay}s 1 forwards;`;
+      const dur = (3 + Math.random()*1.5) * 1000;
+      const delay = Math.random()*400;
+      const leftPx = (Math.random()*90)/100 * vw;
+      const drift = (Math.random()*80-40);
+      const startTop = vh + 80;
+      const endTop = -(vh*1.12);
+      b.style.cssText = `position:absolute;left:${leftPx}px;top:${startTop}px;font-size:38px;opacity:0;line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4));`;
       layer.appendChild(b);
+      try{
+        const anim = b.animate([
+          { top: startTop+'px', transform:'translateX(0px)', opacity:0 },
+          { top: startTop+'px', transform:'translateX(0px)', opacity:1, offset:0.08 },
+          { top: endTop+'px', transform:`translateX(${drift}px)`, opacity:0 }
+        ], { duration:dur, delay, easing:'ease-in-out', fill:'forwards' });
+        anim.onfinish = () => b.remove();
+      }catch(err){ setTimeout(()=>b.remove(), dur+delay); }
     }
-    clearTimeout(spinConfettiClearTimer);
-    spinConfettiClearTimer = setTimeout(() => { layer.innerHTML = ''; }, 4200);
+    console.log('[spinFireConfetti] confetti+balon dibuat');
   }
-  let spinConfettiClearTimer = null;
+
 
   function spinShowPresenceConfirm(name, prizeName){
     document.getElementById('spinWinOverlay').classList.remove('show');
