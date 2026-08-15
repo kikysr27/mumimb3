@@ -3726,6 +3726,7 @@
         #spinConfettiLayer .spin-confetti-piece{position:absolute;top:-24px;width:9px;height:14px;opacity:0;animation:spinConfettiFall linear forwards;}
         @keyframes spinConfettiFall{0%{opacity:1;transform:translateY(0) rotate(0deg);}100%{opacity:.95;transform:translateY(108vh) rotate(720deg);}}
         #spinConfettiLayer .spin-confetti-balloon{position:absolute;bottom:-80px;font-size:38px;opacity:0;animation:spinBalloonRise linear forwards;filter:drop-shadow(0 6px 10px #00000055);}
+        #spinConfettiLayer .spin-confetti-balloon.spin-fall{bottom:auto;top:-40px;}
         @keyframes spinBalloonRise{0%{opacity:0;transform:translateY(0) translateX(0);}8%{opacity:1;}100%{opacity:0;transform:translateY(-112vh) translateX(var(--spinBalloonDrift,20px));}}
         @keyframes spinReactionFall{0%{opacity:0;transform:translateY(-30px) translateX(0) rotate(0deg);}12%{opacity:1;}100%{opacity:0;transform:translateY(60vh) translateX(var(--spinBalloonDrift,20px)) rotate(20deg);}}
         @keyframes spinNoticePop{from{transform:translateX(-50%) translateY(12px);opacity:0;}to{transform:translateX(-50%) translateY(0);opacity:1;}}
@@ -27545,7 +27546,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     const animName = opts.fall ? 'spinReactionFall' : 'spinBalloonRise';
     for(let i=0;i<count;i++){
       const b = document.createElement('div');
-      b.className = 'spin-confetti-balloon';
+      b.className = 'spin-confetti-balloon' + (opts.fall ? ' spin-fall' : '');
       b.textContent = emojiList[Math.floor(Math.random()*emojiList.length)];
       const dur = (opts.duration || (2.4 + Math.random()*1.2));
       const delay = (Math.random()*0.35);
@@ -27612,9 +27613,9 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       await db.from('winners').insert({name: pick.name, image_url: pick.image_url||null, prize_name: prize.name});
       await db.from('spin_prizes').update({stock: Math.max(0, prize.stock - 1)}).eq('id', prize.id);
 
-      spinFireReaction(['👏','🎉','😄','🙌','⭐'], {count:18});
       await spinLoadAll();
       spinShowTicket([{name: pick.name}], prize.name);
+      spinFireReaction(['👏','🎉','😄','🙌','⭐'], {count:18});
     } else {
       // Tidak ada di tempat: stok TIDAK berkurang, tiket TIDAK dihapus, cuma dilewati sementara
       // untuk sesi ini supaya bisa langsung diundi ulang tanpa kena nama yang sama lagi.
