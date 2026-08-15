@@ -4023,9 +4023,9 @@ ALTER TABLE entries ADD COLUMN IF NOT EXISTS group_id uuid REFERENCES spin_group
             <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinEqualizeGroups()">➗ Bagi rata semua grup</button>
           </div>
 
-          <div style="display:flex;gap:6px;margin-bottom:10px;">
-            <input type="text" id="spinGroupNameInput" placeholder="Nama grup baru, misal: Menengah" style="flex:1;">
-            <button class="spin-btn spin-btn-primary spin-btn-sm" onclick="spinAddGroup()">＋ Tambah</button>
+          <div style="margin-bottom:12px;">
+            <input type="text" id="spinGroupNameInput" placeholder="Ketik nama grup baru di sini, misal: Menengah" style="width:100%;background:#0e1013;border:1.5px solid #3a4150;border-radius:10px;color:#e9ebf0;padding:11px 12px;font-family:'Inter',sans-serif;font-size:13.5px;box-sizing:border-box;margin-bottom:8px;">
+            <button class="spin-btn spin-btn-primary" style="width:100%;justify-content:center;" onclick="spinAddGroup()">＋ Tambah Grup Ini</button>
           </div>
 
           <div id="spinGroupTotalBarWrap" style="margin-bottom:10px;">
@@ -27036,12 +27036,12 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       <div class="spin-group-row" style="${isBlank ? 'border-color:#ef4565;' : ''}">
         <div class="spin-group-toprow">
           <input type="text" class="spin-group-name-input" style="${isBlank ? 'border-color:#ef4565;' : ''}" value="${escapeHtml(g.name||'')}" placeholder="⚠️ Belum ada nama — isi di sini" onchange="spinRenameGroup('${g.id}', this.value)">
-          <button class="spin-icon-btn" title="Hapus grup" onclick="spinDeleteGroup('${g.id}')">✕</button>
+          <span class="spin-group-pct-badge" data-gid="${g.id}" title="Persentase peluang menang grup ini">${g.percent}%</span>
+          <button class="spin-icon-btn" style="width:auto;flex:0 0 auto;" title="Hapus grup" onclick="spinDeleteGroup('${g.id}')">✕</button>
         </div>
         ${isBlank ? `<div class="spin-hint" style="color:#ef4565;margin:0 0 6px;">⚠️ Grup ini belum ada namanya — ketik nama lalu klik di luar kotak buat simpan, atau hapus (✕) kalau ini cuma data percobaan.</div>` : ''}
         <div class="spin-group-slider-row">
           <input type="range" min="0" max="100" step="1" value="${g.percent}" oninput="spinUpdateGroupPercent('${g.id}', this.value)">
-          <span class="spin-group-pct-badge" data-gid="${g.id}">${g.percent}%</span>
         </div>
       </div>`;
     }).join('');
