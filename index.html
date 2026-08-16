@@ -4066,8 +4066,8 @@ ALTER TABLE spin_groups ADD COLUMN IF NOT EXISTS one_per_person boolean NOT NULL
               <div class="spin-hint" style="margin:2px 0 0;" id="spinGroupSystemStatusText">Aktif — undian pakai persentase grup di bawah.</div>
             </div>
             <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">
-              <input type="checkbox" id="spinGroupSystemToggle" checked onchange="spinSaveGroupSystemEnabled(this.checked)" style="opacity:0;width:0;height:0;">
-              <span id="spinGroupSystemToggleTrack" style="position:absolute;inset:0;background:#5865f2;border-radius:999px;transition:.15s;cursor:pointer;" onclick="const c=document.getElementById('spinGroupSystemToggle');c.checked=!c.checked;spinSaveGroupSystemEnabled(c.checked);"><span id="spinGroupSystemToggleKnob" style="position:absolute;top:3px;left:23px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.15s;"></span></span>
+              <input type="checkbox" id="spinGroupSystemToggle" checked onchange="spinSaveGroupSystemEnabled(this.checked)" style="position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;">
+              <span id="spinGroupSystemToggleTrack" style="position:absolute;inset:0;background:#5865f2;border-radius:999px;transition:.15s;pointer-events:none;"><span id="spinGroupSystemToggleKnob" style="position:absolute;top:3px;left:23px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.15s;"></span></span>
             </label>
           </div>
           <p class="spin-hint" style="margin-top:-6px;margin-bottom:14px;">Kalau <b>dimatikan</b>: sistem grup dinonaktifkan, undian kembali ke cara lama (semua peserta punya peluang sama rata, tidak peduli grup). Kalau <b>diaktifkan</b>: undian pakai persentase tiap grup seperti diatur di bawah, dan menonaktifkan cara lama itu.</p>
