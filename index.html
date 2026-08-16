@@ -3811,6 +3811,90 @@
       <div class="spin-card" id="spinCard">
         <button class="spin-toggle-ctrl-btn" id="spinToggleCtrlBtn" onclick="spinToggleAdminControls()" title="Tampilkan/sembunyikan tombol admin">👁️</button>
         <h1 class="spin-title" id="spinMainTitle"><span class="spin-dot"></span><span id="spinMainTitleText">Game Spin — Undian Doorprize</span><span class="spin-dot"></span></h1>
+
+        <button class="spin-btn spin-btn-primary spin-btn-sm spin-admin-ctrl" onclick="document.getElementById('spinHelpPanel').classList.toggle('show')" style="margin:0 auto 14px;display:flex;">❓ Cara pakai Game Spin (baca ini dulu — lengkap + contoh)</button>
+        <div class="spin-adv-panel" id="spinHelpPanel" style="flex-direction:column;align-items:stretch;gap:14px;">
+
+          <div>
+            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">1️⃣ 🎁 Kelola Hadiah</div>
+            <div class="spin-hint" style="margin:0;">Tambahkan menu doorprize di sini (Bakso, Geprek, Oli Motor, Nasi Uduk, dst) beserta jumlah stok pcs-nya. Ini yang jadi pilihan di dropdown "Hadiah yang akan diundi" sebelum spin. Stok berkurang otomatis 1 pcs setiap ada pemenang yang dikonfirmasi hadir.</div>
+          </div>
+
+          <div>
+            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">2️⃣ ⚙️ Setting — pengecualian per hadiah</div>
+            <div class="spin-hint" style="margin:0;">Tentukan siapa yang <b>tidak boleh menang hadiah tertentu</b> — cocok untuk orang yang menyumbang doorprize itu sendiri.<br><br>
+            <b>📖 Contoh:</b> Pak Joko menyumbang Bakso untuk doorprize. Supaya dia tidak menang hadiah yang dia sumbang sendiri, masukkan namanya di ⚙️ Setting, lalu centang khusus "Bakso" saja (bukan "Semua hadiah"). Hasilnya: Pak Joko tetap bisa ikut & menang Geprek atau hadiah lain, tapi kalau yang keluar namanya pas undian Bakso, otomatis dilewati.</div>
+          </div>
+
+          <div style="border-top:1px dashed #262b33;padding-top:12px;">
+            <div style="font-weight:700;color:#8fb3ff;font-size:14px;margin-bottom:6px;">👥 SISTEM GRUP — punya 2 mode, pilih salah satu</div>
+            <div class="spin-hint" style="margin:0 0 10px;">Buka menu "👥 Kelola Grup" → ada tombol <b>toggle/saklar Sistem Grup</b> di paling atas. Ini ibarat saklar lampu: cuma bisa ON atau OFF, dan menentukan CARA UNDIAN MEMILIH PEMENANG.</div>
+
+            <div style="background:#0e1013;border:1px solid #262b33;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
+              <div style="font-weight:700;color:#e9ebf0;font-size:13px;margin-bottom:4px;">🔘 MODE A — Toggle di-OFF-kan (cara standar/lama)</div>
+              <div class="spin-hint" style="margin:0 0 6px;">Grup diabaikan total. <b>Semua peserta punya peluang menang SAMA RATA</b>, tidak peduli dia masuk grup apa atau tidak.</div>
+              <div class="spin-hint" style="margin:0;color:#ffd76a;"><b>📖 Contoh:</b> Ada 100 tiket dari macam-macam orang. Klik "Undi sekarang" → sistem pilih 1 nama secara acak murni dari 100 tiket itu. Peluang tiap tiket = 1/100, tidak ada yang diistimewakan.</div>
+            </div>
+
+            <div style="background:#0e1013;border:1px solid #262b33;border-radius:10px;padding:10px 12px;">
+              <div style="font-weight:700;color:#e9ebf0;font-size:13px;margin-bottom:4px;">🔘 MODE B — Toggle di-ON-kan (pakai persentase grup)</div>
+              <div class="spin-hint" style="margin:0 0 6px;">Peluang menang diatur per grup pakai slider %. Peserta yang TIDAK masuk grup manapun berbagi sisa % yang belum dipakai grup manapun.</div>
+              <div class="spin-hint" style="margin:0;color:#ffd76a;">
+                <b>📖 Contoh setting:</b> Grup "VIP" = 70%, Grup "Reguler" = 20%. Sisa 10% otomatis jadi jatah peserta tanpa grup.<br>
+                <b>Isi peserta:</b> Ali & Budi masuk VIP (2 orang). Citra masuk Reguler (1 orang). Dedi tidak ikut grup manapun.<br>
+                <b>Cara sistem milih saat undi:</b> sistem "lempar dadu" 0–100%. Kalau hasilnya jatuh di 0–70 → pemenang diambil dari grup VIP (dipilih acak antara Ali/Budi). Kalau jatuh di 70–90 → dari grup Reguler (Citra). Kalau jatuh di 90–100 → dari peserta tanpa grup (Dedi).<br>
+                <b>Hasilnya:</b> Ali & Budi jauh lebih sering menang dibanding Dedi, walau jumlah tiketnya sama-sama 1 — karena mereka VIP.
+              </div>
+            </div>
+
+            <div class="spin-hint" style="margin-top:8px;">⚠️ <b>Penting:</b> Data grup & persentase yang sudah diatur TIDAK PERNAH HILANG saat toggle dimatikan (Mode A) — cuma "istirahat" sementara. Kalau toggle dinyalakan lagi (Mode B), semua settingan lama langsung aktif kembali seperti semula. Jadi aman bolak-balik ganti mode.</div>
+          </div>
+
+          <div style="border-top:1px dashed #262b33;padding-top:12px;">
+            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">3️⃣ ☑ Satu Orang Satu Hadiah — ini BEDA dari Sistem Grup!</div>
+            <div class="spin-hint" style="margin:0 0 8px;">Kalau Sistem Grup di atas mengatur <b>SIAPA yang lebih besar peluangnya dipilih</b>, checkbox ini mengatur hal yang beda sama sekali: <b>apakah orang yang SUDAH MENANG boleh menang lagi di undian berikutnya atau tidak.</b> Lokasinya ikut mode Sistem Grup di atas — otomatis pindah tempat:</div>
+
+            <div style="background:#0e1013;border:1px solid #262b33;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
+              <div style="font-weight:700;color:#e9ebf0;font-size:13px;margin-bottom:4px;">Kalau Sistem Grup OFF → checkbox ada di tab Entri (satu checkbox untuk semua orang)</div>
+              <div class="spin-hint" style="margin:0;">
+                <b>📖 Contoh:</b> Ali beli 4 tiket doorprize (Ali1, Ali2, Ali3, Ali4).<br>
+                • <b>✅ Dicentang</b> (bawaan/default): undian pertama nama "Ali1" keluar → Ali dikonfirmasi hadir → sah menang Bakso. Undian kedua (hadiah lain) → sistem otomatis <b>melewati Ali2, Ali3, Ali4</b> juga, walau tiketnya beda-beda — karena sistem tahu "Ali" sudah pernah menang. Tiketnya tetap ada di daftar, cuma dilewati, tidak dihapus. Cocok dipakai kalau mau <b>1 orang cuma boleh bawa pulang 1 hadiah</b>.<br>
+                • <b>⬜ Tidak dicentang</b>: undian kedua, "Ali3" bisa saja keluar lagi dan <b>tetap sah menang</b> hadiah lain — karena aturannya dimatikan, 1 orang boleh menang berkali-kali kalau tiketnya banyak. Yang tetap tidak boleh menang lagi cuma tiket "Ali1" itu sendiri (tiket yang sama persis tidak bisa menang 2x). Cocok untuk bazar/charity yang jual tiket — makin banyak beli, makin besar peluang menang berkali-kali.
+              </div>
+            </div>
+
+            <div style="background:#0e1013;border:1px solid #262b33;border-radius:10px;padding:10px 12px;">
+              <div style="font-weight:700;color:#e9ebf0;font-size:13px;margin-bottom:4px;">Kalau Sistem Grup ON → checkbox ada DI DALAM tiap grup (di 👥 Kelola Grup), beda-beda per grup</div>
+              <div class="spin-hint" style="margin:0;">
+                <b>📖 Contoh:</b> Panitia atur begini:<br>
+                &nbsp;&nbsp;— Grup VIP (70%) → checkbox <b>TIDAK dicentang</b> (VIP boleh menang berkali-kali, sebagai bentuk apresiasi tamu penting)<br>
+                &nbsp;&nbsp;— Grup Reguler (20%) → checkbox <b>dicentang</b> (Reguler cuma boleh menang 1x biar merata)<br><br>
+                Kejadiannya: Ali (VIP, punya 3 tiket) menang undian pertama → tiket Ali yang lain <b>tetap boleh diundi lagi</b> karena aturan grup VIP dimatikan. Sementara itu Citra (Reguler, punya 2 tiket) menang undian kedua → tiket Citra yang lain <b>otomatis dilewati</b> di undian berikutnya, karena grup Reguler aturannya dicentang.<br><br>
+                <b>Peserta yang tidak masuk grup manapun</b> (saat mode ini aktif) otomatis pakai aturan "dicentang" (aktif) — supaya aman, tidak bisa kebetulan menang berkali-kali kalau lupa diatur grupnya.
+              </div>
+            </div>
+          </div>
+
+          <div style="border-top:1px dashed #262b33;padding-top:12px;">
+            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">🕵️ Riwayat — siapa yang mengubah apa</div>
+            <div class="spin-hint" style="margin:0;">Setiap kali ada perubahan di menu Spin ini — tambah/hapus hadiah, ubah stok, tambah/hapus/ganti nama grup, ubah persentase grup, nyalakan/matikan toggle Sistem Grup, tambah/hapus entri peserta, tambah/hapus nama yang dikecualikan, sampai hasil undian (siapa menang apa hadiah) — semuanya <b>otomatis tercatat</b> lengkap dengan <b>nama akun yang melakukannya</b> dan waktu kejadiannya. Cek di menu <b>🕵️ Riwayat</b> di menu utama aplikasi (bukan di dalam menu Spin ini). Berguna kalau butuh tahu "siapa tadi yang mengubah stok Bakso" atau "siapa yang mengaktifkan Sistem Grup".</div>
+          </div>
+
+          <div style="border-top:1px dashed #262b33;padding-top:12px;">
+            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">🔄 Urutan lengkap sekali undi (ringkasan alurnya)</div>
+            <div class="spin-hint" style="margin:0;">
+              1. Pilih hadiah dari dropdown (misal: Bakso).<br>
+              2. Klik "🎉 Undi sekarang".<br>
+              3. Nama pemenang keluar — dipilih berdasarkan Mode A (rata) atau Mode B (persen grup), sesuai toggle Sistem Grup, dan sudah otomatis skip nama yang kena aturan ⚙️ Setting (poin 2) atau Satu Orang Satu Hadiah (poin 3).<br>
+              4. Muncul konfirmasi "orangnya ada di tempat atau tidak?"<br>
+              5a. Kalau <b>✓ Ada</b> → sah menang, stok "Bakso" berkurang 1, masuk ke tab Hasil.<br>
+              5b. Kalau <b>✕ Tidak ada</b> → stok tetap sama, tiket tidak dihapus, cuma dilewati untuk sesi ini biar bisa langsung diundi ulang tanpa keluar nama yang sama.
+            </div>
+          </div>
+
+
+        </div>
+
         <div style="display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:10px;">
           <div class="spin-admin-ctrl" style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinOpenPrizeModal()">🎁 Kelola Hadiah</button>
@@ -3819,35 +3903,7 @@
             <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinResetSemua()">🔄 Reset Semua</button>
           </div>
         </div>
-        <p class="spin-subtitle spin-admin-ctrl">Entri &amp; hasil undian tersimpan otomatis di database, tidak hilang saat halaman ditutup.</p>
-
-        <button class="spin-btn spin-btn-ghost spin-btn-sm spin-admin-ctrl" onclick="document.getElementById('spinHelpPanel').classList.toggle('show')" style="margin-bottom:10px;">❓ Cara pakai Game Spin</button>
-        <div class="spin-adv-panel" id="spinHelpPanel" style="flex-direction:column;align-items:stretch;gap:10px;">
-          <div>
-            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">1️⃣ 🎁 Kelola Hadiah</div>
-            <div class="spin-hint" style="margin:0;">Tambahkan menu doorprize di sini (Bakso, Geprek, Oli Motor, Nasi Uduk, dst) beserta jumlah stok pcs-nya. Ini yang jadi pilihan di dropdown "Hadiah yang akan diundi" sebelum spin.</div>
-          </div>
-          <div>
-            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">👥 Kelola Grup — persentase peluang menang</div>
-            <div class="spin-hint" style="margin:0;">Bikin grup bebas sesuai kebutuhan (misal: Miskin, Standar, Menengah, Kaya — atau nama lain, tidak wajib pakai 4 ini). Tiap grup diset persentase peluang menang saat undian (misal Grup A 50%, Grup B 30%, sisanya 20% dibagi rata ke peserta tanpa grup). Lalu di daftar entri, pilih grup untuk tiap peserta lewat dropdown 👥 di sampingnya. Pengaturan ini tetap tunduk sama aturan di ⚙️ Setting (pengecualian per hadiah) dan ☑ Satu orang satu hadiah — grup cuma mengatur SIAPA yang lebih besar peluangnya dipilih dari antara peserta yang memang masih berhak diundi.</div>
-          </div>
-          <div>
-            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">2️⃣ ⚙️ Setting — pengecualian per hadiah</div>
-            <div class="spin-hint" style="margin:0;">Tentukan siapa yang <b>tidak boleh menang hadiah tertentu</b> — cocok untuk orang yang menyumbang doorprize itu sendiri. Bisa pilih "Semua hadiah" (dilewati dari semua undian) atau centang hadiah spesifik saja (misal: hanya dilarang menang Bakso, tapi tetap boleh menang Geprek).</div>
-          </div>
-          <div>
-            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">3️⃣ ☑ Satu orang satu hadiah</div>
-            <div class="spin-hint" style="margin:0;">
-              Aturan ini punya 2 versi terpisah, tidak digabung:<br>
-              • <b>Sistem grup OFF</b> (mode standar): pakai checkbox default di tab Entri. <b>Dicentang</b> (default): kalau "Ali1" menang, tiket "Ali2", "Ali3", "Ali4" (nama sama) <b>tidak dihapus</b>, tapi otomatis <b>dilewati</b> di undian selanjutnya. <b>Tidak dicentang</b>: tiket LAIN dengan nama sama tetap boleh diundi lagi (1 orang bisa menang berkali-kali). Tapi tiket yang persis sama tetap dilewati.<br>
-              • <b>Sistem grup ON</b>: checkbox default disembunyikan, dan tiap grup punya centang "satu orang satu hadiah" sendiri-sendiri di 👥 Kelola Grup — bisa beda aturan per grup. Peserta tanpa grup selalu pakai aturan "dicentang" (default aktif).
-            </div>
-          </div>
-          <div>
-            <div style="font-weight:700;color:#f5b942;font-size:13px;margin-bottom:2px;">🔄 Urutan kerjanya</div>
-            <div class="spin-hint" style="margin:0;">Pilih hadiah dari dropdown → klik "Undi sekarang" → nama keluar → muncul konfirmasi "orangnya ada di tempat atau tidak?". Kalau <b>ada</b> → sah menang, stok hadiah berkurang 1 (tiket tetap ada di daftar, cuma dilewati di undian berikutnya kalau "Satu orang satu hadiah" dicentang). Kalau <b>tidak ada</b> → stok tetap sama, tiket tidak dihapus, cuma dilewati untuk sesi ini supaya bisa langsung diundi ulang.</div>
-          </div>
-        </div>
+        <p class="spin-subtitle spin-admin-ctrl">Entri &amp; hasil undian tersimpan otomatis di database, tidak hilang saat halaman ditutup. Semua perubahan (tambah/hapus hadiah, grup, entri, hasil undian, dll) tercatat otomatis di menu 🕵️ Riwayat.</p>
 
         <div id="spinSqlNotice" class="spin-sql-notice">
           ⚠️ <strong>Tabel Supabase belum dibuat.</strong> Jalankan SQL ini di <a href="https://supabase.com/dashboard" target="_blank" style="color:#d97706;">Supabase Dashboard → SQL Editor</a>:<br>
@@ -7221,6 +7277,9 @@ const TABEL_LABEL = {
   project_task: '📁 Task Project',
   acara_bayar_gp: 'Bayar GP (Acara)', qurban_bayar_gp: 'Bayar GP (Qurban)',
   musyawarah: 'Musyawarah', export_pdf: '📄 Export PDF', export_csv: '📄 Export CSV',
+  spin_entries: '🎡 Spin - Entri Peserta', spin_winners: '🎡 Spin - Pemenang',
+  spin_prizes: '🎡 Spin - Hadiah', spin_groups: '🎡 Spin - Grup Peserta',
+  spin_settings: '🎡 Spin - Pengaturan',
 };
 let rekapRows = [], rekapMeta = {}, rekapSesiStats = [], rekapSemuaAnggota = [];
 let iuranRows = [], iuranMeta = {}, kategoriCache = [], currentIuranId = null, iuranLain = [];
@@ -27026,6 +27085,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     // ke kondisi semula kalau semua hasil undian dihapus (lihat spinClearHasil).
     const {error} = await db.from('spin_prizes').insert({name, stock, initial_stock: stock});
     if(error){ alert('Gagal menambah hadiah: '+error.message); return; }
+    if (typeof _auditLog === 'function') _auditLog('spin_prizes', 'INSERT', null, {name, stock}, `Tambah hadiah "${name}" (${stock} pcs)`);
     document.getElementById('spinPrizeNameInput').value = '';
     document.getElementById('spinPrizeStockInput').value = '1';
     await spinLoadAll();
@@ -27038,14 +27098,18 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   // (spinConfirmPresence), yang cuma mengubah stock saja tanpa menyentuh baseline.
   async function spinUpdatePrizeStock(id, newStock){
     newStock = Math.max(0, parseInt(newStock||'0'));
+    const old = spinPrizes.find(p=>p.id===id);
     await db.from('spin_prizes').update({stock:newStock, initial_stock:newStock}).eq('id', id);
+    if (typeof _auditLog === 'function') _auditLog('spin_prizes', 'UPDATE', old ? {stock: old.stock} : null, {stock:newStock}, `Ubah stok hadiah "${old ? old.name : id}" jadi ${newStock} pcs`);
     await spinLoadAll();
     spinRenderPrizeList();
   }
 
   async function spinDeletePrize(id){
     if(!confirm('Hapus hadiah ini dari daftar?')) return;
+    const old = spinPrizes.find(p=>p.id===id);
     await db.from('spin_prizes').delete().eq('id', id);
+    if (typeof _auditLog === 'function') _auditLog('spin_prizes', 'DELETE', old || {id}, null, `Hapus hadiah "${old ? old.name : id}"`);
     await spinLoadAll();
     spinRenderPrizeList();
   }
@@ -27095,6 +27159,8 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     if(error){
       alert('Gagal menyimpan pengaturan sistem grup: ' + error.message);
       console.error('spinSaveGroupSystemEnabled error:', error);
+    } else if (typeof _auditLog === 'function') {
+      _auditLog('spin_settings', 'UPDATE', null, {group_system_enabled: spinGroupSystemEnabled}, `Sistem Grup diubah jadi ${spinGroupSystemEnabled ? 'AKTIF (ON)' : 'NONAKTIF (OFF)'}`);
     }
     // Kalau filter grup lagi dipakai & sistem dimatikan, reset filter supaya tidak menyaring apa-apa
     const filterSel = document.getElementById('spinGroupFilterSelect');
@@ -27117,6 +27183,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       alert('Gagal menambah grup: ' + error.message + '\n\nPastikan tabel spin_groups & kolom entries.group_id sudah dibuat (lihat SQL di bagian atas menu Spin).');
       return;
     }
+    if (typeof _auditLog === 'function') _auditLog('spin_groups', 'INSERT', null, {name}, `Tambah grup "${name}"`);
     nameInput.value = '';
     await spinLoadAll();
     spinRenderGroupList();
@@ -27134,6 +27201,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       alert('Gagal membuat grup cepat: ' + error.message + '\n\nPastikan tabel spin_groups & kolom entries.group_id sudah dibuat (lihat SQL di bagian atas menu Spin).');
       return;
     }
+    if (typeof _auditLog === 'function') _auditLog('spin_groups', 'INSERT', null, {groups: toInsert.map(g=>g.name)}, `Buat cepat grup: ${toInsert.map(g=>g.name).join(', ')}`);
     await spinLoadAll();
     spinRenderGroupList();
   }
@@ -27143,6 +27211,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     if(spinGroups.length===0){ alert('Belum ada grup untuk dibagi rata.'); return; }
     const equal = Math.round((100 / spinGroups.length) * 10) / 10;
     await Promise.all(spinGroups.map(g => db.from('spin_groups').update({percent: equal}).eq('id', g.id)));
+    if (typeof _auditLog === 'function') _auditLog('spin_groups', 'UPDATE', null, {percent: equal}, `Bagi rata semua grup jadi ${equal}%`);
     await spinLoadAll();
     spinRenderGroupList();
   }
@@ -27155,11 +27224,13 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     const badge = document.querySelector(`.spin-group-pct-badge[data-gid="${id}"]`);
     if(badge) badge.textContent = p + '%';
     const g = spinGroups.find(x=>x.id===id);
+    const oldPercent = g ? g.percent : null;
     if(g) g.percent = p;
     spinUpdateGroupTotalBar();
     clearTimeout(spinGroupSaveDebounce[id]);
     spinGroupSaveDebounce[id] = setTimeout(async () => {
       await db.from('spin_groups').update({percent: p}).eq('id', id);
+      if (typeof _auditLog === 'function') _auditLog('spin_groups', 'UPDATE', {percent: oldPercent}, {percent: p}, `Ubah persentase grup "${g ? g.name : id}" jadi ${p}%`);
     }, 250);
   }
   let spinGroupSaveDebounce = {};
@@ -27172,13 +27243,17 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     if(error){
       alert('Gagal menyimpan pengaturan "satu orang satu hadiah" untuk grup ini: ' + error.message + '\n\nPastikan kolom spin_groups.one_per_person sudah dibuat (lihat SQL di bagian atas menu Spin).');
       console.error('spinUpdateGroupOnePerPerson error:', error);
+      return;
     }
+    if (typeof _auditLog === 'function') _auditLog('spin_groups', 'UPDATE', null, {one_per_person: checked}, `Ubah "satu orang satu hadiah" grup "${g ? g.name : id}" jadi ${checked ? 'AKTIF' : 'NONAKTIF'}`);
   }
 
   async function spinRenameGroup(id, val){
     const name = val.trim();
     if(!name) return;
+    const old = spinGroups.find(x=>x.id===id);
     await db.from('spin_groups').update({name}).eq('id', id);
+    if (typeof _auditLog === 'function') _auditLog('spin_groups', 'UPDATE', {name: old ? old.name : null}, {name}, `Ganti nama grup jadi "${name}"`);
     await spinLoadAll();
     spinRenderGroupList();
   }
@@ -27189,6 +27264,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     const ok = await askConfirm(`Hapus grup "${grp.name}"? Peserta yang ada di grup ini akan jadi "Tanpa grup" (bukan dihapus).`, '🗑️ Hapus Grup');
     if(!ok) return;
     await db.from('spin_groups').delete().eq('id', id);
+    if (typeof _auditLog === 'function') _auditLog('spin_groups', 'DELETE', grp, null, `Hapus grup "${grp.name}"`);
     await spinLoadAll();
     spinRenderGroupList();
   }
@@ -27308,12 +27384,15 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     const rows = lines.map(name => groupId ? {name, group_id: groupId} : {name});
     const {error} = await db.from('entries').insert(rows);
     if(error){ alert('Gagal menambah entri: '+error.message); return; }
+    if (typeof _auditLog === 'function') _auditLog('spin_entries', 'INSERT', null, {jumlah: lines.length, nama: lines.slice(0,50)}, `Tambah ${lines.length} entri peserta`);
     spinCloseAddModal();
     await spinLoadAll();
   }
 
   async function spinDeleteEntry(id){
+    const old = spinEntries.find(e=>e.id===id);
     await db.from('entries').delete().eq('id', id);
+    if (typeof _auditLog === 'function') _auditLog('spin_entries', 'DELETE', old || {id}, null, `Hapus entri "${old ? old.name : id}"`);
     await spinLoadAll();
   }
 
@@ -27323,6 +27402,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     if(!ok) return;
     const backup = spinEntries.slice();
     await db.from('entries').delete().neq('id','00000000-0000-0000-0000-000000000000');
+    if (typeof _auditLog === 'function') _auditLog('spin_entries', 'DELETE', {jumlah: backup.length}, null, `Hapus semua entri (${backup.length} tiket)`);
     await spinLoadAll();
     showUndoToast(`Semua entri (${backup.length} tiket)`,
       async function(){ // onUndo — kembalikan persis seperti semula (id, gambar, waktu dibuat)
@@ -27367,6 +27447,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     const backup = spinWinners.slice();
     const prizeStockBackup = spinPrizes.map(p => ({id:p.id, stock:p.stock})); // stok sebelum direset, buat undo
     await db.from('winners').delete().neq('id','00000000-0000-0000-0000-000000000000');
+    if (typeof _auditLog === 'function') _auditLog('spin_winners', 'DELETE', {jumlah: backup.length}, null, `Hapus semua hasil undian (${backup.length} pemenang), stok dikembalikan ke awal`);
     await spinLoadAll();
     showUndoToast(`Semua hasil (${backup.length} pemenang)`,
       async function(){
@@ -27393,6 +27474,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     // Hapus entri dulu baru grup (urutan aman meski FK-nya ON DELETE SET NULL).
     await db.from('entries').delete().neq('id','00000000-0000-0000-0000-000000000000');
     await db.from('spin_groups').delete().neq('id','00000000-0000-0000-0000-000000000000');
+    if (typeof _auditLog === 'function') _auditLog('spin_entries', 'DELETE', {entri: backupEntries.length, grup: backupGroups.length}, null, `Reset grup & entri (${backupEntries.length} entri, ${backupGroups.length} grup)`);
     await spinLoadAll();
     spinRenderGroupList();
     spinRenderEntries();
@@ -27424,6 +27506,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       db.from('entries').delete().neq('id','00000000-0000-0000-0000-000000000000'),
       db.from('winners').delete().neq('id','00000000-0000-0000-0000-000000000000')
     ]);
+    if (typeof _auditLog === 'function') _auditLog('spin_entries', 'DELETE', {entri: backupEntries.length, pemenang: backupWinners.length}, null, `🔄 Reset Semua Game Spin (${backupEntries.length} entri, ${backupWinners.length} pemenang), stok dikembalikan ke awal`);
     await spinLoadAll();
     showUndoToast(`Reset semua (${backupEntries.length} entri, ${backupWinners.length} pemenang)`,
       async function(){
@@ -27458,6 +27541,8 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     const {error} = await db.from('spin_settings').upsert({key:'one_per_person', data: {value: checked}, updated_at: new Date().toISOString()});
     if(error){
       console.error('spinSaveOnePerPerson error:', error);
+    } else if (typeof _auditLog === 'function') {
+      _auditLog('spin_settings', 'UPDATE', null, {one_per_person: checked}, `Ubah "Satu orang satu hadiah" (default) jadi ${checked ? 'AKTIF' : 'NONAKTIF'}`);
     }
   }
 
@@ -27527,6 +27612,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     document.getElementById('spinExcludeInput').value = '';
     const ok = await spinSaveSettings();
     if(!ok){ await spinLoadAll(); spinRenderExcludePrizeChecks(); }
+    else if (typeof _auditLog === 'function') _auditLog('spin_settings', 'UPDATE', null, {nama: lines}, `Tambah pengecualian undian: ${lines.join(', ')}`);
     spinRenderExcludeList();
     spinRenderEntries();
   }
@@ -27535,6 +27621,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     spinExcluded = spinExcluded.filter(e => e.name !== name);
     const ok = await spinSaveSettings();
     if(!ok){ await spinLoadAll(); spinRenderExcludePrizeChecks(); }
+    else if (typeof _auditLog === 'function') _auditLog('spin_settings', 'UPDATE', {nama: name}, null, `Hapus pengecualian undian untuk "${name}"`);
     spinRenderExcludeList();
     spinRenderEntries();
   }
@@ -27808,6 +27895,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       // tiket duplikatnya) otomatis dilewati di undian berikutnya karena sudah tercatat di winners.
       await db.from('winners').insert({name: pick.name, image_url: pick.image_url||null, prize_name: prize.name});
       await db.from('spin_prizes').update({stock: Math.max(0, prize.stock - 1)}).eq('id', prize.id);
+      if (typeof _auditLog === 'function') _auditLog('spin_winners', 'INSERT', null, {name: pick.name, prize: prize.name}, `🏆 "${pick.name}" menang hadiah "${prize.name}"`);
 
       await spinLoadAll();
       spinShowTicket([{name: pick.name}], prize.name);
@@ -27816,6 +27904,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       // Tidak ada di tempat: stok TIDAK berkurang, tiket TIDAK dihapus, cuma dilewati sementara
       // untuk sesi ini supaya bisa langsung diundi ulang tanpa kena nama yang sama lagi.
       spinSessionSkip.add(pick.id);
+      if (typeof _auditLog === 'function') _auditLog('spin_winners', 'UPDATE', null, {name: pick.name, prize: prize.name}, `⏭ "${pick.name}" terpilih untuk "${prize.name}" tapi tidak ada di tempat — dilewati`);
       spinRenderEntries();
       document.getElementById('spinDrawBtn').disabled = false;
       spinFireReaction(['😢','😞','💔'], {count:14, fall:true, duration:2.6, size:46});
