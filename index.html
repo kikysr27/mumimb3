@@ -5428,6 +5428,15 @@ function descToHTML(text){
       out.push(line.slice('__LIST_BLOCK__'.length));
       continue;
     }
+    // 0. Marker alignment di awal baris — "<<<center>>>", "<<<right>>>", "<<<justify>>>"
+    //    (ditulis oleh htmlElementToMarkdown supaya rata tengah/kanan/justify TERSIMPAN
+    //    dan TIDAK HILANG saat refresh / dibuka lagi).
+    var lineAlignAttr = '';
+    var alignLineMatch = line.match(/^<<<(center|right|justify)>>>/);
+    if (alignLineMatch) {
+      lineAlignAttr = ' style="text-align:' + alignLineMatch[1] + '"';
+      line = line.slice(alignLineMatch[0].length);
+    }
     // 1. Escape HTML entities (keamanan XSS) — TAPI jangan escape kurung kotak/biasa
     //    karena dipakai markdown link. Escape `<` `>` `&` `"` `'` saja.
     var esc = line
@@ -5471,13 +5480,15 @@ function descToHTML(text){
     var h3m = esc.match(/^###\s+(.+)$/);
     var h2m = esc.match(/^##\s+(.+)$/);
     var h1m = esc.match(/^#\s+(.+)$/);
-    if(h3m){      content = h3m[1]; wrapStart = '<div class="desc-h3">'; wrapEnd = '</div>'; }
-    else if(h2m){ content = h2m[1]; wrapStart = '<div class="desc-h2">'; wrapEnd = '</div>'; }
-    else if(h1m){ content = h1m[1]; wrapStart = '<div class="desc-h1">'; wrapEnd = '</div>'; }
+    if(h3m){      content = h3m[1]; wrapStart = '<div class="desc-h3"' + lineAlignAttr + '>'; wrapEnd = '</div>'; }
+    else if(h2m){ content = h2m[1]; wrapStart = '<div class="desc-h2"' + lineAlignAttr + '>'; wrapEnd = '</div>'; }
+    else if(h1m){ content = h1m[1]; wrapStart = '<div class="desc-h1"' + lineAlignAttr + '>'; wrapEnd = '</div>'; }
     else { content = esc; }
     // 4. Inline format: bold, link, mention
     content = _descInline(content);
-    // 5. Bungkus baris
+    // 5. Bungkus baris — kalau ada alignment tapi bukan heading, tetap bungkus dalam
+    //    <div class="desc-align"> supaya rata tengah/kanan/justify-nya kepakai.
+    if (!wrapStart && lineAlignAttr) { wrapStart = '<div class="desc-align"' + lineAlignAttr + '>'; wrapEnd = '</div>'; }
     if(wrapStart){
       out.push(wrapStart + content + wrapEnd);
     } else {
@@ -5486,7 +5497,7 @@ function descToHTML(text){
   }
   // 6. Gabung — heading/todo/poll/list di-render sebagai block, baris biasa pakai <br>
   var html = '';
-  var BLOCK_RE = /^(<div class="(desc-h|md-todo|md-poll)|<ul|<ol)/;
+  var BLOCK_RE = /^(<div class="(desc-h|desc-align|md-todo|md-poll)|<ul|<ol)/;
   for(var j = 0; j < out.length; j++){
     html += out[j];
     var isBlock = BLOCK_RE.test(out[j]);
@@ -5574,9 +5585,9 @@ window.markdownToEditableHtml = function(md) {
   // Normalisasi class span/div → tag native supaya execCommand toggle bekerja
   // CATATAN: md-todo, md-poll, md-mention BIARKAN as-is (interactive elements)
   html = html
-    .replace(/<div class="desc-h1">([\s\S]*?)<\/div>/g, '<h1>$1</h1>')
-    .replace(/<div class="desc-h2">([\s\S]*?)<\/div>/g, '<h2>$1</h2>')
-    .replace(/<div class="desc-h3">([\s\S]*?)<\/div>/g, '<h3>$1</h3>')
+    .replace(/<div class="desc-h1"([^>]*)>([\s\S]*?)<\/div>/g, '<h1$1>$2</h1>')
+    .replace(/<div class="desc-h2"([^>]*)>([\s\S]*?)<\/div>/g, '<h2$1>$2</h2>')
+    .replace(/<div class="desc-h3"([^>]*)>([\s\S]*?)<\/div>/g, '<h3$1>$2</h3>')
     .replace(/<span class="desc-bold">([\s\S]*?)<\/span>/g, '<b>$1</b>')
     .replace(/<span class="desc-italic">([\s\S]*?)<\/span>/g, '<i>$1</i>')
     .replace(/<span class="desc-underline">([\s\S]*?)<\/span>/g, '<u>$1</u>')
@@ -5596,6 +5607,8 @@ window.mdToPlainText = function(text, maxLen) {
   // 1. Hapus blok HTML mentah (tabel/gambar)
   s = s.replace(/\[\[html\]\][\s\S]*?\[\[\/html\]\]/g, '[Tabel/Gambar]');
   s = s.replace(/\[\[html\]\][\s\S]*$/g, '[Tabel/Gambar]'); // marker tidak lengkap
+  // 1b. Hapus marker alignment ("<<<center>>>" dkk) — jangan sampai bocor jadi teks
+  s = s.replace(/^<<<(center|right|justify)>>>/gm, '');
   // 2. Polling, checkbox task, mention, link
   s = s.replace(/\[POLL:[^\]]+\]/g, '[Polling]');
   s = s.replace(/^[\s]*-\s*\[(x|X| )\]\s*/gm, '');
@@ -5639,6 +5652,9 @@ window.mdToStructuredLines = function(text) {
   // 1. Hapus blok HTML mentah & marker khusus (preview-friendly)
   s = s.replace(/\[\[html\]\][\s\S]*?\[\[\/html\]\]/g, '[Tabel/Gambar]');
   s = s.replace(/\[\[html\]\][\s\S]*$/g, '[Tabel/Gambar]');
+  // Hapus marker alignment ("<<<center>>>" dkk) — cukup dipakai di editor WYSIWYG,
+  // tidak perlu tampil di PDF (PDF tetap rata kiri baris per baris).
+  s = s.replace(/^<<<(center|right|justify)>>>/gm, '');
   s = s.replace(/\[POLL:[^\]]+\]/g, '[Polling]');
   s = s.replace(/^[\s]*-\s*\[(x|X| )\]\s*/gm, function(m, c){ return (c.toLowerCase()==='x' ? '[v] ' : '[ ] '); });
   s = s.replace(/@\[([^\]]+)\]\(mention:[^)]+\)/g, '@$1');
@@ -5724,6 +5740,17 @@ window.rgbToHex = function(rgb) {
   return '#' + toHex(m[1]) + toHex(m[2]) + toHex(m[3]);
 };
 
+// Helper: baca text-align inline style dari sebuah elemen (hasil execCommand
+// justifyCenter/justifyRight/justifyFull) dan ubah jadi marker teks di awal baris
+// markdown, mis. "<<<center>>>". 'left' (default) tidak perlu marker.
+function _alignMarker(el) {
+  var st = el.getAttribute && (el.getAttribute('style') || '');
+  var m = st && st.match(/text-align\s*:\s*(center|right|justify|left)/i);
+  if (!m) return '';
+  var v = m[1].toLowerCase();
+  return v === 'left' ? '' : ('<<<' + v + '>>>');
+}
+
 // ─── HELPER: konversi contenteditable HTML → markdown (untuk simpan ke DB) ───
 window.htmlElementToMarkdown = function(rootEl) {
   if (!rootEl) return '';
@@ -5738,11 +5765,11 @@ window.htmlElementToMarkdown = function(rootEl) {
         var cls = c.className || '';
         var inner = walk(c);
         if (tag === 'h1' || cls.indexOf('desc-h1') >= 0)
-          out += '\n# ' + inner.replace(/^\s+|\s+$/g, '') + '\n';
+          out += '\n' + _alignMarker(c) + '# ' + inner.replace(/^\s+|\s+$/g, '') + '\n';
         else if (tag === 'h2' || cls.indexOf('desc-h2') >= 0)
-          out += '\n## ' + inner.replace(/^\s+|\s+$/g, '') + '\n';
+          out += '\n' + _alignMarker(c) + '## ' + inner.replace(/^\s+|\s+$/g, '') + '\n';
         else if (tag === 'h3' || cls.indexOf('desc-h3') >= 0)
-          out += '\n### ' + inner.replace(/^\s+|\s+$/g, '') + '\n';
+          out += '\n' + _alignMarker(c) + '### ' + inner.replace(/^\s+|\s+$/g, '') + '\n';
         else if (tag === 'b' || tag === 'strong' || cls.indexOf('desc-bold') >= 0)
           out += inner ? '**' + inner + '**' : '';
         else if (tag === 'i' || tag === 'em' || cls.indexOf('desc-italic') >= 0)
@@ -5832,7 +5859,7 @@ window.htmlElementToMarkdown = function(rootEl) {
         }
         else if (tag === 'div' || tag === 'p') {
           if (out.length > 0 && !out.endsWith('\n')) out += '\n';
-          out += inner;
+          out += _alignMarker(c) + inner;
           if (!out.endsWith('\n')) out += '\n';
         }
         else if (tag === 'span') {
@@ -21860,9 +21887,9 @@ function _bukaWysiwygTabBaru(opts) {
   // Convert markdown awal → HTML, lalu normalisasi class jadi tag native
   // supaya execCommand bold/italic/underline bisa toggle dengan benar
   let initHtml = descToHTML(hasil)
-    .replace(/<div class="desc-h1">([\s\S]*?)<\/div>/g, '<h1>$1</h1>')
-    .replace(/<div class="desc-h2">([\s\S]*?)<\/div>/g, '<h2>$1</h2>')
-    .replace(/<div class="desc-h3">([\s\S]*?)<\/div>/g, '<h3>$1</h3>')
+    .replace(/<div class="desc-h1"([^>]*)>([\s\S]*?)<\/div>/g, '<h1$1>$2</h1>')
+    .replace(/<div class="desc-h2"([^>]*)>([\s\S]*?)<\/div>/g, '<h2$1>$2</h2>')
+    .replace(/<div class="desc-h3"([^>]*)>([\s\S]*?)<\/div>/g, '<h3$1>$2</h3>')
     .replace(/<span class="desc-bold">([\s\S]*?)<\/span>/g, '<b>$1</b>')
     .replace(/<span class="desc-italic">([\s\S]*?)<\/span>/g, '<i>$1</i>')
     .replace(/<span class="desc-underline">([\s\S]*?)<\/span>/g, '<u>$1</u>')
@@ -22198,6 +22225,17 @@ function _bukaWysiwygTabBaru(opts) {
   editor.innerHTML = data.html || '<p><br></p>';
   var lastSavedHtml = editor.innerHTML;
 
+  // Helper: baca text-align inline style (hasil execCommand justifyCenter/dst.)
+  // dan ubah jadi marker "<<<center>>>" dkk di awal baris markdown, supaya rata
+  // tengah/kanan/justify TIDAK HILANG saat disimpan balik ke parent lalu di-refresh.
+  function _alignMarkerPopup(el) {
+    var st = (el.getAttribute && el.getAttribute('style')) || '';
+    var m = st.match(/text-align\s*:\s*(center|right|justify|left)/i);
+    if (!m) return '';
+    var v = m[1].toLowerCase();
+    return v === 'left' ? '' : ('<<<' + v + '>>>');
+  }
+
   // ─── HTML → Markdown converter (untuk simpan ke parent textarea) ───
   function htmlToMd(node) {
     var out = '';
@@ -22210,11 +22248,11 @@ function _bukaWysiwygTabBaru(opts) {
         var cls = c.className || '';
         var inner = htmlToMd(c);
         if (tag === 'h1' || cls.indexOf('desc-h1') >= 0)
-          out += '\\n# ' + inner.replace(/^\\s+|\\s+$/g,'') + '\\n';
+          out += '\\n' + _alignMarkerPopup(c) + '# ' + inner.replace(/^\\s+|\\s+$/g,'') + '\\n';
         else if (tag === 'h2' || cls.indexOf('desc-h2') >= 0)
-          out += '\\n## ' + inner.replace(/^\\s+|\\s+$/g,'') + '\\n';
+          out += '\\n' + _alignMarkerPopup(c) + '## ' + inner.replace(/^\\s+|\\s+$/g,'') + '\\n';
         else if (tag === 'h3' || cls.indexOf('desc-h3') >= 0)
-          out += '\\n### ' + inner.replace(/^\\s+|\\s+$/g,'') + '\\n';
+          out += '\\n' + _alignMarkerPopup(c) + '### ' + inner.replace(/^\\s+|\\s+$/g,'') + '\\n';
         else if (tag === 'b' || tag === 'strong' || cls.indexOf('desc-bold') >= 0)
           out += inner ? '**' + inner + '**' : '';
         else if (tag === 'i' || tag === 'em' || cls.indexOf('desc-italic') >= 0)
@@ -22248,7 +22286,7 @@ function _bukaWysiwygTabBaru(opts) {
         else if (tag === 'br') out += '\\n';
         else if (tag === 'div' || tag === 'p') {
           if (!out.endsWith('\\n') && out.length > 0) out += '\\n';
-          out += inner;
+          out += _alignMarkerPopup(c) + inner;
           if (!inner.endsWith('\\n')) out += '\\n';
         }
         else out += inner;
