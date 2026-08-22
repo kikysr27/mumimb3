@@ -3149,6 +3149,7 @@
           <button id="evaluasiPdfBtn" onclick="exportEvaluasiDetailPDF(currentEvaluasiId)" style="flex:1;display:none;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;">📄 Export PDF</button>
           <button id="evaluasiHapusBtn" class="danger" onclick="hapusEvaluasi()" style="flex:1;display:none;">🗑️ Hapus</button>
         </div>
+        <div id="evalAutosaveStatus" class="muted" style="margin-top:6px;font-size:11px;"></div>
         <div id="evalMsg" style="margin-top:6px;"></div>
       </div>
     </div>
@@ -9322,6 +9323,89 @@ function renderEvaluasiList() {
   }).join('');
 }
 
+// ═══════════════════════════════════════════════════════════════
+// AUTOSAVE DRAFT — supaya isi form TIDAK HILANG kalau lupa klik
+// "Simpan Evaluasi" lalu refresh / pindah menu / browser ketutup.
+// Draft disimpan ke localStorage tiap kali user berhenti mengetik
+// (debounce ±700ms), terpisah per evaluasi (pakai currentEvaluasiId).
+// Draft otomatis DIHAPUS begitu berhasil "Simpan Evaluasi".
+// ═══════════════════════════════════════════════════════════════
+const EVAL_DRAFT_PREFIX = 'evaluasi_draft_';
+let _evalDraftTimer = null;
+
+function _evalDraftKey() {
+  return EVAL_DRAFT_PREFIX + (currentEvaluasiId || 'baru');
+}
+
+function _saveEvalDraftNow() {
+  try {
+    const judulEl = document.getElementById('evalJudul');
+    const isiEl = document.getElementById('evalIsi');
+    if (!judulEl || !isiEl) return;
+    const judul = judulEl.value || '';
+    const isiHtml = isiEl.innerHTML || '';
+    // Jangan simpan draft kosong (biar tidak menumpuk sampah di localStorage)
+    const isEmpty = !judul.trim() && (!isiHtml || isiHtml.replace(/<[^>]*>/g,'').trim() === '');
+    const key = _evalDraftKey();
+    if (isEmpty) { try { localStorage.removeItem(key); } catch(e){} return; }
+    localStorage.setItem(key, JSON.stringify({ judul, isiHtml, ts: Date.now() }));
+    const st = document.getElementById('evalAutosaveStatus');
+    if (st) st.textContent = '💾 Draf tersimpan otomatis ' + new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  } catch (e) { /* localStorage penuh/diblokir — abaikan diam-diam */ }
+}
+
+function _scheduleEvalDraftSave() {
+  clearTimeout(_evalDraftTimer);
+  _evalDraftTimer = setTimeout(_saveEvalDraftNow, 700);
+}
+
+function _clearEvalDraft() {
+  try { localStorage.removeItem(_evalDraftKey()); } catch(e){}
+  clearTimeout(_evalDraftTimer);
+  const st = document.getElementById('evalAutosaveStatus');
+  if (st) st.textContent = '';
+}
+
+function _loadEvalDraft() {
+  try {
+    const raw = localStorage.getItem(_evalDraftKey());
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+// Pasang listener autosave SEKALI SAJA ke judul & editor (dipanggil tiap buka form,
+// tapi ditandai _evalAutosaveBound supaya tidak dobel-pasang).
+function _bindEvalAutosave() {
+  const judulEl = document.getElementById('evalJudul');
+  const isiEl = document.getElementById('evalIsi');
+  if (judulEl && !judulEl._evalAutosaveBound) {
+    judulEl._evalAutosaveBound = true;
+    judulEl.addEventListener('input', _scheduleEvalDraftSave);
+  }
+  if (isiEl && !isiEl._evalAutosaveBound) {
+    isiEl._evalAutosaveBound = true;
+    // 'input' menangkap ketikan; 'blur' & sesudah aksi toolbar (tabel/gambar/dll) juga
+    // memicu 'input' karena semuanya memodifikasi contenteditable via execCommand/DOM.
+    isiEl.addEventListener('input', _scheduleEvalDraftSave);
+  }
+}
+
+// Kalau ada draf tersisa (lebih baru dari data asli), tawarkan pemulihan otomatis.
+function _restoreEvalDraftIfAny(baseJudul, baseIsiHtml) {
+  const draft = _loadEvalDraft();
+  if (!draft) return;
+  const draftIsiText = (draft.isiHtml || '').replace(/<[^>]*>/g,'').trim();
+  const baseIsiText = (baseIsiHtml || '').replace(/<[^>]*>/g,'').trim();
+  const beda = (draft.judul || '') !== (baseJudul || '') || draftIsiText !== baseIsiText;
+  if (!beda) { _clearEvalDraft(); return; }
+  document.getElementById('evalJudul').value = draft.judul || '';
+  document.getElementById('evalIsi').innerHTML = draft.isiHtml || '<p><br></p>';
+  const st = document.getElementById('evalAutosaveStatus');
+  if (st) st.innerHTML = '↩️ Draf belum tersimpan dipulihkan otomatis (perubahan terakhir ' +
+    new Date(draft.ts).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' }) +
+    '). Klik <b>💾 Simpan Evaluasi</b> untuk mengunci perubahan.';
+}
+
 function bukaEvaluasiBaru() {
   currentEvaluasiId = null;
   document.querySelector('#sec-evaluasi .card').style.display = 'none';
@@ -9334,6 +9418,9 @@ function bukaEvaluasiBaru() {
   document.getElementById('evaluasiHapusBtn').style.display = 'none';
   document.getElementById('evaluasiPdfBtn').style.display = 'none';
   document.getElementById('evalMsg').textContent = '';
+  document.getElementById('evalAutosaveStatus').textContent = '';
+  _bindEvalAutosave();
+  _restoreEvalDraftIfAny('', '<p><br></p>');
   setTimeout(() => document.getElementById('evalJudul').focus(), 100);
 }
 
@@ -9346,11 +9433,15 @@ function bukaEvaluasi(id) {
   form.style.display = 'block';
   document.getElementById('evalJudul').value = c.judul || '';
   const isiEl = document.getElementById('evalIsi');
-  isiEl.innerHTML = window.markdownToEditableHtml(c.isi || '');
+  const baseIsiHtml = window.markdownToEditableHtml(c.isi || '');
+  isiEl.innerHTML = baseIsiHtml;
   if (window.attachWysiwyg) window.attachWysiwyg(isiEl);
   document.getElementById('evaluasiHapusBtn').style.display = 'block';
   document.getElementById('evaluasiPdfBtn').style.display = 'block';
   document.getElementById('evalMsg').textContent = '';
+  document.getElementById('evalAutosaveStatus').textContent = '';
+  _bindEvalAutosave();
+  _restoreEvalDraftIfAny(c.judul || '', baseIsiHtml);
 }
 
 function tutupFormEvaluasi() {
@@ -9390,6 +9481,7 @@ async function simpanEvaluasi() {
     if (typeof _auditLog === 'function') _auditLog('evaluasi', _editMode ? 'UPDATE' : 'INSERT', null,
       { judul: payload.judul }, (_editMode ? 'Edit evaluasi: ' : 'Buat evaluasi: ') + payload.judul);
     setMsg('evalMsg', '✅ Evaluasi tersimpan!', false);
+    _clearEvalDraft();
     await loadEvaluasi();
     setTimeout(tutupFormEvaluasi, 800);
   } catch (e) {
@@ -9406,6 +9498,7 @@ async function simpanEvaluasi() {
     _saveEvaluasiLocal(arr);
     evaluasiCache = arr;
     setMsg('evalMsg', '✅ Evaluasi tersimpan (lokal). Untuk sync antar device, buat tabel "evaluasi" di Supabase.', false);
+    _clearEvalDraft();
     renderEvaluasiList();
     setTimeout(tutupFormEvaluasi, 1500);
   }
