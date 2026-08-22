@@ -619,6 +619,7 @@
 
   /* ─── WYSIWYG editor (contenteditable) untuk form notulensi ─── */
   .wysiwyg-editor {
+    position: relative;
     min-height: 140px; padding: 14px 16px;
     border: 2px solid #d4e8dc; border-radius: 10px;
     background: #fafdfb; outline: none;
@@ -748,10 +749,31 @@
   .tbl-ctx-toolbar button.tctx-danger { color: #b91c1c !important; }
   .tbl-ctx-toolbar button.tctx-danger:hover { background: #fee2e2 !important; border-color: #fecaca !important; }
 
-  /* ─── SHAPE interaktif di dalam editor: bisa dipilih, di-resize, dan diisi teks ─── */
+  /* ─── SHAPE interaktif di dalam editor: bisa dipilih, di-resize, dirotasi, dipindah bebas, dan diisi teks ─── */
   .ins-shape { line-height: 0; }
   .ins-shape.shape-active { outline: 1.5px dashed #16a34a; outline-offset: 3px; border-radius: 3px; }
+  .ins-shape.shape-floating { position: absolute !important; z-index: 40; margin: 0 !important; }
+  .ins-shape.shape-floating.shape-active { z-index: 41; }
   .ins-shape .shape-text { cursor: text; }
+  .ins-shape .shape-move-handle {
+    position: absolute; left: -9px; top: -9px; width: 18px; height: 18px;
+    border-radius: 5px; background: #7c3aed; border: 2px solid #fff;
+    cursor: move; display: none; box-shadow: 0 1px 3px rgba(0,0,0,.4);
+    z-index: 5; align-items: center; justify-content: center;
+    font-size: 10px; color: #fff; line-height: 1;
+  }
+  .ins-shape .shape-rotate-handle {
+    position: absolute; left: 50%; top: -34px; width: 16px; height: 16px;
+    margin-left: -8px; border-radius: 50%; background: #2563eb; border: 2px solid #fff;
+    cursor: grab; display: none; box-shadow: 0 1px 3px rgba(0,0,0,.4); z-index: 5;
+  }
+  .ins-shape .shape-rotate-handle::before {
+    content: ''; position: absolute; left: 50%; top: 16px; width: 1px; height: 18px;
+    background: #b9c3ce; transform: translateX(-50%);
+  }
+  .ins-shape.shape-active .shape-move-handle,
+  .ins-shape.shape-active .shape-rotate-handle { display: flex; }
+  .ins-shape.shape-active .shape-rotate-handle { display: block; }
   .ins-shape .shape-text:empty:before {
     content: attr(data-ph); color: #9ca3af; font-size: 11px; pointer-events: none;
   }
@@ -5343,8 +5365,15 @@ window.toggleSec = function(btn) {
 // lalu KODE ITU JALAN OTOMATIS di browser user LAIN (termasuk admin) yang membuka catatan/
 // deskripsi yang sama — stored XSS, bisa mencuri sesi & data user tsb. Whitelist ketat:
 // hanya tag yang PERNAH digenerate app (table & img beserta anak elemennya), atribut aman saja.
-const _SANITIZE_ALLOWED_TAGS = new Set(['table','thead','tbody','tfoot','tr','td','th','img','caption','colgroup','col']);
-const _SANITIZE_ALLOWED_ATTR = new Set(['src','alt','width','height','colspan','rowspan','align','valign','border','style']);
+// Ditambah tag/atribut untuk Shape (ins-shape + svg beserta bentuk dasarnya) supaya Shape
+// yang disisipkan lewat "🔷 Shape" tidak lenyap ketika deskripsi disimpan lalu dimuat ulang.
+// SVG TIDAK termasuk <script>/<foreignObject>/<image> — sengaja tidak di-whitelist supaya
+// tidak membuka celah XSS baru lewat SVG (mis. <image xlink:href="javascript:...">).
+const _SANITIZE_ALLOWED_TAGS = new Set(['table','thead','tbody','tfoot','tr','td','th','img','caption','colgroup','col',
+  'span','div','svg','rect','circle','polygon','path','line']);
+const _SANITIZE_ALLOWED_ATTR = new Set(['src','alt','width','height','colspan','rowspan','align','valign','border','style',
+  'class','contenteditable','data-ph','data-rotate','title','viewbox','viewBox','preserveaspectratio','preserveAspectRatio',
+  'fill','stroke','stroke-width','points','cx','cy','r','rx','ry','x','y','x1','y1','x2','y2','d']);
 function _sanitizeHtmlBlock(raw) {
   try {
     const doc = new DOMParser().parseFromString('<div>' + raw + '</div>', 'text/html');
@@ -5581,6 +5610,12 @@ function _descInline(text){
 // (descToHTML pakai <div class="desc-h1"> dst., kita normalisasi jadi tag native
 //  supaya execCommand bold/italic/underline bisa toggle dengan benar)
 window.markdownToEditableHtml = function(md) {
+  // Bersihkan noise lama yang mungkin sudah kadung tersimpan di database:
+  // - karakter invisible (object replacement char, zero-width, dll.)
+  // - baris heading kosong ("#", "##", "###" tanpa teks setelahnya)
+  md = String(md || '')
+    .replace(/[\uFFFC\u200B\u200C\u200D\uFEFF]/g, '')
+    .replace(/^[ \t]*#{1,3}[ \t]*$/gm, '');
   var html = descToHTML(md || '');
   // Normalisasi class span/div → tag native supaya execCommand toggle bekerja
   // CATATAN: md-todo, md-poll, md-mention BIARKAN as-is (interactive elements)
@@ -5759,17 +5794,34 @@ window.htmlElementToMarkdown = function(rootEl) {
     for (var i = 0; i < node.childNodes.length; i++) {
       var c = node.childNodes[i];
       if (c.nodeType === 3) {
-        out += c.textContent;
+        // Bersihkan karakter invisible/kontrol yang suka disisipkan browser di
+        // contenteditable (Object Replacement Character, zero-width space, dll.)
+        // — tanpa ini karakter tsb ikut tersimpan ke markdown & muncul sebagai
+        // "kotak kecil" (noise) tiap kali deskripsi dibuka lagi.
+        out += c.textContent.replace(/[\uFFFC\u200B\u200C\u200D\uFEFF]/g, '');
       } else if (c.nodeType === 1) {
         var tag = c.tagName.toLowerCase();
-        var cls = c.className || '';
+        // PENTING: jangan pakai c.className langsung — pada elemen <svg>/<rect>/dst,
+        // className bukan string melainkan objek SVGAnimatedString, sehingga
+        // cls.indexOf(...) di bawah akan melempar error dan bikin Simpan macet
+        // total tanpa pesan apa pun (mis. saat deskripsi berisi Shape).
+        var cls = (c.getAttribute && c.getAttribute('class')) || '';
         var inner = walk(c);
-        if (tag === 'h1' || cls.indexOf('desc-h1') >= 0)
-          out += '\n' + _alignMarker(c) + '# ' + inner.replace(/^\s+|\s+$/g, '') + '\n';
-        else if (tag === 'h2' || cls.indexOf('desc-h2') >= 0)
-          out += '\n' + _alignMarker(c) + '## ' + inner.replace(/^\s+|\s+$/g, '') + '\n';
-        else if (tag === 'h3' || cls.indexOf('desc-h3') >= 0)
-          out += '\n' + _alignMarker(c) + '### ' + inner.replace(/^\s+|\s+$/g, '') + '\n';
+        if (tag === 'h1' || cls.indexOf('desc-h1') >= 0) {
+          // Kalau heading kosong (tag-nya nyangkut tapi teksnya sudah dihapus user),
+          // JANGAN tulis "# " tanpa isi — itu sumber noise "#" yang muncul sendiri
+          // saat deskripsi dibuka lagi.
+          var h1t = inner.replace(/^\s+|\s+$/g, '');
+          if (h1t) out += '\n' + _alignMarker(c) + '# ' + h1t + '\n';
+        }
+        else if (tag === 'h2' || cls.indexOf('desc-h2') >= 0) {
+          var h2t = inner.replace(/^\s+|\s+$/g, '');
+          if (h2t) out += '\n' + _alignMarker(c) + '## ' + h2t + '\n';
+        }
+        else if (tag === 'h3' || cls.indexOf('desc-h3') >= 0) {
+          var h3t = inner.replace(/^\s+|\s+$/g, '');
+          if (h3t) out += '\n' + _alignMarker(c) + '### ' + h3t + '\n';
+        }
         else if (tag === 'b' || tag === 'strong' || cls.indexOf('desc-bold') >= 0)
           out += inner ? '**' + inner + '**' : '';
         else if (tag === 'i' || tag === 'em' || cls.indexOf('desc-italic') >= 0)
@@ -5828,8 +5880,10 @@ window.htmlElementToMarkdown = function(rootEl) {
           out += '[' + inner + '](' + href + ')';
         }
         else if (tag === 'br') out += '\n';
-        else if (tag === 'table' || tag === 'img') {
+        else if (tag === 'table' || tag === 'img' || cls.indexOf('ins-shape') >= 0) {
           // Simpan as-is dalam marker [[html]]...[[/html]] supaya tidak ter-escape saat descToHTML
+          // (ins-shape/svg ikut disimpan mentah — kalau tidak, Shape hilang total sesudah disimpan
+          // & dimuat ulang, walau sekarang tombol Simpan sudah tidak error lagi)
           if (out.length > 0 && !out.endsWith('\n')) out += '\n';
           out += '[[html]]' + c.outerHTML + '[[/html]]\n';
         }
@@ -6029,6 +6083,24 @@ window._wrapSelStyle = function(editorEl, prop, value) {
 window.attachWysiwyg = function(editorEl) {
   if (!editorEl || editorEl._wysiwygAttached) return;
   editorEl._wysiwygAttached = true;
+
+  // ─── FIX: tombol toolbar (Bold, Align, H1, dst.) bikin fokus & seleksi teks di editor
+  //     "kabur" duluan sebelum perintah sempat jalan (perilaku default browser saat mousedown
+  //     di tombol memindah fokus). Makanya kalau ditekan cepat/berkali-kali suka kerasa nyangkut
+  //     atau kena baris/posisi yang salah — persis kayak di Word, klik toolbar TIDAK BOLEH
+  //     menghilangkan seleksi/posisi kursor di editor. Dicegat di sini via event delegation
+  //     supaya berlaku untuk SEMUA tombol di toolbar (Align kiri/tengah/kanan/justify, Bold,
+  //     H1/H2/H3, dst.) tanpa perlu ubah satu-satu, dan di SEMUA menu (Acara, Musyawarah,
+  //     Catatan, Project, Evaluasi) karena semua toolbar pakai class yang sama.
+  var _toolbarEl = editorEl.previousElementSibling;
+  if (_toolbarEl && _toolbarEl.classList && _toolbarEl.classList.contains('desc-toolbar')) {
+    _toolbarEl.addEventListener('mousedown', function(e) {
+      var btn = e.target.closest('button');
+      // Select & input color TIDAK di-preventDefault supaya dropdown/color-picker native-nya
+      // tetap bisa dibuka normal — cuma <button> format yang perlu dijaga fokusnya.
+      if (btn) e.preventDefault();
+    });
+  }
 
   // Toggle highlight via <mark> (tidak ada execCommand untuk ini)
   function toggleHighlight() {
@@ -6425,9 +6497,10 @@ window.attachWysiwyg = function(editorEl) {
     var trect = (cell.closest('table') || cell).getBoundingClientRect();
     var bw = bar.offsetWidth || 260, bh = bar.offsetHeight || 34;
     var vw = window.innerWidth;
-    var left = Math.min(Math.max(trect.left + window.scrollX, 8), vw - bw - 8 + window.scrollX);
-    var top = trect.top + window.scrollY - bh - 6;
-    if (trect.top < bh + 10) top = trect.bottom + window.scrollY + 6;
+    // bar pakai position:fixed → koordinat relatif viewport, JANGAN tambah scrollX/scrollY
+    var left = Math.min(Math.max(trect.left, 8), vw - bw - 8);
+    var top = trect.top - bh - 6;
+    if (trect.top < bh + 10) top = trect.bottom + 6;
     bar.style.left = left + 'px';
     bar.style.top = top + 'px';
   }
@@ -6493,9 +6566,10 @@ window.attachWysiwyg = function(editorEl) {
     var rect = img.getBoundingClientRect();
     var bw = bar.offsetWidth || 220, bh = bar.offsetHeight || 34;
     var vw = window.innerWidth;
-    var left = Math.min(Math.max(rect.left + window.scrollX, 8), vw - bw - 8 + window.scrollX);
-    var top = rect.top + window.scrollY - bh - 6;
-    if (rect.top < bh + 10) top = rect.bottom + window.scrollY + 6;
+    // bar pakai position:fixed → koordinat relatif viewport, JANGAN tambah scrollX/scrollY
+    var left = Math.min(Math.max(rect.left, 8), vw - bw - 8);
+    var top = rect.top - bh - 6;
+    if (rect.top < bh + 10) top = rect.bottom + 6;
     bar.style.left = left + 'px';
     bar.style.top = top + 'px';
   }
@@ -6534,6 +6608,70 @@ window.attachWysiwyg = function(editorEl) {
       if (h) h.style.display = 'none';
     });
   }
+  // Handle geser (drag) untuk memindahkan shape yang sudah "Bisa Dipindah" (floating) bebas ke mana saja.
+  function _shapeMoveStart(e) {
+    var handle = e.target.closest && e.target.closest('.shape-move-handle');
+    if (!handle) return;
+    e.preventDefault(); e.stopPropagation();
+    var shapeEl = handle.closest('.ins-shape');
+    if (!shapeEl.classList.contains('shape-floating')) return;
+    var p0 = e.touches ? e.touches[0] : e;
+    var startX = p0.clientX, startY = p0.clientY;
+    var startLeft = parseFloat(shapeEl.style.left) || 0;
+    var startTop = parseFloat(shapeEl.style.top) || 0;
+    function onMove(ev) {
+      var p = ev.touches ? ev.touches[0] : ev;
+      var dx = p.clientX - startX, dy = p.clientY - startY;
+      shapeEl.style.left = Math.round(startLeft + dx) + 'px';
+      shapeEl.style.top = Math.round(startTop + dy) + 'px';
+      ev.preventDefault();
+    }
+    function onEnd() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('mouseup', onEnd);
+      document.removeEventListener('touchend', onEnd);
+      try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){}
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchend', onEnd);
+  }
+  editorEl.addEventListener('mousedown', _shapeMoveStart);
+  editorEl.addEventListener('touchstart', _shapeMoveStart, { passive: false });
+  // Handle putar (drag bebas 360°) — seret lingkaran biru di atas shape untuk memutar fleksibel.
+  function _shapeRotateStart(e) {
+    var handle = e.target.closest && e.target.closest('.shape-rotate-handle');
+    if (!handle) return;
+    e.preventDefault(); e.stopPropagation();
+    var shapeEl = handle.closest('.ins-shape');
+    function angleFromCenter(clientX, clientY) {
+      var r = shapeEl.getBoundingClientRect();
+      var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      return Math.atan2(clientY - cy, clientX - cx) * 180 / Math.PI + 90;
+    }
+    function onMove(ev) {
+      var p = ev.touches ? ev.touches[0] : ev;
+      var deg = Math.round(angleFromCenter(p.clientX, p.clientY));
+      shapeEl.dataset.rotate = deg;
+      shapeEl.style.transform = 'rotate(' + deg + 'deg)';
+      ev.preventDefault();
+    }
+    function onEnd() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('mouseup', onEnd);
+      document.removeEventListener('touchend', onEnd);
+      try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){}
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchend', onEnd);
+  }
+  editorEl.addEventListener('mousedown', _shapeRotateStart);
+  editorEl.addEventListener('touchstart', _shapeRotateStart, { passive: false });
   function _showShapeCtx(shapeEl) {
     var bar = _shapeCtxBar();
     var curColor = shapeEl.style.color || '#1a6644';
@@ -6543,6 +6681,12 @@ window.attachWysiwyg = function(editorEl) {
       '<button type="button" data-sact="fillToggle" title="Isi Warna Solid / Kosong">🪣 Isi</button>' +
       '<button type="button" data-sact="bigger" title="Perbesar">🔍+</button>' +
       '<button type="button" data-sact="smaller" title="Perkecil">🔍-</button>' +
+      '<span class="tctx-sep"></span>' +
+      '<button type="button" data-sact="rotateLeft" title="Putar Kiri 15°">⟲</button>' +
+      '<button type="button" data-sact="rotateRight" title="Putar Kanan 15°">⟳</button>' +
+      '<button type="button" data-sact="rotateReset" title="Reset Rotasi">⇅0°</button>' +
+      '<span class="tctx-sep"></span>' +
+      '<button type="button" data-sact="floatToggle" title="Pindahkan bebas (seperti Wrap di Word)">' + (shapeEl.classList.contains('shape-floating') ? '📌 Kunci Posisi' : '✥ Bisa Dipindah') + '</button>' +
       '<span class="tctx-sep"></span>' +
       '<button type="button" data-sact="delete" class="tctx-danger" title="Hapus Shape">🗑 Hapus</button>';
     var colorInp = bar.querySelector('#_shpColor');
@@ -6574,6 +6718,15 @@ window.attachWysiwyg = function(editorEl) {
           shapeEl.style.width = Math.max(24, Math.round(w * factor)) + 'px';
           shapeEl.style.height = Math.max(24, Math.round(h * factor)) + 'px';
           try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){}
+        } else if (act === 'rotateLeft' || act === 'rotateRight' || act === 'rotateReset') {
+          var cur = parseFloat(shapeEl.dataset.rotate || '0') || 0;
+          var next = act === 'rotateReset' ? 0 : (cur + (act === 'rotateRight' ? 15 : -15));
+          shapeEl.dataset.rotate = next;
+          shapeEl.style.transform = next ? 'rotate(' + next + 'deg)' : '';
+          try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){}
+        } else if (act === 'floatToggle') {
+          _toggleShapeFloating(shapeEl);
+          _showShapeCtx(shapeEl); // refresh label tombol
         }
       };
     });
@@ -6581,11 +6734,30 @@ window.attachWysiwyg = function(editorEl) {
     var rect = shapeEl.getBoundingClientRect();
     var bw = bar.offsetWidth || 240, bh = bar.offsetHeight || 34;
     var vw = window.innerWidth;
-    var left = Math.min(Math.max(rect.left + window.scrollX, 8), vw - bw - 8 + window.scrollX);
-    var top = rect.top + window.scrollY - bh - 6;
-    if (rect.top < bh + 10) top = rect.bottom + window.scrollY + 6;
+    // bar pakai position:fixed → koordinat relatif viewport, JANGAN tambah scrollX/scrollY
+    var left = Math.min(Math.max(rect.left, 8), vw - bw - 8);
+    var top = rect.top - bh - 6;
+    if (rect.top < bh + 10) top = rect.bottom + 6;
     bar.style.left = left + 'px';
     bar.style.top = top + 'px';
+  }
+  // Ubah shape dari mengikuti alur teks (inline) → posisi bebas (absolute, seperti "Wrap:
+  // In Front of Text" di Word) atau sebaliknya kembali mengikuti alur teks.
+  function _toggleShapeFloating(shapeEl) {
+    var editorRect = editorEl.getBoundingClientRect();
+    if (!shapeEl.classList.contains('shape-floating')) {
+      var r = shapeEl.getBoundingClientRect();
+      var left = r.left - editorRect.left + editorEl.scrollLeft;
+      var top = r.top - editorRect.top + editorEl.scrollTop;
+      shapeEl.classList.add('shape-floating');
+      shapeEl.style.left = Math.round(left) + 'px';
+      shapeEl.style.top = Math.round(top) + 'px';
+    } else {
+      shapeEl.classList.remove('shape-floating');
+      shapeEl.style.left = '';
+      shapeEl.style.top = '';
+    }
+    try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){}
   }
   editorEl.addEventListener('click', function(e) {
     var shapeEl = e.target.closest && e.target.closest('.ins-shape');
@@ -7152,6 +7324,8 @@ window.showShapePicker = function(editorEl, anchorBtn) {
       var wrapHtml = '<span class="ins-shape" contenteditable="false" style="position:relative;display:inline-block;width:110px;height:90px;min-width:24px;min-height:24px;vertical-align:middle;margin:4px;color:#1a6644;">' +
         '<svg viewBox="0 0 40 40" preserveAspectRatio="none" style="width:100%;height:100%;display:block;">' + s.svg + '</svg>' +
         '<div class="shape-text" contenteditable="true" data-ph="Ketik teks…" style="position:absolute;inset:8px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;line-height:1.25;outline:none;overflow:hidden;color:#111827;word-break:break-word;"></div>' +
+        '<span class="shape-move-handle" title="Seret untuk pindah bebas (aktifkan &quot;Bisa Dipindah&quot; dulu)">✥</span>' +
+        '<span class="shape-rotate-handle" title="Seret untuk memutar"></span>' +
         '<span class="shape-handle" style="position:absolute;right:-7px;bottom:-7px;width:16px;height:16px;border-radius:50%;background:#16a34a;border:2px solid #fff;cursor:nwse-resize;display:none;box-shadow:0 1px 3px rgba(0,0,0,.4);"></span>' +
       '</span>&nbsp;';
       editorEl.focus();
@@ -7483,6 +7657,11 @@ window.showStylePicker = function(editorEl, anchorEl) {
   pop.style.top  = (rect.bottom + 6) + 'px';
 
   // Handlers
+  // Sama seperti toolbar utama: cegah tombol popup ini merebut fokus dari editor saat mousedown,
+  // supaya seleksi teks/posisi kursor tidak hilang sebelum applyFmt sempat jalan.
+  pop.addEventListener('mousedown', function(e) {
+    if (e.target.closest('button')) e.preventDefault();
+  });
   pop.querySelectorAll('select.sp-select').forEach(function(sel) {
     sel.onchange = function() {
       var act = sel.dataset.act;
@@ -22245,7 +22424,10 @@ function _bukaWysiwygTabBaru(opts) {
         out += c.textContent;
       } else if (c.nodeType === 1) { // element
         var tag = c.tagName.toLowerCase();
-        var cls = c.className || '';
+        // Sama seperti di htmlElementToMarkdown: pakai getAttribute('class'), BUKAN
+        // c.className, supaya elemen <svg>/<rect>/dll (Shape) tidak bikin error dan
+        // menggagalkan simpan secara diam-diam.
+        var cls = (c.getAttribute && c.getAttribute('class')) || '';
         var inner = htmlToMd(c);
         if (tag === 'h1' || cls.indexOf('desc-h1') >= 0)
           out += '\\n' + _alignMarkerPopup(c) + '# ' + inner.replace(/^\\s+|\\s+$/g,'') + '\\n';
@@ -22345,6 +22527,11 @@ function _bukaWysiwygTabBaru(opts) {
   }
 
   // ─── Toolbar / context menu action handler ───
+  // FIX: tombol .format-bar & .sp-c-btn tidak boleh merebut fokus dari editor saat mousedown,
+  // sama seperti toolbar utama — supaya klik Align dkk. tidak kerasa nyangkut kalau ditekan cepat.
+  document.addEventListener('mousedown', function(e) {
+    if (e.target.closest('.format-bar button, #stylePopup button')) e.preventDefault();
+  });
   window.fmt = function(act, val) {
     editor.focus();
     try {
