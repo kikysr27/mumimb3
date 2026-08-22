@@ -27744,7 +27744,16 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       : '<div class="spin-empty" style="padding:10px 0;">Tidak ada grup.</div>';
 
     const excludedHtml = excluded.length
-      ? excluded.map(x => `<span class="spin-exclude-chip">🚫 ${escapeHtml(x.name)}</span>`).join(' ')
+      ? excluded.map(x => {
+          let scopeLabel;
+          if(!x.prizeIds || x.prizeIds.length===0){
+            scopeLabel = 'Semua hadiah';
+          } else {
+            const names = x.prizeIds.map(pid => { const p = prizes.find(pp=>pp.id===pid); return p ? p.name : null; }).filter(Boolean);
+            scopeLabel = names.length ? names.join(', ') : 'Hadiah tertentu';
+          }
+          return `<span class="spin-exclude-chip">🚫 ${escapeHtml(x.name)} <span style="opacity:.75;font-size:11px;">(${escapeHtml(scopeLabel)})</span></span>`;
+        }).join(' ')
       : '<span class="muted" style="font-size:12px;">Tidak ada pengecualian.</span>';
 
     const overlay = document.getElementById('spinArsipDetailOverlay');
