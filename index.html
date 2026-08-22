@@ -17108,6 +17108,8 @@ function _auditAksiInfo(a) {
     case 'UPDATE': case 'APPROVE': case 'RESTORE':  return { teks: a === 'APPROVE' ? 'Setujui' : a === 'RESTORE' ? 'Pulihkan' : 'Ubah', cls: 'st-in_progress' };
     case 'RESET_PASSWORD': case 'CHANGE_PASSWORD':  return { teks: 'Password', cls: 'st-in_progress' };
     case 'KELUAR': return { teks: '👋 Keluar', cls: 'st-cancelled' };
+    case 'BUKA': return { teks: '🧭 Buka', cls: 'st-in_progress' };
+    case 'KLIK': return { teks: '🖱️ Klik', cls: 'st-in_progress' };
     case 'DELETE': case 'PURGE': case 'PURGE_ALL': case 'REJECT':
       return { teks: a === 'REJECT' ? 'Tolak' : (a === 'PURGE' || a === 'PURGE_ALL') ? 'Hapus Permanen' : 'Hapus', cls: 'st-cancelled' };
     default: return { teks: a || '-', cls: 'st-in_progress' };
@@ -28406,5 +28408,78 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       </div>`;
   }
   </script>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════
+// ⑯  LACAK NAVIGASI & KLIK USER — supaya di Riwayat kelihatan user itu buka
+//     menu apa & klik tombol apa (bukan cuma tercatat waktu SIMPAN data saja).
+//     Entri dibuat SINGKAT (cuma nama menu/tombol) biar Riwayat tidak penuh
+//     kalimat panjang. Dipasang PALING TERAKHIR supaya "membungkus" semua
+//     patch openSection dari modul lain di atas & tetap ikut tercatat.
+// ══════════════════════════════════════════════════════════════════════════
+(function() {
+  if (typeof TABEL_LABEL !== 'undefined') {
+    Object.assign(TABEL_LABEL, {
+      navigasi: '🧭 Buka Menu',
+      klik:     '🖱️ Klik Tombol',
+    });
+  }
+
+  // Nama menu singkat (samakan dgn label kartu menu utama)
+  const _MENU_LABEL = {
+    saldo:'Saldo', kasmasuk:'Kas Masuk', pengeluaran:'Pengeluaran', qurban:'Qurban',
+    anggota:'Anggota', absensi:'Absensi', musyawarah:'Musyawarah', rekap:'Rekap',
+    acara:'Acara', kalender:'Kalender', catatan:'Catatan', evaluasi:'Evaluasi',
+    laporan:'Laporan', strukorg:'Struktur Org.', project:'Project', spin:'Game Spin',
+    riwayat:'Riwayat', foto:'Kelola Foto', akses:'Kelola Akses', recycle:'Tempat Sampah',
+  };
+
+  // ── 1) CATAT MENU YANG DIBUKA ──
+  // Cooldown per menu supaya kalau orangnya bolak-balik ke menu yg sama, Riwayat
+  // tidak banjir entri "Buka Anggota" berkali-kali dalam waktu singkat.
+  const _navLast = {};
+  const _NAV_COOLDOWN = 2 * 60 * 1000; // 2 menit
+  if (typeof window.openSection === 'function') {
+    const _origOpenNav = window.openSection;
+    window.openSection = function(name) {
+      _origOpenNav(name);
+      try {
+        const now = Date.now();
+        if (!_navLast[name] || now - _navLast[name] > _NAV_COOLDOWN) {
+          _navLast[name] = now;
+          if (typeof _auditLog === 'function') {
+            _auditLog('navigasi', 'BUKA', null, null, _MENU_LABEL[name] || name);
+          }
+        }
+      } catch (_) {}
+    };
+  }
+
+  // ── 2) CATAT TOMBOL YANG DIKLIK ──
+  // Hanya <button> dgn teks pendek & jelas yg dicatat (bukan semua elemen),
+  // supaya Riwayat tetap ringkas & tidak mencatat hal remeh (buka/tutup kartu, dll).
+  const _clickLast = {};
+  const _CLICK_COOLDOWN = 30 * 1000; // 30 detik per tombol yg sama
+  const _CLICK_SKIP = new Set(['tutup','close','batal','cancel','×','✕','ok','oke']);
+  document.addEventListener('click', function(ev) {
+    try {
+      const el = ev.target.closest('button');
+      if (!el || el.closest('#riwayatList') || el.closest('#rwDetailModal') || el.closest('#sec-riwayat')) return;
+      let txt = (el.textContent || '').replace(/\s+/g, ' ').trim();
+      // Buang emoji/ikon di depan teks tombol biar rapi
+      txt = txt.replace(/^[^\w]+/u, '').trim();
+      if (!txt || txt.length > 30) return; // teks tombol yg tidak pendek & jelas dilewati
+      if (_CLICK_SKIP.has(txt.toLowerCase())) return;
+      const now = Date.now();
+      const key = txt.toLowerCase();
+      if (_clickLast[key] && now - _clickLast[key] < _CLICK_COOLDOWN) return;
+      _clickLast[key] = now;
+      if (typeof _auditLog === 'function') {
+        _auditLog('klik', 'KLIK', null, null, txt);
+      }
+    } catch (_) {}
+  }, true);
+})();
+</script>
 
 </html>
