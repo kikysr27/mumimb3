@@ -27710,61 +27710,105 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
 
     const groupName = (gid) => { const g = groups.find(x=>x.id===gid); return g ? g.name : null; };
 
+    // ── Tampilan dibuat SAMA PERSIS kaya layar game asli (judul kelap-kelip, tab Entri/Hasil,
+    // daftar peserta bergaya sama) — bedanya ini cuma REPLIKA arsip: tombol undi sengaja
+    // dikunci/nonaktif karena arsip cuma buat dilihat, tidak untuk dimainkan langsung. ──
     const entriesHtml = entries.length
       ? entries.map(e => {
           const gn = groupName(e.group_id);
-          return `<div class="spin-row"><div class="spin-row-name">🎫 ${escapeHtml(e.name)}${gn ? ` <span class="muted" style="font-size:11px;">— 👥 ${escapeHtml(gn)}</span>` : ''}</div></div>`;
+          const groupBadge = gn ? `<span class="spin-group-badge" style="cursor:default;">👥 ${escapeHtml(gn)}</span>` : '';
+          return `<div class="spin-row">
+            ${e.image_url ? `<img class="spin-thumb" src="${escapeHtml(e.image_url)}">` : `<div class="spin-thumb spin-placeholder">🎫</div>`}
+            <div class="spin-row-name">${escapeHtml(e.name)}${groupBadge}</div>
+          </div>`;
         }).join('')
-      : '<div class="spin-empty">Tidak ada peserta.</div>';
+      : '<div class="spin-empty">Belum ada entri di arsip ini.</div>';
+
+    const winnersHtml = winners.length
+      ? winners.map(w => `<div class="spin-row">
+          ${w.image_url ? `<img class="spin-thumb" src="${escapeHtml(w.image_url)}">` : `<div class="spin-thumb spin-placeholder">🏆</div>`}
+          <div class="spin-row-name">${escapeHtml(w.name)}${w.prize_name ? ` <span style="color:#f5b942;font-weight:600;">— 🎁 ${escapeHtml(w.prize_name)}</span>` : ''}</div>
+          <div class="spin-row-time">${w.drawn_at ? new Date(w.drawn_at).toLocaleString('id-ID') : ''}</div>
+        </div>`).join('')
+      : '<div class="spin-empty">Belum ada pemenang di arsip ini.</div>';
 
     const prizesHtml = prizes.length
-      ? prizes.map(p => `<div class="spin-row"><div class="spin-row-name">🎁 ${escapeHtml(p.name)} <span class="muted" style="font-size:11px;">— sisa stok saat itu: ${p.stock}${(p.initial_stock!=null) ? ` (awal ${p.initial_stock})` : ''}</span></div></div>`).join('')
-      : '<div class="spin-empty">Tidak ada hadiah.</div>';
+      ? prizes.map(p => `<div class="spin-prize-row" style="margin-bottom:6px;">
+          <div class="spin-prize-name">🎁 ${escapeHtml(p.name)}</div>
+          <span class="spin-prize-stock ${p.stock<=0?'zero':''}">${p.stock<=0?'Habis':p.stock+' pcs'}${(p.initial_stock!=null) ? ` · awal ${p.initial_stock}` : ''}</span>
+        </div>`).join('')
+      : '<div class="spin-empty" style="padding:10px 0;">Tidak ada hadiah.</div>';
 
     const groupsHtml = groups.length
       ? groups.map(g => `<div class="spin-row"><div class="spin-row-name">👥 ${escapeHtml(g.name)} <span class="muted" style="font-size:11px;">— ${g.percent ?? 0}% menang${('one_per_person' in g) ? (g.one_per_person===false ? ', tanpa batas 1 hadiah/orang' : ', 1 hadiah/orang') : ''}</span></div></div>`).join('')
-      : '<div class="spin-empty">Tidak ada grup.</div>';
-
-    const winnersHtml = winners.length
-      ? winners.map(w => `<div class="spin-row"><div class="spin-row-name">🏆 ${escapeHtml(w.name)} <span class="muted" style="font-size:12px;">— ${escapeHtml(w.prize_name || '-')}</span></div><div class="spin-row-time">${w.drawn_at ? new Date(w.drawn_at).toLocaleString('id-ID') : ''}</div></div>`).join('')
-      : '<div class="spin-empty">Tidak ada pemenang di arsip ini.</div>';
+      : '<div class="spin-empty" style="padding:10px 0;">Tidak ada grup.</div>';
 
     const excludedHtml = excluded.length
       ? excluded.map(x => `<span class="spin-exclude-chip">🚫 ${escapeHtml(x.name)}</span>`).join(' ')
       : '<span class="muted" style="font-size:12px;">Tidak ada pengecualian.</span>';
 
     const overlay = document.getElementById('spinArsipDetailOverlay');
-    overlay.innerHTML = `<div class="spin-modal" style="max-width:640px;max-height:88vh;overflow-y:auto;">
-      <h3>📦 ${escapeHtml(a.judul || '(tanpa judul)')}</h3>
-      <p class="spin-hint">${tgl} · ${entries.length} peserta · ${winners.length} pemenang · ${prizes.length} hadiah · ${groups.length} grup</p>
-      <p class="spin-hint" style="background:#1f2430;border-radius:8px;padding:8px 10px;">📦 Ini SALINAN lengkap data game persis saat diarsipkan — cuma bisa dilihat, tidak bisa langsung dimainkan. Kalau mau main lagi pakai data ini, klik "♻️ Keluarkan dari Arsip" di bawah (data game yang lagi aktif sekarang akan diganti dengan ini — tapi otomatis dicadangkan dulu, jadi tetap aman).</p>
+    overlay.innerHTML = `<div class="spin-card" style="max-width:640px;width:100%;max-height:92vh;overflow-y:auto;padding:20px 16px 26px;">
+      <div style="position:absolute;top:10px;left:10px;background:#2a1620;border:1px solid #4a2230;color:#ef4565;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;z-index:2;">🔒 ARSIP — TAMPILAN SAJA</div>
+      <button class="spin-icon-btn" style="position:absolute;top:8px;right:8px;font-size:18px;z-index:2;" onclick="spinCloseArsipDetail()" title="Tutup">✕</button>
 
-      <h4 style="margin:14px 0 6px;font-size:13px;">⚙️ Pengaturan saat itu</h4>
-      <div class="spin-panel" style="max-height:none;padding:10px;">
-        <div style="font-size:13px;margin-bottom:4px;">Judul tampilan: <b>${escapeHtml(d.titleText || '-')}</b></div>
-        <div style="font-size:13px;margin-bottom:4px;">Sistem grup: <b>${d.groupSystemEnabled === false ? 'Nonaktif' : 'Aktif'}</b></div>
-        <div style="font-size:13px;">Pengecualian undian: ${excludedHtml}</div>
+      <h1 class="spin-title"><span class="spin-dot"></span><span>${escapeHtml(d.titleText || a.judul || 'Game Spin')}</span><span class="spin-dot"></span></h1>
+      <p class="spin-subtitle" style="text-align:center;">📦 "${escapeHtml(a.judul || '(tanpa judul)')}" · diarsipkan ${tgl}</p>
+
+      <div class="spin-tabs">
+        <button class="spin-tab active" id="spinArsipDetailTabEntri" onclick="spinArsipDetailSwitchTab('entri')">Entri <span class="spin-badge">${entries.length}</span></button>
+        <button class="spin-tab" id="spinArsipDetailTabHasil" onclick="spinArsipDetailSwitchTab('hasil')">Hasil <span class="spin-badge">${winners.length}</span></button>
+        <button class="spin-tab" id="spinArsipDetailTabInfo" onclick="spinArsipDetailSwitchTab('info')">⚙️ Hadiah/Grup/Setting</button>
       </div>
 
-      <h4 style="margin:14px 0 6px;font-size:13px;">🎫 Peserta (${entries.length})</h4>
-      <div class="spin-panel" style="max-height:180px;">${entriesHtml}</div>
+      <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:180px;">
+          <select disabled style="width:100%;background:#0e1013;border:1px solid #262b33;border-radius:8px;color:#8b93a3;padding:8px 10px;font-family:'Inter',sans-serif;opacity:.6;cursor:not-allowed;">
+            <option>🎁 Hadiah yang akan diundi — arsip (tidak bisa dipilih)</option>
+          </select>
+        </div>
+      </div>
 
-      <h4 style="margin:14px 0 6px;font-size:13px;">👥 Grup (${groups.length})</h4>
-      <div class="spin-panel" style="max-height:140px;">${groupsHtml}</div>
+      <div id="spinArsipDetailEntriView">
+        <div class="spin-panel">${entriesHtml}</div>
+      </div>
+      <div id="spinArsipDetailHasilView" style="display:none;">
+        <div class="spin-panel">${winnersHtml}</div>
+      </div>
+      <div id="spinArsipDetailInfoView" style="display:none;">
+        <div style="background:#171a20;border:1px solid #262b33;border-radius:12px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:13px;margin-bottom:4px;">Judul tampilan: <b>${escapeHtml(d.titleText || '-')}</b></div>
+          <div style="font-size:13px;margin-bottom:4px;">Sistem grup: <b>${d.groupSystemEnabled === false ? 'Nonaktif' : 'Aktif'}</b></div>
+          <div style="font-size:13px;">Pengecualian undian: ${excludedHtml}</div>
+        </div>
+        <div style="font-size:13px;font-weight:700;color:#f5b942;margin-bottom:6px;">🎁 Hadiah (${prizes.length})</div>
+        <div style="margin-bottom:14px;">${prizesHtml}</div>
+        <div style="font-size:13px;font-weight:700;color:#f5b942;margin-bottom:6px;">👥 Grup (${groups.length})</div>
+        <div class="spin-panel" style="max-height:160px;">${groupsHtml}</div>
+      </div>
 
-      <h4 style="margin:14px 0 6px;font-size:13px;">🎁 Hadiah (${prizes.length})</h4>
-      <div class="spin-panel" style="max-height:140px;">${prizesHtml}</div>
+      <div style="margin-top:16px;background:#171a20;border:1px dashed #3a4150;border-radius:14px;padding:16px;text-align:center;">
+        <button class="spin-draw-btn" disabled style="opacity:.45;margin:0 auto;">🎉 Undi sekarang</button>
+        <p class="spin-hint" style="margin:10px 0 0;">🔒 Ini arsip — tombol undi sengaja dimatikan supaya tidak kepencet tidak sengaja. Klik "♻️ Keluarkan dari Arsip" di bawah kalau memang mau main beneran pakai data ini.</p>
+      </div>
 
-      <h4 style="margin:14px 0 6px;font-size:13px;">🏆 Hasil Undian (${winners.length})</h4>
-      <div class="spin-panel" style="max-height:200px;">${winnersHtml}</div>
-
-      <div class="spin-modal-actions" style="flex-wrap:wrap;">
+      <div class="spin-modal-actions" style="justify-content:center;flex-wrap:wrap;margin-top:16px;">
         <button class="spin-btn spin-btn-primary spin-btn-sm" onclick='spinPulihkanArsip(${JSON.stringify(a.id)})'>♻️ Keluarkan dari Arsip</button>
         <button class="spin-btn spin-btn-danger spin-btn-sm" onclick='spinHapusArsip(${JSON.stringify(a.id)})'>🗑️ Hapus Arsip</button>
-        <button class="spin-btn spin-btn-ghost" onclick="spinCloseArsipDetail()">Tutup</button>
+        <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinCloseArsipDetail()">Tutup</button>
       </div>
     </div>`;
     overlay.classList.add('show');
+  }
+
+  // Ganti tab Entri/Hasil/Info di dalam tampilan replika arsip (tidak nyenggol tab game asli).
+  function spinArsipDetailSwitchTab(t){
+    document.getElementById('spinArsipDetailTabEntri').classList.toggle('active', t==='entri');
+    document.getElementById('spinArsipDetailTabHasil').classList.toggle('active', t==='hasil');
+    document.getElementById('spinArsipDetailTabInfo').classList.toggle('active', t==='info');
+    document.getElementById('spinArsipDetailEntriView').style.display = t==='entri' ? 'block' : 'none';
+    document.getElementById('spinArsipDetailHasilView').style.display = t==='hasil' ? 'block' : 'none';
+    document.getElementById('spinArsipDetailInfoView').style.display = t==='info' ? 'block' : 'none';
   }
 
   // Keluarkan arsip dari "penyimpanan" dan jadikan game AKTIF lagi persis seperti saat
