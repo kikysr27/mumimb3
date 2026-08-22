@@ -27701,23 +27701,129 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     const a = spinArchives.find(x => x.id === id);
     if(!a) return;
     const d = a.data || {};
-    const winners = Array.isArray(d.winners) ? d.winners : [];
     const entries = Array.isArray(d.entries) ? d.entries : [];
+    const winners = Array.isArray(d.winners) ? d.winners : [];
+    const prizes = Array.isArray(d.prizes) ? d.prizes : [];
+    const groups = Array.isArray(d.groups) ? d.groups : [];
+    const excluded = Array.isArray(d.excluded) ? d.excluded : [];
     const tgl = a.created_at ? new Date(a.created_at).toLocaleString('id-ID', { dateStyle:'long', timeStyle:'short' }) : '';
+
+    const groupName = (gid) => { const g = groups.find(x=>x.id===gid); return g ? g.name : null; };
+
+    const entriesHtml = entries.length
+      ? entries.map(e => {
+          const gn = groupName(e.group_id);
+          return `<div class="spin-row"><div class="spin-row-name">🎫 ${escapeHtml(e.name)}${gn ? ` <span class="muted" style="font-size:11px;">— 👥 ${escapeHtml(gn)}</span>` : ''}</div></div>`;
+        }).join('')
+      : '<div class="spin-empty">Tidak ada peserta.</div>';
+
+    const prizesHtml = prizes.length
+      ? prizes.map(p => `<div class="spin-row"><div class="spin-row-name">🎁 ${escapeHtml(p.name)} <span class="muted" style="font-size:11px;">— sisa stok saat itu: ${p.stock}${(p.initial_stock!=null) ? ` (awal ${p.initial_stock})` : ''}</span></div></div>`).join('')
+      : '<div class="spin-empty">Tidak ada hadiah.</div>';
+
+    const groupsHtml = groups.length
+      ? groups.map(g => `<div class="spin-row"><div class="spin-row-name">👥 ${escapeHtml(g.name)} <span class="muted" style="font-size:11px;">— ${g.percent ?? 0}% menang${('one_per_person' in g) ? (g.one_per_person===false ? ', tanpa batas 1 hadiah/orang' : ', 1 hadiah/orang') : ''}</span></div></div>`).join('')
+      : '<div class="spin-empty">Tidak ada grup.</div>';
+
     const winnersHtml = winners.length
-      ? winners.map(w => `<div class="spin-row"><div class="spin-row-name">🏆 ${escapeHtml(w.name)} <span class="muted" style="font-size:12px;">— ${escapeHtml(w.prize_name || '-')}</span></div></div>`).join('')
+      ? winners.map(w => `<div class="spin-row"><div class="spin-row-name">🏆 ${escapeHtml(w.name)} <span class="muted" style="font-size:12px;">— ${escapeHtml(w.prize_name || '-')}</span></div><div class="spin-row-time">${w.drawn_at ? new Date(w.drawn_at).toLocaleString('id-ID') : ''}</div></div>`).join('')
       : '<div class="spin-empty">Tidak ada pemenang di arsip ini.</div>';
+
+    const excludedHtml = excluded.length
+      ? excluded.map(x => `<span class="spin-exclude-chip">🚫 ${escapeHtml(x.name)}</span>`).join(' ')
+      : '<span class="muted" style="font-size:12px;">Tidak ada pengecualian.</span>';
+
     const overlay = document.getElementById('spinArsipDetailOverlay');
-    overlay.innerHTML = `<div class="spin-modal" style="max-width:480px;">
+    overlay.innerHTML = `<div class="spin-modal" style="max-width:640px;max-height:88vh;overflow-y:auto;">
       <h3>📦 ${escapeHtml(a.judul || '(tanpa judul)')}</h3>
-      <p class="spin-hint">${tgl} · ${entries.length} peserta · ${winners.length} pemenang</p>
-      <div class="spin-panel" style="max-height:50vh;">${winnersHtml}</div>
-      <div class="spin-modal-actions">
+      <p class="spin-hint">${tgl} · ${entries.length} peserta · ${winners.length} pemenang · ${prizes.length} hadiah · ${groups.length} grup</p>
+      <p class="spin-hint" style="background:#1f2430;border-radius:8px;padding:8px 10px;">📦 Ini SALINAN lengkap data game persis saat diarsipkan — cuma bisa dilihat, tidak bisa langsung dimainkan. Kalau mau main lagi pakai data ini, klik "♻️ Keluarkan dari Arsip" di bawah (data game yang lagi aktif sekarang akan diganti dengan ini — tapi otomatis dicadangkan dulu, jadi tetap aman).</p>
+
+      <h4 style="margin:14px 0 6px;font-size:13px;">⚙️ Pengaturan saat itu</h4>
+      <div class="spin-panel" style="max-height:none;padding:10px;">
+        <div style="font-size:13px;margin-bottom:4px;">Judul tampilan: <b>${escapeHtml(d.titleText || '-')}</b></div>
+        <div style="font-size:13px;margin-bottom:4px;">Sistem grup: <b>${d.groupSystemEnabled === false ? 'Nonaktif' : 'Aktif'}</b></div>
+        <div style="font-size:13px;">Pengecualian undian: ${excludedHtml}</div>
+      </div>
+
+      <h4 style="margin:14px 0 6px;font-size:13px;">🎫 Peserta (${entries.length})</h4>
+      <div class="spin-panel" style="max-height:180px;">${entriesHtml}</div>
+
+      <h4 style="margin:14px 0 6px;font-size:13px;">👥 Grup (${groups.length})</h4>
+      <div class="spin-panel" style="max-height:140px;">${groupsHtml}</div>
+
+      <h4 style="margin:14px 0 6px;font-size:13px;">🎁 Hadiah (${prizes.length})</h4>
+      <div class="spin-panel" style="max-height:140px;">${prizesHtml}</div>
+
+      <h4 style="margin:14px 0 6px;font-size:13px;">🏆 Hasil Undian (${winners.length})</h4>
+      <div class="spin-panel" style="max-height:200px;">${winnersHtml}</div>
+
+      <div class="spin-modal-actions" style="flex-wrap:wrap;">
+        <button class="spin-btn spin-btn-primary spin-btn-sm" onclick='spinPulihkanArsip(${JSON.stringify(a.id)})'>♻️ Keluarkan dari Arsip</button>
         <button class="spin-btn spin-btn-danger spin-btn-sm" onclick='spinHapusArsip(${JSON.stringify(a.id)})'>🗑️ Hapus Arsip</button>
         <button class="spin-btn spin-btn-ghost" onclick="spinCloseArsipDetail()">Tutup</button>
       </div>
     </div>`;
     overlay.classList.add('show');
+  }
+
+  // Keluarkan arsip dari "penyimpanan" dan jadikan game AKTIF lagi persis seperti saat
+  // diarsipkan (peserta, grup, hadiah+stok, hasil undian, pengaturan). Data aktif yang
+  // sedang berjalan (kalau ada) otomatis dicadangkan dulu jadi arsip baru sebelum ditimpa,
+  // supaya tidak ada data yang hilang percuma.
+  async function spinPulihkanArsip(id){
+    const a = spinArchives.find(x => x.id === id);
+    if(!a) return;
+    const d = a.data || {};
+    const entries = Array.isArray(d.entries) ? d.entries : [];
+    const winners = Array.isArray(d.winners) ? d.winners : [];
+    const prizes = Array.isArray(d.prizes) ? d.prizes : [];
+    const groups = Array.isArray(d.groups) ? d.groups : [];
+
+    const adaDataAktif = spinEntries.length>0 || spinWinners.length>0 || spinPrizes.length>0 || spinGroups.length>0;
+    const pesan = `Keluarkan arsip "${a.judul}" dan jadikan game AKTIF lagi (bisa diundi seperti biasa)?\n\n` +
+      (adaDataAktif
+        ? `⚠️ Data game yang SEDANG AKTIF sekarang (${spinEntries.length} peserta, ${spinWinners.length} pemenang, ${spinPrizes.length} hadiah, ${spinGroups.length} grup) akan DIGANTI TOTAL dengan data dari arsip ini. Data aktif sekarang otomatis dicadangkan dulu sebagai arsip baru sebelum diganti, jadi tetap aman & bisa dibuka lagi lewat 📦 Arsip.`
+        : `Belum ada data aktif sekarang, jadi data dari arsip ini akan langsung dipasang.`);
+    const ok = await askConfirm(pesan, '♻️ Keluarkan dari Arsip');
+    if(!ok) return;
+
+    if(adaDataAktif){
+      const cadangan = {
+        judul: '(Cadangan otomatis) ' + (spinTitleSettings.text || 'Sebelum dipulihkan dari arsip') + ' — ' + new Date().toLocaleString('id-ID'),
+        entries: spinEntries, winners: spinWinners, prizes: spinPrizes, groups: spinGroups,
+        groupSystemEnabled: spinGroupSystemEnabled, excluded: spinExcluded, titleText: spinTitleSettings.text,
+        arsip_pada: new Date().toISOString(),
+      };
+      const { error: errCadangan } = await db.from('spin_archives').insert({ judul: cadangan.judul, data: cadangan });
+      if(errCadangan){
+        alert('Gagal membuat cadangan otomatis dari data aktif sekarang, proses pemulihan dibatalkan supaya data tidak hilang: ' + errCadangan.message);
+        return;
+      }
+    }
+
+    await Promise.all([
+      db.from('entries').delete().neq('id','00000000-0000-0000-0000-000000000000'),
+      db.from('winners').delete().neq('id','00000000-0000-0000-0000-000000000000'),
+      db.from('spin_prizes').delete().neq('id','00000000-0000-0000-0000-000000000000'),
+      db.from('spin_groups').delete().neq('id','00000000-0000-0000-0000-000000000000'),
+    ]);
+
+    if(groups.length) await db.from('spin_groups').insert(groups);
+    if(entries.length) await db.from('entries').insert(entries);
+    if(prizes.length) await db.from('spin_prizes').insert(prizes);
+    if(winners.length) await db.from('winners').insert(winners);
+
+    await Promise.all([
+      db.from('spin_settings').upsert({key:'title_settings', data:{text: d.titleText || 'Game Spin — Undian Doorprize'}, updated_at: new Date().toISOString()}),
+      db.from('spin_settings').upsert({key:'group_system_enabled', data:{value: d.groupSystemEnabled !== false}, updated_at: new Date().toISOString()}),
+      db.from('spin_settings').upsert({key:'exclude_list', data: Array.isArray(d.excluded) ? d.excluded : [], updated_at: new Date().toISOString()}),
+    ]);
+
+    if (typeof _auditLog === 'function') _auditLog('spin_archives', 'UPDATE', null, {judul: a.judul}, `♻️ Arsip "${a.judul}" dikeluarkan/dipulihkan jadi data aktif`);
+    spinCloseArsipDetail();
+    await spinLoadAll();
+    showToast('♻️ Arsip "' + a.judul + '" berhasil dipulihkan jadi game aktif', 'success', 3500);
   }
 
   function spinCloseArsipDetail(){
