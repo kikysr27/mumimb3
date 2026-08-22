@@ -746,7 +746,7 @@
     display: inline-flex !important; align-items: center; gap: 3px;
   }
   .tbl-ctx-toolbar button:hover { background: #e8f5ef !important; border-color: #b9dcc7 !important; }
-  .tbl-ctx-toolbar button.tctx-danger { color: #b91c1c !important; }
+  .tbl-ctx-toolbar button.tctx-danger { color: #b91c1c !important; border-color: #fca5a5 !important; }
   .tbl-ctx-toolbar button.tctx-danger:hover { background: #fee2e2 !important; border-color: #fecaca !important; }
 
   /* ─── SHAPE interaktif di dalam editor: bisa dipilih, di-resize, dirotasi, dipindah bebas, dan diisi teks ─── */
@@ -5614,7 +5614,7 @@ window.markdownToEditableHtml = function(md) {
   // - karakter invisible (object replacement char, zero-width, dll.)
   // - baris heading kosong ("#", "##", "###" tanpa teks setelahnya)
   md = String(md || '')
-    .replace(/[\uFFFC\u200B\u200C\u200D\uFEFF]/g, '')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200F\u2028-\u202F\u205F-\u206F\uFEFF\uFFF9-\uFFFC\uE000-\uF8FF]/g, '')
     .replace(/^[ \t]*#{1,3}[ \t]*$/gm, '');
   var html = descToHTML(md || '');
   // Normalisasi class span/div → tag native supaya execCommand toggle bekerja
@@ -5798,7 +5798,7 @@ window.htmlElementToMarkdown = function(rootEl) {
         // contenteditable (Object Replacement Character, zero-width space, dll.)
         // — tanpa ini karakter tsb ikut tersimpan ke markdown & muncul sebagai
         // "kotak kecil" (noise) tiap kali deskripsi dibuka lagi.
-        out += c.textContent.replace(/[\uFFFC\u200B\u200C\u200D\uFEFF]/g, '');
+        out += c.textContent.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200F\u2028-\u202F\u205F-\u206F\uFEFF\uFFF9-\uFFFC\uE000-\uF8FF]/g, '');
       } else if (c.nodeType === 1) {
         var tag = c.tagName.toLowerCase();
         // PENTING: jangan pakai c.className langsung — pada elemen <svg>/<rect>/dst,
@@ -5884,8 +5884,19 @@ window.htmlElementToMarkdown = function(rootEl) {
           // Simpan as-is dalam marker [[html]]...[[/html]] supaya tidak ter-escape saat descToHTML
           // (ins-shape/svg ikut disimpan mentah — kalau tidak, Shape hilang total sesudah disimpan
           // & dimuat ulang, walau sekarang tombol Simpan sudah tidak error lagi)
+          // Buang dulu karakter invisible yang mungkin nyangkut di dalam blok ini (mis. placeholder
+          // kursor browser di dalam sel tabel) SEBELUM di-outerHTML — kalau tidak, karakter itu ikut
+          // tersimpan mentah dan lolos dari sanitasi teks biasa (jadi noise kotak kecil).
+          var cleanNode = c.cloneNode(true);
+          (function stripInvisible(n) {
+            for (var ci = 0; ci < n.childNodes.length; ci++) {
+              var cc = n.childNodes[ci];
+              if (cc.nodeType === 3) cc.textContent = cc.textContent.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200F\u2028-\u202F\u205F-\u206F\uFEFF\uFFF9-\uFFFC\uE000-\uF8FF]/g, '');
+              else if (cc.nodeType === 1) stripInvisible(cc);
+            }
+          })(cleanNode);
           if (out.length > 0 && !out.endsWith('\n')) out += '\n';
-          out += '[[html]]' + c.outerHTML + '[[/html]]\n';
+          out += '[[html]]' + cleanNode.outerHTML + '[[/html]]\n';
         }
         else if (tag === 'ul' || tag === 'ol') {
           // List: convert each <li> ke markdown line
@@ -5910,6 +5921,12 @@ window.htmlElementToMarkdown = function(rootEl) {
           // LI di luar UL/OL (jarang) — treat as plain bullet
           if (out.length > 0 && !out.endsWith('\n')) out += '\n';
           out += '- ' + inner.replace(/\n/g,' ') + '\n';
+        }
+        else if (cls.indexOf('ins-spacer') >= 0 && !inner.replace(/\s+/g, '')) {
+          // Div spacer kosong yang otomatis ditambahkan sesudah sisip tabel/gambar/poll
+          // (cuma buat tempat klik lanjut ngetik) — kalau tidak pernah diisi user, JANGAN
+          // ditulis ke markdown sama sekali. Ini sumber noise "kotak kecil" yang muncul
+          // di atas/bawah tabel & foto tiap kali disimpan.
         }
         else if (tag === 'div' || tag === 'p') {
           if (out.length > 0 && !out.endsWith('\n')) out += '\n';
@@ -6162,7 +6179,7 @@ window.attachWysiwyg = function(editorEl) {
             }
             tableHtml += '</tr>';
           }
-          tableHtml += '</tbody></table><div><br></div>';
+          tableHtml += '</tbody></table><div class="ins-spacer"><br></div>';
           document.execCommand('insertHTML', false, tableHtml);
           break;
         }
@@ -6263,7 +6280,7 @@ window.attachWysiwyg = function(editorEl) {
         case 'insertImage': {
           // value = data URL
           if (value) {
-            var imgHtml = '<img src="' + value + '" style="max-width:100%;height:auto;border-radius:6px;margin:6px 0;" alt="gambar"><div><br></div>';
+            var imgHtml = '<img src="' + value + '" style="max-width:100%;height:auto;border-radius:6px;margin:6px 0;" alt="gambar"><div class="ins-spacer"><br></div>';
             document.execCommand('insertHTML', false, imgHtml);
           }
           break;
@@ -6469,18 +6486,18 @@ window.attachWysiwyg = function(editorEl) {
   function _showTblCtx(cell) {
     var bar = _tblCtxBar();
     bar.innerHTML =
-      '<span class="tctx-label">⊞ Tabel</span>' +
-      '<button type="button" data-tact="tblInsertRowAbove" title="Sisipkan Baris di Atas">⬆➕ Baris</button>' +
-      '<button type="button" data-tact="tblInsertRowBelow" title="Sisipkan Baris di Bawah">⬇➕ Baris</button>' +
-      '<button type="button" data-tact="tblInsertColLeft" title="Sisipkan Kolom di Kiri">⬅➕ Kolom</button>' +
-      '<button type="button" data-tact="tblInsertColRight" title="Sisipkan Kolom di Kanan">➡➕ Kolom</button>' +
+      '<span class="tctx-label">Tabel</span>' +
+      '<button type="button" data-tact="tblInsertRowAbove" title="Sisipkan baris baru di atas baris ini">+ Baris Atas</button>' +
+      '<button type="button" data-tact="tblInsertRowBelow" title="Sisipkan baris baru di bawah baris ini">+ Baris Bawah</button>' +
+      '<button type="button" data-tact="tblInsertColLeft" title="Sisipkan kolom baru di kiri kolom ini">+ Kolom Kiri</button>' +
+      '<button type="button" data-tact="tblInsertColRight" title="Sisipkan kolom baru di kanan kolom ini">+ Kolom Kanan</button>' +
       '<span class="tctx-sep"></span>' +
-      '<button type="button" data-tact="tblMergeRight" title="Gabung dengan Sel Kanan">⊔ Gabung</button>' +
-      '<button type="button" data-tact="openBorderDialog" title="Border and Shading">▦ Border</button>' +
+      '<button type="button" data-tact="tblMergeRight" title="Gabung sel ini dengan sel di kanannya jadi satu">Gabung Kanan</button>' +
+      '<button type="button" data-tact="openBorderDialog" title="Atur garis pinggir (border) & warna latar tabel">Border</button>' +
       '<span class="tctx-sep"></span>' +
-      '<button type="button" data-tact="tblDeleteRow" class="tctx-danger" title="Hapus Baris ini">🗑 Baris</button>' +
-      '<button type="button" data-tact="tblDeleteCol" class="tctx-danger" title="Hapus Kolom ini">🗑 Kolom</button>' +
-      '<button type="button" data-tact="tblDeleteTable" class="tctx-danger" title="Hapus Seluruh Tabel">🗑 Tabel</button>';
+      '<button type="button" data-tact="tblDeleteRow" class="tctx-danger" title="Hapus baris yang sedang dipilih ini">Hapus Baris</button>' +
+      '<button type="button" data-tact="tblDeleteCol" class="tctx-danger" title="Hapus kolom yang sedang dipilih ini">Hapus Kolom</button>' +
+      '<button type="button" data-tact="tblDeleteTable" class="tctx-danger" title="Hapus seluruh tabel ini beserta isinya">Hapus Tabel</button>';
     bar.querySelectorAll('button[data-tact]').forEach(function(b) {
       b.onmousedown = function(e) { e.preventDefault(); }; // jangan hilangkan seleksi/fokus editor
       b.onclick = function(e) {
@@ -6937,7 +6954,7 @@ window.insertPollToEditor = function(editorEl) {
     }).join('') +
     '</div>' +
     '<div class="md-poll-results" data-poll-id="' + pollId + '"></div>' +
-    '</div><div><br></div>';
+    '</div><div class="ins-spacer"><br></div>';
   editorEl.focus();
   document.execCommand('insertHTML', false, pollHtml);
   try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(e){}
