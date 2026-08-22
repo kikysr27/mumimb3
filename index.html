@@ -696,6 +696,10 @@
   .desc-toolbar-btn:hover {
     background: #d4edd9 !important; border-color: #1a6644 !important;
   }
+  select.desc-toolbar-btn {
+    -webkit-appearance: menulist; appearance: menulist;
+    padding: 4px 4px !important; font-weight: 500 !important; cursor: pointer;
+  }
   .desc-toolbar-hint {
     flex: 1; text-align: right; font-size: 10px; color: #7a9585;
     align-self: center; padding: 0 6px;
@@ -712,30 +716,45 @@
   }
   [data-theme="dark"] .desc-toolbar-hint { color: #8aa99a; }
 
-  /* ─── TABLE CONTEXT TOOLBAR (muncul mengambang saat kursor di dalam tabel, ala Word) ─── */
+  /* ─── TABLE CONTEXT TOOLBAR (ribbon horizontal ala "Table Tools" di Word) ─── */
   .tbl-ctx-toolbar {
     position: fixed; z-index: 5000; display: none;
-    align-items: center; gap: 4px; flex-wrap: wrap;
-    max-width: min(92vw, 520px);
-    background: #14311f; border: 1px solid #1a6644; border-radius: 9px;
-    padding: 6px 8px; box-shadow: 0 8px 24px rgba(0,0,0,.28);
+    align-items: stretch; gap: 2px; flex-wrap: nowrap;
+    max-width: 94vw; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    background: #ffffff; border: 1px solid #c7d9cf; border-radius: 10px;
+    padding: 6px 6px; box-shadow: 0 10px 28px rgba(0,0,0,.22);
+    scrollbar-width: thin;
   }
+  .tbl-ctx-toolbar::-webkit-scrollbar { height: 5px; }
+  .tbl-ctx-toolbar::-webkit-scrollbar-thumb { background: #c7d9cf; border-radius: 4px; }
   .tbl-ctx-toolbar .tctx-label {
-    font-size: 11px; font-weight: 800; color: #6fdcab; margin-right: 2px; white-space: nowrap;
+    font-size: 10px; font-weight: 800; color: #1a6644; white-space: nowrap;
+    display: flex; align-items: center; padding: 0 6px 0 2px; flex: 0 0 auto;
+    border-right: 1px solid #e5e7eb; margin-right: 2px;
   }
   .tbl-ctx-toolbar .tctx-sep {
-    width: 1px; align-self: stretch; background: rgba(255,255,255,.15); margin: 0 2px;
+    width: 1px; flex: 0 0 1px; align-self: stretch; background: #e5e7eb; margin: 2px 3px;
   }
   .tbl-ctx-toolbar button {
-    background: rgba(255,255,255,.08) !important; color: #eafff2 !important;
-    border: 1px solid rgba(255,255,255,.15) !important;
-    padding: 5px 8px !important; border-radius: 5px !important;
-    font-size: 11px !important; font-weight: 600 !important;
-    cursor: pointer; white-space: nowrap; line-height: 1;
+    background: #ffffff !important; color: #1a4d33 !important;
+    border: 1px solid transparent !important;
+    padding: 4px 7px !important; border-radius: 6px !important;
+    font-size: 10.5px !important; font-weight: 600 !important;
+    cursor: pointer !important; white-space: nowrap !important; line-height: 1.5 !important;
+    width: auto !important; flex: 0 0 auto !important;
+    display: inline-flex !important; align-items: center; gap: 3px;
   }
-  .tbl-ctx-toolbar button:hover { background: rgba(45,158,107,.35) !important; }
-  .tbl-ctx-toolbar button.tctx-danger { color: #fecaca !important; }
-  .tbl-ctx-toolbar button.tctx-danger:hover { background: rgba(220,38,38,.35) !important; }
+  .tbl-ctx-toolbar button:hover { background: #e8f5ef !important; border-color: #b9dcc7 !important; }
+  .tbl-ctx-toolbar button.tctx-danger { color: #b91c1c !important; }
+  .tbl-ctx-toolbar button.tctx-danger:hover { background: #fee2e2 !important; border-color: #fecaca !important; }
+
+  /* ─── SHAPE interaktif di dalam editor: bisa dipilih, di-resize, dan diisi teks ─── */
+  .ins-shape { line-height: 0; }
+  .ins-shape.shape-active { outline: 1.5px dashed #16a34a; outline-offset: 3px; border-radius: 3px; }
+  .ins-shape .shape-text { cursor: text; }
+  .ins-shape .shape-text:empty:before {
+    content: attr(data-ph); color: #9ca3af; font-size: 11px; pointer-events: none;
+  }
 
   /* Live preview box di bawah textarea deskripsi */
   .desc-preview-wrap {
@@ -2923,6 +2942,9 @@
 
           <label>Deskripsi <span class="muted" style="font-size:11px;font-weight:400;">(pilih kata, klik tombol / klik kanan)</span></label>
           <div class="desc-toolbar">
+            
+            <select class="desc-toolbar-btn" style="width:118px;" title="Jenis Huruf" onchange="document.getElementById('acDeskripsi').applyFmt('fontFamily', this.value)"><option value="">Default (Sistem)</option><option value="Aptos, -apple-system, &quot;Segoe UI&quot;, Roboto, Arial, sans-serif">Aptos</option><option value="Arial, sans-serif">Arial</option><option value="Calibri, sans-serif">Calibri</option><option value="Cambria, serif">Cambria</option><option value="&quot;Times New Roman&quot;, serif">Times New Roman</option><option value="Georgia, serif">Georgia</option><option value="Garamond, serif">Garamond</option><option value="&quot;Courier New&quot;, monospace">Courier New</option><option value="Verdana, sans-serif">Verdana</option><option value="Tahoma, sans-serif">Tahoma</option><option value="&quot;Trebuchet MS&quot;, sans-serif">Trebuchet MS</option><option value="&quot;Segoe UI&quot;, sans-serif">Segoe UI</option><option value="&quot;Comic Sans MS&quot;, cursive">Comic Sans MS</option><option value="Impact, sans-serif">Impact</option><option value="ui-monospace, &quot;Cascadia Code&quot;, Consolas, monospace">Consolas</option></select>
+            <select class="desc-toolbar-btn" style="width:52px;" title="Ukuran Huruf" onchange="document.getElementById('acDeskripsi').applyFmt('fontSize', this.value)"><option value="">11</option><option value="8px">8</option><option value="9px">9</option><option value="10px">10</option><option value="11px">11</option><option value="12px">12</option><option value="14px">14</option><option value="16px">16</option><option value="18px">18</option><option value="20px">20</option><option value="22px">22</option><option value="24px">24</option><option value="26px">26</option><option value="28px">28</option><option value="36px">36</option><option value="48px">48</option><option value="72px">72</option></select>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('h1')" title="Judul Besar">H1</button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('h2')" title="Sub Judul">H2</button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('h3')" title="Sub-Sub Judul">H3</button>
@@ -3035,7 +3057,10 @@
         <input id="catJudul" type="text" placeholder="Cth: Ide acara perpisahan, Kontak vendor, Resep snack...">
         <label>Isi Catatan</label>
         <div class="desc-toolbar">
-          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('h1')" title="Judul Besar">H1</button>
+          
+            <select class="desc-toolbar-btn" style="width:118px;" title="Jenis Huruf" onchange="document.getElementById('catIsi').applyFmt('fontFamily', this.value)"><option value="">Default (Sistem)</option><option value="Aptos, -apple-system, &quot;Segoe UI&quot;, Roboto, Arial, sans-serif">Aptos</option><option value="Arial, sans-serif">Arial</option><option value="Calibri, sans-serif">Calibri</option><option value="Cambria, serif">Cambria</option><option value="&quot;Times New Roman&quot;, serif">Times New Roman</option><option value="Georgia, serif">Georgia</option><option value="Garamond, serif">Garamond</option><option value="&quot;Courier New&quot;, monospace">Courier New</option><option value="Verdana, sans-serif">Verdana</option><option value="Tahoma, sans-serif">Tahoma</option><option value="&quot;Trebuchet MS&quot;, sans-serif">Trebuchet MS</option><option value="&quot;Segoe UI&quot;, sans-serif">Segoe UI</option><option value="&quot;Comic Sans MS&quot;, cursive">Comic Sans MS</option><option value="Impact, sans-serif">Impact</option><option value="ui-monospace, &quot;Cascadia Code&quot;, Consolas, monospace">Consolas</option></select>
+            <select class="desc-toolbar-btn" style="width:52px;" title="Ukuran Huruf" onchange="document.getElementById('catIsi').applyFmt('fontSize', this.value)"><option value="">11</option><option value="8px">8</option><option value="9px">9</option><option value="10px">10</option><option value="11px">11</option><option value="12px">12</option><option value="14px">14</option><option value="16px">16</option><option value="18px">18</option><option value="20px">20</option><option value="22px">22</option><option value="24px">24</option><option value="26px">26</option><option value="28px">28</option><option value="36px">36</option><option value="48px">48</option><option value="72px">72</option></select>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('h1')" title="Judul Besar">H1</button>
           <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('h2')" title="Sub Judul">H2</button>
           <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('h3')" title="Sub-Sub">H3</button>
           <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('bold')" title="Tebal"><b>B</b></button>
@@ -3090,7 +3115,10 @@
         <input id="evalJudul" type="text" placeholder="Cth: Ide acara perpisahan, Kontak vendor, Resep snack...">
         <label>Isi Evaluasi</label>
         <div class="desc-toolbar">
-          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('h1')" title="Judul Besar">H1</button>
+          
+            <select class="desc-toolbar-btn" style="width:118px;" title="Jenis Huruf" onchange="document.getElementById('evalIsi').applyFmt('fontFamily', this.value)"><option value="">Default (Sistem)</option><option value="Aptos, -apple-system, &quot;Segoe UI&quot;, Roboto, Arial, sans-serif">Aptos</option><option value="Arial, sans-serif">Arial</option><option value="Calibri, sans-serif">Calibri</option><option value="Cambria, serif">Cambria</option><option value="&quot;Times New Roman&quot;, serif">Times New Roman</option><option value="Georgia, serif">Georgia</option><option value="Garamond, serif">Garamond</option><option value="&quot;Courier New&quot;, monospace">Courier New</option><option value="Verdana, sans-serif">Verdana</option><option value="Tahoma, sans-serif">Tahoma</option><option value="&quot;Trebuchet MS&quot;, sans-serif">Trebuchet MS</option><option value="&quot;Segoe UI&quot;, sans-serif">Segoe UI</option><option value="&quot;Comic Sans MS&quot;, cursive">Comic Sans MS</option><option value="Impact, sans-serif">Impact</option><option value="ui-monospace, &quot;Cascadia Code&quot;, Consolas, monospace">Consolas</option></select>
+            <select class="desc-toolbar-btn" style="width:52px;" title="Ukuran Huruf" onchange="document.getElementById('evalIsi').applyFmt('fontSize', this.value)"><option value="">11</option><option value="8px">8</option><option value="9px">9</option><option value="10px">10</option><option value="11px">11</option><option value="12px">12</option><option value="14px">14</option><option value="16px">16</option><option value="18px">18</option><option value="20px">20</option><option value="22px">22</option><option value="24px">24</option><option value="26px">26</option><option value="28px">28</option><option value="36px">36</option><option value="48px">48</option><option value="72px">72</option></select>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('h1')" title="Judul Besar">H1</button>
           <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('h2')" title="Sub Judul">H2</button>
           <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('h3')" title="Sub-Sub">H3</button>
           <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('bold')" title="Tebal"><b>B</b></button>
@@ -3275,6 +3303,9 @@
 
           <label>Deskripsi <span class="muted" style="font-size:11px;font-weight:400;">(pilih kata, klik tombol / klik kanan)</span></label>
           <div class="desc-toolbar">
+            
+            <select class="desc-toolbar-btn" style="width:118px;" title="Jenis Huruf" onchange="document.getElementById('prjDeskripsi').applyFmt('fontFamily', this.value)"><option value="">Default (Sistem)</option><option value="Aptos, -apple-system, &quot;Segoe UI&quot;, Roboto, Arial, sans-serif">Aptos</option><option value="Arial, sans-serif">Arial</option><option value="Calibri, sans-serif">Calibri</option><option value="Cambria, serif">Cambria</option><option value="&quot;Times New Roman&quot;, serif">Times New Roman</option><option value="Georgia, serif">Georgia</option><option value="Garamond, serif">Garamond</option><option value="&quot;Courier New&quot;, monospace">Courier New</option><option value="Verdana, sans-serif">Verdana</option><option value="Tahoma, sans-serif">Tahoma</option><option value="&quot;Trebuchet MS&quot;, sans-serif">Trebuchet MS</option><option value="&quot;Segoe UI&quot;, sans-serif">Segoe UI</option><option value="&quot;Comic Sans MS&quot;, cursive">Comic Sans MS</option><option value="Impact, sans-serif">Impact</option><option value="ui-monospace, &quot;Cascadia Code&quot;, Consolas, monospace">Consolas</option></select>
+            <select class="desc-toolbar-btn" style="width:52px;" title="Ukuran Huruf" onchange="document.getElementById('prjDeskripsi').applyFmt('fontSize', this.value)"><option value="">11</option><option value="8px">8</option><option value="9px">9</option><option value="10px">10</option><option value="11px">11</option><option value="12px">12</option><option value="14px">14</option><option value="16px">16</option><option value="18px">18</option><option value="20px">20</option><option value="22px">22</option><option value="24px">24</option><option value="26px">26</option><option value="28px">28</option><option value="36px">36</option><option value="48px">48</option><option value="72px">72</option></select>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('h1')" title="Judul Besar">H1</button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('h2')" title="Sub Judul">H2</button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('h3')" title="Sub-Sub Judul">H3</button>
@@ -4335,7 +4366,10 @@ CREATE POLICY "spin_archives_all" ON spin_archives FOR ALL USING (true) WITH CHE
 
       <label>Deskripsi Lengkap / Detail Acara <span class="muted" style="font-size:11px;font-weight:400;">(pilih kata, klik tombol / klik kanan)</span></label>
       <div class="desc-toolbar">
-        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('h1')" title="Judul Besar">H1</button>
+        
+            <select class="desc-toolbar-btn" style="width:118px;" title="Jenis Huruf" onchange="document.getElementById('amDeskripsi').applyFmt('fontFamily', this.value)"><option value="">Default (Sistem)</option><option value="Aptos, -apple-system, &quot;Segoe UI&quot;, Roboto, Arial, sans-serif">Aptos</option><option value="Arial, sans-serif">Arial</option><option value="Calibri, sans-serif">Calibri</option><option value="Cambria, serif">Cambria</option><option value="&quot;Times New Roman&quot;, serif">Times New Roman</option><option value="Georgia, serif">Georgia</option><option value="Garamond, serif">Garamond</option><option value="&quot;Courier New&quot;, monospace">Courier New</option><option value="Verdana, sans-serif">Verdana</option><option value="Tahoma, sans-serif">Tahoma</option><option value="&quot;Trebuchet MS&quot;, sans-serif">Trebuchet MS</option><option value="&quot;Segoe UI&quot;, sans-serif">Segoe UI</option><option value="&quot;Comic Sans MS&quot;, cursive">Comic Sans MS</option><option value="Impact, sans-serif">Impact</option><option value="ui-monospace, &quot;Cascadia Code&quot;, Consolas, monospace">Consolas</option></select>
+            <select class="desc-toolbar-btn" style="width:52px;" title="Ukuran Huruf" onchange="document.getElementById('amDeskripsi').applyFmt('fontSize', this.value)"><option value="">11</option><option value="8px">8</option><option value="9px">9</option><option value="10px">10</option><option value="11px">11</option><option value="12px">12</option><option value="14px">14</option><option value="16px">16</option><option value="18px">18</option><option value="20px">20</option><option value="22px">22</option><option value="24px">24</option><option value="26px">26</option><option value="28px">28</option><option value="36px">36</option><option value="48px">48</option><option value="72px">72</option></select>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('h1')" title="Judul Besar">H1</button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('h2')" title="Sub Judul">H2</button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('h3')" title="Sub-Sub Judul">H3</button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('p')" title="Teks biasa">¶</button>
@@ -5935,6 +5969,35 @@ window.showLinkDialog = function(editorEl) {
 };
 
 // ─── HELPER: pasang WYSIWYG mode (toolbar, context menu, paste handler) di element contenteditable ───
+// ─── Terapkan font-family / font-size hanya ke teks yang diseleksi (seperti Word). ───
+// Jika tidak ada seleksi (kursor kosong), berlaku ke seluruh editor.
+window._wrapSelStyle = function(editorEl, prop, value) {
+  var sel = window.getSelection();
+  if (!sel || !sel.rangeCount || sel.isCollapsed) {
+    editorEl.style[prop] = value;
+    try { localStorage.setItem('wysiwyg_' + prop, value); } catch(_){}
+    return;
+  }
+  var range = sel.getRangeAt(0);
+  if (!editorEl.contains(range.commonAncestorContainer)) {
+    editorEl.style[prop] = value;
+    return;
+  }
+  var span = document.createElement('span');
+  span.style[prop] = value;
+  try {
+    range.surroundContents(span);
+  } catch (e) {
+    var frag = range.extractContents();
+    span.appendChild(frag);
+    range.insertNode(span);
+  }
+  sel.removeAllRanges();
+  var newRange = document.createRange();
+  newRange.selectNodeContents(span);
+  sel.addRange(newRange);
+};
+
 window.attachWysiwyg = function(editorEl) {
   if (!editorEl || editorEl._wysiwygAttached) return;
   editorEl._wysiwygAttached = true;
@@ -6114,13 +6177,12 @@ window.attachWysiwyg = function(editorEl) {
         case 'align-right': document.execCommand('justifyRight'); break;
         case 'align-justify': document.execCommand('justifyFull'); break;
         case 'fontFamily':
-          // Editor-wide setting (semua teks pakai font ini)
-          editorEl.style.fontFamily = value || '';
-          try { localStorage.setItem('wysiwyg_fontFamily', value || ''); } catch(_){}
+          // Jika ada teks terpilih → terapkan hanya ke seleksi (seperti Word). Jika tidak → seluruh editor.
+          window._wrapSelStyle(editorEl, 'fontFamily', value || '');
+          if (!value) { try { localStorage.setItem('wysiwyg_fontFamily', ''); } catch(_){} }
           break;
         case 'fontSize':
-          editorEl.style.fontSize = value || '';
-          try { localStorage.setItem('wysiwyg_fontSize', value || ''); } catch(_){}
+          window._wrapSelStyle(editorEl, 'fontSize', value || '');
           break;
         case 'lineHeight':
           editorEl.style.lineHeight = value || '';
@@ -6312,7 +6374,8 @@ window.attachWysiwyg = function(editorEl) {
       '<button type="button" data-tact="tblInsertRowBelow" title="Sisipkan Baris di Bawah">⬇➕ Baris</button>' +
       '<button type="button" data-tact="tblInsertColLeft" title="Sisipkan Kolom di Kiri">⬅➕ Kolom</button>' +
       '<button type="button" data-tact="tblInsertColRight" title="Sisipkan Kolom di Kanan">➡➕ Kolom</button>' +
-      '<button type="button" data-tact="tblMergeRight" title="Gabung dengan Sel Kanan">⊔ Gabung Sel</button>' +
+      '<span class="tctx-sep"></span>' +
+      '<button type="button" data-tact="tblMergeRight" title="Gabung dengan Sel Kanan">⊔ Gabung</button>' +
       '<button type="button" data-tact="openBorderDialog" title="Border and Shading">▦ Border</button>' +
       '<span class="tctx-sep"></span>' +
       '<button type="button" data-tact="tblDeleteRow" class="tctx-danger" title="Hapus Baris ini">🗑 Baris</button>' +
@@ -6418,6 +6481,126 @@ window.attachWysiwyg = function(editorEl) {
       window.hideImgCtxToolbar();
     }
   });
+
+  // ─── SHAPE INTERAKTIF: klik untuk pilih (muncul gagang resize), seret gagang untuk resize,
+  //     ketik langsung di dalam shape untuk isi teks (seperti Word) ───
+  function _shapeCtxBar() {
+    var bar = document.getElementById('wysiwygShapeCtxBar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'wysiwygShapeCtxBar';
+      bar.className = 'tbl-ctx-toolbar';
+      bar.style.display = 'none';
+      document.body.appendChild(bar);
+    }
+    return bar;
+  }
+  window.hideShapeCtxToolbar = function() {
+    var bar = document.getElementById('wysiwygShapeCtxBar');
+    if (bar) bar.style.display = 'none';
+  };
+  function _deactivateAllShapes() {
+    editorEl.querySelectorAll('.ins-shape.shape-active').forEach(function(s) {
+      s.classList.remove('shape-active');
+      var h = s.querySelector('.shape-handle');
+      if (h) h.style.display = 'none';
+    });
+  }
+  function _showShapeCtx(shapeEl) {
+    var bar = _shapeCtxBar();
+    var curColor = shapeEl.style.color || '#1a6644';
+    bar.innerHTML =
+      '<span class="tctx-label">🔷 Shape</span>' +
+      '<input type="color" id="_shpColor" value="' + curColor + '" title="Warna Garis/Isi" style="width:30px;height:26px;border:1px solid #e5e7eb;border-radius:5px;cursor:pointer;padding:0;">' +
+      '<button type="button" data-sact="fillToggle" title="Isi Warna Solid / Kosong">🪣 Isi</button>' +
+      '<button type="button" data-sact="bigger" title="Perbesar">🔍+</button>' +
+      '<button type="button" data-sact="smaller" title="Perkecil">🔍-</button>' +
+      '<span class="tctx-sep"></span>' +
+      '<button type="button" data-sact="delete" class="tctx-danger" title="Hapus Shape">🗑 Hapus</button>';
+    var colorInp = bar.querySelector('#_shpColor');
+    colorInp.oninput = function() {
+      shapeEl.style.color = colorInp.value;
+      var svgShape = shapeEl.querySelector('svg rect,svg circle,svg polygon,svg path');
+      if (svgShape && svgShape.getAttribute('fill') && svgShape.getAttribute('fill') !== 'none') {
+        svgShape.setAttribute('fill', colorInp.value);
+      }
+      try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){}
+    };
+    bar.querySelectorAll('button[data-sact]').forEach(function(b) {
+      b.onmousedown = function(e) { e.preventDefault(); };
+      b.onclick = function(e) {
+        e.preventDefault(); e.stopPropagation();
+        var act = b.dataset.sact;
+        var svgShape = shapeEl.querySelector('svg rect,svg circle,svg polygon,svg path,svg line');
+        if (act === 'delete') {
+          shapeEl.remove();
+          window.hideShapeCtxToolbar();
+          try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){}
+        } else if (act === 'fillToggle' && svgShape) {
+          var isFilled = svgShape.getAttribute('fill') && svgShape.getAttribute('fill') !== 'none';
+          svgShape.setAttribute('fill', isFilled ? 'none' : (colorInp.value || 'currentColor'));
+          try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){}
+        } else if (act === 'bigger' || act === 'smaller') {
+          var w = shapeEl.offsetWidth, h = shapeEl.offsetHeight;
+          var factor = act === 'bigger' ? 1.2 : 0.83;
+          shapeEl.style.width = Math.max(24, Math.round(w * factor)) + 'px';
+          shapeEl.style.height = Math.max(24, Math.round(h * factor)) + 'px';
+          try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){}
+        }
+      };
+    });
+    bar.style.display = 'flex';
+    var rect = shapeEl.getBoundingClientRect();
+    var bw = bar.offsetWidth || 240, bh = bar.offsetHeight || 34;
+    var vw = window.innerWidth;
+    var left = Math.min(Math.max(rect.left + window.scrollX, 8), vw - bw - 8 + window.scrollX);
+    var top = rect.top + window.scrollY - bh - 6;
+    if (rect.top < bh + 10) top = rect.bottom + window.scrollY + 6;
+    bar.style.left = left + 'px';
+    bar.style.top = top + 'px';
+  }
+  editorEl.addEventListener('click', function(e) {
+    var shapeEl = e.target.closest && e.target.closest('.ins-shape');
+    if (shapeEl && editorEl.contains(shapeEl)) {
+      _deactivateAllShapes();
+      shapeEl.classList.add('shape-active');
+      var h = shapeEl.querySelector('.shape-handle');
+      if (h) h.style.display = 'block';
+      _showShapeCtx(shapeEl);
+    } else {
+      _deactivateAllShapes();
+      window.hideShapeCtxToolbar();
+    }
+  });
+  function _shapeResizeStart(e) {
+    var handle = e.target.closest && e.target.closest('.shape-handle');
+    if (!handle) return;
+    e.preventDefault(); e.stopPropagation();
+    var shapeEl = handle.closest('.ins-shape');
+    var p0 = e.touches ? e.touches[0] : e;
+    var startX = p0.clientX, startY = p0.clientY;
+    var startW = shapeEl.offsetWidth, startH = shapeEl.offsetHeight;
+    function onMove(ev) {
+      var p = ev.touches ? ev.touches[0] : ev;
+      var dx = p.clientX - startX, dy = p.clientY - startY;
+      shapeEl.style.width = Math.max(24, startW + dx) + 'px';
+      shapeEl.style.height = Math.max(24, startH + dy) + 'px';
+      ev.preventDefault();
+    }
+    function onEnd() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('mouseup', onEnd);
+      document.removeEventListener('touchend', onEnd);
+      try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){}
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchend', onEnd);
+  }
+  editorEl.addEventListener('mousedown', _shapeResizeStart);
+  editorEl.addEventListener('touchstart', _shapeResizeStart, { passive: false });
 };
 
 // ─── HELPER: Insert checkbox task ke contenteditable editor ───
@@ -6938,8 +7121,11 @@ window.showShapePicker = function(editorEl, anchorBtn) {
     b.onmouseout = function() { b.style.background = '#fff'; b.style.borderColor = '#d4e8dc'; };
     b.onclick = function() {
       var s = SHAPES[parseInt(b.dataset.idx, 10)];
-      var wrapHtml = '<span contenteditable="false" style="display:inline-block;width:60px;height:60px;color:#1a6644;vertical-align:middle;margin:2px;" data-shape="1">' +
-        '<svg viewBox="0 0 40 40" width="100%" height="100%">' + s.svg + '</svg></span>&nbsp;';
+      var wrapHtml = '<span class="ins-shape" contenteditable="false" style="position:relative;display:inline-block;width:110px;height:90px;min-width:24px;min-height:24px;vertical-align:middle;margin:4px;color:#1a6644;">' +
+        '<svg viewBox="0 0 40 40" preserveAspectRatio="none" style="width:100%;height:100%;display:block;">' + s.svg + '</svg>' +
+        '<div class="shape-text" contenteditable="true" data-ph="Ketik teks…" style="position:absolute;inset:8px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;line-height:1.25;outline:none;overflow:hidden;color:#111827;word-break:break-word;"></div>' +
+        '<span class="shape-handle" style="position:absolute;right:-7px;bottom:-7px;width:16px;height:16px;border-radius:50%;background:#16a34a;border:2px solid #fff;cursor:nwse-resize;display:none;box-shadow:0 1px 3px rgba(0,0,0,.4);"></span>' +
+      '</span>&nbsp;';
       editorEl.focus();
       try { document.execCommand('insertHTML', false, wrapHtml); } catch(e) {}
       try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){}
@@ -21412,7 +21598,10 @@ function renderMswForm(msw, peserta=[], keuangan=[]) {
       </div>
       <label>Hasil / Notulensi Musyawarah <span class="muted" style="font-size:11px;font-weight:400;">(pilih kata, klik tombol / klik kanan)</span></label>
       <div class="desc-toolbar">
-        <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('h1')" title="Judul Besar">H1</button>
+        
+            <select class="desc-toolbar-btn" style="width:118px;" title="Jenis Huruf" onchange="document.getElementById('mswHasil').applyFmt('fontFamily', this.value)"><option value="">Default (Sistem)</option><option value="Aptos, -apple-system, &quot;Segoe UI&quot;, Roboto, Arial, sans-serif">Aptos</option><option value="Arial, sans-serif">Arial</option><option value="Calibri, sans-serif">Calibri</option><option value="Cambria, serif">Cambria</option><option value="&quot;Times New Roman&quot;, serif">Times New Roman</option><option value="Georgia, serif">Georgia</option><option value="Garamond, serif">Garamond</option><option value="&quot;Courier New&quot;, monospace">Courier New</option><option value="Verdana, sans-serif">Verdana</option><option value="Tahoma, sans-serif">Tahoma</option><option value="&quot;Trebuchet MS&quot;, sans-serif">Trebuchet MS</option><option value="&quot;Segoe UI&quot;, sans-serif">Segoe UI</option><option value="&quot;Comic Sans MS&quot;, cursive">Comic Sans MS</option><option value="Impact, sans-serif">Impact</option><option value="ui-monospace, &quot;Cascadia Code&quot;, Consolas, monospace">Consolas</option></select>
+            <select class="desc-toolbar-btn" style="width:52px;" title="Ukuran Huruf" onchange="document.getElementById('mswHasil').applyFmt('fontSize', this.value)"><option value="">11</option><option value="8px">8</option><option value="9px">9</option><option value="10px">10</option><option value="11px">11</option><option value="12px">12</option><option value="14px">14</option><option value="16px">16</option><option value="18px">18</option><option value="20px">20</option><option value="22px">22</option><option value="24px">24</option><option value="26px">26</option><option value="28px">28</option><option value="36px">36</option><option value="48px">48</option><option value="72px">72</option></select>
+            <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('h1')" title="Judul Besar">H1</button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('h2')" title="Sub Judul">H2</button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('h3')" title="Sub-Sub Judul">H3</button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('p')" title="Teks biasa">¶</button>
