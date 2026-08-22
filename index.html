@@ -3078,6 +3078,7 @@
              data-placeholder="Tulis evaluasi apa saja di sini. Pilih kata lalu klik tombol format di atas, atau klik kanan..."></div>
         <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
           <button onclick="simpanEvaluasi()" style="flex:1;">💾 Simpan Evaluasi</button>
+          <button id="evaluasiPdfBtn" onclick="exportEvaluasiDetailPDF(currentEvaluasiId)" style="flex:1;display:none;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;">📄 Export PDF</button>
           <button id="evaluasiHapusBtn" class="danger" onclick="hapusEvaluasi()" style="flex:1;display:none;">🗑️ Hapus</button>
         </div>
         <div id="evalMsg" style="margin-top:6px;"></div>
@@ -8519,7 +8520,7 @@ function renderEvaluasiList() {
   el.innerHTML = list.map(c => {
     const tgl = c.updated_at ? new Date(c.updated_at).toLocaleString('id-ID', { dateStyle:'long', timeStyle:'short' }) : '';
     const preview = window.mdToPlainText(c.isi || '', 140);
-    return `<div onclick="bukaEvaluasi(${c.id})" style="padding:12px 14px;background:#fafdfb;border:1px solid #d4e8dc;border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;"
+    return `<div onclick='bukaEvaluasi(${JSON.stringify(c.id)})' style="padding:12px 14px;background:#fafdfb;border:1px solid #d4e8dc;border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;"
       onmouseover="this.style.background='#f0f7f3'" onmouseout="this.style.background='#fafdfb'">
       <div style="font-weight:700;font-size:14px;color:#1a6644;">📝 ${escapeHtml(c.judul || '(tanpa judul)')}</div>
       ${preview ? `<div class="muted" style="font-size:12px;margin-top:4px;line-height:1.4;">${escapeHtml(preview)}${preview.length === 140 ? '...' : ''}</div>` : ''}
@@ -8538,6 +8539,7 @@ function bukaEvaluasiBaru() {
   isiEl.innerHTML = '<p><br></p>';
   if (window.attachWysiwyg) window.attachWysiwyg(isiEl);
   document.getElementById('evaluasiHapusBtn').style.display = 'none';
+  document.getElementById('evaluasiPdfBtn').style.display = 'none';
   document.getElementById('evalMsg').textContent = '';
   setTimeout(() => document.getElementById('evalJudul').focus(), 100);
 }
@@ -8554,6 +8556,7 @@ function bukaEvaluasi(id) {
   isiEl.innerHTML = window.markdownToEditableHtml(c.isi || '');
   if (window.attachWysiwyg) window.attachWysiwyg(isiEl);
   document.getElementById('evaluasiHapusBtn').style.display = 'block';
+  document.getElementById('evaluasiPdfBtn').style.display = 'block';
   document.getElementById('evalMsg').textContent = '';
 }
 
@@ -14012,6 +14015,39 @@ async function exportMswDetailPDF(mswId) {
   _pdfFootersAll(doc);
   doc.save('musyawarah-' + S(m.judul || 'musyawarah').replace(/[\/\\ ]+/g, '-').slice(0, 40) + '.pdf');
   showToast('PDF musyawarah berhasil dibuat', 'success');
+}
+
+// ─── Export PDF Evaluasi (heading/bold/tabel/gambar, sama seperti notulensi/deskripsi acara) ───
+async function exportEvaluasiDetailPDF(evalId) {
+  evalId = evalId != null ? evalId : currentEvaluasiId;
+  const c = (evaluasiCache || []).find(x => x.id === evalId);
+  if (!c) { showToast('Evaluasi tidak ditemukan. Simpan dulu sebelum export PDF.', 'error'); return; }
+  if (!window.jspdf) { showToast('Library PDF belum termuat, coba lagi sebentar', 'info'); return; }
+  showToast('Menyiapkan PDF evaluasi...', 'info', 1500);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const S = _pdfSafe;
+  const tgl = c.updated_at ? new Date(c.updated_at).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' }) : '-';
+
+  _pdfHeader(doc, 'EVALUASI - MUMI MB3', S(c.judul || 'Evaluasi'));
+  doc.autoTable({
+    startY: 28, theme: 'grid', styles: { fontSize: 9, cellPadding: 2.5 },
+    body: [
+      ['Judul', S(c.judul || '-')],
+      ['Terakhir Diperbarui', tgl],
+    ],
+    columnStyles: { 0: { cellWidth: 50, fontStyle: 'bold' }, 1: { cellWidth: 'auto' } },
+  });
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 6,
+    head: [['Isi Evaluasi']],
+    body: [],
+    styles: { fontSize: 9 }, headStyles: { fillColor: [26, 102, 68] },
+  });
+  _pdfRenderMd(doc, c.isi || '', { startY: doc.lastAutoTable.finalY + 4, emptyText: '(belum ada isi evaluasi)' });
+  _pdfFootersAll(doc);
+  doc.save('evaluasi-' + S(c.judul || 'evaluasi').replace(/[\/\\ ]+/g, '-').slice(0, 40) + '.pdf');
+  showToast('PDF evaluasi berhasil dibuat', 'success');
 }
 
 async function saveAcaraDetail() {
