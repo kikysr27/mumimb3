@@ -27579,8 +27579,9 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   }
 
   async function spinResetSemua(){
-    if(spinEntries.length===0 && spinWinners.length===0) return;
-    const ok = await askConfirm(`Reset semua? ${spinEntries.length} entri dan ${spinWinners.length} riwayat pemenang akan dihapus, stok hadiah dikembalikan ke jumlah awal. Bisa diurungkan dalam 10 detik setelah ini.`, '🔄 Reset Semua');
+    const adaData = spinEntries.length>0 || spinWinners.length>0 || spinPrizes.length>0 || spinGroups.length>0 || spinExcluded.length>0;
+    if(!adaData){ alert('Belum ada data apa pun (entri, hadiah, grup, pengaturan) untuk direset.'); return; }
+    const ok = await askConfirm(`Reset semua? SEMUA data spin akan dihapus TOTAL supaya siap dipakai acara baru dari nol: ${spinEntries.length} entri, ${spinWinners.length} riwayat pemenang, ${spinPrizes.length} hadiah, ${spinGroups.length} grup, plus pengaturan (judul tampilan & daftar pengecualian) dikembalikan ke default.\n\nTips: kalau data sekarang masih mau disimpan buat kenangan, batalkan dulu lalu klik "📦 Arsipkan Periode Ini" di tab Arsip sebelum reset ini.\n\nBisa diurungkan dalam 10 detik setelah ini.`, '🔄 Reset Semua');
     if(!ok) return;
     await spinResetSemuaJalankan();
   }
@@ -27588,29 +27589,47 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   // Inti logika "Reset Semua" TANPA dialog konfirmasi — dipakai oleh tombol Reset Semua
   // (yang minta konfirmasi dulu) MAUPUN oleh alur 📦 Arsipkan Periode Ini (yang sudah
   // punya konfirmasi sendiri, supaya user tidak ditanya dua kali).
+  // Menghapus TOTAL: entri, hasil undian, hadiah, grup, dan pengaturan (judul tampilan,
+  // daftar pengecualian) balik ke default — supaya benar-benar siap dipakai acara baru,
+  // bukan cuma peserta & hasil undian yang hilang sementara hadiah/grup/setting lama tetap nyangkut.
   async function spinResetSemuaJalankan(){
-    const canReset = await spinResetStokKeAwal();
-    if(!canReset) return false;
     const backupEntries = spinEntries.slice();
     const backupWinners = spinWinners.slice();
-    const prizeStockBackup = spinPrizes.map(p => ({id:p.id, stock:p.stock})); // stok sebelum direset, buat undo
+    const backupPrizes = spinPrizes.slice();
+    const backupGroups = spinGroups.slice();
+    const backupExcluded = spinExcluded.slice();
+    const backupTitleText = spinTitleSettings.text;
+    const backupGroupSystemEnabled = spinGroupSystemEnabled;
+
     await Promise.all([
       db.from('entries').delete().neq('id','00000000-0000-0000-0000-000000000000'),
-      db.from('winners').delete().neq('id','00000000-0000-0000-0000-000000000000')
+      db.from('winners').delete().neq('id','00000000-0000-0000-0000-000000000000'),
+      db.from('spin_prizes').delete().neq('id','00000000-0000-0000-0000-000000000000'),
+      db.from('spin_groups').delete().neq('id','00000000-0000-0000-0000-000000000000'),
+      db.from('spin_settings').upsert({key:'exclude_list', data: [], updated_at: new Date().toISOString()}),
+      db.from('spin_settings').upsert({key:'title_settings', data:{text:'Game Spin — Undian Doorprize'}, updated_at: new Date().toISOString()}),
+      db.from('spin_settings').upsert({key:'group_system_enabled', data:{value:true}, updated_at: new Date().toISOString()}),
     ]);
-    if (typeof _auditLog === 'function') _auditLog('spin_entries', 'DELETE', {entri: backupEntries.length, pemenang: backupWinners.length}, null, `🔄 Reset Semua Game Spin (${backupEntries.length} entri, ${backupWinners.length} pemenang), stok dikembalikan ke awal`);
+    if (typeof _auditLog === 'function') _auditLog('spin_entries', 'DELETE', {entri: backupEntries.length, pemenang: backupWinners.length, hadiah: backupPrizes.length, grup: backupGroups.length}, null, `🔄 Reset Semua Game Spin (${backupEntries.length} entri, ${backupWinners.length} pemenang, ${backupPrizes.length} hadiah, ${backupGroups.length} grup) — data & pengaturan dikembalikan ke default`);
     spinSessionSkip = new Set();
     spinRoundCalled = new Set();
     await spinLoadAll();
-    showUndoToast(`Reset semua (${backupEntries.length} entri, ${backupWinners.length} pemenang)`,
+    showUndoToast(`Reset semua (${backupEntries.length} entri, ${backupWinners.length} pemenang, ${backupPrizes.length} hadiah, ${backupGroups.length} grup)`,
       async function(){
-        const tasks = [];
-        if(backupEntries.length) tasks.push(db.from('entries').insert(backupEntries));
-        if(backupWinners.length) tasks.push(db.from('winners').insert(backupWinners));
-        prizeStockBackup.forEach(pb => tasks.push(db.from('spin_prizes').update({stock:pb.stock}).eq('id', pb.id)));
-        if(tasks.length) await Promise.all(tasks);
+        // Grup & hadiah dulu (dipakai/dirujuk entri & hasil), baru entri & hasil, baru pengaturan.
+        const tasks1 = [];
+        if(backupGroups.length) tasks1.push(db.from('spin_groups').insert(backupGroups));
+        if(backupPrizes.length) tasks1.push(db.from('spin_prizes').insert(backupPrizes));
+        if(tasks1.length) await Promise.all(tasks1);
+        const tasks2 = [];
+        if(backupEntries.length) tasks2.push(db.from('entries').insert(backupEntries));
+        if(backupWinners.length) tasks2.push(db.from('winners').insert(backupWinners));
+        tasks2.push(db.from('spin_settings').upsert({key:'exclude_list', data: backupExcluded, updated_at: new Date().toISOString()}));
+        tasks2.push(db.from('spin_settings').upsert({key:'title_settings', data:{text: backupTitleText}, updated_at: new Date().toISOString()}));
+        tasks2.push(db.from('spin_settings').upsert({key:'group_system_enabled', data:{value: backupGroupSystemEnabled}, updated_at: new Date().toISOString()}));
+        await Promise.all(tasks2);
         await spinLoadAll();
-        showToast('↩️ Semua data & stok dikembalikan', 'success', 2500);
+        showToast('↩️ Semua data & pengaturan dikembalikan', 'success', 2500);
       },
       function(){},
       '🔄'
