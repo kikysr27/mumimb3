@@ -4020,15 +4020,21 @@ CREATE POLICY "spin_archives_all" ON spin_archives FOR ALL USING (true) WITH CHE
         </div>
 
         <div id="spinArsipView" style="display:none;">
-          <div onclick="spinToggleArsipHint()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:8px;margin:0 0 10px;">
-            <span class="spin-hint" style="margin:0;">ℹ️ Tentang fitur Arsip</span>
-            <button type="button" id="spinArsipHintToggleBtn" class="spin-btn spin-btn-ghost spin-btn-sm">Tampilkan ▼</button>
+          <div style="background:#171a20;border:1px solid #262b33;border-radius:14px;padding:12px 14px;margin-bottom:14px;">
+            <div onclick="spinToggleArsipHint()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:8px;">
+              <span class="spin-hint" style="margin:0;">ℹ️ Tentang fitur Arsip</span>
+              <button type="button" id="spinArsipHintToggleBtn" class="spin-btn spin-btn-ghost spin-btn-sm">Tampilkan ▼</button>
+            </div>
+            <p class="spin-hint" id="spinArsipHintBody" style="display:none;margin:10px 0 0;">Arsip menyimpan SEMUA data spin sekarang (daftar peserta, grup, hasil undian tiap orang, hadiah) sebagai satu paket "kenangan" periode acara ini — supaya bisa dilihat lagi kapan saja, meski nanti data sekarang sudah direset untuk acara berikutnya.</p>
           </div>
-          <p class="spin-hint" id="spinArsipHintBody" style="display:none;margin:0 0 10px;">Arsip menyimpan SEMUA data spin sekarang (daftar peserta, grup, hasil undian tiap orang, hadiah) sebagai satu paket "kenangan" periode acara ini — supaya bisa dilihat lagi kapan saja, meski nanti data sekarang sudah direset untuk acara berikutnya.</p>
-          <div class="spin-toolbar spin-admin-ctrl">
-            <button class="spin-btn spin-btn-primary" onclick="spinArsipkanSekarang()">📦 Arsipkan Periode Ini</button>
+
+          <div style="background:#171a20;border:1px solid #262b33;border-radius:14px;padding:12px 14px;">
+            <div class="spin-toolbar spin-admin-ctrl" style="display:flex;justify-content:space-between;align-items:center;margin:0 0 10px;">
+              <h3 style="margin:0;font-size:14px;">📦 Daftar Arsip</h3>
+              <button class="spin-btn spin-btn-primary spin-btn-sm" onclick="spinArsipkanSekarang()">📦 Arsipkan Periode Ini</button>
+            </div>
+            <div class="spin-panel" id="spinArsipList"><div class="spin-empty">Memuat…</div></div>
           </div>
-          <div class="spin-panel" id="spinArsipList"><div class="spin-empty">Memuat…</div></div>
         </div>
 
         <div class="spin-draw-bar" id="spinDrawBar">
