@@ -712,6 +712,31 @@
   }
   [data-theme="dark"] .desc-toolbar-hint { color: #8aa99a; }
 
+  /* ─── TABLE CONTEXT TOOLBAR (muncul mengambang saat kursor di dalam tabel, ala Word) ─── */
+  .tbl-ctx-toolbar {
+    position: fixed; z-index: 5000; display: none;
+    align-items: center; gap: 4px; flex-wrap: wrap;
+    max-width: min(92vw, 520px);
+    background: #14311f; border: 1px solid #1a6644; border-radius: 9px;
+    padding: 6px 8px; box-shadow: 0 8px 24px rgba(0,0,0,.28);
+  }
+  .tbl-ctx-toolbar .tctx-label {
+    font-size: 11px; font-weight: 800; color: #6fdcab; margin-right: 2px; white-space: nowrap;
+  }
+  .tbl-ctx-toolbar .tctx-sep {
+    width: 1px; align-self: stretch; background: rgba(255,255,255,.15); margin: 0 2px;
+  }
+  .tbl-ctx-toolbar button {
+    background: rgba(255,255,255,.08) !important; color: #eafff2 !important;
+    border: 1px solid rgba(255,255,255,.15) !important;
+    padding: 5px 8px !important; border-radius: 5px !important;
+    font-size: 11px !important; font-weight: 600 !important;
+    cursor: pointer; white-space: nowrap; line-height: 1;
+  }
+  .tbl-ctx-toolbar button:hover { background: rgba(45,158,107,.35) !important; }
+  .tbl-ctx-toolbar button.tctx-danger { color: #fecaca !important; }
+  .tbl-ctx-toolbar button.tctx-danger:hover { background: rgba(220,38,38,.35) !important; }
+
   /* Live preview box di bawah textarea deskripsi */
   .desc-preview-wrap {
     margin: -4px 0 12px;
@@ -2910,7 +2935,12 @@
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('subscript')" title="Subscript">x₂</button>
             <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('acDeskripsi'), this, 'fore')" title="Warna Huruf" style="border-bottom:3px solid #dc2626;">A▾</button>
             <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('acDeskripsi'), this, 'hilite')" title="Warna Highlight" style="background:#fef08a;color:#422006;">🖍▾</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('align-left')" title="Rata Kiri">≡L</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('align-center')" title="Rata Tengah">≡C</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('align-right')" title="Rata Kanan">≡R</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('align-justify')" title="Rata Kanan-Kiri (Justify)">≡J</button>
             <button type="button" class="desc-toolbar-btn" data-table-btn onclick="window.showTablePicker(document.getElementById('acDeskripsi'), this)" title="Sisipkan Tabel">⊞ Tabel</button>
+            <button type="button" class="desc-toolbar-btn" data-shape-btn onclick="window.showShapePicker(document.getElementById('acDeskripsi'), this)" title="Sisipkan Bentuk (Shape)">🔷 Shape</button>
             <button type="button" class="desc-toolbar-btn" onclick="window.pickImageForEditor(document.getElementById('acDeskripsi'))" title="Sisipkan Gambar">🖼️ Gambar</button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('link')" title="Sisipkan Link (Ctrl+K)">🔗 Link</button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('acDeskripsi').applyFmt('ul')" title="Bullet List">• List</button>
@@ -3014,7 +3044,12 @@
           <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('strikethrough')" title="Coret" style="text-decoration:line-through;">S</button>
           <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('catIsi'), this, 'fore')" title="Warna Huruf" style="border-bottom:3px solid #dc2626;">A▾</button>
           <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('catIsi'), this, 'hilite')" title="Warna Highlight" style="background:#fef08a;color:#422006;">🖍▾</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('align-left')" title="Rata Kiri">≡L</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('align-center')" title="Rata Tengah">≡C</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('align-right')" title="Rata Kanan">≡R</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('align-justify')" title="Rata Kanan-Kiri (Justify)">≡J</button>
           <button type="button" class="desc-toolbar-btn" data-table-btn onclick="window.showTablePicker(document.getElementById('catIsi'), this)" title="Tabel">⊞ Tabel</button>
+            <button type="button" class="desc-toolbar-btn" data-shape-btn onclick="window.showShapePicker(document.getElementById('catIsi'), this)" title="Sisipkan Bentuk (Shape)">🔷 Shape</button>
           <button type="button" class="desc-toolbar-btn" onclick="window.pickImageForEditor(document.getElementById('catIsi'))" title="Gambar">🖼️ Gambar</button>
           <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('link')" title="Link">🔗 Link</button>
           <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('catIsi').applyFmt('ul')" title="Bullet">• List</button>
@@ -3064,7 +3099,12 @@
           <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('strikethrough')" title="Coret" style="text-decoration:line-through;">S</button>
           <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('evalIsi'), this, 'fore')" title="Warna Huruf" style="border-bottom:3px solid #dc2626;">A▾</button>
           <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('evalIsi'), this, 'hilite')" title="Warna Highlight" style="background:#fef08a;color:#422006;">🖍▾</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('align-left')" title="Rata Kiri">≡L</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('align-center')" title="Rata Tengah">≡C</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('align-right')" title="Rata Kanan">≡R</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('align-justify')" title="Rata Kanan-Kiri (Justify)">≡J</button>
           <button type="button" class="desc-toolbar-btn" data-table-btn onclick="window.showTablePicker(document.getElementById('evalIsi'), this)" title="Tabel">⊞ Tabel</button>
+            <button type="button" class="desc-toolbar-btn" data-shape-btn onclick="window.showShapePicker(document.getElementById('evalIsi'), this)" title="Sisipkan Bentuk (Shape)">🔷 Shape</button>
           <button type="button" class="desc-toolbar-btn" onclick="window.pickImageForEditor(document.getElementById('evalIsi'))" title="Gambar">🖼️ Gambar</button>
           <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('link')" title="Link">🔗 Link</button>
           <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('evalIsi').applyFmt('ul')" title="Bullet">• List</button>
@@ -3247,7 +3287,12 @@
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('subscript')" title="Subscript">x₂</button>
             <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('prjDeskripsi'), this, 'fore')" title="Warna Huruf" style="border-bottom:3px solid #dc2626;">A▾</button>
             <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('prjDeskripsi'), this, 'hilite')" title="Warna Highlight" style="background:#fef08a;color:#422006;">🖍▾</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('align-left')" title="Rata Kiri">≡L</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('align-center')" title="Rata Tengah">≡C</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('align-right')" title="Rata Kanan">≡R</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('align-justify')" title="Rata Kanan-Kiri (Justify)">≡J</button>
             <button type="button" class="desc-toolbar-btn" data-table-btn onclick="window.showTablePicker(document.getElementById('prjDeskripsi'), this)" title="Sisipkan Tabel">⊞ Tabel</button>
+            <button type="button" class="desc-toolbar-btn" data-shape-btn onclick="window.showShapePicker(document.getElementById('prjDeskripsi'), this)" title="Sisipkan Bentuk (Shape)">🔷 Shape</button>
             <button type="button" class="desc-toolbar-btn" onclick="window.pickImageForEditor(document.getElementById('prjDeskripsi'))" title="Sisipkan Gambar">🖼️ Gambar</button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('link')" title="Sisipkan Link (Ctrl+K)">🔗 Link</button>
             <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('prjDeskripsi').applyFmt('ul')" title="Bullet List">• List</button>
@@ -4302,7 +4347,12 @@ CREATE POLICY "spin_archives_all" ON spin_archives FOR ALL USING (true) WITH CHE
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('subscript')" title="Subscript">x₂</button>
         <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('amDeskripsi'), this, 'fore')" title="Warna Huruf" style="border-bottom:3px solid #dc2626;">A▾</button>
         <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('amDeskripsi'), this, 'hilite')" title="Warna Highlight" style="background:#fef08a;color:#422006;">🖍▾</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('align-left')" title="Rata Kiri">≡L</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('align-center')" title="Rata Tengah">≡C</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('align-right')" title="Rata Kanan">≡R</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('align-justify')" title="Rata Kanan-Kiri (Justify)">≡J</button>
         <button type="button" class="desc-toolbar-btn" data-table-btn onclick="window.showTablePicker(document.getElementById('amDeskripsi'), this)" title="Sisipkan Tabel">⊞ Tabel</button>
+            <button type="button" class="desc-toolbar-btn" data-shape-btn onclick="window.showShapePicker(document.getElementById('amDeskripsi'), this)" title="Sisipkan Bentuk (Shape)">🔷 Shape</button>
         <button type="button" class="desc-toolbar-btn" onclick="window.pickImageForEditor(document.getElementById('amDeskripsi'))" title="Sisipkan Gambar">🖼️ Gambar</button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('link')" title="Sisipkan Link (Ctrl+K)">🔗 Link</button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('amDeskripsi').applyFmt('ul')" title="Bullet List">• List</button>
@@ -5953,6 +6003,100 @@ window.attachWysiwyg = function(editorEl) {
           document.execCommand('insertHTML', false, tableHtml);
           break;
         }
+        case 'tblInsertRowAbove':
+        case 'tblInsertRowBelow': {
+          var trCell = editorEl._tblCurCell;
+          if (trCell) {
+            var trRow = trCell.closest('tr');
+            var trTable = trCell.closest('table');
+            if (trRow && trTable) {
+              var newTr = document.createElement('tr');
+              for (var ri = 0; ri < trRow.children.length; ri++) {
+                var newTd = document.createElement(trRow.children[ri].tagName === 'TH' ? 'th' : 'td');
+                newTd.innerHTML = '&nbsp;';
+                newTr.appendChild(newTd);
+              }
+              if (act === 'tblInsertRowAbove') trRow.parentNode.insertBefore(newTr, trRow);
+              else trRow.parentNode.insertBefore(newTr, trRow.nextSibling);
+            }
+          }
+          break;
+        }
+        case 'tblInsertColLeft':
+        case 'tblInsertColRight': {
+          var tcCell = editorEl._tblCurCell;
+          if (tcCell) {
+            var tcRow = tcCell.closest('tr');
+            var tcTable = tcCell.closest('table');
+            if (tcRow && tcTable) {
+              var tcIdx = Array.prototype.indexOf.call(tcRow.children, tcCell);
+              Array.prototype.forEach.call(tcTable.querySelectorAll('tr'), function(tr) {
+                var refCell = tr.children[tcIdx];
+                var newTd = document.createElement(refCell && refCell.tagName === 'TH' ? 'th' : 'td');
+                newTd.innerHTML = '&nbsp;';
+                if (act === 'tblInsertColLeft') tr.insertBefore(newTd, refCell || null);
+                else tr.insertBefore(newTd, refCell ? refCell.nextSibling : null);
+              });
+            }
+          }
+          break;
+        }
+        case 'tblDeleteRow': {
+          var drCell = editorEl._tblCurCell;
+          if (drCell) {
+            var drRow = drCell.closest('tr');
+            var drTable = drCell.closest('table');
+            if (drRow && drTable) {
+              if (drTable.querySelectorAll('tr').length > 1) drRow.parentNode.removeChild(drRow);
+              else drTable.parentNode.removeChild(drTable);
+            }
+          }
+          if (window.hideTblCtxToolbar) window.hideTblCtxToolbar();
+          break;
+        }
+        case 'tblDeleteCol': {
+          var dcCell = editorEl._tblCurCell;
+          if (dcCell) {
+            var dcRow = dcCell.closest('tr');
+            var dcTable = dcCell.closest('table');
+            if (dcRow && dcTable) {
+              var dcIdx = Array.prototype.indexOf.call(dcRow.children, dcCell);
+              if (dcRow.children.length > 1) {
+                Array.prototype.forEach.call(dcTable.querySelectorAll('tr'), function(tr) {
+                  if (tr.children[dcIdx]) tr.removeChild(tr.children[dcIdx]);
+                });
+              } else {
+                dcTable.parentNode.removeChild(dcTable);
+              }
+            }
+          }
+          if (window.hideTblCtxToolbar) window.hideTblCtxToolbar();
+          break;
+        }
+        case 'tblMergeRight': {
+          var mrCell = editorEl._tblCurCell;
+          if (mrCell) {
+            var mrNext = mrCell.nextElementSibling;
+            if (mrNext && (mrNext.tagName === 'TD' || mrNext.tagName === 'TH')) {
+              var leftHtml = mrCell.innerHTML.replace(/^(&nbsp;|\s)+$/i, '');
+              var rightHtml = mrNext.innerHTML.replace(/^(&nbsp;|\s)+$/i, '');
+              mrCell.innerHTML = (leftHtml + ' ' + rightHtml).trim() || '&nbsp;';
+              var mrSpan = (parseInt(mrCell.getAttribute('colspan') || '1', 10)) + (parseInt(mrNext.getAttribute('colspan') || '1', 10));
+              mrCell.setAttribute('colspan', mrSpan);
+              mrNext.parentNode.removeChild(mrNext);
+            }
+          }
+          break;
+        }
+        case 'tblDeleteTable': {
+          var dtCell = editorEl._tblCurCell;
+          if (dtCell) {
+            var dtTable = dtCell.closest('table');
+            if (dtTable) dtTable.parentNode.removeChild(dtTable);
+          }
+          if (window.hideTblCtxToolbar) window.hideTblCtxToolbar();
+          break;
+        }
         case 'insertImage': {
           // value = data URL
           if (value) {
@@ -6142,6 +6286,137 @@ window.attachWysiwyg = function(editorEl) {
     var k = (e.key || '').toLowerCase();
     if (e.shiftKey && k === 'h') { e.preventDefault(); editorEl.applyFmt('highlight'); }
     else if (k === 'k') { e.preventDefault(); editorEl.applyFmt('link'); }
+  });
+
+  // ─── TABLE CONTEXT TOOLBAR (Word-style: muncul saat kursor berada di dalam tabel) ───
+  function _tblCtxBar() {
+    var bar = document.getElementById('wysiwygTblCtxBar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'wysiwygTblCtxBar';
+      bar.className = 'tbl-ctx-toolbar';
+      bar.style.display = 'none';
+      document.body.appendChild(bar);
+    }
+    return bar;
+  }
+  window.hideTblCtxToolbar = function() {
+    var bar = document.getElementById('wysiwygTblCtxBar');
+    if (bar) bar.style.display = 'none';
+  };
+  function _showTblCtx(cell) {
+    var bar = _tblCtxBar();
+    bar.innerHTML =
+      '<span class="tctx-label">⊞ Tabel</span>' +
+      '<button type="button" data-tact="tblInsertRowAbove" title="Sisipkan Baris di Atas">⬆➕ Baris</button>' +
+      '<button type="button" data-tact="tblInsertRowBelow" title="Sisipkan Baris di Bawah">⬇➕ Baris</button>' +
+      '<button type="button" data-tact="tblInsertColLeft" title="Sisipkan Kolom di Kiri">⬅➕ Kolom</button>' +
+      '<button type="button" data-tact="tblInsertColRight" title="Sisipkan Kolom di Kanan">➡➕ Kolom</button>' +
+      '<button type="button" data-tact="tblMergeRight" title="Gabung dengan Sel Kanan">⊔ Gabung Sel</button>' +
+      '<button type="button" data-tact="openBorderDialog" title="Border and Shading">▦ Border</button>' +
+      '<span class="tctx-sep"></span>' +
+      '<button type="button" data-tact="tblDeleteRow" class="tctx-danger" title="Hapus Baris ini">🗑 Baris</button>' +
+      '<button type="button" data-tact="tblDeleteCol" class="tctx-danger" title="Hapus Kolom ini">🗑 Kolom</button>' +
+      '<button type="button" data-tact="tblDeleteTable" class="tctx-danger" title="Hapus Seluruh Tabel">🗑 Tabel</button>';
+    bar.querySelectorAll('button[data-tact]').forEach(function(b) {
+      b.onmousedown = function(e) { e.preventDefault(); }; // jangan hilangkan seleksi/fokus editor
+      b.onclick = function(e) {
+        e.preventDefault(); e.stopPropagation();
+        if (b.dataset.tact === 'openBorderDialog') {
+          window.showBorderShadingDialog(editorEl, editorEl._tblCurCell);
+          return;
+        }
+        editorEl.applyFmt(b.dataset.tact);
+        setTimeout(_updateTblCtx, 30);
+      };
+    });
+    bar.style.display = 'flex';
+    var trect = (cell.closest('table') || cell).getBoundingClientRect();
+    var bw = bar.offsetWidth || 260, bh = bar.offsetHeight || 34;
+    var vw = window.innerWidth;
+    var left = Math.min(Math.max(trect.left + window.scrollX, 8), vw - bw - 8 + window.scrollX);
+    var top = trect.top + window.scrollY - bh - 6;
+    if (trect.top < bh + 10) top = trect.bottom + window.scrollY + 6;
+    bar.style.left = left + 'px';
+    bar.style.top = top + 'px';
+  }
+  function _updateTblCtx() {
+    var sel = window.getSelection();
+    if (!sel || !sel.rangeCount) { window.hideTblCtxToolbar(); return; }
+    var node = sel.anchorNode;
+    var el = node && (node.nodeType === 1 ? node : node.parentElement);
+    var cell = el && el.closest ? el.closest('td,th') : null;
+    if (!cell || !editorEl.contains(cell)) { window.hideTblCtxToolbar(); return; }
+    editorEl._tblCurCell = cell;
+    _showTblCtx(cell);
+  }
+  editorEl.addEventListener('keyup', _updateTblCtx);
+  editorEl.addEventListener('click', _updateTblCtx);
+  editorEl.addEventListener('blur', function() {
+    setTimeout(function() {
+      var bar = document.getElementById('wysiwygTblCtxBar');
+      if (bar && !bar.matches(':hover')) window.hideTblCtxToolbar();
+    }, 150);
+  });
+  document.addEventListener('scroll', function() { window.hideTblCtxToolbar(); }, true);
+
+  // ─── IMAGE CONTEXT TOOLBAR (klik gambar → tampil tombol Crop & Hapus) ───
+  function _imgCtxBar() {
+    var bar = document.getElementById('wysiwygImgCtxBar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'wysiwygImgCtxBar';
+      bar.className = 'tbl-ctx-toolbar';
+      bar.style.display = 'none';
+      document.body.appendChild(bar);
+    }
+    return bar;
+  }
+  window.hideImgCtxToolbar = function() {
+    var bar = document.getElementById('wysiwygImgCtxBar');
+    if (bar) bar.style.display = 'none';
+  };
+  function _showImgCtx(img) {
+    var bar = _imgCtxBar();
+    bar.innerHTML =
+      '<span class="tctx-label">🖼️ Gambar</span>' +
+      '<button type="button" data-iact="crop" title="Potong / Crop Gambar">✂ Crop</button>' +
+      '<button type="button" data-iact="small" title="Ukuran Kecil">S</button>' +
+      '<button type="button" data-iact="medium" title="Ukuran Sedang">M</button>' +
+      '<button type="button" data-iact="full" title="Ukuran Penuh">L</button>' +
+      '<span class="tctx-sep"></span>' +
+      '<button type="button" data-iact="delete" class="tctx-danger" title="Hapus Gambar">🗑 Hapus</button>';
+    bar.querySelectorAll('button[data-iact]').forEach(function(b) {
+      b.onmousedown = function(e) { e.preventDefault(); };
+      b.onclick = function(e) {
+        e.preventDefault(); e.stopPropagation();
+        var act = b.dataset.iact;
+        if (act === 'crop') window.showImageCropModal(img, editorEl);
+        else if (act === 'delete') { img.remove(); window.hideImgCtxToolbar(); try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){} }
+        else if (act === 'small') { img.style.maxWidth = '220px'; img.style.width = '220px'; }
+        else if (act === 'medium') { img.style.maxWidth = '420px'; img.style.width = '420px'; }
+        else if (act === 'full') { img.style.maxWidth = '100%'; img.style.width = ''; }
+      };
+    });
+    bar.style.display = 'flex';
+    var rect = img.getBoundingClientRect();
+    var bw = bar.offsetWidth || 220, bh = bar.offsetHeight || 34;
+    var vw = window.innerWidth;
+    var left = Math.min(Math.max(rect.left + window.scrollX, 8), vw - bw - 8 + window.scrollX);
+    var top = rect.top + window.scrollY - bh - 6;
+    if (rect.top < bh + 10) top = rect.bottom + window.scrollY + 6;
+    bar.style.left = left + 'px';
+    bar.style.top = top + 'px';
+  }
+  editorEl.addEventListener('click', function(e) {
+    var img = e.target.closest && e.target.closest('img');
+    if (img && editorEl.contains(img)) {
+      e.preventDefault();
+      editorEl._curImg = img;
+      _showImgCtx(img);
+    } else {
+      window.hideImgCtxToolbar();
+    }
   });
 };
 
@@ -6501,6 +6776,306 @@ window.showTablePicker = function(editorEl, anchorBtn) {
     var cc = parseInt(cell.dataset.c, 10);
     editorEl.applyFmt('insertTable', { rows: rr, cols: cc });
     pop.style.display = 'none';
+  };
+};
+
+// ─── BORDERS AND SHADING (mirip dialog Word: Setting / Style / Color / Width / Apply to) ───
+window.showBorderShadingDialog = function(editorEl, cell) {
+  if (!editorEl || !cell) return;
+  var table = cell.closest('table');
+  if (!table) return;
+  var ov = document.createElement('div');
+  ov.className = 'wysiwyg-modal-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100010;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML =
+    '<div style="background:#fff;border-radius:12px;max-width:420px;width:100%;max-height:88vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.35);">' +
+      '<div style="padding:14px 16px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#1a6644,#2d9e6b);color:#fff;border-radius:12px 12px 0 0;">' +
+        '<b style="font-size:14px;">▦ Borders and Shading</b>' +
+        '<button type="button" id="_bsClose" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;line-height:1;">✕</button>' +
+      '</div>' +
+      '<div style="padding:16px;">' +
+        '<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Setting</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">' +
+          '<button type="button" data-bsset="none" class="_bsSetBtn" style="flex:1;min-width:70px;padding:10px 6px;border:2px solid #d4e8dc;border-radius:8px;background:#fff;cursor:pointer;font-size:11px;font-weight:700;">🚫 None</button>' +
+          '<button type="button" data-bsset="all" class="_bsSetBtn" style="flex:1;min-width:70px;padding:10px 6px;border:2px solid #1a6644;border-radius:8px;background:#e8f5ef;cursor:pointer;font-size:11px;font-weight:700;">▦ All</button>' +
+          '<button type="button" data-bsset="outside" class="_bsSetBtn" style="flex:1;min-width:70px;padding:10px 6px;border:2px solid #d4e8dc;border-radius:8px;background:#fff;cursor:pointer;font-size:11px;font-weight:700;">▢ Outside</button>' +
+          '<button type="button" data-bsset="inside" class="_bsSetBtn" style="flex:1;min-width:70px;padding:10px 6px;border:2px solid #d4e8dc;border-radius:8px;background:#fff;cursor:pointer;font-size:11px;font-weight:700;">▥ Inside</button>' +
+        '</div>' +
+        '<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Style</div>' +
+        '<select id="_bsStyle" style="width:100%;padding:8px;border:1px solid #d4e8dc;border-radius:7px;margin-bottom:12px;font-size:13px;">' +
+          '<option value="solid">━━━━ Solid</option>' +
+          '<option value="dashed">╌╌╌╌ Dashed</option>' +
+          '<option value="dotted">⋯⋯⋯⋯ Dotted</option>' +
+          '<option value="double">══ Double</option>' +
+        '</select>' +
+        '<div style="display:flex;gap:10px;margin-bottom:14px;">' +
+          '<div style="flex:1;">' +
+            '<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Color</div>' +
+            '<input type="color" id="_bsColor" value="#1a6644" style="width:100%;height:38px;border:1px solid #d4e8dc;border-radius:7px;cursor:pointer;">' +
+          '</div>' +
+          '<div style="flex:1;">' +
+            '<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Width</div>' +
+            '<select id="_bsWidth" style="width:100%;padding:8px;border:1px solid #d4e8dc;border-radius:7px;font-size:13px;">' +
+              '<option value="0.5">½ pt</option><option value="1" selected>1 pt</option>' +
+              '<option value="1.5">1½ pt</option><option value="2">2 pt</option><option value="3">3 pt</option>' +
+            '</select>' +
+          '</div>' +
+        '</div>' +
+        '<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Shading (warna latar sel)</div>' +
+        '<div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;">' +
+          '<input type="color" id="_bsShade" value="#f0f7f3" style="width:44px;height:34px;border:1px solid #d4e8dc;border-radius:7px;cursor:pointer;">' +
+          '<button type="button" id="_bsShadeApply" style="padding:8px 12px;border:1px solid #d4e8dc;border-radius:7px;background:#fff;cursor:pointer;font-size:12px;font-weight:700;">Terapkan Shading</button>' +
+          '<button type="button" id="_bsShadeClear" style="padding:8px 12px;border:1px solid #d4e8dc;border-radius:7px;background:#fff;cursor:pointer;font-size:12px;font-weight:700;">Hapus Shading</button>' +
+        '</div>' +
+        '<div style="font-size:11px;color:#7a9585;margin-top:2px;">Apply to: <b>Seluruh Tabel</b></div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid #e5e7eb;">' +
+        '<button type="button" id="_bsCancel" style="padding:9px 16px;border-radius:8px;background:#374151;color:#fff;border:none;font-weight:700;cursor:pointer;">Batal</button>' +
+        '<button type="button" id="_bsOk" style="padding:9px 16px;border-radius:8px;background:#16a34a;color:#fff;border:none;font-weight:700;cursor:pointer;">OK</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(ov);
+
+  var curSetting = 'all';
+  ov.querySelectorAll('._bsSetBtn').forEach(function(b) {
+    b.onclick = function() {
+      curSetting = b.dataset.bsset;
+      ov.querySelectorAll('._bsSetBtn').forEach(function(x) {
+        x.style.border = '2px solid #d4e8dc'; x.style.background = '#fff';
+      });
+      b.style.border = '2px solid #1a6644'; b.style.background = '#e8f5ef';
+    };
+  });
+
+  function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
+  ov.querySelector('#_bsClose').onclick = close;
+  ov.querySelector('#_bsCancel').onclick = close;
+  ov.addEventListener('click', function(e) { if (e.target === ov) close(); });
+
+  ov.querySelector('#_bsShadeApply').onclick = function() {
+    cell.style.backgroundColor = ov.querySelector('#_bsShade').value;
+    try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){}
+  };
+  ov.querySelector('#_bsShadeClear').onclick = function() {
+    cell.style.backgroundColor = '';
+    try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){}
+  };
+
+  ov.querySelector('#_bsOk').onclick = function() {
+    var style = ov.querySelector('#_bsStyle').value;
+    var width = ov.querySelector('#_bsWidth').value;
+    var color = ov.querySelector('#_bsColor').value;
+    var cells = table.querySelectorAll('td,th');
+    var borderVal = width + 'pt ' + style + ' ' + color;
+    if (curSetting === 'none') {
+      cells.forEach(function(c) { c.style.border = 'none'; });
+    } else if (curSetting === 'all') {
+      cells.forEach(function(c) { c.style.border = borderVal; });
+    } else if (curSetting === 'outside') {
+      table.style.border = borderVal;
+      cells.forEach(function(c) { c.style.border = '0.5pt solid #d4e8dc'; });
+    } else if (curSetting === 'inside') {
+      cells.forEach(function(c) { c.style.border = borderVal; });
+      table.style.border = 'none';
+    }
+    table.style.borderCollapse = 'collapse';
+    try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){}
+    close();
+  };
+};
+
+// ─── SHAPE PICKER (mirip menu Shapes di Word: Lines, Rectangles, Basic Shapes, Block Arrows) ───
+window.showShapePicker = function(editorEl, anchorBtn) {
+  if (!editorEl) return;
+  var pop = document.getElementById('wysiwygShapePicker');
+  if (!pop) {
+    pop = document.createElement('div');
+    pop.id = 'wysiwygShapePicker';
+    pop.className = 'table-picker-popup';
+    pop.style.cssText = 'position:fixed;z-index:5000;display:none;background:#fff;border:1px solid #d4e8dc;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);padding:10px;max-width:290px;';
+    document.body.appendChild(pop);
+    document.addEventListener('click', function(e) {
+      if (!pop.contains(e.target) && !e.target.closest('[data-shape-btn]')) pop.style.display = 'none';
+    });
+  }
+
+  var SHAPES = [
+    { name: 'Garis', svg: '<line x1="4" y1="36" x2="36" y2="4" stroke="currentColor" stroke-width="3"/>' },
+    { name: 'Persegi', svg: '<rect x="5" y="9" width="30" height="22" fill="none" stroke="currentColor" stroke-width="3"/>' },
+    { name: 'Persegi Bulat', svg: '<rect x="5" y="9" width="30" height="22" rx="6" fill="none" stroke="currentColor" stroke-width="3"/>' },
+    { name: 'Lingkaran', svg: '<circle cx="20" cy="20" r="15" fill="none" stroke="currentColor" stroke-width="3"/>' },
+    { name: 'Segitiga', svg: '<polygon points="20,6 35,33 5,33" fill="none" stroke="currentColor" stroke-width="3"/>' },
+    { name: 'Diamond', svg: '<polygon points="20,4 36,20 20,36 4,20" fill="none" stroke="currentColor" stroke-width="3"/>' },
+    { name: 'Pentagon', svg: '<polygon points="20,4 36,15 30,34 10,34 4,15" fill="none" stroke="currentColor" stroke-width="3"/>' },
+    { name: 'Hexagon', svg: '<polygon points="12,5 28,5 36,20 28,35 12,35 4,20" fill="none" stroke="currentColor" stroke-width="3"/>' },
+    { name: 'Bintang', svg: '<polygon points="20,3 24,15 37,15 27,23 30,36 20,28 10,36 13,23 3,15 16,15" fill="none" stroke="currentColor" stroke-width="2.5"/>' },
+    { name: 'Panah Kanan', svg: '<polygon points="4,14 22,14 22,6 36,20 22,34 22,26 4,26" fill="none" stroke="currentColor" stroke-width="3"/>' },
+    { name: 'Panah Kiri', svg: '<polygon points="36,14 18,14 18,6 4,20 18,34 18,26 36,26" fill="none" stroke="currentColor" stroke-width="3"/>' },
+    { name: 'Panah Atas', svg: '<polygon points="14,36 14,18 6,18 20,4 34,18 26,18 26,36" fill="none" stroke="currentColor" stroke-width="3"/>' },
+    { name: 'Panah Bawah', svg: '<polygon points="14,4 14,22 6,22 20,36 34,22 26,22 26,4" fill="none" stroke="currentColor" stroke-width="3"/>' },
+    { name: 'Panah Dua Arah', svg: '<polygon points="8,20 15,12 15,17 25,17 25,12 32,20 25,28 25,23 15,23 15,28" fill="none" stroke="currentColor" stroke-width="2.5"/>' },
+    { name: 'Kotak Ceklis', svg: '<rect x="6" y="6" width="28" height="28" rx="4" fill="none" stroke="currentColor" stroke-width="3"/><path d="M12 20l5 6 11-14" fill="none" stroke="currentColor" stroke-width="3"/>' },
+    { name: 'Callout / Bubble', svg: '<rect x="5" y="6" width="30" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="3"/><polygon points="12,24 12,34 20,24" fill="none" stroke="currentColor" stroke-width="3"/>' },
+  ];
+
+  var html = '<div style="font-size:12px;font-weight:800;color:#1a6644;margin-bottom:8px;">🔷 Sisipkan Bentuk</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
+  SHAPES.forEach(function(s, i) {
+    html += '<button type="button" class="_shapePick" data-idx="' + i + '" title="' + s.name + '" ' +
+      'style="border:1px solid #d4e8dc;border-radius:7px;background:#fff;padding:6px;cursor:pointer;color:#1a6644;display:flex;align-items:center;justify-content:center;">' +
+      '<svg viewBox="0 0 40 40" width="30" height="30">' + s.svg + '</svg></button>';
+  });
+  html += '</div>';
+  pop.innerHTML = html;
+  pop.style.display = 'block';
+  var rect = anchorBtn.getBoundingClientRect();
+  var pw = 290, vw = window.innerWidth;
+  pop.style.left = Math.min(rect.left, vw - pw - 12) + 'px';
+  pop.style.top = (rect.bottom + 6) + 'px';
+
+  pop.querySelectorAll('._shapePick').forEach(function(b) {
+    b.onmouseover = function() { b.style.background = '#e8f5ef'; b.style.borderColor = '#1a6644'; };
+    b.onmouseout = function() { b.style.background = '#fff'; b.style.borderColor = '#d4e8dc'; };
+    b.onclick = function() {
+      var s = SHAPES[parseInt(b.dataset.idx, 10)];
+      var wrapHtml = '<span contenteditable="false" style="display:inline-block;width:60px;height:60px;color:#1a6644;vertical-align:middle;margin:2px;" data-shape="1">' +
+        '<svg viewBox="0 0 40 40" width="100%" height="100%">' + s.svg + '</svg></span>&nbsp;';
+      editorEl.focus();
+      try { document.execCommand('insertHTML', false, wrapHtml); } catch(e) {}
+      try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){}
+      pop.style.display = 'none';
+    };
+  });
+};
+
+// ─── IMAGE CROP MODAL (crop gambar dengan kotak seleksi yang bisa digeser/diresize) ───
+window.showImageCropModal = function(imgEl, editorEl) {
+  if (!imgEl) return;
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100020;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;';
+
+  var stageWrap = document.createElement('div');
+  stageWrap.style.cssText = 'position:relative;max-width:90vw;max-height:70vh;display:inline-block;touch-action:none;';
+  var dispImg = document.createElement('img');
+  dispImg.src = imgEl.src;
+  dispImg.style.cssText = 'display:block;max-width:90vw;max-height:70vh;user-select:none;pointer-events:none;';
+  stageWrap.appendChild(dispImg);
+
+  var box = document.createElement('div');
+  box.style.cssText = 'position:absolute;border:2px dashed #22c55e;background:rgba(34,197,94,.15);cursor:move;';
+  stageWrap.appendChild(box);
+
+  ['nw','ne','sw','se'].forEach(function(pos) {
+    var h = document.createElement('div');
+    h.dataset.handle = pos;
+    h.style.cssText = 'position:absolute;width:16px;height:16px;background:#16a34a;border:2px solid #fff;border-radius:50%;';
+    box.appendChild(h);
+  });
+
+  var panel = document.createElement('div');
+  panel.style.cssText = 'margin-top:14px;display:flex;gap:10px;';
+  panel.innerHTML =
+    '<button type="button" id="_cropCancel" style="padding:10px 18px;border-radius:8px;background:#374151;color:#fff;border:none;font-weight:700;cursor:pointer;">Batal</button>' +
+    '<button type="button" id="_cropApply" style="padding:10px 18px;border-radius:8px;background:#16a34a;color:#fff;border:none;font-weight:700;cursor:pointer;">✂ Terapkan Crop</button>';
+
+  var hint = document.createElement('div');
+  hint.style.cssText = 'color:#d1fae5;font-size:12px;margin-bottom:10px;text-align:center;';
+  hint.textContent = 'Geser kotak untuk memindahkan, tarik sudut untuk mengubah ukuran area crop';
+
+  ov.appendChild(hint);
+  ov.appendChild(stageWrap);
+  ov.appendChild(panel);
+  document.body.appendChild(ov);
+
+  function initBox() {
+    var w = stageWrap.offsetWidth, h = stageWrap.offsetHeight;
+    var bw = w * 0.7, bh = h * 0.7;
+    box.style.left = ((w - bw) / 2) + 'px';
+    box.style.top = ((h - bh) / 2) + 'px';
+    box.style.width = bw + 'px';
+    box.style.height = bh + 'px';
+    positionHandles();
+  }
+  function positionHandles() {
+    var bw = box.offsetWidth, bh = box.offsetHeight;
+    var map = { nw: [-8, -8], ne: [bw - 8, -8], sw: [-8, bh - 8], se: [bw - 8, bh - 8] };
+    box.querySelectorAll('[data-handle]').forEach(function(h) {
+      var pos = map[h.dataset.handle];
+      h.style.left = pos[0] + 'px'; h.style.top = pos[1] + 'px';
+      h.style.cursor = (h.dataset.handle === 'nw' || h.dataset.handle === 'se') ? 'nwse-resize' : 'nesw-resize';
+    });
+  }
+  dispImg.onload = initBox;
+  if (dispImg.complete) initBox();
+
+  var dragMode = null, startX = 0, startY = 0, startBox = null;
+  function toPoint(e) { return e.touches ? e.touches[0] : e; }
+  function onDown(e, mode) {
+    dragMode = mode;
+    var p = toPoint(e);
+    startX = p.clientX; startY = p.clientY;
+    startBox = { left: box.offsetLeft, top: box.offsetTop, w: box.offsetWidth, h: box.offsetHeight };
+    e.preventDefault(); e.stopPropagation();
+  }
+  box.addEventListener('mousedown', function(e) { if (e.target === box) onDown(e, 'move'); });
+  box.addEventListener('touchstart', function(e) { if (e.target === box) onDown(e, 'move'); }, { passive: false });
+  box.querySelectorAll('[data-handle]').forEach(function(h) {
+    h.addEventListener('mousedown', function(e) { onDown(e, h.dataset.handle); });
+    h.addEventListener('touchstart', function(e) { onDown(e, h.dataset.handle); }, { passive: false });
+  });
+  function onMove(e) {
+    if (!dragMode) return;
+    var p = toPoint(e);
+    var dx = p.clientX - startX, dy = p.clientY - startY;
+    var maxW = stageWrap.offsetWidth, maxH = stageWrap.offsetHeight;
+    if (dragMode === 'move') {
+      var nl = Math.min(Math.max(0, startBox.left + dx), maxW - startBox.w);
+      var nt = Math.min(Math.max(0, startBox.top + dy), maxH - startBox.h);
+      box.style.left = nl + 'px'; box.style.top = nt + 'px';
+    } else {
+      var nl2 = startBox.left, nt2 = startBox.top, nw = startBox.w, nh = startBox.h;
+      if (dragMode === 'se') { nw = Math.max(30, startBox.w + dx); nh = Math.max(30, startBox.h + dy); }
+      if (dragMode === 'ne') { nw = Math.max(30, startBox.w + dx); nh = Math.max(30, startBox.h - dy); nt2 = startBox.top + dy; }
+      if (dragMode === 'sw') { nw = Math.max(30, startBox.w - dx); nh = Math.max(30, startBox.h + dy); nl2 = startBox.left + dx; }
+      if (dragMode === 'nw') { nw = Math.max(30, startBox.w - dx); nh = Math.max(30, startBox.h - dy); nl2 = startBox.left + dx; nt2 = startBox.top + dy; }
+      nl2 = Math.max(0, nl2); nt2 = Math.max(0, nt2);
+      nw = Math.min(nw, maxW - nl2); nh = Math.min(nh, maxH - nt2);
+      box.style.left = nl2 + 'px'; box.style.top = nt2 + 'px';
+      box.style.width = nw + 'px'; box.style.height = nh + 'px';
+    }
+    positionHandles();
+    e.preventDefault();
+  }
+  function onUp() { dragMode = null; }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, { passive: false });
+  document.addEventListener('mouseup', onUp);
+  document.addEventListener('touchend', onUp);
+
+  function cleanup() {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.removeEventListener('touchend', onUp);
+    if (ov.parentNode) ov.parentNode.removeChild(ov);
+  }
+  panel.querySelector('#_cropCancel').onclick = cleanup;
+  panel.querySelector('#_cropApply').onclick = function() {
+    var scaleX = dispImg.naturalWidth / stageWrap.offsetWidth;
+    var scaleY = dispImg.naturalHeight / stageWrap.offsetHeight;
+    var sx = box.offsetLeft * scaleX, sy = box.offsetTop * scaleY;
+    var sw = box.offsetWidth * scaleX, sh = box.offsetHeight * scaleY;
+    var canvas = document.createElement('canvas');
+    canvas.width = sw; canvas.height = sh;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(dispImg, sx, sy, sw, sh, 0, 0, sw, sh);
+    try {
+      var dataUrl = canvas.toDataURL('image/png');
+      imgEl.src = dataUrl;
+      if (editorEl) { try { editorEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(_){} }
+    } catch (e) { alert('Gagal memotong gambar: ' + e.message); }
+    cleanup();
+    if (window.hideImgCtxToolbar) window.hideImgCtxToolbar();
   };
 };
 
@@ -20849,7 +21424,12 @@ function renderMswForm(msw, peserta=[], keuangan=[]) {
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('subscript')" title="Subscript (bawah)">x₂</button>
         <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('mswHasil'), this, 'fore')" title="Warna Huruf" style="border-bottom:3px solid #dc2626;">A▾</button>
         <button type="button" class="desc-toolbar-btn" data-color-btn onclick="window.showColorPicker(document.getElementById('mswHasil'), this, 'hilite')" title="Warna Highlight" style="background:#fef08a;color:#422006;">🖍▾</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('align-left')" title="Rata Kiri">≡L</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('align-center')" title="Rata Tengah">≡C</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('align-right')" title="Rata Kanan">≡R</button>
+          <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('align-justify')" title="Rata Kanan-Kiri (Justify)">≡J</button>
         <button type="button" class="desc-toolbar-btn" data-table-btn onclick="window.showTablePicker(document.getElementById('mswHasil'), this)" title="Sisipkan Tabel">⊞ Tabel</button>
+            <button type="button" class="desc-toolbar-btn" data-shape-btn onclick="window.showShapePicker(document.getElementById('mswHasil'), this)" title="Sisipkan Bentuk (Shape)">🔷 Shape</button>
         <button type="button" class="desc-toolbar-btn" onclick="window.pickImageForEditor(document.getElementById('mswHasil'))" title="Sisipkan Gambar dari device">🖼️ Gambar</button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('link')" title="Sisipkan Link (Ctrl+K)">🔗 Link</button>
         <button type="button" class="desc-toolbar-btn" onclick="document.getElementById('mswHasil').applyFmt('ul')" title="Bullet List">• List</button>
