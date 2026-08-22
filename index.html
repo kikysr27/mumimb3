@@ -3770,8 +3770,8 @@
         #sec-spin .spin-draw-btn{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-size:15px;background:linear-gradient(135deg,#f5b942,#e0952b);color:#1a1204;border:none;border-radius:999px;padding:14px 30px;cursor:pointer;box-shadow:0 6px 24px #f5b94240;display:flex;align-items:center;gap:10px;max-width:480px;width:100%;justify-content:center;}
         #sec-spin .spin-draw-btn:disabled{opacity:.5;cursor:not-allowed;}
         #sec-spin .spin-draw-btn:active:not(:disabled){transform:scale(.98);}
-        #spinAddOverlay,#spinImgOverlay,#spinWinOverlay,#spinSettingsOverlay,#spinPrizeOverlay,#spinPresenceOverlay,#spinGroupOverlay,#spinAssignGroupOverlay{position:fixed;inset:0;background:#05060899;backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;}
-        #spinAddOverlay.show,#spinImgOverlay.show,#spinWinOverlay.show,#spinSettingsOverlay.show,#spinPrizeOverlay.show,#spinPresenceOverlay.show,#spinGroupOverlay.show,#spinAssignGroupOverlay.show{display:flex;}
+        #spinAddOverlay,#spinImgOverlay,#spinWinOverlay,#spinSettingsOverlay,#spinPrizeOverlay,#spinPresenceOverlay,#spinGroupOverlay,#spinAssignGroupOverlay,#spinArsipDetailOverlay{position:fixed;inset:0;background:#05060899;backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+        #spinAddOverlay.show,#spinImgOverlay.show,#spinWinOverlay.show,#spinSettingsOverlay.show,#spinPrizeOverlay.show,#spinPresenceOverlay.show,#spinGroupOverlay.show,#spinAssignGroupOverlay.show,#spinArsipDetailOverlay.show{display:flex;}
         #sec-spin .spin-group-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:#26314a;color:#8fb3ff;margin-left:6px;white-space:nowrap;cursor:pointer;border:1px solid #33436b;}
         #sec-spin .spin-group-badge:hover{filter:brightness(1.25);}
         #sec-spin .spin-group-badge-empty{background:transparent;border:1px dashed #3a4152;color:#6b7280;}
@@ -3901,6 +3901,7 @@
             <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinOpenPrizeModal()">🎁 Kelola Hadiah</button>
             <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinOpenGroupModal()">👥 Kelola Grup</button>
             <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinOpenSettings()">⚙️ Setting</button>
+            <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinSwitchTab('arsip')">📦 Arsip</button>
             <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinResetSemua()">🔄 Reset Semua</button>
           </div>
         </div>
@@ -3958,12 +3959,22 @@ UPDATE spin_prizes SET initial_stock = stock;
 -- WAJIB untuk fitur Grup Peserta (kelompok + persen peluang menang):
 ALTER TABLE entries ADD COLUMN IF NOT EXISTS group_id uuid REFERENCES spin_groups(id) ON DELETE SET NULL;
 -- WAJIB untuk aturan "satu orang satu hadiah" per-grup (tiap grup punya centang sendiri):
-ALTER TABLE spin_groups ADD COLUMN IF NOT EXISTS one_per_person boolean NOT NULL DEFAULT true;</code>
+ALTER TABLE spin_groups ADD COLUMN IF NOT EXISTS one_per_person boolean NOT NULL DEFAULT true;
+-- WAJIB untuk fitur 📦 Arsip Spin (simpan data 1 periode acara, bisa dilihat lagi kapan saja):
+CREATE TABLE IF NOT EXISTS spin_archives (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  judul text NOT NULL,
+  data jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE spin_archives ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "spin_archives_all" ON spin_archives FOR ALL USING (true) WITH CHECK (true);</code>
         </div>
 
         <div class="spin-tabs">
           <button class="spin-tab active" id="spinTabEntri" onclick="spinSwitchTab('entri')">Entri <span class="spin-badge" id="spinCountEntri">0</span></button>
           <button class="spin-tab" id="spinTabHasil" onclick="spinSwitchTab('hasil')">Hasil <span class="spin-badge" id="spinCountHasil">0</span></button>
+          <button class="spin-tab spin-admin-ctrl" id="spinTabArsip" onclick="spinSwitchTab('arsip')">📦 Arsip <span class="spin-badge" id="spinCountArsip">0</span></button>
         </div>
 
         <div id="spinEntriView">
@@ -4006,6 +4017,14 @@ ALTER TABLE spin_groups ADD COLUMN IF NOT EXISTS one_per_person boolean NOT NULL
             <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinClearHasil()">Hapus semua hasil</button>
           </div>
           <div class="spin-panel" id="spinHasilList"><div class="spin-empty">Memuat…</div></div>
+        </div>
+
+        <div id="spinArsipView" style="display:none;">
+          <p class="spin-hint" style="margin:0 0 10px;">Arsip menyimpan SEMUA data spin sekarang (daftar peserta, grup, hasil undian tiap orang, hadiah) sebagai satu paket "kenangan" periode acara ini — supaya bisa dilihat lagi kapan saja, meski nanti data sekarang sudah direset untuk acara berikutnya.</p>
+          <div class="spin-toolbar spin-admin-ctrl">
+            <button class="spin-btn spin-btn-primary" onclick="spinArsipkanSekarang()">📦 Arsipkan Periode Ini</button>
+          </div>
+          <div class="spin-panel" id="spinArsipList"><div class="spin-empty">Memuat…</div></div>
         </div>
 
         <div class="spin-draw-bar" id="spinDrawBar">
@@ -4127,7 +4146,7 @@ ALTER TABLE spin_groups ADD COLUMN IF NOT EXISTS one_per_person boolean NOT NULL
               <span id="spinGroupSystemToggleTrack" style="position:absolute;inset:0;background:#5865f2;border-radius:999px;transition:.15s;pointer-events:none;"><span id="spinGroupSystemToggleKnob" style="position:absolute;top:3px;left:23px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.15s;"></span></span>
             </label>
           </div>
-          <p class="spin-hint" style="margin-top:-6px;margin-bottom:14px;">Kalau <b>dimatikan</b>: sistem grup dinonaktifkan, undian kembali ke cara lama (semua peserta punya peluang sama rata, tidak peduli grup). Kalau <b>diaktifkan</b>: undian pakai persentase tiap grup seperti diatur di bawah, dan menonaktifkan cara lama itu.</p>
+          <p class="spin-hint" style="margin-top:-6px;margin-bottom:14px;">Kalau <b>dimatikan</b>: sistem grup dinonaktifkan, undian kembali ke cara lama (semua peserta punya peluang sama rata, tidak peduli grup). Kalau <b>diaktifkan</b>: undian pakai persentase tiap grup seperti diatur di bawah, dan menonaktifkan cara lama itu.<br><br>⚖️ <b>Pemerataan panggilan (berlaku baik ON maupun OFF):</b> persentase grup cuma menentukan siapa yang <b>lebih besar peluangnya dipanggil duluan</b>. Begitu seseorang sudah dipanggil (menang atau ternyata tidak ada di tempat), dia <b>tidak akan dipanggil lagi</b> sampai semua orang lain yang masih mungkin diundi juga sudah kebagian giliran dipanggil minimal 1x — baru setelah itu putaran baru dimulai dan dia boleh muncul lagi. Ini mencegah 1 nama dipanggil berkali-kali beruntun walau grupnya diset 100%.</p>
 
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
             <button class="spin-btn spin-btn-ghost spin-btn-sm" onclick="spinQuickPreset()">⚡ Buat cepat: Miskin/Standar/Menengah/Kaya</button>
@@ -4186,6 +4205,9 @@ ALTER TABLE spin_groups ADD COLUMN IF NOT EXISTS one_per_person boolean NOT NULL
           <p class="spin-hint" style="margin-top:12px;">Kalau "Tidak ada", stok hadiah tetap sama dan nama ini dilewati — silakan undi ulang.</p>
         </div>
       </div>
+
+      <!-- Overlay: detail arsip spin (isinya diisi lewat JS, lihat spinOpenArsipDetail) -->
+      <div id="spinArsipDetailOverlay"></div>
     </div>
 
   </div>
@@ -26887,6 +26909,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   let spinExcluded = [];  // array nama yang tidak boleh menang
   let spinPrizes = [];    // {id, name, stock, initial_stock}
   let spinGroups = [];    // {id, name, percent}  -- grup peserta & persentase peluang menang
+  let spinArchives = [];  // {id, judul, data, created_at} -- arsip periode acara spin (lihat 📦 Arsip)
   let spinGroupSystemEnabled = true; // toggle: kalau false, sistem grup dimatikan & undian pakai cara lama (peluang sama rata semua peserta)
   let spinImgTargetId = null;
   let spinAssignGroupTargetId = null; // id entri yang sedang diatur grupnya lewat modal kecil
@@ -26896,7 +26919,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   let spinShowWonTag = false; // default: label "Sudah pernah menang" DISEMBUNYIKAN dari daftar entri (biar lebih rapi/profesional), bisa dinyalakan lewat menu Setting
 
   async function spinLoadAll(){
-    const [e, w, s, p, opp, g, ts, ch, wt, gse] = await Promise.all([
+    const [e, w, s, p, opp, g, ts, ch, wt, gse, ar] = await Promise.all([
       db.from('entries').select('*').order('created_at', {ascending:true}),
       db.from('winners').select('*').order('drawn_at', {ascending:false}),
       db.from('spin_settings').select('data').eq('key','exclude_list').maybeSingle(),
@@ -26906,7 +26929,8 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       db.from('spin_settings').select('data').eq('key','title_settings').maybeSingle(),
       db.from('spin_settings').select('data').eq('key','controls_hidden').maybeSingle(),
       db.from('spin_settings').select('data').eq('key','show_won_tag').maybeSingle(),
-      db.from('spin_settings').select('data').eq('key','group_system_enabled').maybeSingle()
+      db.from('spin_settings').select('data').eq('key','group_system_enabled').maybeSingle(),
+      db.from('spin_archives').select('*').order('created_at', {ascending:false})
     ]);
     const notice = document.getElementById('spinSqlNotice');
     if (notice) notice.style.display = (e.error || w.error) ? 'block' : 'none';
@@ -26917,6 +26941,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     spinExcluded = spinExcluded.map(x => typeof x === 'string' ? {name: x, prizeIds: []} : {name: x.name, prizeIds: Array.isArray(x.prizeIds) ? x.prizeIds : []});
     spinPrizes = p.data || [];
     spinGroups = g.data || []; // kalau error (kolom/tabel belum dibuat), dianggap kosong -> semua peserta setara
+    spinArchives = ar.data || []; // kalau error (tabel spin_archives belum dibuat), dianggap kosong
     spinGroupSystemEnabled = (!gse.error && gse.data && typeof gse.data.data === 'object' && gse.data.data !== null && 'value' in gse.data.data)
       ? !!gse.data.data.value
       : true; // default: aktif (perilaku lama tetap sama seperti sebelum ada toggle ini)
@@ -26951,6 +26976,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     spinRenderPrizeList();
     spinRenderGroupSelects();
     spinRenderGroupList();
+    spinRenderArsipList();
   }
 
   let spinTitleSettings = {text:'Game Spin — Undian Doorprize'};
@@ -26993,9 +27019,14 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
   function spinSwitchTab(t){
     document.getElementById('spinTabEntri').classList.toggle('active', t==='entri');
     document.getElementById('spinTabHasil').classList.toggle('active', t==='hasil');
+    const tabArsip = document.getElementById('spinTabArsip');
+    if(tabArsip) tabArsip.classList.toggle('active', t==='arsip');
     document.getElementById('spinEntriView').style.display = t==='entri' ? 'block':'none';
     document.getElementById('spinHasilView').style.display = t==='hasil' ? 'block':'none';
+    const arsipView = document.getElementById('spinArsipView');
+    if(arsipView) arsipView.style.display = t==='arsip' ? 'block':'none';
     document.getElementById('spinDrawBar').style.display = t==='entri' ? 'flex':'none';
+    if(t==='arsip') spinRenderArsipList();
   }
 
   // Tentukan aturan "satu orang satu hadiah" untuk satu entri:
@@ -27045,10 +27076,12 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       const excluded = spinIsExcluded(e.name, selectedPrizeId);
       const skipped = spinSessionSkip.has(e.id);
       const alreadyWon = spinIsAlreadyWon(e.name, spinEntryOnePerPerson(e));
-      const dimmed = excluded || skipped || alreadyWon;
+      const calledThisRound = !alreadyWon && spinRoundCalled.has(spinBaseName(e.name).toLowerCase());
+      const dimmed = excluded || skipped || alreadyWon || calledThisRound;
       let tag = '';
       if(excluded) tag = '<span class="spin-row-excluded-tag">🚫 Tidak ikut undi hadiah ini</span>';
       else if(alreadyWon) tag = spinShowWonTag ? '<span class="spin-row-excluded-tag">🏆 Sudah pernah menang — dilewati</span>' : '';
+      else if(calledThisRound) tag = '<span class="spin-row-excluded-tag">🔁 Sudah dipanggil putaran ini — giliran orang lain dulu</span>';
       else if(skipped) tag = '<span class="spin-row-excluded-tag">⏭ Dilewati sesi ini (tidak hadir)</span>';
       const groupName = spinGroupLabel(e.group_id);
       const groupBadge = !spinGroupSystemEnabled ? '' : (groupName
@@ -27439,6 +27472,8 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     const backup = spinEntries.slice();
     await db.from('entries').delete().neq('id','00000000-0000-0000-0000-000000000000');
     if (typeof _auditLog === 'function') _auditLog('spin_entries', 'DELETE', {jumlah: backup.length}, null, `Hapus semua entri (${backup.length} tiket)`);
+    spinSessionSkip = new Set();
+    spinRoundCalled = new Set();
     await spinLoadAll();
     showUndoToast(`Semua entri (${backup.length} tiket)`,
       async function(){ // onUndo — kembalikan persis seperti semula (id, gambar, waktu dibuat)
@@ -27484,6 +27519,8 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     const prizeStockBackup = spinPrizes.map(p => ({id:p.id, stock:p.stock})); // stok sebelum direset, buat undo
     await db.from('winners').delete().neq('id','00000000-0000-0000-0000-000000000000');
     if (typeof _auditLog === 'function') _auditLog('spin_winners', 'DELETE', {jumlah: backup.length}, null, `Hapus semua hasil undian (${backup.length} pemenang), stok dikembalikan ke awal`);
+    spinSessionSkip = new Set();
+    spinRoundCalled = new Set();
     await spinLoadAll();
     showUndoToast(`Semua hasil (${backup.length} pemenang)`,
       async function(){
@@ -27511,6 +27548,8 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     await db.from('entries').delete().neq('id','00000000-0000-0000-0000-000000000000');
     await db.from('spin_groups').delete().neq('id','00000000-0000-0000-0000-000000000000');
     if (typeof _auditLog === 'function') _auditLog('spin_entries', 'DELETE', {entri: backupEntries.length, grup: backupGroups.length}, null, `Reset grup & entri (${backupEntries.length} entri, ${backupGroups.length} grup)`);
+    spinSessionSkip = new Set();
+    spinRoundCalled = new Set();
     await spinLoadAll();
     spinRenderGroupList();
     spinRenderEntries();
@@ -27533,8 +27572,15 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     if(spinEntries.length===0 && spinWinners.length===0) return;
     const ok = await askConfirm(`Reset semua? ${spinEntries.length} entri dan ${spinWinners.length} riwayat pemenang akan dihapus, stok hadiah dikembalikan ke jumlah awal. Bisa diurungkan dalam 10 detik setelah ini.`, '🔄 Reset Semua');
     if(!ok) return;
+    await spinResetSemuaJalankan();
+  }
+
+  // Inti logika "Reset Semua" TANPA dialog konfirmasi — dipakai oleh tombol Reset Semua
+  // (yang minta konfirmasi dulu) MAUPUN oleh alur 📦 Arsipkan Periode Ini (yang sudah
+  // punya konfirmasi sendiri, supaya user tidak ditanya dua kali).
+  async function spinResetSemuaJalankan(){
     const canReset = await spinResetStokKeAwal();
-    if(!canReset) return;
+    if(!canReset) return false;
     const backupEntries = spinEntries.slice();
     const backupWinners = spinWinners.slice();
     const prizeStockBackup = spinPrizes.map(p => ({id:p.id, stock:p.stock})); // stok sebelum direset, buat undo
@@ -27543,6 +27589,8 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       db.from('winners').delete().neq('id','00000000-0000-0000-0000-000000000000')
     ]);
     if (typeof _auditLog === 'function') _auditLog('spin_entries', 'DELETE', {entri: backupEntries.length, pemenang: backupWinners.length}, null, `🔄 Reset Semua Game Spin (${backupEntries.length} entri, ${backupWinners.length} pemenang), stok dikembalikan ke awal`);
+    spinSessionSkip = new Set();
+    spinRoundCalled = new Set();
     await spinLoadAll();
     showUndoToast(`Reset semua (${backupEntries.length} entri, ${backupWinners.length} pemenang)`,
       async function(){
@@ -27557,6 +27605,117 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       function(){},
       '🔄'
     );
+    return true;
+  }
+
+  // ═══════════════════ 📦 ARSIP SPIN — simpan 1 periode acara, bisa dilihat lagi kapan saja ═══════════════════
+  // Arsip menyimpan SNAPSHOT (salinan) data spin saat ini: peserta, grup, hasil undian, hadiah.
+  // Tidak menghapus data yang sedang berjalan kecuali user memilih "reset sekarang" setelah diarsipkan.
+  async function spinArsipkanSekarang(){
+    if(spinEntries.length===0 && spinWinners.length===0){
+      alert('Belum ada data spin (peserta/hasil undian) untuk diarsipkan.');
+      return;
+    }
+    const judul = prompt('Nama arsip periode/acara ini (misal: "Agustusan 2026" atau "Doorprize 17 Agustus"):', spinTitleSettings.text || '');
+    if(judul === null) return; // dibatalkan
+    const judulFinal = judul.trim() || ('Arsip ' + new Date().toLocaleDateString('id-ID'));
+
+    const snapshot = {
+      judul: judulFinal,
+      entries: spinEntries,
+      winners: spinWinners,
+      prizes: spinPrizes,
+      groups: spinGroups,
+      groupSystemEnabled: spinGroupSystemEnabled,
+      excluded: spinExcluded,
+      titleText: spinTitleSettings.text,
+      arsip_pada: new Date().toISOString(),
+    };
+    const { error } = await db.from('spin_archives').insert({ judul: judulFinal, data: snapshot });
+    if(error){
+      alert('Gagal membuat arsip: ' + error.message + '\n\nPastikan tabel spin_archives sudah dibuat (lihat SQL di bagian atas menu Spin, cari kata "spin_archives").');
+      console.error('spinArsipkanSekarang error:', error);
+      return;
+    }
+    if (typeof _auditLog === 'function') _auditLog('spin_archives', 'INSERT', null, {judul: judulFinal}, `📦 Arsip spin dibuat: "${judulFinal}" (${spinEntries.length} entri, ${spinWinners.length} pemenang)`);
+    await spinLoadAll();
+    spinRenderArsipList();
+    showToast('📦 Arsip "' + judulFinal + '" berhasil disimpan', 'success', 3000);
+
+    const okReset = await askConfirm(
+      `Arsip "${judulFinal}" berhasil disimpan (${spinEntries.length} entri, ${spinWinners.length} pemenang) — data ini AMAN, bisa dilihat lagi kapan saja lewat tab 📦 Arsip.\n\nMau langsung reset data spin sekarang juga supaya siap dipakai untuk periode/acara berikutnya?`,
+      '📦 Arsip Tersimpan — Reset Sekarang?'
+    );
+    if(okReset) await spinResetSemuaJalankan();
+  }
+
+  function spinRenderArsipList(){
+    const el = document.getElementById('spinArsipList');
+    if(!el) return;
+    const badge = document.getElementById('spinCountArsip');
+    if(badge) badge.textContent = spinArchives.length;
+    if(spinArchives.length===0){
+      el.innerHTML = '<div class="spin-empty">Belum ada arsip. Klik "📦 Arsipkan Periode Ini" buat menyimpan data spin sekarang sebagai arsip yang bisa dilihat lagi nanti.</div>';
+      return;
+    }
+    el.innerHTML = spinArchives.map(a => {
+      const tgl = a.created_at ? new Date(a.created_at).toLocaleString('id-ID', { dateStyle:'long', timeStyle:'short' }) : '';
+      const d = a.data || {};
+      const entryCount = Array.isArray(d.entries) ? d.entries.length : 0;
+      const winCount = Array.isArray(d.winners) ? d.winners.length : 0;
+      return `<div class="spin-row" style="cursor:pointer;" onclick="spinOpenArsipDetail(${JSON.stringify(a.id)})">
+        <div class="spin-thumb spin-placeholder">📦</div>
+        <div class="spin-row-name">${escapeHtml(a.judul || '(tanpa judul)')}<div class="muted" style="font-size:11px;margin-top:2px;">${tgl} · ${entryCount} peserta · ${winCount} pemenang</div></div>
+        <div class="spin-row-actions">
+          <button class="spin-icon-btn" title="Hapus arsip" onclick="event.stopPropagation();spinHapusArsip(${JSON.stringify(a.id)})">🗑️</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function spinOpenArsipDetail(id){
+    const a = spinArchives.find(x => x.id === id);
+    if(!a) return;
+    const d = a.data || {};
+    const winners = Array.isArray(d.winners) ? d.winners : [];
+    const entries = Array.isArray(d.entries) ? d.entries : [];
+    const tgl = a.created_at ? new Date(a.created_at).toLocaleString('id-ID', { dateStyle:'long', timeStyle:'short' }) : '';
+    const winnersHtml = winners.length
+      ? winners.map(w => `<div class="spin-row"><div class="spin-row-name">🏆 ${escapeHtml(w.name)} <span class="muted" style="font-size:12px;">— ${escapeHtml(w.prize_name || '-')}</span></div></div>`).join('')
+      : '<div class="spin-empty">Tidak ada pemenang di arsip ini.</div>';
+    const overlay = document.getElementById('spinArsipDetailOverlay');
+    overlay.innerHTML = `<div class="spin-modal" style="max-width:480px;">
+      <h3>📦 ${escapeHtml(a.judul || '(tanpa judul)')}</h3>
+      <p class="spin-hint">${tgl} · ${entries.length} peserta · ${winners.length} pemenang</p>
+      <div class="spin-panel" style="max-height:50vh;">${winnersHtml}</div>
+      <div class="spin-modal-actions">
+        <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinHapusArsip(${JSON.stringify(a.id)})">🗑️ Hapus Arsip</button>
+        <button class="spin-btn spin-btn-ghost" onclick="spinCloseArsipDetail()">Tutup</button>
+      </div>
+    </div>`;
+    overlay.classList.add('show');
+  }
+
+  function spinCloseArsipDetail(){
+    const overlay = document.getElementById('spinArsipDetailOverlay');
+    if(overlay) overlay.classList.remove('show');
+  }
+
+  async function spinHapusArsip(id){
+    const a = spinArchives.find(x => x.id === id);
+    if(!a) return;
+    const ok = await askConfirm(`Hapus arsip "${a.judul || '(tanpa judul)'}"? Data arsip ini akan dihapus PERMANEN dan tidak bisa dikembalikan.`, '🗑️ Hapus Arsip');
+    if(!ok) return;
+    const { error } = await db.from('spin_archives').delete().eq('id', id);
+    if(error){
+      alert('Gagal menghapus arsip: ' + error.message);
+      console.error('spinHapusArsip error:', error);
+      return;
+    }
+    if (typeof _auditLog === 'function') _auditLog('spin_archives', 'DELETE', {judul: a.judul}, null, `Hapus arsip spin: "${a.judul}"`);
+    spinCloseArsipDetail();
+    await spinLoadAll();
+    showToast('🗑️ Arsip dihapus', 'success');
   }
 
   // ---- setting: nama yang dikecualikan dari undian ----
@@ -27700,6 +27859,12 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     return s.replace(/^\d+\.\s*/, '').replace(/\d+$/,'').trim();
   }
   let spinSessionSkip = new Set(); // id tiket yang dilewati sementara (misal: "tidak hadir"), tidak dihapus dari database
+  // Nama-nama dasar (base name, huruf kecil) yang SUDAH PERNAH DIPANGGIL di "putaran" undian
+  // yang sedang berjalan (menang ataupun ternyata "tidak ada di tempat"). Dipakai untuk pemerataan:
+  // seseorang tidak dipanggil ulang sampai semua orang lain yang masih mungkin diundi kebagian
+  // giliran dipanggil juga. Direset otomatis kalau semua orang sudah kebagian giliran (putaran baru),
+  // atau manual lewat "Reset Semua" / "Hapus Semua Entri" / "Reset Grup & Entri" / "Hapus Semua Hasil".
+  let spinRoundCalled = new Set();
 
   function spinHasWon(baseName){
     return spinWinners.some(w => spinBaseName(w.name).toLowerCase() === baseName.toLowerCase());
@@ -27790,19 +27955,43 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     // Aturan "satu orang satu hadiah" ditentukan per-entri: pakai checkbox default (sistem grup off)
     // atau checkbox milik grupnya masing-masing (sistem grup on).
 
-    const eligible = spinEntries.filter(e => {
+    // Langkah 1: siapa saja yang SECARA PERMANEN masih boleh diundi (belum menang & tidak dikecualikan
+    // dari hadiah ini). Ini tidak peduli sistem grup aktif/tidak, dan tidak peduli "putaran" — kalau
+    // orangnya sudah pernah menang (mode satu-orang-satu-hadiah) dia tidak akan pernah muncul lagi.
+    const stillPossible = spinEntries.filter(e => {
       if(spinIsExcluded(e.name, prize.id)) return false;
-      if(spinSessionSkip.has(e.id)) return false; // lagi dilewati sementara (misal: tadi "tidak hadir")
-      if(spinIsAlreadyWon(e.name, spinEntryOnePerPerson(e))) return false; // tiket ini sendiri, atau (kalau mode aktif) orang yang sama, sudah pernah menang
+      if(spinIsAlreadyWon(e.name, spinEntryOnePerPerson(e))) return false;
       return true;
     });
-    if(eligible.length===0){
+    if(stillPossible.length===0){
       alert(`Tidak ada entri yang memenuhi syarat untuk hadiah "${prize.name}" — cek daftar pengecualian (⚙️ Setting) atau mungkin semua sisa peserta sudah pernah menang.`);
       return;
     }
 
+    // Langkah 2: aturan PEMERATAAN PUTARAN — orang yang SUDAH PERNAH DIPANGGIL (menang ATAUPUN
+    // ternyata "tidak ada di tempat") tidak boleh dipanggil ulang sampai SEMUA orang lain yang masih
+    // mungkin diundi juga sudah pernah dipanggil minimal 1x dalam putaran ini. Persentase grup (kalau
+    // sistem grup aktif) hanya menentukan PELUANG/URUTAN siapa yang lebih besar kemungkinan dipanggil
+    // duluan — bukan alasan 1 orang bisa dipanggil berkali-kali beruntun padahal yang lain belum pernah
+    // sama sekali. Berlaku SAMA baik sistem grup aktif maupun nonaktif.
+    const notCalledYet = stillPossible.filter(e => !spinRoundCalled.has(spinBaseName(e.name).toLowerCase()));
+    let eligible;
+    if(notCalledYet.length > 0){
+      eligible = notCalledYet;
+    } else {
+      // Semua orang yang masih mungkin diundi sudah pernah dipanggil semua di putaran ini ->
+      // putaran baru dimulai (semua boleh dipanggil lagi dari 0), persentase grup tetap berlaku.
+      spinRoundCalled.clear();
+      eligible = stillPossible;
+    }
+
     document.getElementById('spinDrawBtn').disabled = true;
     const pick = spinWeightedPick(eligible);
+
+    // Tandai orang ini "sudah dipanggil" di putaran sekarang SEBELUM tahu hasilnya (menang atau
+    // ternyata tidak ada) — supaya dia tidak langsung terpilih lagi di undian berikutnya sebelum
+    // semua orang lain kebagian giliran dipanggil dulu.
+    spinRoundCalled.add(spinBaseName(pick.name).toLowerCase());
 
     await spinRunSpinAnimation(pick.name, eligible.map(e=>e.name));
 
