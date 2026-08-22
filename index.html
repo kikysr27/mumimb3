@@ -27642,9 +27642,12 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     spinRenderArsipList();
     showToast('📦 Arsip "' + judulFinal + '" berhasil disimpan', 'success', 3000);
 
-    const okReset = await askConfirm(
-      `Arsip "${judulFinal}" berhasil disimpan (${spinEntries.length} entri, ${spinWinners.length} pemenang) — data ini AMAN, bisa dilihat lagi kapan saja lewat tab 📦 Arsip.\n\nMau langsung reset data spin sekarang juga supaya siap dipakai untuk periode/acara berikutnya?`,
-      '📦 Arsip Tersimpan — Reset Sekarang?'
+    const okReset = await askConfirmNew(
+      `Arsip "${judulFinal}" berhasil disimpan (${spinEntries.length} entri, ${spinWinners.length} pemenang) — data ini AMAN, bisa dilihat lagi kapan saja lewat tab 📦 Arsip.\n\nSekarang mau langsung KOSONGKAN data spin biar siap dipakai untuk periode/acara berikutnya? (Arsip yang barusan disimpan TIDAK akan hilang walau kamu pilih ini.)`,
+      '📦 Arsip Berhasil Disimpan',
+      '📦',
+      'Ya, Kosongkan Sekarang',
+      ''
     );
     if(okReset) await spinResetSemuaJalankan();
   }
