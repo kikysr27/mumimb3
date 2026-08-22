@@ -4020,7 +4020,11 @@ CREATE POLICY "spin_archives_all" ON spin_archives FOR ALL USING (true) WITH CHE
         </div>
 
         <div id="spinArsipView" style="display:none;">
-          <p class="spin-hint" style="margin:0 0 10px;">Arsip menyimpan SEMUA data spin sekarang (daftar peserta, grup, hasil undian tiap orang, hadiah) sebagai satu paket "kenangan" periode acara ini — supaya bisa dilihat lagi kapan saja, meski nanti data sekarang sudah direset untuk acara berikutnya.</p>
+          <div onclick="spinToggleArsipHint()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:8px;margin:0 0 10px;">
+            <span class="spin-hint" style="margin:0;">ℹ️ Tentang fitur Arsip</span>
+            <button type="button" id="spinArsipHintToggleBtn" class="spin-btn spin-btn-ghost spin-btn-sm">Tampilkan ▼</button>
+          </div>
+          <p class="spin-hint" id="spinArsipHintBody" style="display:none;margin:0 0 10px;">Arsip menyimpan SEMUA data spin sekarang (daftar peserta, grup, hasil undian tiap orang, hadiah) sebagai satu paket "kenangan" periode acara ini — supaya bisa dilihat lagi kapan saja, meski nanti data sekarang sudah direset untuk acara berikutnya.</p>
           <div class="spin-toolbar spin-admin-ctrl">
             <button class="spin-btn spin-btn-primary" onclick="spinArsipkanSekarang()">📦 Arsipkan Periode Ini</button>
           </div>
@@ -27652,6 +27656,17 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     if(okReset) await spinResetSemuaJalankan();
   }
 
+  // Toggle tampil/sembunyi sub keterangan "Tentang fitur Arsip" (default tersembunyi,
+  // dan selalu balik tersembunyi lagi tiap kali halaman di-refresh/dibuka ulang).
+  function spinToggleArsipHint(){
+    const body = document.getElementById('spinArsipHintBody');
+    const btn = document.getElementById('spinArsipHintToggleBtn');
+    if(!body) return;
+    const show = body.style.display === 'none';
+    body.style.display = show ? 'block' : 'none';
+    if(btn) btn.textContent = show ? 'Sembunyikan ▲' : 'Tampilkan ▼';
+  }
+
   function spinRenderArsipList(){
     const el = document.getElementById('spinArsipList');
     if(!el) return;
@@ -27666,11 +27681,11 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       const d = a.data || {};
       const entryCount = Array.isArray(d.entries) ? d.entries.length : 0;
       const winCount = Array.isArray(d.winners) ? d.winners.length : 0;
-      return `<div class="spin-row" style="cursor:pointer;" onclick="spinOpenArsipDetail(${JSON.stringify(a.id)})">
+      return `<div class="spin-row" style="cursor:pointer;" onclick='spinOpenArsipDetail(${JSON.stringify(a.id)})'>
         <div class="spin-thumb spin-placeholder">📦</div>
         <div class="spin-row-name">${escapeHtml(a.judul || '(tanpa judul)')}<div class="muted" style="font-size:11px;margin-top:2px;">${tgl} · ${entryCount} peserta · ${winCount} pemenang</div></div>
         <div class="spin-row-actions">
-          <button class="spin-icon-btn" title="Hapus arsip" onclick="event.stopPropagation();spinHapusArsip(${JSON.stringify(a.id)})">🗑️</button>
+          <button class="spin-icon-btn" title="Hapus arsip" onclick='event.stopPropagation();spinHapusArsip(${JSON.stringify(a.id)})'>🗑️</button>
         </div>
       </div>`;
     }).join('');
@@ -27692,7 +27707,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       <p class="spin-hint">${tgl} · ${entries.length} peserta · ${winners.length} pemenang</p>
       <div class="spin-panel" style="max-height:50vh;">${winnersHtml}</div>
       <div class="spin-modal-actions">
-        <button class="spin-btn spin-btn-danger spin-btn-sm" onclick="spinHapusArsip(${JSON.stringify(a.id)})">🗑️ Hapus Arsip</button>
+        <button class="spin-btn spin-btn-danger spin-btn-sm" onclick='spinHapusArsip(${JSON.stringify(a.id)})'>🗑️ Hapus Arsip</button>
         <button class="spin-btn spin-btn-ghost" onclick="spinCloseArsipDetail()">Tutup</button>
       </div>
     </div>`;
