@@ -5719,15 +5719,23 @@ window.mdToStructuredLines = function(text) {
   s = s.replace(/\{c[#a-zA-Z0-9]+\}([\s\S]+?)\{\/c\}/g, '$1');
   s = s.replace(/\{h[#a-zA-Z0-9]+\}([\s\S]+?)\{\/h\}/g, '$1');
   s = s.replace(/~~([^~\n]+)~~/g, '$1');
-  // Bold (** atau __) dulu, baru italic (* atau _) -- urutan penting supaya delimiter
-  // dua-karakter tidak salah ke-match sebagai italic satu-karakter.
+  // Bold+italic gabungan (***teks*** atau ___teks___, hasil dari <b><i>) HARUS ditangani
+  // DULUAN sebelum bold-saja & italic-saja -- kalau tidak, ***teks*** ke-match dua kali
+  // (bold-tokenize lalu italic-tokenize nge-bungkus token bold yang sudah jadi), bikin
+  // token bersarang yang gagal ke-resolve dan muncul jadi karakter sampah di PDF.
+  s = s.replace(/\*\*\*([^*\n]+)\*\*\*/g, function(_m, t){ return _pushStyled(t, true, true); });
+  s = s.replace(/___([^_\n]+)___/g, function(_m, t){ return _pushStyled(t, true, true); });
+  // Bold (** atau __) -- urutan penting supaya delimiter dua-karakter tidak salah
+  // ke-match sebagai italic satu-karakter.
   s = s.replace(/\*\*([^*\n]+)\*\*/g, function(_m, t){ return _pushStyled(t, true, false); });
   s = s.replace(/__([^_\n]+)__/g, function(_m, t){ return _pushStyled(t, true, false); });
   s = s.replace(/==([^=\n]+)==/g, '$1');
   s = s.replace(/\^\^([^\^\n]+)\^\^/g, '$1');
   s = s.replace(/,,([^,\n]+),,/g, '$1');
+  // Italic satu-karakter (*teks*) -- HANYA "*", bukan "_" (dialek app ini pakai __ untuk
+  // underline, bukan italic, jadi "_" satuan sengaja TIDAK diperlakukan sebagai italic
+  // supaya kata seperti nama_variabel/snake_case tidak salah ke-tokenize).
   s = s.replace(/(^|[^*])\*([^*\n]+)\*([^*]|$)/g, function(_m, pre, t, post){ return pre + _pushStyled(t, false, true) + post; });
-  s = s.replace(/(^|[^_])_([^_\n]+)_([^_]|$)/g, function(_m, pre, t, post){ return pre + _pushStyled(t, false, true) + post; });
   s = s.replace(/\{c[#a-zA-Z0-9]*\}?/g, '').replace(/\{h[#a-zA-Z0-9]*\}?/g, '').replace(/\{\/[ch]\}/g, '');
   s = s.replace(/\*{2,}/g, '').replace(/={2,}/g, '');
   s = s.replace(/~~/g, '').replace(/__/g, '').replace(/\^\^/g, '').replace(/,,/g, '');
@@ -16934,6 +16942,7 @@ function _pdfFootersAll(doc) {
 function _pdfSafe(s) {
   return String(s == null ? '' : s)
     .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2300}-\u{23FF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{1F1E6}-\u{1F1FF}]/gu, '')
+    .replace(/[\u{E000}-\u{F8FF}]/gu, '')
     .replace(/[→➜➔]/g, '->').replace(/[←⬅]/g, '<-')
     .replace(/[≥]/g, '>=').replace(/[≤]/g, '<=').replace(/[≠]/g, '!=')
     .replace(/[•·∙]/g, '-').replace(/[—–]/g, '-').replace(/[…]/g, '...')
