@@ -5536,7 +5536,10 @@ function descToHTML(text){
   }
   // ─── Restore HTML blocks (table, gambar, dll.) — WAJIB lewat sanitasi ───
   // Jangan pernah restore _htmlBlocks mentah di sini — lihat _sanitizeHtmlBlock di atas.
-  html = html.replace(/HTMLBLK(\d+)/g, function(_, idx) {
+  // FIX kotak-kotak: token pembungkus \u0001HTMLBLK<idx>\u0002 harus ikut ke-consume
+  // regex-nya, bukan cuma tulisan "HTMLBLK0"-nya -- kalau tidak, karakter kontrol
+  // \u0001/\u0002 nyangkut di HTML hasil dan browser render jadi kotak kecil (tofu).
+  html = html.replace(/\u0001HTMLBLK(\d+)\u0002/g, function(_, idx) {
     return _sanitizeHtmlBlock(_htmlBlocks[parseInt(idx, 10)] || '');
   });
   return html;
