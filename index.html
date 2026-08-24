@@ -5684,9 +5684,15 @@ window.mdToPlainText = function(text, maxLen) {
 window.mdToStructuredLines = function(text) {
   if (!text) return [];
   var s = String(text);
-  // 1. Hapus blok HTML mentah & marker khusus (preview-friendly)
-  s = s.replace(/\[\[html\]\][\s\S]*?\[\[\/html\]\]/g, '[Tabel/Gambar]');
-  s = s.replace(/\[\[html\]\][\s\S]*$/g, '[Tabel/Gambar]');
+  // 1. Simpan blok HTML mentah (tabel/gambar/shape) sebagai token baris tersendiri --
+  // TIDAK dibuang jadi placeholder teks lagi, supaya PDF bisa merender tabel/gambar/shape
+  // yang sebenarnya (lihat penanganan type:'html' di _pdfRenderMd).
+  var _mdHtmlBlocks = [];
+  s = s.replace(/\[\[html\]\]([\s\S]*?)\[\[\/html\]\]/g, function(_m, inner){
+    _mdHtmlBlocks.push(inner);
+    return '\n' + (_mdHtmlBlocks.length - 1) + '\n';
+  });
+  s = s.replace(/\[\[html\]\][\s\S]*$/g, ''); // marker tak lengkap (belum ada penutup) -- buang
   // Hapus marker alignment ("<<<center>>>" dkk) — cukup dipakai di editor WYSIWYG,
   // tidak perlu tampil di PDF (PDF tetap rata kiri baris per baris).
   s = s.replace(/^<<<(center|right|justify)>>>/gm, '');
@@ -5700,16 +5706,25 @@ window.mdToStructuredLines = function(text) {
     _mdLinks.push({ label: label, url: url });
     return '' + (_mdLinks.length - 1) + '';
   });
-  // 2. Strip inline formatting (pertahankan TEXT-nya saja)
+  // 2. Inline formatting: bold/italic diubah jadi TOKEN (bukan dibuang) supaya PDF
+  // bisa render tebal/miring beneran -- sama seperti mekanisme token link di atas.
+  var _mdStyled = [];
+  function _pushStyled(text, bold, italic){
+    _mdStyled.push({ text: text, bold: !!bold, italic: !!italic });
+    return '' + (_mdStyled.length - 1) + '';
+  }
   s = s.replace(/\{c[#a-zA-Z0-9]+\}([\s\S]+?)\{\/c\}/g, '$1');
   s = s.replace(/\{h[#a-zA-Z0-9]+\}([\s\S]+?)\{\/h\}/g, '$1');
   s = s.replace(/~~([^~\n]+)~~/g, '$1');
-  s = s.replace(/\*\*([^*\n]+)\*\*/g, '$1');
-  s = s.replace(/__([^_\n]+)__/g, '$1');
+  // Bold (** atau __) dulu, baru italic (* atau _) -- urutan penting supaya delimiter
+  // dua-karakter tidak salah ke-match sebagai italic satu-karakter.
+  s = s.replace(/\*\*([^*\n]+)\*\*/g, function(_m, t){ return _pushStyled(t, true, false); });
+  s = s.replace(/__([^_\n]+)__/g, function(_m, t){ return _pushStyled(t, true, false); });
   s = s.replace(/==([^=\n]+)==/g, '$1');
   s = s.replace(/\^\^([^\^\n]+)\^\^/g, '$1');
   s = s.replace(/,,([^,\n]+),,/g, '$1');
-  s = s.replace(/(^|[^*])\*([^*\n]+)\*([^*]|$)/g, '$1$2$3');
+  s = s.replace(/(^|[^*])\*([^*\n]+)\*([^*]|$)/g, function(_m, pre, t, post){ return pre + _pushStyled(t, false, true) + post; });
+  s = s.replace(/(^|[^_])_([^_\n]+)_([^_]|$)/g, function(_m, pre, t, post){ return pre + _pushStyled(t, false, true) + post; });
   s = s.replace(/\{c[#a-zA-Z0-9]*\}?/g, '').replace(/\{h[#a-zA-Z0-9]*\}?/g, '').replace(/\{\/[ch]\}/g, '');
   s = s.replace(/\*{2,}/g, '').replace(/={2,}/g, '');
   s = s.replace(/~~/g, '').replace(/__/g, '').replace(/\^\^/g, '').replace(/,,/g, '');
@@ -5720,6 +5735,8 @@ window.mdToStructuredLines = function(text) {
   for (var i = 0; i < lines.length; i++) {
     var raw = lines[i];
     if (!raw.replace(/\s+/g, '').length) { out.push({ type: 'blank' }); orderedCounters = {}; continue; }
+    var mHtml = raw.match(/^\s*\ue020(\d+)\ue021\s*$/);
+    if (mHtml) { out.push({ type: 'html', html: _mdHtmlBlocks[parseInt(mHtml[1], 10)] || '' }); orderedCounters = {}; continue; }
     var mH = raw.match(/^[ \t]*(#{1,6})\s+(.*)$/);
     if (mH) { out.push({ type: 'heading', level: mH[1].length, text: mH[2].trim() }); orderedCounters = {}; continue; }
     var mB = raw.match(/^([ \t]*)[-*]\s+(.*)$/);
@@ -5739,17 +5756,23 @@ window.mdToStructuredLines = function(text) {
     }
     out.push({ type: 'para', text: raw.trim() });
   }
-  // Resolve token link → .segments (untuk render JUDUL biru & bisa diklik di PDF),
-  // dan ganti token di .text dengan judul (teks bersih) untuk konsumen lain.
+  // Resolve token link/bold/italic → .segments (untuk render JUDUL biru+link, TEBAL,
+  // dan MIRING beneran di PDF), dan ganti token di .text dengan teks bersih untuk konsumen lain.
   var _S0 = String.fromCharCode(0xE000), _S1 = String.fromCharCode(0xE001);
+  var _T0 = String.fromCharCode(0xE010), _T1 = String.fromCharCode(0xE011);
   function _resolveLinks(txt){
-    if (typeof txt !== 'string' || txt.indexOf(_S0) < 0) return null;
-    var re = new RegExp(_S0 + '(\\d+)' + _S1, 'g');
+    if (typeof txt !== 'string' || (txt.indexOf(_S0) < 0 && txt.indexOf(_T0) < 0)) return null;
+    var re = new RegExp('(' + _S0 + '(\\d+)' + _S1 + ')|(' + _T0 + '(\\d+)' + _T1 + ')', 'g');
     var segs = [], last = 0, m, plain = '';
     while ((m = re.exec(txt))) {
       if (m.index > last) { var t = txt.slice(last, m.index); segs.push({ text: t }); plain += t; }
-      var lk = _mdLinks[parseInt(m[1], 10)] || { label: '', url: '' };
-      segs.push({ text: lk.label, url: lk.url }); plain += lk.label;
+      if (m[1]) {
+        var lk = _mdLinks[parseInt(m[2], 10)] || { label: '', url: '' };
+        segs.push({ text: lk.label, url: lk.url }); plain += lk.label;
+      } else {
+        var st = _mdStyled[parseInt(m[4], 10)] || { text: '', bold: false, italic: false };
+        segs.push({ text: st.text, bold: st.bold, italic: st.italic }); plain += st.text;
+      }
       last = m.index + m[0].length;
     }
     if (last < txt.length) { var t2 = txt.slice(last); segs.push({ text: t2 }); plain += t2; }
@@ -14977,7 +15000,7 @@ async function exportAcaraDetailPDF(acaraId) {
     body: [],
     styles: { fontSize: 9 }, headStyles: { fillColor: [37, 99, 235] },
   });
-  _pdfRenderMd(doc, a.deskripsi || '', { startY: doc.lastAutoTable.finalY + 4, emptyText: '(belum ada deskripsi)' });
+  await _pdfRenderMd(doc, a.deskripsi || '', { startY: doc.lastAutoTable.finalY + 4, emptyText: '(belum ada deskripsi)' });
   if (tasks.length) {
     doc.autoTable({
       startY: doc.lastAutoTable.finalY + 6,
@@ -15120,7 +15143,7 @@ async function exportMswDetailPDF(mswId) {
     body: [],
     styles: { fontSize: 9 }, headStyles: { fillColor: [37, 99, 235] },
   });
-  _pdfRenderMd(doc, m.hasil || '', { startY: doc.lastAutoTable.finalY + 4, emptyText: '(belum ada catatan)' });
+  await _pdfRenderMd(doc, m.hasil || '', { startY: doc.lastAutoTable.finalY + 4, emptyText: '(belum ada catatan)' });
   _pdfFootersAll(doc);
   doc.save('musyawarah-' + S(m.judul || 'musyawarah').replace(/[\/\\ ]+/g, '-').slice(0, 40) + '.pdf');
   showToast('PDF musyawarah berhasil dibuat', 'success');
@@ -15153,7 +15176,7 @@ async function exportEvaluasiDetailPDF(evalId) {
     body: [],
     styles: { fontSize: 9 }, headStyles: { fillColor: [26, 102, 68] },
   });
-  _pdfRenderMd(doc, c.isi || '', { startY: doc.lastAutoTable.finalY + 4, emptyText: '(belum ada isi evaluasi)' });
+  await _pdfRenderMd(doc, c.isi || '', { startY: doc.lastAutoTable.finalY + 4, emptyText: '(belum ada isi evaluasi)' });
   _pdfFootersAll(doc);
   doc.save('evaluasi-' + S(c.judul || 'evaluasi').replace(/[\/\\ ]+/g, '-').slice(0, 40) + '.pdf');
   showToast('PDF evaluasi berhasil dibuat', 'success');
@@ -16693,7 +16716,73 @@ function _pdfFooter(doc) {
 // "flatten ke plain-text → taruh di 1 cell autoTable" yang bikin semua baris dempet
 // jadi satu paragraf besar tanpa hirarki list/heading.
 // Return: Y akhir (mm). Footer dipanggil terpisah oleh caller via _pdfFootersAll().
-function _pdfRenderMd(doc, mdText, opts) {
+// Ubah 1 blok HTML mentah ([[html]]...[[/html]] -- <img> atau Shape/<svg>) jadi PNG dataURL
+// supaya bisa ditempel ke PDF via doc.addImage. <img> (sudah base64) dipakai langsung;
+// <svg> (Shape gambar tangan) dirasterisasi lewat <canvas> dulu.
+function _pdfHtmlBlockToImage(rawHtml) {
+  return new Promise(function(resolve){
+    try {
+      var wrap = document.createElement('div');
+      wrap.innerHTML = rawHtml;
+      var el = wrap.firstElementChild;
+      if (!el) { resolve(null); return; }
+      var imgEl = (el.tagName === 'IMG') ? el : el.querySelector('img');
+      var svgEl = (el.tagName === 'svg' || el.tagName === 'SVG') ? el : el.querySelector('svg');
+      if (imgEl && imgEl.getAttribute('src')) {
+        var im = new Image();
+        im.onload = function(){ resolve({ dataUrl: imgEl.getAttribute('src'), width: im.naturalWidth || im.width || 300, height: im.naturalHeight || im.height || 200 }); };
+        im.onerror = function(){ resolve(null); };
+        im.src = imgEl.getAttribute('src');
+        return;
+      }
+      if (svgEl) {
+        var vb = svgEl.viewBox && svgEl.viewBox.baseVal;
+        var svgW = parseFloat(svgEl.getAttribute('width')) || (vb && vb.width) || 400;
+        var svgH = parseFloat(svgEl.getAttribute('height')) || (vb && vb.height) || 300;
+        var svgStr = new XMLSerializer().serializeToString(svgEl);
+        if (svgStr.indexOf('xmlns=') < 0) svgStr = svgStr.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+        var svgData = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgStr)));
+        var im2 = new Image();
+        im2.onload = function(){
+          try {
+            var scale = 2;
+            var cnv = document.createElement('canvas');
+            cnv.width = Math.max(1, Math.round(svgW * scale));
+            cnv.height = Math.max(1, Math.round(svgH * scale));
+            var ctx = cnv.getContext('2d');
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cnv.width, cnv.height);
+            ctx.drawImage(im2, 0, 0, cnv.width, cnv.height);
+            resolve({ dataUrl: cnv.toDataURL('image/png'), width: svgW, height: svgH });
+          } catch (e) { resolve(null); }
+        };
+        im2.onerror = function(){ resolve(null); };
+        im2.src = svgData;
+        return;
+      }
+      resolve(null);
+    } catch (e) { resolve(null); }
+  });
+}
+// Ekstrak isi <table> dari blok HTML mentah jadi array baris (buat doc.autoTable).
+// Return null kalau blok itu bukan tabel (mis. img/shape) -> caller lanjut ke render gambar.
+function _pdfHtmlTableRows(rawHtml) {
+  try {
+    var wrap = document.createElement('div');
+    wrap.innerHTML = rawHtml;
+    var table = wrap.querySelector('table');
+    if (!table) return null;
+    var rows = [];
+    table.querySelectorAll('tr').forEach(function(tr){
+      var cells = [];
+      tr.querySelectorAll('td,th').forEach(function(td){
+        cells.push((td.textContent || '').replace(/\s+/g, ' ').trim());
+      });
+      if (cells.length) rows.push(cells);
+    });
+    return rows.length ? rows : null;
+  } catch (e) { return null; }
+}
+async function _pdfRenderMd(doc, mdText, opts) {
   opts = opts || {};
   var lines = (window.mdToStructuredLines ? window.mdToStructuredLines(mdText || '') : []);
   if (!lines.length) lines = [{ type: 'para', text: opts.emptyText || '(belum ada deskripsi)' }];
@@ -16715,6 +16804,42 @@ function _pdfRenderMd(doc, mdText, opts) {
   for (var k = 0; k < lines.length; k++) {
     var ln = lines[k];
     if (ln.type === 'blank') { y += 2.5; continue; }
+    if (ln.type === 'html') {
+      // Blok Tabel/Gambar/Shape sungguhan (bukan lagi placeholder teks "[Tabel/Gambar]") --
+      // tabel dirender via autoTable, gambar/shape dirasterisasi lalu ditempel via addImage.
+      var _rows = _pdfHtmlTableRows(ln.html);
+      if (_rows) {
+        ensureSpace(12);
+        doc.autoTable({
+          startY: y, margin: { left: marginL, right: marginR }, body: _rows,
+          theme: 'grid', styles: { fontSize: 8, cellPadding: 1.5, overflow: 'linebreak' }, tableWidth: maxW,
+        });
+        y = doc.lastAutoTable.finalY + 4;
+      } else {
+        var _img = await _pdfHtmlBlockToImage(ln.html);
+        if (_img && _img.dataUrl) {
+          var _ratio = _img.height / _img.width;
+          var _drawW = Math.min(maxW, _img.width * 0.264583);
+          var _drawH = _drawW * _ratio;
+          var _maxDrawH = pageH - marginTop - marginBot;
+          if (_drawH > _maxDrawH) { _drawH = _maxDrawH; _drawW = _drawH / _ratio; }
+          ensureSpace(_drawH + 3);
+          try {
+            var _fmt = _img.dataUrl.indexOf('image/png') >= 0 ? 'PNG' : 'JPEG';
+            doc.addImage(_img.dataUrl, _fmt, marginL, y, _drawW, _drawH);
+            y += _drawH + 4;
+          } catch (e) {
+            doc.setFont('helvetica', 'italic'); doc.setFontSize(9); doc.setTextColor(150, 150, 150);
+            ensureSpace(6); doc.text('[Gambar/Shape tidak dapat ditampilkan]', marginL, y); y += 6;
+          }
+        } else {
+          doc.setFont('helvetica', 'italic'); doc.setFontSize(9); doc.setTextColor(150, 150, 150);
+          ensureSpace(6); doc.text('[Tabel/Gambar tidak dapat ditampilkan]', marginL, y); y += 6;
+        }
+      }
+      doc.setTextColor(33, 37, 41);
+      continue;
+    }
     var fontSize = 9.5, fontStyle = 'normal', leftIndent = 2, prefix = '', topPad = 0;
     var textColor = [33, 37, 41];
     if (ln.type === 'heading') {
@@ -16738,7 +16863,7 @@ function _pdfRenderMd(doc, mdText, opts) {
     var lh = fontSize * 0.4 + 1.2; // mm per baris (approx Helvetica)
     var prefixW = prefix ? doc.getTextWidth(prefix) : 0;
 
-    // Baris dengan link → render JUDUL biru + bisa diklik (textWithLink), wrapping per-kata
+    // Baris dengan link/bold/italic → render JUDUL biru+link, TEBAL, MIRING (wrapping per-kata)
     if (ln.segments) {
       ensureSpace(lh + 0.5);
       var availW = maxW - leftIndent;
@@ -16751,13 +16876,17 @@ function _pdfRenderMd(doc, mdText, opts) {
         String(S(sg.text || '')).split(/(\s+)/).forEach(function(p){
           if (p === '') return;
           if (/^\s+$/.test(p)) words.push({ sp: true });
-          else words.push({ text: p, url: sg.url || null });
+          else words.push({ text: p, url: sg.url || null, bold: !!sg.bold, italic: !!sg.italic });
         });
       });
       var atStart = true;
       for (var wi = 0; wi < words.length; wi++) {
         var wd = words[wi];
         if (wd.sp) { if (!atStart) x += spaceW; continue; }
+        // Font per-kata: kata bold/italic dari **tebal**/*miring* dicetak dengan style aslinya,
+        // kata biasa pakai fontStyle dasar baris (mis. bold kalau ini heading).
+        var wStyle = (wd.bold && wd.italic) ? 'bolditalic' : (wd.bold ? 'bold' : (wd.italic ? 'italic' : fontStyle));
+        doc.setFont('helvetica', wStyle);
         var ww = doc.getTextWidth(wd.text);
         if (!atStart && (x + ww) > (x0 + availW)) { y += lh; ensureSpace(lh + 0.5); x = hangX; atStart = true; }
         if (wd.url) {
@@ -16768,6 +16897,7 @@ function _pdfRenderMd(doc, mdText, opts) {
         } else {
           doc.text(wd.text, x, y);
         }
+        doc.setFont('helvetica', fontStyle);
         x += ww; atStart = false;
       }
       y += lh;
@@ -26323,8 +26453,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     var PRI = (typeof PRIORITY_LABELS!=='undefined') ? PRIORITY_LABELS : {};
     var divs = (p.divisis||[]).join(', ');
     var pj = (p.anggota||[]).join(', ');
-    // Strip tag HTML mentah; biar markdown utuh untuk renderer terstruktur
-    var deskRaw = (p.deskripsi||'').replace(/<[^>]+>/g,' ');
+    var deskRaw = p.deskripsi || '';
 
     _pdfHeader(doc, 'LAPORAN DETAIL PROJECT - MUMI MB3', S(p.nama||'Project'));
     doc.autoTable({
@@ -26353,7 +26482,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
       body: [],
       styles:{fontSize:9}, headStyles:{fillColor:[37,99,235]},
     });
-    _pdfRenderMd(doc, deskRaw, { startY: doc.lastAutoTable.finalY + 4, emptyText: '(belum ada deskripsi)' });
+    await _pdfRenderMd(doc, deskRaw, { startY: doc.lastAutoTable.finalY + 4, emptyText: '(belum ada deskripsi)' });
     if(tasks.length){
       var done = tasks.filter(function(t){ return t.done; }).length;
       doc.autoTable({
