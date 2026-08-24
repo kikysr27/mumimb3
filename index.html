@@ -4718,9 +4718,10 @@ CREATE POLICY "spin_archives_all" ON spin_archives FOR ALL USING (true) WITH CHE
         <input type="checkbox" id="edTampilAbsensi" style="width:18px;height:18px;accent-color:#1a6644;margin:0;flex-shrink:0;">
         <span>
           <span style="font-size:13px;font-weight:700;color:#1a6644;display:block;">📋 Tampil di Absensi</span>
-          <span style="font-size:11px;color:#7a9585;font-weight:400;text-transform:none;letter-spacing:0;">Nonaktifkan jika anggota ini tidak perlu diabsen (contoh: bertugas di balik layar / luar kota)</span>
+          <span style="font-size:11px;color:#7a9585;font-weight:400;text-transform:none;letter-spacing:0;">Nonaktifkan jika anggota ini tidak perlu diabsen (contoh: bertugas di balik layar / luar kota).</span>
         </span>
       </label>
+
       <!-- Keluarkan Anggota (dari MUMI) — beda dari status Tidak Aktif biasa:
            tercatat alasan (menikah/pindah domisili/dll) + tanggal, direkap di Laporan. -->
       <div id="edKeluarBox" style="margin-bottom:10px;"></div>
@@ -8053,7 +8054,7 @@ window._getAllMembersList = function(){
   } catch(e){}
   if(!list.length && window.anggotaFull && Array.isArray(window.anggotaFull)){
     list = window.anggotaFull
-      .filter(function(a){ return a.tampil_absensi !== false; })
+      .filter(function(a){ return a.status !== 'tidak_aktif'; })
       .map(function(a){ return {id:a.id, name:a.nama||a.name||'', role:'Anggota', divisi:''}; });
   }
   return list.filter(function(m){ return m.name; });
@@ -10442,7 +10443,7 @@ function showSekolahSqlNotice() {
     'ALTER TABLE anggota ADD COLUMN IF NOT EXISTS jenjang_sekolah TEXT;\n' +
     'ALTER TABLE anggota ADD COLUMN IF NOT EXISTS nama_sekolah TEXT;\n' +
     'ALTER TABLE anggota ADD COLUMN IF NOT EXISTS nama_panggilan TEXT;\n' +
-    'ALTER TABLE anggota ADD COLUMN IF NOT EXISTS sambung_kelompok BOOLEAN DEFAULT false;\n\n' +
+    'ALTER TABLE anggota ADD COLUMN IF NOT EXISTS sambung_kelompok BOOLEAN DEFAULT false;\n' +
     'Setelah itu reload halaman & coba simpan lagi.\n' +
     '(Data lain tetap tersimpan untuk sekarang.)'
   );
@@ -13959,10 +13960,10 @@ async function loadPeriodeDetail(id) {
   const { data: keluarD } = await db.from('qurban_keluar').select('*').eq('periode_id', id).order('tanggal', { ascending: false });
   // Fetch anggota beserta kategori (untuk target per kategori)
   const { data: angD } = await db.from('anggota')
-    .select('id, nama, kategori_id, kategori_anggota(id, nama), tampil_absensi')
+    .select('id, nama, status, kategori_id, kategori_anggota(id, nama), tampil_absensi')
     .order('nama');
   const bayar = bayarD || [], keluar = keluarD || [], ang = angD || [];
-  qurbanAngList = ang.filter(a => a.tampil_absensi !== false).map(a => ({ id: a.id, nama: a.nama }));
+  qurbanAngList = ang.filter(a => a.status !== 'tidak_aktif').map(a => ({ id: a.id, nama: a.nama }));
 
   // ── Anak GP yang diikutkan ke periode qurban ini (terpisah dari anggota MUMI) ──
   const qIkutGpmt = per.ikut_gpmt === true, qIkutGpsd = per.ikut_gpsd === true;
@@ -14014,8 +14015,8 @@ async function loadPeriodeDetail(id) {
       if (paid >= tgt) status = 'lunas';
       else if (paid > 0) status = 'sebagian';
     } else if (paid > 0) status = 'bayar';
-    // Anggota tidak dicentang: hanya tampil jika ada pembayaran
-    const tampil = a.tampil_absensi !== false;
+    // Anggota tidak dicentang "Wajib di Acara/Project/Kas/Qurban": hanya tampil jika ada pembayaran
+    const tampil = a.status !== 'tidak_aktif';
     if (!tampil && paid === 0) return null;
     return { id: a.id, nama: a.nama, katId, katNama, paid, count, tgt, sisa: sisa2, status };
   }).filter(Boolean);
@@ -14154,7 +14155,7 @@ async function loadPeriodeDetail(id) {
       <div class="qd-bayar-form" style="display:none;margin-top:10px;">
       <label>Nama Siswa</label>
       <input type="text" id="qdBayarSearch" autocomplete="off" placeholder="🔍 Cari nama siswa..." oninput="filterSiswa('qdBayarSearch','qdBayarAng',qurbanAngList)">
-      <select id="qdBayarAng">${ang.filter(a => a.tampil_absensi !== false).length ? ang.filter(a => a.tampil_absensi !== false).map(a => {
+      <select id="qdBayarAng">${ang.filter(a => a.status !== 'tidak_aktif').length ? ang.filter(a => a.status !== 'tidak_aktif').map(a => {
         const katNama = a.kategori_anggota ? ' ('+a.kategori_anggota.nama+')' : '';
         const tgt = a.kategori_id && tpk[String(a.kategori_id)] ? ' — target '+IDR(tpk[String(a.kategori_id)]) : '';
         return `<option value="${a.id}">${escapeHtml(a.nama+katNama+tgt)}</option>`;
@@ -14948,7 +14949,7 @@ async function exportAcaraDetailPDF(acaraId) {
   const allRows = allD || [], ang = angD || [];
   const bayar  = allRows.filter(b => !b.tipe || b.tipe === 'masuk');
   const keluar = allRows.filter(b => b.tipe === 'keluar');
-  const angTampil = ang.filter(x => x.status === 'aktif' && x.tampil_absensi !== false);
+  const angTampil = ang.filter(x => x.status !== 'tidak_aktif');
   let tpk = {}; try { tpk = a.target_per_kategori ? JSON.parse(JSON.stringify(a.target_per_kategori)) : {}; } catch (_) {}
   const biaya = Number(a.biaya_per_siswa || 0);
   const angMap = {}; ang.forEach(x => { angMap[String(x.id)] = x; });
@@ -15270,8 +15271,8 @@ async function renderAcaraBayar(acaraId) {
   const bayar  = allRows.filter(b => !b.tipe || b.tipe === 'masuk');
   const keluar = allRows.filter(b => b.tipe === 'keluar');
 
-  // Dropdown hanya anggota aktif yang dicentang tampil_absensi
-  const angTampil = ang.filter(a => a.status === 'aktif' && a.tampil_absensi !== false);
+  // Dropdown: anggota yang dicentang "Wajib di Acara/Project/Kas/Qurban" (terpisah dari status/absensi)
+  const angTampil = ang.filter(a => a.status !== 'tidak_aktif');
   acaraAngList = angTampil.map(a => ({ id: a.id, nama: a.nama }));
 
   // ── Anak GP yang diikutkan ke acara ini (terpisah dari anggota MUMI) ──
@@ -16456,7 +16457,7 @@ async function loadIuran() {
     label = BULAN[mm-1] + ' ' + yy;
   }
   $('iuranResult').innerHTML = '<p class="muted">Memuat...</p>';
-  const { data: ang } = await db.from('anggota').select('id, nama, kategori_anggota(nama, iuran_kas), tampil_absensi')
+  const { data: ang } = await db.from('anggota').select('id, nama, kategori_anggota(nama, iuran_kas), tampil_absensi, sambung_kelompok')
     .eq('status', 'aktif').order('nama');
   const { data: tx } = await db.from('transaksi').select('anggota_id, jumlah')
     .eq('tipe', 'masuk').in('kategori', ['iuran', 'kas_bulanan']).not('anggota_id', 'is', null)
@@ -16473,8 +16474,8 @@ async function loadIuran() {
     if (target === 0) status = 'tanpa';            // tidak ada kewajiban iuran (Rp 0) → netral, tidak dihitung lunas/belum
     else if (bayar >= target) status = 'lunas';
     else if (bayar > 0) status = 'sebagian';
-    // Anggota tidak dicentang tampil_absensi: hanya muncul jika ada kontribusi (bayar > 0)
-    const tampil = a.tampil_absensi !== false;
+    // Non-aktif ditampil_absensi ATAU Sambung di Kelompok: hanya muncul jika ada kontribusi (bayar > 0)
+    const tampil = a.tampil_absensi !== false && a.sambung_kelompok !== true;
     if (!tampil && bayar === 0) return null;
     return { id: a.id, nama: a.nama, kategori: kat ? kat.nama : '(tanpa kategori)', iuran, target, bayar, status, tampil };
   }).filter(Boolean);
@@ -19384,8 +19385,8 @@ async function _cekStatusSemuaBulan(tampilMsg) {
   const { data: bulanList } = await db.from('kas_bulan').select('*').order('bulan', { ascending: false });
   if (!bulanList || !bulanList.length) { kasBulanCache = []; renderKasBulan(); return; }
 
-  const { data: ang } = await db.from('anggota').select('id, kategori_anggota(iuran_kas)').eq('status', 'aktif');
-  const anggota = ang || [];
+  const { data: ang } = await db.from('anggota').select('id, kategori_anggota(iuran_kas), sambung_kelompok').eq('status', 'aktif');
+  const anggota = (ang || []).filter(a => a.sambung_kelompok !== true);
   const bulanIni = new Date().toISOString().slice(0, 7); // "YYYY-MM" — utk deteksi bulan lewat
 
   // Untuk tiap bulan, hitung apakah semua siswa sudah lunas
@@ -26022,7 +26023,7 @@ console.log('✅ Audit Log Komprehensif aktif — semua aktivitas user tercatat.
     // Fallback ke anggotaFull global (dari menu Anggota)
     if(!list.length && window.anggotaFull && Array.isArray(window.anggotaFull)){
       list = window.anggotaFull
-        .filter(function(a){ return a.tampil_absensi !== false; })
+        .filter(function(a){ return a.status !== 'tidak_aktif'; })
         .map(function(a){ return {id:a.id, name:a.nama||a.name||'', role:'Anggota', divisi:''}; });
     }
     return list.filter(function(m){ return m.name; });
