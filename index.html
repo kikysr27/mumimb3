@@ -8,6 +8,7 @@
 <!-- chart.js & jspdf di-defer: dimuat di latar belakang, tidak menghambat login -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js" defer></script>
 <!-- Cloudflare Turnstile: proteksi form Login/Daftar/Lupa Password dari bot pendaftaran
      massal. Gratis tanpa batas, lebih modern dari captcha klasik (checkbox tanpa puzzle
@@ -2703,6 +2704,36 @@
           <div><label>Sesi</label><select id="absSesi" onchange="loadAbsensi()"></select></div>
         </div>
 
+        <!-- ═══ ABSEN MANDIRI VIA QR ═══ -->
+        <div id="qrPanel" style="display:none;background:#f0f7f3;border:1.5px solid #2d9e6b;border-radius:12px;padding:12px 14px;margin:6px 0 12px;">
+          <div style="font-size:13px;font-weight:800;color:#1a6644;margin-bottom:2px;">📱 Absen Mandiri via QR</div>
+          <div class="muted" style="font-size:11px;margin-bottom:8px;">Cetak / kirim QR ke grup. Anggota scan lalu pilih Hadir atau Izin. <b>Sesi otomatis tertutup saat jam tutup lewat</b> — yang belum mengisi dicatat Tidak Hadir. Anak GPMT/GPSD ikut bisa scan bila dicentang di "Ikutkan Anak GP di Sesi Ini" (di bawah). Untuk yang tidak punya HP atau salah isi, admin tetap bisa input/ubah manual di bawah.</div>
+          <div id="qrErr" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:8px;padding:8px 10px;font-size:12px;margin-bottom:8px;"></div>
+          <div id="qrForm">
+            <div class="row">
+              <div><label>Dibuka</label><input type="datetime-local" id="qrBuka"></div>
+              <div><label>Ditutup</label><input type="datetime-local" id="qrTutup"></div>
+            </div>
+            <button id="qrBtnBuat" onclick="qrBuat()">🔲 Buat QR</button>
+          </div>
+          <div id="qrExisting" style="display:none;margin-top:12px;text-align:center;">
+            <div id="qrStatusLine" style="font-size:12px;font-weight:700;margin-bottom:8px;"></div>
+            <div id="qrCanvasBox" style="display:inline-block;background:#fff;padding:10px;border-radius:10px;"></div>
+            <div style="margin-top:8px;"><input type="text" id="qrLink" readonly onclick="this.select()" style="font-size:11px;text-align:center;"></div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:6px;">
+              <button class="small secondary" onclick="qrSalin()">📋 Salin Link</button>
+              <button class="small secondary" onclick="qrDownload()">⬇️ Unduh Gambar</button>
+              <button class="small secondary" onclick="qrCetak()">🖨️ Cetak</button>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:10px;">
+              <button class="small secondary" onclick="qrRefreshScan()">🔄 Cek yang Sudah Scan</button>
+              <button class="small danger" onclick="qrTutupSesi()">🔒 Tutup Sekarang</button>
+            </div>
+            <div class="muted" style="font-size:11px;margin-top:6px;">Tidak wajib ditekan — otomatis tertutup di jam tutup.</div>
+            <div id="qrScanList" style="margin-top:10px;text-align:left;font-size:12px;"></div>
+          </div>
+        </div>
+
         <!-- Centang ikutkan grup GP di sesi ini (per sesi, default mati) -->
         <div id="absGpInclude" style="display:none;background:#f5f3ff;border:1.5px solid #ddd6fe;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
           <div style="font-size:11px;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">🧒👧 Ikutkan Anak GP di Sesi Ini</div>
@@ -4940,6 +4971,7 @@ function _roBlockedResult() {
     if (_roNow()) { _roToast(); return _roBlockedResult(); }
     return origRpc.apply(null, arguments);
   };
+  db.rpcRaw = origRpc;   // panggilan sistem (mis. tutup otomatis) — tidak kena mode lihat-saja
 })();
 
 // Tombol/aksi "tulis" di section mode-lihat-saja: diredupkan + klik diblokir.
@@ -4987,6 +5019,279 @@ function _applyRoUI() {
     '[data-theme="dark"] #ro-banner{background:#13233d;border-color:#1e3a6e;color:#93c5fd;}' +
     '.ro-dim{opacity:.4 !important;filter:grayscale(.6);cursor:not-allowed !important;}';
   document.head.appendChild(st);
+})();
+
+
+// ════════════════ ABSEN MANDIRI VIA QR ════════════════
+let _qrCur = null;
+const _esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function _qrLink(kode) { return location.href.split('#')[0].split('?')[0] + '?absen=' + encodeURIComponent(kode); }
+function _qrLocalDT(d) {
+  const p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+function _qrSesiNama(id) { const x = (typeof sesiCache !== 'undefined' ? sesiCache : []).find(z => String(z.id) === String(id)); return x ? x.nama : 'Pengajian'; }
+function _qrFmtTgl(tgl) { const [y, m, d] = tgl.split('-').map(Number); return d + ' ' + BULAN[m - 1] + ' ' + y; }
+function _qrFmtJam(iso) { return new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':'); }
+function _qrDefaults(tgl, sesiId) {
+  const now = new Date();
+  const sc = (typeof sesiCache !== 'undefined' ? sesiCache : []).find(z => String(z.id) === String(sesiId));
+  let buka = now, tutup = new Date(now.getTime() + 3 * 3600e3);
+  const mk = (jam) => { const [h, m] = String(jam).split(':').map(Number); const t = new Date(tgl + 'T00:00:00'); t.setHours(h || 0, m || 0, 0, 0); return t; };
+  if (sc && sc.jam_mulai) { const b = new Date(mk(sc.jam_mulai).getTime() - 30 * 60e3); if (b > now) buka = b; }
+  if (sc && sc.jam_selesai) { const t = mk(sc.jam_selesai); if (t > buka) tutup = t; }
+  return { buka, tutup };
+}
+// Tutup otomatis: semua QR yang jam tutupnya lewat → yang belum mengisi jadi Tidak Hadir.
+// Dipanggil saat Absensi / Rekap dibuka (cadangan bila pg_cron belum aktif). Diam-diam bila SQL belum dipasang.
+async function _absenAutoTutup(force) {
+  const now = Date.now();
+  if (!force && window._autoTutupAt && now - window._autoTutupAt < 20000) return;
+  window._autoTutupAt = now;
+  try { await (db.rpcRaw || db.rpc).call(db, 'absen_tutup_otomatis'); } catch (e) {}
+}
+function _qrShowErr(msg) { const e = $('qrErr'); if (!e) return; e.style.display = msg ? 'block' : 'none'; e.textContent = msg || ''; }
+
+async function qrLoadPanel() {
+  const panel = $('qrPanel'); if (!panel) return;
+  const tgl = $('absTanggal').value, sesiId = $('absSesi').value;
+  _qrCur = null; _qrShowErr('');
+  if (!tgl || !sesiId) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  await _absenAutoTutup();
+  const { data, error } = await db.from('absen_qr').select('*').eq('tanggal', tgl).eq('sesi_id', sesiId).maybeSingle();
+  if (error) {
+    $('qrForm').style.display = 'none'; $('qrExisting').style.display = 'none';
+    _qrShowErr('Fitur QR belum aktif: jalankan file absen_qr.sql di Supabase → SQL Editor dulu. (' + error.message + ')');
+    return;
+  }
+  $('qrForm').style.display = 'block';
+  _qrCur = data || null;
+  if (data) { $('qrBuka').value = _qrLocalDT(new Date(data.buka)); $('qrTutup').value = _qrLocalDT(new Date(data.tutup)); }
+  else { const d = _qrDefaults(tgl, sesiId); $('qrBuka').value = _qrLocalDT(d.buka); $('qrTutup').value = _qrLocalDT(d.tutup); }
+  $('qrBtnBuat').textContent = data ? '💾 Perbarui Jam / Buka Lagi' : '🔲 Buat QR';
+  if (!data) { $('qrExisting').style.display = 'none'; return; }
+  $('qrExisting').style.display = 'block';
+  _qrRender();
+  qrRefreshScan();
+}
+
+function _qrRender() {
+  if (!_qrCur) return;
+  const box = $('qrCanvasBox'); box.innerHTML = '';
+  const link = _qrLink(_qrCur.kode);
+  $('qrLink').value = link;
+  const now = new Date(), b = new Date(_qrCur.buka), t = new Date(_qrCur.tutup);
+  let st, col;
+  if (!_qrCur.aktif || now > t) { st = '🔒 Ditutup'; col = '#b91c1c'; }
+  else if (now < b)             { st = '⏳ Belum dibuka — mulai ' + _qrFmtJam(_qrCur.buka); col = '#b45309'; }
+  else                          { st = '🟢 Sedang dibuka — sampai ' + _qrFmtJam(_qrCur.tutup); col = '#15803d'; }
+  const sl = $('qrStatusLine'); sl.textContent = st; sl.style.color = col;
+  if (typeof QRCode === 'undefined') { box.innerHTML = '<div class="muted" style="font-size:12px;max-width:240px;">Library QR belum termuat (cek internet lalu buka ulang menu ini). Link di bawah tetap bisa dibagikan.</div>'; return; }
+  new QRCode(box, { text: link, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
+}
+
+async function qrBuat() {
+  const tgl = $('absTanggal').value, sesiId = parseInt($('absSesi').value);
+  if (!tgl || !sesiId) { alert('Pilih tanggal & sesi dulu.'); return; }
+  const b = new Date($('qrBuka').value), t = new Date($('qrTutup').value);
+  if (isNaN(b) || isNaN(t)) { alert('Isi jam dibuka dan ditutup.'); return; }
+  if (t <= b) { alert('Jam ditutup harus setelah jam dibuka.'); return; }
+  let error;
+  if (_qrCur) {
+    ({ error } = await db.from('absen_qr').update({ buka: b.toISOString(), tutup: t.toISOString(), aktif: true }).eq('id', _qrCur.id));
+  } else {
+    const arr = new Uint8Array(10); crypto.getRandomValues(arr);
+    const abc = 'abcdefghjkmnpqrstuvwxyz23456789';
+    const kode = Array.from(arr, x => abc[x % abc.length]).join('');
+    ({ error } = await db.from('absen_qr').insert({ kode, sesi_id: sesiId, tanggal: tgl, buka: b.toISOString(), tutup: t.toISOString(), aktif: true, dibuat_oleh: currentProf ? currentProf.id : null }));
+  }
+  if (error) { if (error.code !== 'RO_BLOCK') alert('Gagal menyimpan QR: ' + error.message); return; }
+  showToast('✅ QR siap dipakai', 'success');
+  await qrLoadPanel();
+}
+
+async function qrRefreshScan() {
+  if (!_qrCur) return;
+  const el = $('qrScanList');
+  const { data, error } = await db.from('kehadiran').select('status, alasan, anggota(nama)')
+    .eq('tanggal', _qrCur.tanggal).eq('sesi_id', _qrCur.sesi_id).eq('sumber', 'qr');
+  if (error) { el.innerHTML = '<span class="muted">Gagal memuat: ' + _esc(error.message) + '</span>'; return; }
+  let rows = (data || []).map(r => ({ status: r.status, alasan: r.alasan, nama: r.anggota?.nama || '?' }));
+  // anak GPMT / GPSD yang ikut scan
+  try {
+    const { data: g } = await db.from('kehadiran_gp').select('gp_tipe, gp_id, status, alasan')
+      .eq('tanggal', _qrCur.tanggal).eq('sesi_id', _qrCur.sesi_id).eq('sumber', 'qr');
+    for (const tipe of ['gpmt', 'gpsd']) {
+      const sub = (g || []).filter(r => r.gp_tipe === tipe);
+      if (!sub.length) continue;
+      const { data: nm } = await db.from(tipe).select('id, nama').in('id', sub.map(r => r.gp_id));
+      const map = {}; (nm || []).forEach(x => { map[x.id] = x.nama; });
+      sub.forEach(r => rows.push({ status: r.status, alasan: r.alasan, nama: (map[r.gp_id] || '?') + ' (' + tipe.toUpperCase() + ')' }));
+    }
+  } catch (e) {}
+  rows.sort((a, c) => a.nama.localeCompare(c.nama));
+  const h = rows.filter(r => r.status === 'hadir').length, iz = rows.filter(r => r.status === 'izin').length;
+  el.innerHTML = '<div style="font-weight:700;color:#1a6644;">✅ ' + rows.length + ' sudah mengisi · ' + h + ' hadir · ' + iz + ' izin</div>' +
+    (rows.length ? '<details style="margin-top:4px;"><summary style="cursor:pointer;color:#7a9585;">Lihat nama</summary><div style="margin-top:4px;line-height:1.7;">' +
+      rows.map(r => (r.status === 'hadir' ? '✅ ' : '📝 ') + _esc(r.nama) + (r.alasan ? ' <span class="muted">— ' + _esc(r.alasan) + '</span>' : '')).join('<br>') +
+      '</div></details>' : '');
+}
+
+async function qrTutupSesi() {
+  if (!_qrCur) return;
+  if (!confirm('Tutup sesi SEKARANG (sebelum jam tutup)?\n\nSemua yang belum mengisi akan dicatat TIDAK HADIR, dan QR tidak bisa dipakai lagi.')) return;
+  const { data, error } = await db.rpc('absen_tutup', { p_kode: _qrCur.kode });
+  if (error) { if (error.code !== 'RO_BLOCK') alert('Gagal menutup sesi: ' + error.message); return; }
+  if (data && data.ok === false) { alert(data.msg || 'Gagal menutup sesi.'); return; }
+  showToast('🔒 Sesi ditutup · ' + (data ? data.tidak_hadir : 0) + ' orang dicatat Tidak Hadir', 'success');
+  try { await loadAbsensi(); } catch (e) { await qrLoadPanel(); }
+}
+
+function qrSalin() {
+  const inp = $('qrLink'); inp.select();
+  const done = () => showToast('📋 Link disalin', 'success');
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(inp.value).then(done, () => { document.execCommand('copy'); done(); });
+  else { document.execCommand('copy'); done(); }
+}
+
+// Poster siap kirim ke grup / cetak: judul + QR + jam
+function _qrPoster() {
+  const src = $('qrCanvasBox').querySelector('canvas');
+  if (!src || !_qrCur) return null;
+  const W = 720, H = 920, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#1a6644'; x.fillRect(0, 0, W, 170);
+  x.fillStyle = '#fff'; x.textAlign = 'center';
+  x.font = '700 30px Arial, sans-serif'; x.fillText('ABSENSI PENGAJIAN', W / 2, 62);
+  let fs = 44; const nm = _qrSesiNama(_qrCur.sesi_id);
+  do { x.font = '800 ' + fs + 'px Arial, sans-serif'; fs -= 2; } while (x.measureText(nm).width > W - 60 && fs > 20);
+  x.fillText(nm, W / 2, 124);
+  x.fillStyle = '#1f2937'; x.font = '600 28px Arial, sans-serif';
+  x.fillText(_qrFmtTgl(_qrCur.tanggal), W / 2, 225);
+  x.fillStyle = '#15803d'; x.font = '700 26px Arial, sans-serif';
+  x.fillText('Dibuka ' + _qrFmtJam(_qrCur.buka) + ' – ' + _qrFmtJam(_qrCur.tutup), W / 2, 265);
+  x.fillStyle = '#f0f7f3'; x.fillRect(110, 290, 500, 500);
+  x.imageSmoothingEnabled = false; x.drawImage(src, 130, 310, 460, 460);
+  x.fillStyle = '#1f2937'; x.font = '700 30px Arial, sans-serif';
+  x.fillText('Scan lalu pilih namamu:', W / 2, 840);
+  x.font = '600 28px Arial, sans-serif'; x.fillText('Hadir  atau  Izin', W / 2, 880);
+  return c;
+}
+function qrDownload() {
+  const c = _qrPoster(); if (!c) { alert('QR belum tampil.'); return; }
+  c.toBlob(b => {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+    a.download = ('qr-absen-' + _qrSesiNama(_qrCur.sesi_id) + '-' + _qrCur.tanggal).replace(/[^A-Za-z0-9-]+/g, '-') + '.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }, 'image/png');
+}
+function qrCetak() {
+  const c = _qrPoster(); if (!c) { alert('QR belum tampil.'); return; }
+  const w = window.open('', '_blank');
+  if (!w) { alert('Pop-up diblokir browser. Izinkan pop-up atau pakai tombol Unduh Gambar.'); return; }
+  w.document.write('<!doctype html><title>QR Absen</title><style>@page{margin:10mm}body{margin:0;text-align:center}img{width:100%;max-width:700px}</style><img src="' + c.toDataURL('image/png') + '" onload="setTimeout(function(){window.print()},300)">');
+  w.document.close();
+}
+
+// Segarkan panel QR setiap kali tanggal/sesi/roster absensi dimuat ulang
+(function () {
+  const orig = window.loadAbsensi;
+  if (typeof orig !== 'function') return;
+  window.loadAbsensi = async function () {
+    await _absenAutoTutup();
+    const r = await orig.apply(this, arguments);
+    try { window._absLoaded = Object.assign({}, absenState); } catch (e) { window._absLoaded = {}; }
+    try { await qrLoadPanel(); } catch (e) {}
+    return r;
+  };
+})();
+
+// ════════════════ HALAMAN ABSEN ANGGOTA (link QR: ?absen=KODE) ════════════════
+(function absenPublicPage() {
+  const kode = new URLSearchParams(location.search).get('absen');
+  if (!kode) return;
+  const start = () => {
+    document.documentElement.style.overflow = 'hidden';
+    const ov = document.createElement('div');
+    ov.id = 'absenPublic';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483000;overflow:auto;background:linear-gradient(160deg,#14573a,#1f7a50);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%;';
+    ov.innerHTML = '<div id="apWrap" style="max-width:480px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 16px 40px;"></div>';
+    document.body.appendChild(ov);
+    const wrap = ov.querySelector('#apWrap');
+    const card = h => '<div style="background:#fff;border-radius:16px;padding:18px 16px;box-shadow:0 6px 24px rgba(0,0,0,.2);color:#1f2937;">' + h + '</div>';
+    const head = (info) => '<div style="text-align:center;color:#fff;margin:8px 0 14px;"><div style="font-size:13px;opacity:.85;letter-spacing:.5px;">ABSENSI PENGAJIAN</div>' +
+      '<div style="font-size:22px;font-weight:800;margin-top:2px;">' + _esc(info.sesi || 'Pengajian') + '</div>' +
+      '<div style="font-size:13px;opacity:.9;margin-top:2px;">' + _qrFmtTgl(String(info.tanggal).slice(0, 10)) + ' · ' + _qrFmtJam(info.buka) + ' – ' + _qrFmtJam(info.tutup) + '</div></div>';
+    const msgCard = (icon, t, sub) => card('<div style="text-align:center;padding:14px 4px;"><div style="font-size:44px;">' + icon + '</div><div style="font-size:17px;font-weight:800;margin-top:6px;">' + _esc(t) + '</div>' + (sub ? '<div style="font-size:13px;color:#6b7280;margin-top:6px;line-height:1.5;">' + _esc(sub) + '</div>' : '') + '</div>');
+    let info = null, picked = null;
+
+    function showList(filter) {
+      const q = (filter || '').toLowerCase().trim();
+      const list = info.anggota.filter(a => !q || String(a.nama).toLowerCase().includes(q));
+      const LBL = { mumi: 'MUMI', gpmt: 'GPMT', gpsd: 'GPSD' };
+      const present = ['mumi', 'gpmt', 'gpsd'].filter(g => list.some(a => (a.tipe || 'mumi') === g));
+      const row = a => a.sudah
+        ? '<div style="padding:12px;border-radius:10px;color:#9ca3af;display:flex;justify-content:space-between;"><span>' + _esc(a.nama) + '</span><span style="font-size:12px;">✔ sudah mengisi</span></div>'
+        : '<button data-key="' + (a.tipe || 'mumi') + ':' + a.id + '" style="display:block;width:100%;text-align:left;padding:13px 12px;margin:0 0 6px;border:1.5px solid #e5e7eb;background:#f9fafb;border-radius:10px;font-size:16px;font-weight:600;color:#1f2937;">' + _esc(a.nama) + '</button>';
+      const body = present.map(g =>
+        (present.length > 1 ? '<div style="font-size:11px;font-weight:800;color:#6b7280;margin:10px 2px 6px;letter-spacing:.5px;">' + LBL[g] + '</div>' : '') +
+        list.filter(a => (a.tipe || 'mumi') === g).map(row).join('')
+      ).join('');
+      wrap.innerHTML = head(info) + card(
+        '<div style="font-weight:800;margin-bottom:8px;">Pilih namamu</div>' +
+        '<input id="apSearch" type="search" placeholder="🔍 Ketik nama..." autocomplete="off" value="' + _esc(filter || '') + '" style="width:100%;box-sizing:border-box;padding:12px;font-size:16px;border:2px solid #cfe3d8;border-radius:10px;outline:none;margin-bottom:10px;">' +
+        '<div style="max-height:56vh;overflow:auto;">' +
+        (body || '<div style="text-align:center;color:#6b7280;padding:16px;">Nama tidak ditemukan.</div>') +
+        '</div>');
+      const inp = wrap.querySelector('#apSearch');
+      inp.addEventListener('input', () => { const pos = inp.selectionStart; showList(inp.value); const n = wrap.querySelector('#apSearch'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} });
+      wrap.querySelectorAll('button[data-key]').forEach(b => b.addEventListener('click', () => { picked = info.anggota.find(a => ((a.tipe || 'mumi') + ':' + a.id) === b.dataset.key); showChoose(); }));
+    }
+
+    function showChoose(izin) {
+      wrap.innerHTML = head(info) + card(
+        '<div style="text-align:center;font-size:13px;color:#6b7280;">Halo,</div>' +
+        '<div style="text-align:center;font-size:22px;font-weight:800;margin-bottom:14px;">' + _esc(picked.nama) + (picked.tipe && picked.tipe !== 'mumi' ? ' <span style="font-size:13px;color:#6b7280;">(' + picked.tipe.toUpperCase() + ')</span>' : '') + '</div>' +
+        (izin
+          ? '<label style="font-size:13px;font-weight:700;">Alasan izin (boleh dikosongkan)</label>' +
+            '<textarea id="apAlasan" maxlength="200" rows="3" placeholder="Contoh: sakit / kerja / keluar kota" style="width:100%;box-sizing:border-box;padding:10px;font-size:16px;border:2px solid #cfe3d8;border-radius:10px;margin:6px 0 10px;font-family:inherit;"></textarea>' +
+            '<button id="apKirimIzin" style="width:100%;padding:15px;font-size:17px;font-weight:800;border:0;border-radius:12px;background:#d97706;color:#fff;">📝 Kirim Izin</button>'
+          : '<button id="apHadir" style="width:100%;padding:18px;font-size:19px;font-weight:800;border:0;border-radius:12px;background:#16a34a;color:#fff;margin-bottom:10px;">✅ HADIR</button>' +
+            '<button id="apIzin" style="width:100%;padding:18px;font-size:19px;font-weight:800;border:0;border-radius:12px;background:#f59e0b;color:#fff;">📝 IZIN</button>') +
+        '<div id="apErr" style="display:none;margin-top:10px;background:#fef2f2;color:#b91c1c;border-radius:8px;padding:9px 10px;font-size:13px;"></div>' +
+        '<button id="apBack" style="width:100%;margin-top:12px;padding:10px;font-size:14px;border:0;background:transparent;color:#6b7280;">← Bukan saya</button>');
+      const err = m => { const e = wrap.querySelector('#apErr'); e.style.display = 'block'; e.textContent = m; };
+      wrap.querySelector('#apBack').addEventListener('click', () => showList(''));
+      const kirim = async (status, alasan) => {
+        wrap.querySelectorAll('button').forEach(b => b.disabled = true);
+        const { data, error } = await db.rpc('absen_kirim', { p_kode: kode, p_anggota_id: picked.id, p_status: status, p_alasan: alasan || null, p_tipe: picked.tipe || 'mumi' });
+        wrap.querySelectorAll('button').forEach(b => b.disabled = false);
+        if (error) { err('Gagal mengirim: ' + error.message + '. Coba lagi.'); return; }
+        if (!data || !data.ok) { err((data && data.msg) || 'Gagal mengirim.'); if (data && data.sudah) picked.sudah = true; return; }
+        picked.sudah = true;
+        wrap.innerHTML = head(info) + msgCard(status === 'hadir' ? '✅' : '📝', 'Tercatat: ' + (status === 'hadir' ? 'HADIR' : 'IZIN'), picked.nama + ' — terima kasih. Kamu boleh menutup halaman ini.');
+      };
+      if (izin) wrap.querySelector('#apKirimIzin').addEventListener('click', () => kirim('izin', wrap.querySelector('#apAlasan').value.trim()));
+      else {
+        wrap.querySelector('#apHadir').addEventListener('click', () => kirim('hadir'));
+        wrap.querySelector('#apIzin').addEventListener('click', () => showChoose(true));
+      }
+    }
+
+    wrap.innerHTML = '<div style="text-align:center;color:#fff;padding:60px 0;font-size:16px;">Memuat absensi...</div>';
+    db.rpc('absen_info', { p_kode: kode }).then(({ data, error }) => {
+      if (error) { wrap.innerHTML = msgCard('⚠️', 'Gagal memuat', error.message); return; }
+      if (!data || !data.ok) { wrap.innerHTML = msgCard('❓', 'Link tidak valid', data && data.msg); return; }
+      info = data;
+      if (data.status === 'belum_buka') wrap.innerHTML = head(data) + msgCard('⏳', 'Absensi belum dibuka', 'Silakan scan lagi mulai pukul ' + _qrFmtJam(data.buka) + '.');
+      else if (data.status === 'tutup') wrap.innerHTML = head(data) + msgCard('🔒', 'Absensi sudah ditutup', 'Hubungi pengurus bila kamu belum sempat mengisi.');
+      else showList('');
+    }).catch(e => { wrap.innerHTML = msgCard('⚠️', 'Gagal memuat', String(e && e.message || e)); });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
 // ════════════════ RESET PASSWORD — "Buat Password Baru" ════════════════
@@ -13608,9 +13913,29 @@ async function simpanAbsensi() {
   if (!tgl || !sesiId) { setMsg('absMsg', 'Pilih tanggal & sesi dulu', true); return; }
   if (!anggotaCache.length) { setMsg('absMsg', 'Belum ada anggota aktif', true); return; }
   const nowIso = new Date().toISOString();
+  // ── DATA SCAN QR DIUTAMAKAN ──
+  // Nama yang sudah mengisi lewat QR tidak ditimpa oleh simpan manual, kecuali admin
+  // sengaja mengubah statusnya di layar (koreksi manual). Scan yang masuk setelah daftar
+  // dimuat tetap dipertahankan.
+  const _qrKeep = new Set();
+  try {
+    const loaded = window._absLoaded || {};
+    const keepIf = (key, status) => {
+      const cur = absenState[key], was = loaded[key];
+      if (was === undefined || !cur || cur === was) { absenState[key] = status; _qrKeep.add(key); }
+    };
+    const { data: qrM } = await db.from('kehadiran').select('anggota_id, status')
+      .eq('tanggal', tgl).eq('sesi_id', sesiId).eq('sumber', 'qr');
+    (qrM || []).forEach(r => keepIf(String(r.anggota_id), r.status));
+    try {
+      const { data: qrG } = await db.from('kehadiran_gp').select('gp_tipe, gp_id, status')
+        .eq('tanggal', tgl).eq('sesi_id', sesiId).eq('sumber', 'qr');
+      (qrG || []).forEach(r => keepIf(r.gp_tipe + '_' + r.gp_id, r.status));
+    } catch (e) {}
+  } catch (e) {}
   // Auto-isi semua yang belum dipilih sebagai tidak_hadir
   anggotaCache.forEach(a => { if (!absenState[a.id]) absenState[a.id] = 'tidak_hadir'; });
-  const dipilihIds = Object.keys(absenState).filter(id => absenState[id]);
+  const dipilihIds = Object.keys(absenState).filter(id => absenState[id] && !_qrKeep.has(id));
   // Pisah: anggota biasa → kehadiran ; anak GP (id ber-namespace) → kehadiran_gp
   const angRows = [], gpRows = [];
   dipilihIds.forEach(id => {
@@ -13644,7 +13969,7 @@ async function simpanAbsensi() {
   const hadir = allRows.filter(r => r.status === 'hadir').length;
   const izin  = allRows.filter(r => r.status === 'izin').length;
   const tidak = allRows.filter(r => r.status === 'tidak_hadir').length;
-  setMsg('absMsg', `✅ Absensi tersimpan — ${hadir} hadir, ${izin} izin, ${tidak} tidak hadir`);
+  setMsg('absMsg', `✅ Absensi tersimpan — ${hadir} hadir, ${izin} izin, ${tidak} tidak hadir` + (_qrKeep.size ? ` · ${_qrKeep.size} data scan QR dipertahankan` : ''));
   const panel = $('absDetailPanel');
   const lbl   = $('absToggleLabel');
   if (panel) panel.style.display = 'block';
@@ -13661,6 +13986,7 @@ function toggleRekapMode() {
 }
 
 async function loadRekap() {
+  await _absenAutoTutup();
   const mode = $('rekapMode').value;
   let first, last, label;
   if (mode === 'tahun') {
