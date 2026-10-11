@@ -2878,10 +2878,17 @@
         <select id="rekapMode" onchange="toggleRekapMode()">
           <option value="bulan">Per Bulan</option>
           <option value="tahun">Per Tahun</option>
+          <option value="rentang">Pilih Tanggal (dari – sampai)</option>
         </select>
         <div class="row">
           <div id="rekapBulanWrap"><label>Pilih Bulan</label><input type="month" id="rekapBulan"></div>
           <div id="rekapTahunWrap" style="display:none;"><label>Pilih Tahun</label><input type="number" id="rekapTahun" min="2020" max="2099" placeholder="2026"></div>
+          <div id="rekapRentangWrap" style="display:none;flex:2;min-width:240px;">
+            <div class="row" style="margin:0;">
+              <div><label>Dari Tanggal</label><input type="date" id="rekapDari"></div>
+              <div><label>Sampai Tanggal</label><input type="date" id="rekapSampai"></div>
+            </div>
+          </div>
           <div style="display:flex;align-items:flex-end;">
             <button onclick="loadRekap()">Tampilkan Rekap</button>
           </div>
@@ -4843,6 +4850,144 @@ const db = createClient(SUPABASE_URL, SUPABASE_KEY, {
     flowType: 'implicit',
   }
 });
+
+
+// ════════════════ HAK EDIT PER-MENU (Master Edit) ════════════════
+// Kolom profiles.akses_edit (jsonb): { saldo:true, kasmasuk:false, ... }
+//   ✔ true  = hak penuh (boleh tambah/ubah/hapus)
+//   ✘ else  = MODE LIHAT SAJA (menu tetap tampil, data tidak bisa diubah)
+// Admin Master / Super = selalu penuh. akses_edit kosong (null) = akun lama → penuh
+// (supaya user lama tidak tiba-tiba terkunci); begitu admin mengatur, nilainya eksplisit.
+const EDIT_MENUS = [
+  { key:'saldo',       label:'📊 Saldo' },
+  { key:'kasmasuk',    label:'💵 Kas Masuk' },
+  { key:'pengeluaran', label:'💸 Pengeluaran' },
+  { key:'qurban',      label:'🐐 Qurban' },
+  { key:'anggota',     label:'👥 Anggota' },
+  { key:'absensi',     label:'📋 Absensi' },
+  { key:'musyawarah',  label:'🗣️ Musyawarah' },
+  { key:'rekap',       label:'📈 Rekap' },
+  { key:'acara',       label:'🎉 Acara' },
+  { key:'kalender',    label:'📆 Kalender' },
+  { key:'catatan',     label:'📝 Catatan' },
+  { key:'evaluasi',    label:'🧭 Evaluasi' },
+  { key:'laporan',     label:'📑 Laporan' },
+  { key:'strukorg',    label:'🏛️ Struktur Org.' },
+  { key:'project',     label:'🗂️ Project' },
+  { key:'spin',        label:'🎡 Game Spin' },
+];
+window._curSec = null;       // section yang sedang terbuka
+window._editMap = null;      // null = semua boleh edit
+function canEditMenu(key) {
+  if (!key) return true;                       // di menu utama / section non-edit
+  if (!EDIT_MENUS.some(m => m.key === key)) return true; // riwayat/foto/recycle/akses: diatur terpisah
+  return !window._editMap || window._editMap[key] === true;
+}
+function _roNow() { return !canEditMenu(window._curSec); }
+function _roToast() {
+  const now = Date.now();
+  if (window._roToastAt && now - window._roToastAt < 1500) return;
+  window._roToastAt = now;
+  if (typeof showToast === 'function') showToast('🔒 Mode lihat saja — kamu tidak punya hak edit di menu ini.', 'warn');
+}
+// Builder palsu: bisa di-chain (.select().single() dst) dan di-await → hasil error
+function _roBlockedResult() {
+  const result = { data: null, error: { message: 'Mode lihat saja: tidak punya hak edit di menu ini.', code: 'RO_BLOCK' } };
+  const fn = function() {};
+  const px = new Proxy(fn, {
+    get(_, prop) {
+      if (prop === 'then') return (res, rej) => Promise.resolve(result).then(res, rej);
+      return px;
+    },
+    apply() { return px; }
+  });
+  return px;
+}
+(function installEditGuard() {
+  const WRITE = ['insert', 'update', 'delete', 'upsert'];
+  const EXEMPT_TABLES = ['audit_log', 'profiles'];   // log & profil sendiri tidak diblokir
+  const origFrom = db.from.bind(db);
+  db.from = function(table) {
+    const b = origFrom(table);
+    if (EXEMPT_TABLES.indexOf(table) >= 0) return b;
+    WRITE.forEach(m => {
+      const orig = b[m] && b[m].bind(b);
+      if (!orig) return;
+      b[m] = function() {
+        if (_roNow()) { _roToast(); return _roBlockedResult(); }
+        return orig.apply(null, arguments);
+      };
+    });
+    return b;
+  };
+  if (db.storage && db.storage.from) {
+    const origSF = db.storage.from.bind(db.storage);
+    db.storage.from = function(bucket) {
+      const b = origSF(bucket);
+      ['upload', 'update', 'remove', 'move', 'copy'].forEach(m => {
+        const orig = b[m] && b[m].bind(b);
+        if (!orig) return;
+        b[m] = function() {
+          if (_roNow()) { _roToast(); return Promise.resolve({ data: null, error: { message: 'Mode lihat saja: tidak punya hak edit.' } }); }
+          return orig.apply(null, arguments);
+        };
+      });
+      return b;
+    };
+  }
+  const origRpc = db.rpc.bind(db);
+  db.rpc = function() {
+    if (_roNow()) { _roToast(); return _roBlockedResult(); }
+    return origRpc.apply(null, arguments);
+  };
+})();
+
+// Tombol/aksi "tulis" di section mode-lihat-saja: diredupkan + klik diblokir.
+const _RO_WORDS = /(simpan|tambah|hapus|edit|ubah|update|upload|unggah|catat|kirim|impor|import|bayar|lunas|setor|pulihkan|restore|duplikat|baru\b|reset|acak|undi|putar)/i;
+const _RO_ICONS = /^(\s*)(➕|\+|🗑️|🗑|✏️|✏|💾|📥|📤|🔄✔)/;
+function _isWriteControl(el) {
+  if (!el || !el.closest || !el.closest('.section')) return false;
+  if (el.closest('.back, .collapse-bar, #ro-banner')) return false;
+  const t = (el.textContent || '').trim();
+  if (!t || t.length > 40) return false;
+  if (/^(←|cetak|pdf|unduh|download|export|ekspor|cari|filter|refresh|tampil|buka|tutup)/i.test(t.replace(/^[^\wA-Za-z]+/, ''))) return false;
+  return _RO_ICONS.test(t) || _RO_WORDS.test(t);
+}
+document.addEventListener('click', function(e) {
+  if (!_roNow()) return;
+  const el = e.target.closest && e.target.closest('button, .btn, [role="button"]');
+  if (el && _isWriteControl(el)) {
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    _roToast();
+  }
+}, true);
+function _applyRoUI() {
+  const sec = window._curSec && document.getElementById('sec-' + window._curSec);
+  document.querySelectorAll('.section .ro-dim').forEach(b => b.classList.remove('ro-dim'));
+  const old = document.getElementById('ro-banner');
+  if (old) old.remove();
+  if (!sec || !_roNow()) return;
+  const bar = document.createElement('div');
+  bar.id = 'ro-banner';
+  bar.innerHTML = '👁️ <b>Mode lihat saja</b> — kamu bisa melihat data di menu ini, tapi tidak bisa menambah / mengubah / menghapus. Hubungi Admin Master untuk meminta hak edit.';
+  const back = sec.querySelector(':scope > .back');
+  if (back && back.nextSibling) sec.insertBefore(bar, back.nextSibling); else sec.prepend(bar);
+  const dim = () => sec.querySelectorAll('button, .btn, [role="button"]').forEach(b => {
+    if (_isWriteControl(b)) b.classList.add('ro-dim');
+  });
+  dim();
+  if (sec._roObs) sec._roObs.disconnect();
+  sec._roObs = new MutationObserver(() => { if (_roNow() && window._curSec) dim(); });
+  sec._roObs.observe(sec, { childList: true, subtree: true });
+}
+(function() {
+  const st = document.createElement('style');
+  st.textContent =
+    '#ro-banner{margin:0 0 12px;padding:10px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;font-size:12px;color:#1e40af;line-height:1.5;}' +
+    '[data-theme="dark"] #ro-banner{background:#13233d;border-color:#1e3a6e;color:#93c5fd;}' +
+    '.ro-dim{opacity:.4 !important;filter:grayscale(.6);cursor:not-allowed !important;}';
+  document.head.appendChild(st);
+})();
 
 // ════════════════ RESET PASSWORD — "Buat Password Baru" ════════════════
 let _recoveryShown = false;
@@ -8904,6 +9049,9 @@ async function onLoggedIn(user) {
   $('menuFoto').style.display = _can('foto') ? 'block' : 'none';
   if ($('menuRecycle')) $('menuRecycle').style.display = _can('recycle') ? 'block' : 'none';
   $('menuAkses').style.display = (isMasterAdmin || isSuper) ? 'block' : 'none'; // hanya master admin
+  // Hak EDIT per-menu: master/super = penuh; akses_edit null (akun lama) = penuh
+  window._editMap = (isSuper || isMasterAdmin || !prof || !prof.akses_edit) ? null : prof.akses_edit;
+  window._curSec = null;
 
   const today = new Date();
   $('kmTanggal').valueAsDate = today;
@@ -8914,6 +9062,8 @@ async function onLoggedIn(user) {
   if ($('pgRekapBulan')) $('pgRekapBulan').value = today.toISOString().slice(0, 7);  // rekap pengeluaran: default bulan ini
   $('rekapBulan').value = today.toISOString().slice(0, 7);
   $('rekapTahun').value = today.getFullYear();
+  if ($('rekapDari'))   $('rekapDari').value   = today.toISOString().slice(0, 7) + '-01';
+  if ($('rekapSampai')) $('rekapSampai').value = today.toISOString().slice(0, 10);
   $('lapBulan').value = today.toISOString().slice(0, 7);
   $('iuranBulan').value = today.toISOString().slice(0, 7);
   $('iuranTahun').value = today.getFullYear();
@@ -8931,12 +9081,16 @@ async function onLoggedIn(user) {
 function showMenu() {
   $('menuView').style.display = 'block';
   document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+  window._curSec = null;
+  if (typeof _applyRoUI === 'function') _applyRoUI();
   window.scrollTo(0, 0);
 }
 function openSection(name) {
   $('menuView').style.display = 'none';
   document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
   $('sec-' + name).style.display = 'block';
+  window._curSec = name;
+  _applyRoUI();
   window.scrollTo(0, 0);
   // Catat ke history browser → tombol Back fisik/gesture HP bisa kembali ke menu
   history.pushState({ section: name }, '');
@@ -13503,6 +13657,7 @@ function toggleRekapMode() {
   const m = $('rekapMode').value;
   $('rekapBulanWrap').style.display = m === 'bulan' ? 'block' : 'none';
   $('rekapTahunWrap').style.display = m === 'tahun' ? 'block' : 'none';
+  if ($('rekapRentangWrap')) $('rekapRentangWrap').style.display = m === 'rentang' ? 'block' : 'none';
 }
 
 async function loadRekap() {
@@ -13512,6 +13667,13 @@ async function loadRekap() {
     const y = parseInt($('rekapTahun').value);
     if (!y || y < 2020 || y > 2099) { $('rekapResult').innerHTML = '<p class="muted">Isi tahun yang valid dulu.</p>'; return; }
     first = `${y}-01-01`; last = `${y}-12-31`; label = 'Tahun ' + y;
+  } else if (mode === 'rentang') {
+    const d1 = $('rekapDari').value, d2 = $('rekapSampai').value;
+    if (!d1 || !d2) { $('rekapResult').innerHTML = '<p class="muted">Isi tanggal "Dari" dan "Sampai" dulu.</p>'; return; }
+    if (d1 > d2) { $('rekapResult').innerHTML = '<p class="err">Tanggal "Dari" tidak boleh lebih besar dari "Sampai".</p>'; return; }
+    first = d1; last = d2;
+    const fmt = d => { const [yy, mm, dd] = d.split('-').map(Number); return dd + ' ' + BULAN_SG[mm-1] + ' ' + yy; };
+    label = d1 === d2 ? fmt(d1) : fmt(d1) + ' s.d. ' + fmt(d2);
   } else {
     const bln = $('rekapBulan').value;
     if (!bln) { $('rekapResult').innerHTML = '<p class="muted">Pilih bulan dulu.</p>'; return; }
@@ -13689,7 +13851,11 @@ function renderRekapTable() {
         <div class="stat"><div class="sv" style="color:#d97706;">${pctIzinAll}%</div><div class="sl">Izin</div></div>
         <div class="stat"><div class="sv" style="color:#dc2626;">${pctTanpaKetAll}%</div><div class="sl">Tanpa Keterangan</div></div>
       </div>
-      <p style="font-size:11px;color:#7a9585;margin:0 0 12px;">Hadir + Izin = ${tot.hadir + tot.izin} dari total ${totTotal} catatan kehadiran (${rekapMeta.siswa} siswa × ${rekapMeta.sesi} sesi) — (${totPct}%)</p>`;
+      <div class="stat" style="margin:0 0 12px;padding:16px 12px;text-align:center;border:2px solid #1a6644;">
+        <div class="sl" style="font-size:15px;font-weight:800;color:#1a6644;margin-bottom:4px;">Hadir + Izin</div>
+        <div class="sv" style="font-size:44px;line-height:1.1;font-weight:800;color:#1a6644;">${totPct}%</div>
+        <div class="sl" style="font-size:12px;margin-top:6px;">${tot.hadir + tot.izin} dari total ${totTotal} catatan kehadiran (${rekapMeta.siswa} siswa × ${rekapMeta.sesi} sesi)</div>
+      </div>`;
   }
   $('rekapTableWrap').innerHTML = `
     <div style="overflow-x:auto;"><table class="rekap">
@@ -17273,7 +17439,7 @@ function cetakRekap() {
   }
 
   _pdfFooter(doc);
-  doc.save('rekap-kehadiran-' + rekapMeta.label.replace(/ /g, '-') + '.pdf');
+  doc.save('rekap-kehadiran-' + rekapMeta.label.replace(/[^A-Za-z0-9]+/g, '-') + '.pdf');
 }
 
 function cetakLaporan() {
@@ -17583,7 +17749,7 @@ function exportRekapCSV() {
   const totTotal = tot.h + tot.i + tot.t;
   const totPct = totTotal > 0 ? Math.round((tot.h + tot.i) / totTotal * 100) : 0;
   rows.push(['', 'TOTAL', tot.h, tot.i, tot.t, totTotal, totPct + '%']);
-  downloadCSV('rekap-kehadiran-' + rekapMeta.label.replace(/ /g, '-') + '.csv', rows);
+  downloadCSV('rekap-kehadiran-' + rekapMeta.label.replace(/[^A-Za-z0-9]+/g, '-') + '.csv', rows);
 }
 
 function exportLaporanCSV() {
@@ -19003,6 +19169,28 @@ function renderKelolAkses() {
           style="width:16px;height:16px;margin:0;accent-color:#1a6644;"> ${m.label}</label>`;
     }).join('');
 
+    // ── BARIS 2: MASTER EDIT (centang = hak edit penuh; kosong = hanya lihat) ──
+    const editFull = full;                       // master/super selalu penuh
+    const editMap = u.akses_edit || null;        // null (akun lama) = penuh
+    const dummyEditDis = (!canEdit || rowIsMaster) ? 'disabled' : '';
+    const editBoxes = EDIT_MENUS.map(m => {
+      const on = editFull || !editMap || editMap[m.key] === true;
+      return `<label class="prj-divisi-checkbox-wrap ${on ? 'checked' : ''}" style="font-size:12px;">
+        <input type="checkbox" ${on ? 'checked' : ''} ${dummyEditDis}
+          onchange="setEditAkses('${u.id}','${m.key}',this.checked,${i})"
+          style="width:16px;height:16px;margin:0;accent-color:#1d4ed8;"> ${m.label}</label>`;
+    }).join('');
+    const editBulk = (canEdit && !rowIsMaster)
+      ? `<span style="display:inline-flex;gap:6px;margin-left:6px;">
+          <button class="small secondary" style="width:auto;padding:3px 8px;font-size:10px;" onclick="setEditAksesSemua('${u.id}',true,${i})">✅ Semua</button>
+          <button class="small secondary" style="width:auto;padding:3px 8px;font-size:10px;" onclick="setEditAksesSemua('${u.id}',false,${i})">⬜ Kosongkan</button>
+        </span>` : '';
+    const editSection = `<div style="margin-top:10px;padding-top:10px;border-top:1px dashed #b7d3c4;">
+        <div style="font-size:12px;font-weight:800;color:#1d4ed8;margin-bottom:6px;">✏️ Master Edit — hak EDIT per menu ${editBulk}</div>
+        <div class="muted" style="font-size:11px;margin-bottom:6px;">☑ = hak penuh (boleh tambah/ubah/hapus) · ☐ = menu tetap tampil tapi <b>hanya lihat</b>.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">${editBoxes}</div>
+      </div>`;
+
     const emailLine = u.email ? `<div class="muted" style="font-size:11px;margin-bottom:2px;">📧 ${escapeHtml(u.email)}</div>` : '';
 
     // Tombol aksi user — admin utama (root) & diri sendiri DILINDUNGI (tanpa tombol).
@@ -19025,14 +19213,17 @@ function renderKelolAkses() {
       <div style="font-weight:700;font-size:13px;">${escapeHtml(u.nama_lengkap || '(tanpa nama)')}${masterBadge}${rejectBadge}</div>
       ${emailLine}
       <div class="muted" style="font-size:11px;margin:2px 0 8px;">Jabatan: ${escapeHtml(u.jabatan || '-')}</div>
+      <div style="font-size:12px;font-weight:800;color:#1a6644;margin-bottom:6px;">👁️ Menu khusus (tampil / tersembunyi)</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;">${cekboxes}</div>
+      ${editSection}
       ${aksiBtn}
     </div>`;
   }).join('');
 
   $('aksesList').innerHTML = `
     <div style="margin-bottom:12px;padding:10px 12px;background:#fef9c3;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e;">
-      ⚠️ <b>Centang menu</b> yang boleh dilihat tiap user. Contoh: User A hanya ☑ Kelola Foto, User B hanya ☑ Tempat Sampah, User C hanya ☑ Riwayat, User D centang ketiga-tiganya.<br>
+      ⚠️ <b>Baris 1 (👁️ Menu khusus)</b>: centang menu Riwayat / Kelola Foto / Tempat Sampah yang boleh <b>dilihat</b> user (kalau tidak dicentang, menunya disembunyikan).<br>
+      ✏️ <b>Baris 2 (Master Edit)</b>: centang menu yang boleh <b>diedit penuh</b>. Yang tidak dicentang tetap tampil tapi <b>hanya bisa dilihat</b> (tidak bisa tambah/ubah/hapus).<br>
       Hanya <b>Admin Master</b> yang bisa mengubah. Perubahan berlaku saat user <b>login berikutnya</b>.
     </div>
     <div style="font-size:12px;color:#6b7280;margin-bottom:8px;">Total ${aksesUserList.filter(u => u.status !== 'pending').length} user aktif</div>
@@ -19123,6 +19314,48 @@ async function setMenuAkses(userId, key, checked, idx) {
     _auditLog('akses_user', 'UPDATE', null, { user: u.nama_lengkap, menu: namaMenu, diberikan: checked });
   }
   renderKelolAkses();
+}
+
+// ── Simpan hak EDIT per-menu (Master Edit) ──
+async function _saveAksesEdit(u, cur, okMsg) {
+  const { error } = await db.from('profiles').update({ akses_edit: cur }).eq('id', u.id);
+  if (error) {
+    const m = error.message || '';
+    if (m.includes('akses_edit') || m.includes('column')) {
+      alert('❌ Kolom "akses_edit" belum ada di tabel profiles.\n\nJalankan SQL ini di Supabase → SQL Editor:\n\nALTER TABLE profiles ADD COLUMN IF NOT EXISTS akses_edit jsonb;');
+    } else if (m.includes('RLS') || error.code === '42501' || m.includes('permission')) {
+      alert('❌ RLS Supabase memblokir UPDATE profiles. Tambahkan policy UPDATE untuk authenticated.');
+    } else {
+      alert('❌ Gagal menyimpan: ' + m);
+    }
+    renderKelolAkses();
+    return false;
+  }
+  u.akses_edit = cur;
+  setMsg('aksesMsg', okMsg);
+  if (typeof _auditLog === 'function') _auditLog('akses_user', 'UPDATE', null, { user: u.nama_lengkap, hak_edit: cur });
+  renderKelolAkses();
+  return true;
+}
+async function setEditAkses(userId, key, checked, idx) {
+  if (!isMasterAdmin) { alert('Hanya Admin Master yang bisa mengubah hak edit.'); renderKelolAkses(); return; }
+  const u = aksesUserList[idx];
+  if (!u) return;
+  if (userId === currentProf?.id) { alert('Akses admin utama tidak bisa diubah.'); renderKelolAkses(); return; }
+  // Akun lama (null) / super: mulai dari "semua penuh", lalu terapkan perubahan
+  let cur;
+  if (!u.akses_edit || u.is_super === true) { cur = {}; EDIT_MENUS.forEach(m => cur[m.key] = true); }
+  else cur = Object.assign({}, u.akses_edit);
+  cur[key] = checked;
+  const nm = (EDIT_MENUS.find(m => m.key === key) || {}).label || key;
+  await _saveAksesEdit(u, cur, '✅ Hak edit ' + nm + ' untuk ' + (u.nama_lengkap || 'user') + ': ' + (checked ? 'PENUH' : 'hanya lihat'));
+}
+async function setEditAksesSemua(userId, semua, idx) {
+  if (!isMasterAdmin) { alert('Hanya Admin Master yang bisa mengubah hak edit.'); return; }
+  const u = aksesUserList[idx];
+  if (!u || userId === currentProf?.id) return;
+  const cur = {}; EDIT_MENUS.forEach(m => cur[m.key] = !!semua);
+  await _saveAksesEdit(u, cur, '✅ ' + (u.nama_lengkap || 'user') + ': ' + (semua ? 'hak edit PENUH di semua menu' : 'semua menu jadi hanya lihat'));
 }
 
 // ── ANGKAT / CABUT ADMIN MASTER ──────────────────────────────────────
