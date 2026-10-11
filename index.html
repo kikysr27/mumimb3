@@ -2707,7 +2707,7 @@
         <!-- ═══ ABSEN MANDIRI VIA QR ═══ -->
         <div id="qrPanel" style="display:none;background:#f0f7f3;border:1.5px solid #2d9e6b;border-radius:12px;padding:12px 14px;margin:6px 0 12px;">
           <div style="font-size:13px;font-weight:800;color:#1a6644;margin-bottom:2px;">📱 Absen Mandiri via QR</div>
-          <div class="muted" style="font-size:11px;margin-bottom:8px;">Cetak / kirim QR ke grup. Anggota scan lalu pilih Hadir atau Izin. <b>Sesi otomatis tertutup saat jam tutup lewat</b> — yang belum mengisi dicatat Tidak Hadir. Anak GPMT/GPSD ikut bisa scan bila dicentang di "Ikutkan Anak GP di Sesi Ini" (di bawah). Untuk yang tidak punya HP atau salah isi, admin tetap bisa input/ubah manual di bawah.</div>
+          <div class="muted" style="font-size:11px;margin-bottom:8px;">Cetak / kirim QR ke grup. Anggota scan lalu pilih Hadir atau Izin. <b>Sesi otomatis tertutup saat jam tutup lewat</b> — yang belum mengisi dicatat Tidak Hadir. <b>Jam DIKUNCI begitu QR dibuat</b>: tidak bisa diperpanjang atau dibuka lagi. Anggota hanya bisa mengisi di antara jam buka–tutup (jam server) dan hanya boleh mengubah isiannya <b>1 kali</b>. Anak GPMT/GPSD ikut bisa scan bila dicentang di "Ikutkan Anak GP di Sesi Ini" (di bawah). Untuk yang tidak punya HP atau salah isi, admin tetap bisa input/ubah manual di bawah.</div>
           <div id="qrErr" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:8px;padding:8px 10px;font-size:12px;margin-bottom:8px;"></div>
           <div id="qrForm">
             <div class="row">
@@ -2717,6 +2717,7 @@
             <button id="qrBtnBuat" onclick="qrBuat()">🔲 Buat QR</button>
           </div>
           <div id="qrExisting" style="display:none;margin-top:12px;text-align:center;">
+            <div id="qrLockNote" style="font-size:11px;font-weight:700;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:6px 8px;margin-bottom:8px;">🔒 Jam dikunci: tidak bisa diperpanjang / dibuka lagi. Sesi tertutup otomatis di jam tutup.</div>
             <div id="qrStatusLine" style="font-size:12px;font-weight:700;margin-bottom:8px;"></div>
             <div id="qrCanvasBox" style="display:inline-block;background:#fff;padding:10px;border-radius:10px;"></div>
             <div style="margin-top:8px;"><input type="text" id="qrLink" readonly onclick="this.select()" style="font-size:11px;text-align:center;"></div>
@@ -2727,9 +2728,11 @@
             </div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:10px;">
               <button class="small secondary" onclick="qrRefreshScan()">🔄 Cek yang Sudah Scan</button>
-              <button class="small danger" onclick="qrTutupSesi()">🔒 Tutup Sekarang</button>
+              <button class="small secondary" onclick="qrTesLink()">🔍 Tes Link</button>
+              <button class="small secondary" id="qrBtnBaru" onclick="qrBaru()">♻️ QR Baru</button>
             </div>
-            <div class="muted" style="font-size:11px;margin-top:6px;">Tidak wajib ditekan — otomatis tertutup di jam tutup.</div>
+            <div id="qrCheck" style="display:none;margin-top:8px;border-radius:8px;padding:7px 9px;font-size:11px;line-height:1.5;text-align:left;"></div>
+            <div id="qrAutoInfo" class="muted" style="font-size:11px;margin-top:6px;">Daftar scan diperbarui otomatis tiap 15 detik selama sesi berjalan. Sesi tertutup otomatis di jam tutup.</div>
             <div id="qrScanList" style="margin-top:10px;text-align:left;font-size:12px;"></div>
           </div>
         </div>
@@ -5055,7 +5058,7 @@ function _qrShowErr(msg) { const e = $('qrErr'); if (!e) return; e.style.display
 async function qrLoadPanel() {
   const panel = $('qrPanel'); if (!panel) return;
   const tgl = $('absTanggal').value, sesiId = $('absSesi').value;
-  _qrCur = null; _qrShowErr('');
+  _qrCur = null; _qrShowErr(''); _qrPollStop();
   if (!tgl || !sesiId) { panel.style.display = 'none'; return; }
   panel.style.display = 'block';
   await _absenAutoTutup();
@@ -5069,11 +5072,14 @@ async function qrLoadPanel() {
   _qrCur = data || null;
   if (data) { $('qrBuka').value = _qrLocalDT(new Date(data.buka)); $('qrTutup').value = _qrLocalDT(new Date(data.tutup)); }
   else { const d = _qrDefaults(tgl, sesiId); $('qrBuka').value = _qrLocalDT(d.buka); $('qrTutup').value = _qrLocalDT(d.tutup); }
-  $('qrBtnBuat').textContent = data ? '💾 Perbarui Jam / Buka Lagi' : '🔲 Buat QR';
+  $('qrBtnBuat').textContent = '🔲 Buat QR';
+  $('qrForm').style.display = data ? 'none' : 'block'; // jam dikunci: form hilang setelah QR dibuat
   if (!data) { $('qrExisting').style.display = 'none'; return; }
   $('qrExisting').style.display = 'block';
   _qrRender();
   qrRefreshScan();
+  qrTesLink();
+  if (data.aktif && new Date() <= new Date(data.tutup)) _qrPollStart();
 }
 
 function _qrRender() {
@@ -5087,20 +5093,21 @@ function _qrRender() {
   else if (now < b)             { st = '⏳ Belum dibuka — mulai ' + _qrFmtJam(_qrCur.buka); col = '#b45309'; }
   else                          { st = '🟢 Sedang dibuka — sampai ' + _qrFmtJam(_qrCur.tutup); col = '#15803d'; }
   const sl = $('qrStatusLine'); sl.textContent = st; sl.style.color = col;
+  { const bb = $('qrBtnBaru'); if (bb) bb.style.display = (!_qrCur.aktif || now > t) ? 'none' : ''; }
   if (typeof QRCode === 'undefined') { box.innerHTML = '<div class="muted" style="font-size:12px;max-width:240px;">Library QR belum termuat (cek internet lalu buka ulang menu ini). Link di bawah tetap bisa dibagikan.</div>'; return; }
   new QRCode(box, { text: link, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
 }
 
 async function qrBuat() {
+  if (_qrCur) { alert('Jam QR sudah dikunci. Tidak bisa diperpanjang atau dibuka lagi.'); return; }
   const tgl = $('absTanggal').value, sesiId = parseInt($('absSesi').value);
   if (!tgl || !sesiId) { alert('Pilih tanggal & sesi dulu.'); return; }
   const b = new Date($('qrBuka').value), t = new Date($('qrTutup').value);
   if (isNaN(b) || isNaN(t)) { alert('Isi jam dibuka dan ditutup.'); return; }
   if (t <= b) { alert('Jam ditutup harus setelah jam dibuka.'); return; }
+  if (!confirm('Setelah QR dibuat, jam TIDAK bisa diubah lagi (tidak bisa diperpanjang / dibuka ulang).\n\nLanjutkan?')) return;
   let error;
-  if (_qrCur) {
-    ({ error } = await db.from('absen_qr').update({ buka: b.toISOString(), tutup: t.toISOString(), aktif: true }).eq('id', _qrCur.id));
-  } else {
+  {
     const arr = new Uint8Array(10); crypto.getRandomValues(arr);
     const abc = 'abcdefghjkmnpqrstuvwxyz23456789';
     const kode = Array.from(arr, x => abc[x % abc.length]).join('');
@@ -5136,6 +5143,89 @@ async function qrRefreshScan() {
     (rows.length ? '<details style="margin-top:4px;"><summary style="cursor:pointer;color:#7a9585;">Lihat nama</summary><div style="margin-top:4px;line-height:1.7;">' +
       rows.map(r => (r.status === 'hadir' ? '✅ ' : '📝 ') + _esc(r.nama) + (r.alasan ? ' <span class="muted">— ' + _esc(r.alasan) + '</span>' : '')).join('<br>') +
       '</div></details>' : '');
+  _qrStamp();
+}
+
+// ── Auto-segarkan daftar scan ──
+// Jalan tiap QR_POLL_MS selama: sesi sudah dibuka & belum tutup, menu Absensi sedang tampil, tab tidak tersembunyi.
+// Begitu jam tutup lewat: berhenti, satu kali refresh terakhir, lalu daftar absensi ikut diperbarui.
+const QR_POLL_MS = 15000;
+let _qrPollTimer = null;
+function _qrPollStop() { if (_qrPollTimer) { clearInterval(_qrPollTimer); _qrPollTimer = null; } }
+function _qrPollStart() { _qrPollStop(); if (_qrCur) _qrPollTimer = setInterval(_qrPollRun, QR_POLL_MS); }
+function _qrStamp() {
+  const el = $('qrAutoInfo'); if (!el) return;
+  const j = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':');
+  el.textContent = 'Terakhir diperbarui ' + j + (_qrPollTimer ? ' · otomatis tiap ' + (QR_POLL_MS / 1000) + ' detik' : ' · pemantauan otomatis berhenti (sesi tidak berjalan)') + '. Sesi tertutup otomatis di jam tutup.';
+}
+function _qrStatusLineUpdate() {
+  if (!_qrCur) return;
+  const now = new Date(), b = new Date(_qrCur.buka), t = new Date(_qrCur.tutup);
+  const closed = !_qrCur.aktif || now > t;
+  let st, col;
+  if (closed)        { st = '🔒 Ditutup'; col = '#b91c1c'; }
+  else if (now < b)  { st = '⏳ Belum dibuka — mulai ' + _qrFmtJam(_qrCur.buka); col = '#b45309'; }
+  else               { st = '🟢 Sedang dibuka — sampai ' + _qrFmtJam(_qrCur.tutup); col = '#15803d'; }
+  const sl = $('qrStatusLine'); if (sl) { sl.textContent = st; sl.style.color = col; }
+  const bb = $('qrBtnBaru'); if (bb) bb.style.display = closed ? 'none' : '';
+}
+async function _qrPollRun() {
+  const sec = $('sec-absensi');
+  if (!_qrCur || !sec || sec.style.display === 'none') { _qrPollStop(); return; }
+  if (document.hidden) return;
+  const now = new Date(), b = new Date(_qrCur.buka), t = new Date(_qrCur.tutup);
+  _qrStatusLineUpdate();
+  if (now < b) return;                          // belum dibuka → belum ada yang bisa scan
+  if (!_qrCur.aktif || now > t) {               // lewat jam tutup → refresh terakhir lalu berhenti
+    _qrPollStop();
+    await _absenAutoTutup(true);
+    await qrRefreshScan();
+    try {
+      const dirty = JSON.stringify(absenState) !== JSON.stringify(window._absLoaded || {});
+      if (dirty) { showToast('🔒 Sesi QR sudah ditutup. Ada perubahan yang belum disimpan — simpan dulu, lalu pilih ulang sesi untuk melihat hasil akhir.', 'warn', 6000); }
+      else { await loadAbsensi({ keepSearch: true }); showToast('🔒 Sesi QR ditutup otomatis — daftar absensi diperbarui', 'success', 3000); }
+    } catch (e) {}
+    return;
+  }
+  await qrRefreshScan();
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && _qrPollTimer) _qrPollRun(); });
+
+// ── Tes link: cek alamat & kode di server ──
+async function qrTesLink() {
+  const box = $('qrCheck'); if (!box || !_qrCur) return;
+  const msgs = []; let bad = false;
+  const h = location.hostname;
+  if (location.protocol === 'file:' || /^(localhost|127\.|0\.0\.0\.0|\[::1\])/.test(h) || /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h) || /\.local$/.test(h)) {
+    bad = true;
+    msgs.push('⚠️ Aplikasi ini dibuka lewat alamat "' + (h || 'file lokal') + '" yang hanya bisa diakses dari perangkat/jaringan kamu. Anggota lain tidak akan bisa membuka link QR. Buka aplikasi lewat alamat publik (domain aslinya), lalu tekan ♻️ QR Baru.');
+  }
+  box.style.display = 'block'; box.style.background = '#f3f4f6'; box.style.color = '#4b5563'; box.textContent = 'Memeriksa link…';
+  try {
+    const { data, error } = await db.rpc('absen_info', { p_kode: _qrCur.kode });
+    if (error) { bad = true; msgs.push('❌ Server menolak: ' + error.message); }
+    else if (!data || !data.ok) { bad = true; msgs.push('❌ Kode tidak dikenali server' + (data && data.msg ? ' (' + data.msg + ')' : '') + '. Tekan ♻️ QR Baru.'); }
+    else msgs.push('✅ Kode valid di server · ' + (data.status === 'belum_buka' ? 'belum dibuka' : data.status === 'tutup' ? 'sudah ditutup' : 'sedang dibuka') + ' · ' + (Array.isArray(data.anggota) ? data.anggota.length : 0) + ' nama siap dipilih');
+  } catch (e) { bad = true; msgs.push('❌ Gagal memeriksa: ' + (e.message || e)); }
+  if (typeof QRCode === 'undefined') { bad = true; msgs.push('⚠️ Gambar QR belum termuat (butuh internet). Link di atas tetap bisa dibagikan.'); }
+  box.style.background = bad ? '#fef2f2' : '#f0fdf4';
+  box.style.color = bad ? '#b91c1c' : '#15803d';
+  box.innerHTML = msgs.map(_esc).join('<br>');
+}
+
+// ── QR baru: kode/link diganti, JAM TETAP (tidak bisa memperpanjang / membuka ulang) ──
+async function qrBaru() {
+  if (!_qrCur) return;
+  if (!_qrCur.aktif || new Date() > new Date(_qrCur.tutup)) { alert('Sesi sudah ditutup — QR baru tidak diperlukan.'); return; }
+  if (!confirm('Buat QR / link BARU?\n\n• QR & link lama langsung TIDAK berlaku (yang sudah dicetak/dibagikan harus diganti).\n• Jam buka–tutup TETAP sama, tidak diperpanjang.\n• Data yang sudah scan tetap aman, dan jatah ubah 1x tiap orang tidak di-reset.')) return;
+  const arr = new Uint8Array(10); crypto.getRandomValues(arr);
+  const abc = 'abcdefghjkmnpqrstuvwxyz23456789';
+  const kode = Array.from(arr, x => abc[x % abc.length]).join('');
+  const { data, error } = await db.from('absen_qr').update({ kode }).eq('id', _qrCur.id).select('kode');
+  if (error) { if (error.code !== 'RO_BLOCK') alert('Gagal membuat QR baru: ' + error.message); return; }
+  if (!data || !data.length) { alert('Gagal membuat QR baru (izin ditolak atau sesi sudah tutup).'); return; }
+  showToast('✅ QR baru dibuat — bagikan ulang QR/link yang baru', 'success');
+  await qrLoadPanel();
 }
 
 async function qrTutupSesi() {
@@ -5226,7 +5316,7 @@ function qrCetak() {
       '<div style="font-size:22px;font-weight:800;margin-top:2px;">' + _esc(info.sesi || 'Pengajian') + '</div>' +
       '<div style="font-size:13px;opacity:.9;margin-top:2px;">' + _qrFmtTgl(String(info.tanggal).slice(0, 10)) + ' · ' + _qrFmtJam(info.buka) + ' – ' + _qrFmtJam(info.tutup) + '</div></div>';
     const msgCard = (icon, t, sub) => card('<div style="text-align:center;padding:14px 4px;"><div style="font-size:44px;">' + icon + '</div><div style="font-size:17px;font-weight:800;margin-top:6px;">' + _esc(t) + '</div>' + (sub ? '<div style="font-size:13px;color:#6b7280;margin-top:6px;line-height:1.5;">' + _esc(sub) + '</div>' : '') + '</div>');
-    let info = null, picked = null;
+    let info = null, picked = null, editedSet = null; // editedSet: kunci "tipe:id" yg jatah ubahnya sudah habis (null = tidak diketahui → terkunci)
 
     function showList(filter) {
       const q = (filter || '').toLowerCase().trim();
@@ -5234,7 +5324,9 @@ function qrCetak() {
       const LBL = { mumi: 'MUMI', gpmt: 'GPMT', gpsd: 'GPSD' };
       const present = ['mumi', 'gpmt', 'gpsd'].filter(g => list.some(a => (a.tipe || 'mumi') === g));
       const row = a => a.sudah
-        ? '<div style="padding:12px;border-radius:10px;color:#9ca3af;display:flex;justify-content:space-between;"><span>' + _esc(a.nama) + '</span><span style="font-size:12px;">✔ sudah mengisi</span></div>'
+        ? ((editedSet && !editedSet[(a.tipe || 'mumi') + ':' + a.id])
+          ? '<button data-key="' + (a.tipe || 'mumi') + ':' + a.id + '" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:13px 12px;margin:0 0 6px;border:1.5px dashed #d97706;background:#fffbeb;border-radius:10px;font-size:16px;font-weight:600;color:#1f2937;"><span>' + _esc(a.nama) + '</span><span style="font-size:12px;color:#b45309;">✔ sudah mengisi · ✏️ ubah 1x</span></button>'
+          : '<div style="padding:12px;border-radius:10px;color:#9ca3af;display:flex;justify-content:space-between;"><span>' + _esc(a.nama) + '</span><span style="font-size:12px;">✔ sudah mengisi · tidak bisa diubah</span></div>')
         : '<button data-key="' + (a.tipe || 'mumi') + ':' + a.id + '" style="display:block;width:100%;text-align:left;padding:13px 12px;margin:0 0 6px;border:1.5px solid #e5e7eb;background:#f9fafb;border-radius:10px;font-size:16px;font-weight:600;color:#1f2937;">' + _esc(a.nama) + '</button>';
       const body = present.map(g =>
         (present.length > 1 ? '<div style="font-size:11px;font-weight:800;color:#6b7280;margin:10px 2px 6px;letter-spacing:.5px;">' + LBL[g] + '</div>' : '') +
@@ -5253,6 +5345,9 @@ function qrCetak() {
 
     function showChoose(izin) {
       wrap.innerHTML = head(info) + card(
+        (picked.sudah
+          ? '<div style="background:#fffbeb;border:1.5px solid #f59e0b;color:#92400e;border-radius:10px;padding:9px 10px;font-size:13px;margin-bottom:12px;line-height:1.5;">✏️ Kamu sudah mengisi. Ini kesempatan <b>mengubah 1 kali</b> — setelah ini tidak bisa diubah lagi.</div>'
+          : '<div style="font-size:12px;color:#6b7280;text-align:center;margin-bottom:10px;line-height:1.5;">Mengisi hanya bisa di antara jam buka–tutup. Setelah mengirim, kamu boleh mengubah <b>1 kali</b> saja.</div>') +
         '<div style="text-align:center;font-size:13px;color:#6b7280;">Halo,</div>' +
         '<div style="text-align:center;font-size:22px;font-weight:800;margin-bottom:14px;">' + _esc(picked.nama) + (picked.tipe && picked.tipe !== 'mumi' ? ' <span style="font-size:13px;color:#6b7280;">(' + picked.tipe.toUpperCase() + ')</span>' : '') + '</div>' +
         (izin
@@ -5270,9 +5365,10 @@ function qrCetak() {
         const { data, error } = await db.rpc('absen_kirim', { p_kode: kode, p_anggota_id: picked.id, p_status: status, p_alasan: alasan || null, p_tipe: picked.tipe || 'mumi' });
         wrap.querySelectorAll('button').forEach(b => b.disabled = false);
         if (error) { err('Gagal mengirim: ' + error.message + '. Coba lagi.'); return; }
-        if (!data || !data.ok) { err((data && data.msg) || 'Gagal mengirim.'); if (data && data.sudah) picked.sudah = true; return; }
+        if (!data || !data.ok) { err((data && data.msg) || 'Gagal mengirim.'); if (data && data.sudah) picked.sudah = true; if (data && data.ubah_habis) { if (!editedSet) editedSet = {}; editedSet[(picked.tipe || 'mumi') + ':' + picked.id] = true; } return; }
         picked.sudah = true;
-        wrap.innerHTML = head(info) + msgCard(status === 'hadir' ? '✅' : '📝', 'Tercatat: ' + (status === 'hadir' ? 'HADIR' : 'IZIN'), picked.nama + ' — terima kasih. Kamu boleh menutup halaman ini.');
+        if (data.ubah) { if (!editedSet) editedSet = {}; editedSet[(picked.tipe || 'mumi') + ':' + picked.id] = true; }
+        wrap.innerHTML = head(info) + msgCard(status === 'hadir' ? '✅' : '📝', 'Tercatat: ' + (status === 'hadir' ? 'HADIR' : 'IZIN'), picked.nama + (data.ubah ? ' — perubahan tercatat. Jatah ubah sudah habis, tidak bisa diubah lagi.' : ' — terima kasih. Kamu masih bisa mengubah 1 kali selama sesi masih dibuka (scan ulang).'));
       };
       if (izin) wrap.querySelector('#apKirimIzin').addEventListener('click', () => kirim('izin', wrap.querySelector('#apAlasan').value.trim()));
       else {
@@ -5288,7 +5384,12 @@ function qrCetak() {
       info = data;
       if (data.status === 'belum_buka') wrap.innerHTML = head(data) + msgCard('⏳', 'Absensi belum dibuka', 'Silakan scan lagi mulai pukul ' + _qrFmtJam(data.buka) + '.');
       else if (data.status === 'tutup') wrap.innerHTML = head(data) + msgCard('🔒', 'Absensi sudah ditutup', 'Hubungi pengurus bila kamu belum sempat mengisi.');
-      else showList('');
+      else {
+        db.rpc('absen_info_ubah', { p_kode: kode }).then(r => {
+          editedSet = (!r.error && Array.isArray(r.data)) ? Object.fromEntries(r.data.map(k => [k, true])) : null;
+          showList('');
+        }).catch(() => { editedSet = null; showList(''); });
+      }
     }).catch(e => { wrap.innerHTML = msgCard('⚠️', 'Gagal memuat', String(e && e.message || e)); });
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
