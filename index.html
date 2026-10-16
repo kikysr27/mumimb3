@@ -5138,6 +5138,7 @@ async function qrLoadPanel() {
   $('qrBtnSimpan').style.display = canEdit ? '' : 'none';
   _qrRender();
   qrRefreshScan();
+  _qrStartAutoScan();
 }
 
 function _qrRender() {
@@ -5182,12 +5183,31 @@ async function qrSimpanCustom() {
   await qrLoadPanel();
 }
 
-async function qrRefreshScan() {
-  if (!_qrCur) return;
+let _qrScanBusy = false, _qrScanTimer = null;
+function _qrStartAutoScan() {
+  if (_qrScanTimer) clearInterval(_qrScanTimer);
+  _qrScanTimer = setInterval(function() {
+    const body = $('qrBody');
+    // hanya refresh kalau panel QR tampil & tab browser sedang dilihat
+    if (!_qrCur || !body || body.offsetParent === null || document.hidden) return;
+    qrRefreshScan(true);
+  }, 10000);
+}
+
+async function qrRefreshScan(silent) {
+  if (!_qrCur || _qrScanBusy) return;
+  _qrScanBusy = true;
+  try { await _qrRefreshScanInner(silent === true); } finally { _qrScanBusy = false; }
+}
+
+async function _qrRefreshScanInner(silent) {
+  const cur = _qrCur;
   const el = $('qrScanList');
+  const wasOpen = !!(el.querySelector('details') && el.querySelector('details').open);
   const { data, error } = await db.from('kehadiran').select('status, alasan, anggota(nama)')
-    .eq('tanggal', _qrCur.tanggal).eq('sesi_id', _qrCur.sesi_id).eq('sumber', 'qr');
-  if (error) { el.innerHTML = '<span class="muted">Gagal memuat: ' + _esc(error.message) + '</span>'; return; }
+    .eq('tanggal', cur.tanggal).eq('sesi_id', cur.sesi_id).eq('sumber', 'qr');
+  if (error) { if (!silent) el.innerHTML = '<span class="muted">Gagal memuat: ' + _esc(error.message) + '</span>'; return; }
+  if (_qrCur !== cur) return; // pindah tanggal/sesi saat menunggu
   let rows = (data || []).map(r => ({ status: r.status, alasan: r.alasan, nama: r.anggota?.nama || '?' }));
   // anak GPMT / GPSD yang ikut scan
   try {
@@ -5204,7 +5224,7 @@ async function qrRefreshScan() {
   rows.sort((a, c) => a.nama.localeCompare(c.nama));
   const h = rows.filter(r => r.status === 'hadir').length, iz = rows.filter(r => r.status === 'izin').length;
   el.innerHTML = '<div style="font-weight:700;color:#1a6644;">✅ ' + rows.length + ' sudah mengisi · ' + h + ' hadir · ' + iz + ' izin</div>' +
-    (rows.length ? '<details style="margin-top:4px;"><summary style="cursor:pointer;color:#7a9585;">Lihat nama</summary><div style="margin-top:4px;line-height:1.7;">' +
+    (rows.length ? '<details' + (wasOpen ? ' open' : '') + ' style="margin-top:4px;"><summary style="cursor:pointer;color:#7a9585;">Lihat nama</summary><div style="margin-top:4px;line-height:1.7;">' +
       rows.map(r => (r.status === 'hadir' ? '✅ ' : '📝 ') + _esc(r.nama) + (r.alasan ? ' <span class="muted">— ' + _esc(r.alasan) + '</span>' : '')).join('<br>') +
       '</div></details>' : '');
 }
@@ -5417,20 +5437,38 @@ async function pinResetIdx(i) {
     }
 
     // ── Perangkat sudah dikenal: tinggal Hadir / Izin (boleh diubah selama jam masih buka) ──
-    function showMe(notice) {
+    function showMe(notice, editing) {
       const me = info.me, st = me.status;
+      const sudahIsi = !!st && !editing;
+      const NAMA = '<div style="text-align:center;font-size:13px;color:#6b7280;">Halo,</div>' +
+        '<div style="text-align:center;font-size:22px;font-weight:800;margin-bottom:8px;">' + _esc(me.nama) + tag(me.tipe) + '</div>';
+      if (sudahIsi) {
+        // Sudah mengisi → tampilan ringkas + ucapan; tombol Hadir/Izin disembunyikan sampai "Ubah Status" ditekan
+        const hadir = st === 'hadir';
+        wrap.innerHTML = head(info) + card(
+          NAMA +
+          '<div style="text-align:center;background:#f0fdf4;color:#166534;border-radius:12px;padding:16px 10px;margin:6px 0 12px;">' +
+            '<div style="font-size:40px;line-height:1;">' + (hadir ? '✅' : '📝') + '</div>' +
+            '<div style="font-size:17px;font-weight:800;margin-top:8px;">Alhamdulillahi jazakallahu khoiro</div>' +
+            '<div style="font-size:15px;font-weight:700;margin-top:6px;">Tercatat: ' + (hadir ? 'HADIR' : 'IZIN') + '</div>' +
+          '</div>' +
+          '<div style="text-align:center;font-size:13px;color:#6b7280;margin-bottom:12px;line-height:1.5;">Salah tekan? Kamu bisa mengubahnya sampai pukul <b>' + _qrFmtJam(info.tutup) + '</b>.</div>' +
+          '<button id="apUbah" style="width:100%;padding:15px;font-size:17px;font-weight:800;border:2px solid #16a34a;border-radius:12px;background:#fff;color:#15803d;margin-bottom:4px;">✏️ Ubah Status</button>' +
+          errBox);
+        wrap.querySelector('#apUbah').addEventListener('click', () => showMe(null, true));
+        return;
+      }
       wrap.innerHTML = head(info) + card(
-        '<div style="text-align:center;font-size:13px;color:#6b7280;">Halo,</div>' +
-        '<div style="text-align:center;font-size:22px;font-weight:800;margin-bottom:8px;">' + _esc(me.nama) + tag(me.tipe) + '</div>' +
+        NAMA +
         (notice ? '<div style="text-align:center;background:#f0fdf4;color:#166534;border-radius:8px;padding:9px 10px;font-size:14px;font-weight:700;margin-bottom:10px;">' + _esc(notice) + '</div>' : '') +
         '<div style="text-align:center;font-size:13px;color:#6b7280;margin-bottom:12px;line-height:1.5;">' +
-          (st ? 'Tercatat: <b>' + (st === 'hadir' ? 'HADIR' : 'IZIN') + '</b>. Salah tekan? Kamu bisa mengubahnya sampai pukul ' + _qrFmtJam(info.tutup) + '.' : 'Silakan pilih:') + '</div>' +
+          (st ? 'Status sekarang: <b>' + (st === 'hadir' ? 'HADIR' : 'IZIN') + '</b>. Pilih status baru (bisa diubah sampai pukul ' + _qrFmtJam(info.tutup) + ').' : 'Silakan pilih:') + '</div>' +
         bigBtn('apHadir', '#16a34a', st === 'hadir' ? '✓ HADIR (tercatat)' : '✅ HADIR', st === 'hadir') +
         bigBtn('apIzin', '#f59e0b', st === 'izin' ? '✓ IZIN (tercatat)' : '📝 IZIN', st === 'izin') +
-        errBox + linkBtn('apBukan', '← Bukan saya'));
+        errBox + (st ? linkBtn('apBatalUbah', '← Kembali') : ''));
       if (st !== 'hadir') wrap.querySelector('#apHadir').addEventListener('click', () => kirim('hadir'));
       if (st !== 'izin') wrap.querySelector('#apIzin').addEventListener('click', showIzin);
-      wrap.querySelector('#apBukan').addEventListener('click', bukanSaya);
+      const bu = wrap.querySelector('#apBatalUbah'); if (bu) bu.addEventListener('click', () => showMe());
     }
 
     function showIzin() {
@@ -5442,7 +5480,7 @@ async function pinResetIdx(i) {
         '<button id="apKirimIzin" style="width:100%;padding:15px;font-size:17px;font-weight:800;border:0;border-radius:12px;background:#d97706;color:#fff;">📝 Kirim Izin</button>' +
         errBox + linkBtn('apBatal', '← Kembali'));
       wrap.querySelector('#apKirimIzin').addEventListener('click', () => kirim('izin', wrap.querySelector('#apAlasan').value.trim()));
-      wrap.querySelector('#apBatal').addEventListener('click', () => showMe());
+      wrap.querySelector('#apBatal').addEventListener('click', () => showMe(null, !!(info.me && info.me.status)));
     }
 
     async function kirim(status, alasan) {
@@ -5453,14 +5491,7 @@ async function pinResetIdx(i) {
       if (data && data.perlu_masuk) { await setTok(null); info.me = null; showCari('Silakan masuk dulu: ketik nama lengkapmu.'); return; }
       if (!data || !data.ok) { showErr((data && data.msg) || 'Gagal mengirim.'); return; }
       info.me.status = status;
-      showMe(status === 'hadir' ? '✅ Tercatat: HADIR. Terima kasih!' : '📝 Tercatat: IZIN. Terima kasih!');
-    }
-
-    async function bukanSaya() {
-      busy(true);
-      await rpc('absen_keluar', { p_device: getTok() });
-      await setTok(null); info.me = null;
-      showCari();
+      showMe();   // tampilan "sudah mengisi" + ucapan Alhamdulillahi jazakallahu khoiro
     }
 
     // ── Belum dikenal: ketik NAMA LENGKAP → (nama baru) buat PIN / (sudah terdaftar) masukkan PIN ──
@@ -13208,15 +13239,20 @@ async function deleteSesi(id) {
   const nama = s ? s.nama : 'Sesi #' + id;
   // [REAL-TIME] Hapus optimistik dari cache + render ulang TANPA re-fetch.
   // (loadSesi akan re-fetch & memunculkan lagi item yang belum benar2 dihapus)
+  const _selSebelum = $('absSesi') ? $('absSesi').value : '';
   sesiCache = sesiCache.filter(x => x.id !== id);
   renderSesiList();
+  // Sesi yang sedang dipilih ikut terhapus → panel QR & daftar absensi langsung ikut berganti (tanpa refresh halaman)
+  if ($('absSesi') && $('absSesi').value !== _selSebelum) loadAbsensi();
   showUndoToast(nama,
     function() {
       // URUNGKAN: kembalikan sesi ke posisi semula + render (tanpa re-fetch)
       if (s && !sesiCache.some(x => x.id === id)) {
         sesiCache.splice(Math.min(idx, sesiCache.length), 0, s);
       }
+      const _selSkrg = $('absSesi') ? $('absSesi').value : '';
       renderSesiList();
+      if ($('absSesi') && $('absSesi').value !== _selSkrg) loadAbsensi();
     },
     async function() {
       // KONFIRMASI (timer habis / tombol ✕): hapus permanen dari DB.
@@ -13226,7 +13262,11 @@ async function deleteSesi(id) {
       if (!deleted || deleted.length === 0) { showToast('❌ Hapus GAGAL — Supabase RLS memblokir DELETE.', 'error'); await loadSesi(); }
       // Bersihkan absensi anak GP untuk sesi ini (tabel kehadiran_gp tidak punya cascade FK,
       // jadi harus dihapus manual biar tidak jadi record yatim yang muncul di rekap).
-      else { try { await db.from('kehadiran_gp').delete().eq('sesi_id', id); } catch (e) {} }
+      else {
+        try { await db.from('kehadiran_gp').delete().eq('sesi_id', id); } catch (e) {}
+        // QR sesi ini ikut dihapus → link/QR lama yang sudah dibagikan jadi tidak valid
+        try { await db.from('absen_qr').delete().eq('sesi_id', id); } catch (e) {}
+      }
       // [AUDIT] Catat hapus sesi
       if (typeof _auditLog === 'function') _auditLog('sesi', 'DELETE',
         s ? { id: s.id, nama: s.nama, tanggal: s.tanggal } : { id }, null, 'Hapus sesi: ' + nama);
@@ -13703,6 +13743,7 @@ async function loadAbsensi(opts) {
     absenState = {};
     anggotaCache = [];
     _absRenderReview();
+    try { if (typeof qrLoadPanel === 'function') qrLoadPanel(); } catch (e) {}   // sembunyikan QR sesi yang sudah tidak ada
     return;
   }
   // Sertakan sambung_kelompok untuk fitur auto-izin; kalau kolom belum ada di DB,
