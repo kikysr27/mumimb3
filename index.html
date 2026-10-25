@@ -14457,8 +14457,10 @@ async function loadRekap() {
       </div>
       <div id="rekapSesiStatsWrap"></div>
       <div id="rekapAnalisaWrap"></div>
-    </div>`;
+    </div>
+    <div id="rekapGrafikSiswa" style="margin-top:22px;"></div>`;
   renderRekapTable();
+  gfInit();
 }
 
 function sortedRekapRows() {
@@ -14702,6 +14704,257 @@ function renderRekapChart(rows) {
       },
     });
   } catch (e) { console.log('Rekap chart error:', e); }
+}
+
+// ─────────────── GRAFIK KEHADIRAN PER PERTEMUAN & SISWA (bagian bawah Rekap) ───────────────
+let _gfCharts = {}, _gfCache = {}, _gfSesiCache = null;
+let _gfState = { open: null, lists: {}, tahunBulan: null };
+const GF_COL = { hadir: '#16a34a', izin: '#d97706', tidak_hadir: '#dc2626' };
+const GF_LBL = { hadir: 'Hadir', izin: 'Izin', tidak_hadir: 'Tidak Hadir' };
+
+function gfTgl(t) { const [, m, d] = t.split('-').map(Number); return d + ' ' + BULAN_SG[m - 1]; }
+function gfTglPanjang(t) { return new Date(t + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }); }
+function gfDestroy(k) { if (_gfCharts[k]) { try { _gfCharts[k].destroy(); } catch (e) {} delete _gfCharts[k]; } }
+
+function gfPop() {
+  let mumi = $('rekapPopMumi') ? $('rekapPopMumi').checked : true;
+  const gpmt = $('rekapPopGpmt') ? $('rekapPopGpmt').checked : false;
+  const gpsd = $('rekapPopGpsd') ? $('rekapPopGpsd').checked : false;
+  if (!mumi && !gpmt && !gpsd) mumi = true;
+  return { mumi, gpmt, gpsd };
+}
+
+// Ambil catatan kehadiran per siswa per pertemuan untuk rentang tanggal (ikut filter populasi Rekap)
+async function gfFetch(first, last) {
+  const pop = gfPop();
+  const ck = [first, last, pop.mumi, pop.gpmt, pop.gpsd].join('|');
+  if (_gfCache[ck]) return _gfCache[ck];
+  if (!_gfSesiCache) {
+    const { data } = await db.from('sesi').select('id, nama, jam_mulai, jam_selesai').order('urutan').order('id');
+    _gfSesiCache = data || [];
+  }
+  const { data: ang } = await db.from('anggota').select('id, tampil_absensi, status');
+  const tampil = new Set((ang || []).filter(a => a.status !== 'tidak_aktif' && a.tampil_absensi !== false).map(a => String(a.id)));
+  const { data: keh, error } = await db.from('kehadiran')
+    .select('anggota_id, status, tanggal, sesi_id, anggota(nama)')
+    .gte('tanggal', first).lte('tanggal', last).limit(100000);
+  if (error) console.log('[grafik siswa] gagal ambil kehadiran:', error.message);
+  const real = new Set(), recs = [];
+  (keh || []).forEach(k => {
+    if (!tampil.has(String(k.anggota_id))) return;
+    real.add(k.tanggal + '#' + k.sesi_id);
+    if (pop.mumi) recs.push({ nama: k.anggota?.nama || '(?)', status: k.status, tanggal: k.tanggal, sesi_id: k.sesi_id });
+  });
+  if (pop.gpmt || pop.gpsd) {
+    try {
+      const { data: kg } = await db.from('kehadiran_gp').select('gp_tipe, gp_id, status, tanggal, sesi_id')
+        .gte('tanggal', first).lte('tanggal', last).limit(100000);
+      const nm = {};
+      if (pop.gpmt) { const { data: g } = await db.from('gpmt').select('id, nama'); (g || []).forEach(x => { nm['gpmt_' + x.id] = x.nama; }); }
+      if (pop.gpsd) { const { data: g } = await db.from('gpsd').select('id, nama'); (g || []).forEach(x => { nm['gpsd_' + x.id] = x.nama; }); }
+      (kg || []).forEach(k => {
+        if (!((k.gp_tipe === 'gpmt' && pop.gpmt) || (k.gp_tipe === 'gpsd' && pop.gpsd))) return;
+        if (!real.has(k.tanggal + '#' + k.sesi_id)) return;   // jangan munculkan sesi hantu
+        const key = k.gp_tipe + '_' + k.gp_id;
+        recs.push({ nama: (nm[key] || '(?)') + ' (' + k.gp_tipe.toUpperCase() + ')', status: k.status, tanggal: k.tanggal, sesi_id: k.sesi_id });
+      });
+    } catch (e) { /* tabel GP belum ada — abaikan */ }
+  }
+  // Kelompokkan per pertemuan (tanggal + sesi)
+  const idx = {}; _gfSesiCache.forEach((s, i) => { idx[s.id] = i; });
+  const m = {};
+  recs.forEach(r => {
+    const key = r.tanggal + '#' + r.sesi_id;
+    (m[key] = m[key] || { key, tanggal: r.tanggal, sesi_id: r.sesi_id, rows: [] }).rows.push(r);
+  });
+  const groups = Object.values(m).sort((a, b) => a.tanggal.localeCompare(b.tanggal) || (idx[a.sesi_id] ?? 999) - (idx[b.sesi_id] ?? 999));
+  _gfCache[ck] = groups;
+  return groups;
+}
+
+// Baris sebuah pertemuan, dengan filter siswa (kalau dipilih)
+function gfRows(g) {
+  const sel = $('gfSiswa') ? $('gfSiswa').value : '';
+  return sel ? g.rows.filter(r => r.nama === sel) : g.rows;
+}
+function gfCount(rows) {
+  const c = { hadir: 0, izin: 0, tidak_hadir: 0 };
+  rows.forEach(r => { if (c[r.status] !== undefined) c[r.status]++; });
+  return c;
+}
+
+function gfInit() {
+  const box = $('rekapGrafikSiswa');
+  if (!box) return;
+  Object.keys(_gfCharts).forEach(gfDestroy);
+  _gfCache = {}; _gfState = { open: null, lists: {}, tahunBulan: null };
+  const names = [...new Set(rekapRows.map(r => r.nama))].sort((a, b) => a.localeCompare(b));
+  const today = new Date().toISOString().slice(0, 10);
+  const vBulan = ($('rekapBulan') || {}).value || today.slice(0, 7);
+  const vTahun = ($('rekapTahun') || {}).value || today.slice(0, 4);
+  const vDari = ($('rekapDari') || {}).value || today.slice(0, 7) + '-01';
+  const vSampai = ($('rekapSampai') || {}).value || today;
+  const panel = (kind, judul, inputs) => `
+    <div class="stat" style="text-align:left;padding:10px;">
+      <div style="font-weight:700;font-size:13px;color:#1a6644;margin-bottom:6px;">${judul}</div>
+      ${inputs}
+      <div style="position:relative;height:200px;margin-top:8px;"><canvas id="gfChart_${kind}"></canvas></div>
+      <div id="gfInfo_${kind}" class="muted" style="font-size:11px;margin-top:6px;"></div>
+      <div id="gfChips_${kind}" style="margin-top:4px;"></div>
+    </div>`;
+  box.innerHTML = `
+    <div style="border-top:2px solid #e0ece5;padding-top:16px;">
+      <h2 style="font-size:14px;margin-bottom:4px;">📊 Grafik Kehadiran per Pertemuan &amp; Siswa</h2>
+      <div class="muted" style="font-size:11px;margin-bottom:8px;">Pilih periode di tiap grafik. Klik batang (atau tombol pertemuan) untuk melihat grafik Hadir, Izin, dan Tidak Hadir pada pertemuan itu beserta nama siswanya. Di grafik Per Tahun, klik bulan dulu untuk menampilkan pertemuannya.</div>
+      <label>Siswa</label>
+      <select id="gfSiswa" onchange="gfRenderAll()">
+        <option value="">Semua siswa</option>
+        ${names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('')}
+      </select>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:10px;">
+        ${panel('bulan', '📅 Per Bulan', `<input type="month" id="gfBulan" value="${vBulan}" onchange="gfRenderPanel('bulan')">`)}
+        ${panel('custom', '🗓️ Custom', `<div class="row" style="margin:0;"><input type="date" id="gfDari" value="${vDari}" onchange="gfRenderPanel('custom')"><input type="date" id="gfSampai" value="${vSampai}" onchange="gfRenderPanel('custom')"></div>`)}
+        ${panel('tahun', '📆 Per Tahun', `<input type="number" id="gfTahun" min="2020" max="2099" value="${vTahun}" onchange="gfRenderPanel('tahun')">`)}
+      </div>
+      <div id="gfDetail" style="margin-top:14px;"></div>
+    </div>`;
+  gfRenderAll();
+}
+
+function gfRenderAll() {
+  ['bulan', 'custom', 'tahun'].forEach(k => gfRenderPanel(k));
+  if (_gfState.open) gfShowDetail(_gfState.open.g, _gfState.open.no, false);
+}
+
+function gfChipsHtml(list, kind) {
+  return list.map((g, i) => `<button class="secondary" style="width:auto;padding:4px 10px;font-size:11px;margin:2px;" onclick="gfOpen('${kind}',${i})">P${i + 1} · ${gfTgl(g.tanggal)}</button>`).join('');
+}
+
+function gfDrawBar(kind, labels, counts, onClick) {
+  gfDestroy('p_' + kind);
+  const cv = $('gfChart_' + kind);
+  if (!cv || typeof Chart === 'undefined') return;
+  _gfCharts['p_' + kind] = new Chart(cv, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: ['hadir', 'izin', 'tidak_hadir'].map(k => ({ label: GF_LBL[k], data: counts.map(c => c[k]), backgroundColor: GF_COL[k] })),
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { x: { stacked: true, ticks: { font: { size: 10 } } }, y: { stacked: true, ticks: { precision: 0, font: { size: 10 } } } },
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
+      onClick: (e, els) => { if (els.length && onClick) onClick(els[0].index); },
+      onHover: (e, els) => { if (e.native && e.native.target) e.native.target.style.cursor = (els.length && onClick) ? 'pointer' : 'default'; },
+    },
+  });
+}
+
+async function gfRenderPanel(kind) {
+  const info = $('gfInfo_' + kind), chips = $('gfChips_' + kind);
+  if (!info) return;
+  if (typeof Chart === 'undefined') { info.textContent = 'Library grafik belum termuat.'; return; }
+  let first, last;
+  if (kind === 'bulan') {
+    const b = $('gfBulan').value;
+    if (!b) { info.textContent = 'Pilih bulan dulu.'; gfDestroy('p_bulan'); return; }
+    const [y, m] = b.split('-').map(Number);
+    first = b + '-01'; last = b + '-' + String(new Date(y, m, 0).getDate()).padStart(2, '0');
+  } else if (kind === 'custom') {
+    first = $('gfDari').value; last = $('gfSampai').value;
+    if (!first || !last) { info.textContent = 'Isi tanggal dari & sampai dulu.'; gfDestroy('p_custom'); return; }
+    if (first > last) { info.textContent = 'Tanggal "dari" tidak boleh lebih besar dari "sampai".'; gfDestroy('p_custom'); return; }
+  } else {
+    const y = parseInt($('gfTahun').value);
+    if (!y || y < 2020 || y > 2099) { info.textContent = 'Isi tahun yang valid.'; gfDestroy('p_tahun'); return; }
+    first = y + '-01-01'; last = y + '-12-31';
+  }
+  info.textContent = 'Memuat...';
+  const groups = await gfFetch(first, last);
+  if (!groups.length) {
+    gfDestroy('p_' + kind);
+    info.textContent = 'Belum ada data absensi pada periode ini.';
+    chips.innerHTML = ''; _gfState.lists[kind] = [];
+    return;
+  }
+  if (kind === 'tahun') {
+    const per = Array.from({ length: 12 }, () => ({ hadir: 0, izin: 0, tidak_hadir: 0, p: [] }));
+    groups.forEach(g => {
+      const mi = +g.tanggal.slice(5, 7) - 1;
+      per[mi].p.push(g);
+      const c = gfCount(gfRows(g));
+      per[mi].hadir += c.hadir; per[mi].izin += c.izin; per[mi].tidak_hadir += c.tidak_hadir;
+    });
+    _gfState.tahunPer = per;
+    gfDrawBar('tahun', BULAN_SG, per, mi => gfPilihBulanTahun(mi));
+    info.textContent = groups.length + ' pertemuan dalam setahun. Klik bulan untuk melihat pertemuannya.';
+    if (_gfState.tahunBulan !== null && per[_gfState.tahunBulan]) gfPilihBulanTahun(_gfState.tahunBulan, true);
+    else { chips.innerHTML = ''; _gfState.lists.tahun = []; }
+  } else {
+    _gfState.lists[kind] = groups;
+    gfDrawBar(kind, groups.map((g, i) => 'P' + (i + 1) + ' · ' + gfTgl(g.tanggal)), groups.map(g => gfCount(gfRows(g))), i => gfOpen(kind, i));
+    info.textContent = groups.length + ' pertemuan. Klik batang / tombol untuk detail.';
+    chips.innerHTML = gfChipsHtml(groups, kind);
+  }
+}
+
+function gfPilihBulanTahun(mi, silent) {
+  _gfState.tahunBulan = mi;
+  const p = (_gfState.tahunPer || [])[mi];
+  const chips = $('gfChips_tahun'), info = $('gfInfo_tahun');
+  if (!p || !chips) return;
+  _gfState.lists.tahun = p.p;
+  const y = $('gfTahun').value;
+  if (!p.p.length) { chips.innerHTML = `<div class="muted" style="font-size:11px;">Tidak ada pertemuan di ${BULAN[mi]} ${y}.</div>`; return; }
+  chips.innerHTML = `<div style="font-size:11px;font-weight:700;color:#1a6644;">${BULAN[mi]} ${y} — ${p.p.length} pertemuan:</div>` + gfChipsHtml(p.p, 'tahun');
+  if (!silent && p.p.length === 1) gfOpen('tahun', 0);
+}
+
+function gfOpen(kind, i) {
+  const g = (_gfState.lists[kind] || [])[i];
+  if (g) gfShowDetail(g, i + 1, true);
+}
+
+function gfShowDetail(g, no, scroll) {
+  const wrap = $('gfDetail');
+  if (!wrap) return;
+  _gfState.open = { g, no };
+  ['hadir', 'izin', 'tidak_hadir'].forEach(k => gfDestroy('d_' + k));
+  const rows = g.rows, total = rows.length;
+  const sel = $('gfSiswa') ? $('gfSiswa').value : '';
+  const sesi = _gfSesiCache.find(s => s.id === g.sesi_id);
+  const jam = sesi && sesi.jam_mulai ? ' · 🕐 ' + sesi.jam_mulai.slice(0, 5) + (sesi.jam_selesai ? '–' + sesi.jam_selesai.slice(0, 5) : '') : '';
+  const cols = ['hadir', 'izin', 'tidak_hadir'].map(k => {
+    const list = rows.filter(r => r.status === k).map(r => r.nama).sort((a, b) => a.localeCompare(b));
+    const pct = total ? Math.round(list.length / total * 100) : 0;
+    const chips = list.map(n => {
+      const on = sel && n === sel;
+      return `<span style="display:inline-block;background:${on ? GF_COL[k] : '#fff'};color:${on ? '#fff' : '#1a3a2a'};border:1px solid ${GF_COL[k]};border-radius:20px;padding:2px 8px;font-size:10px;margin:2px;">${escapeHtml(n)}</span>`;
+    }).join('') || '<span class="muted" style="font-size:10px;">—</span>';
+    return `<div class="stat" style="padding:8px;">
+      <div style="font-weight:700;font-size:12px;color:${GF_COL[k]};">${k === 'hadir' ? '✅' : k === 'izin' ? '🟡' : '❌'} ${GF_LBL[k]}</div>
+      <div style="position:relative;height:110px;margin:6px 0;"><canvas id="gfD_${k}"></canvas></div>
+      <div style="font-weight:800;font-size:16px;color:${GF_COL[k]};">${list.length} <span style="font-size:11px;font-weight:600;">siswa · ${pct}%</span></div>
+      <div style="margin-top:6px;text-align:left;max-height:170px;overflow-y:auto;">${chips}</div>
+    </div>`;
+  });
+  wrap.innerHTML = `
+    <div style="font-weight:700;font-size:13px;color:#1a6644;margin-bottom:2px;">Pertemuan ${no} — ${gfTglPanjang(g.tanggal)}</div>
+    <div class="muted" style="font-size:11px;margin-bottom:8px;">${escapeHtml(sesi ? sesi.nama : '—')}${jam} · ${total} siswa tercatat${sel ? ' · siswa terpilih disorot' : ''}</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">${cols.join('')}</div>`;
+  if (typeof Chart !== 'undefined') {
+    ['hadir', 'izin', 'tidak_hadir'].forEach(k => {
+      const n = rows.filter(r => r.status === k).length;
+      try {
+        _gfCharts['d_' + k] = new Chart($('gfD_' + k), {
+          type: 'doughnut',
+          data: { labels: [GF_LBL[k], 'Lainnya'], datasets: [{ data: [n, Math.max(0, total - n)], backgroundColor: [GF_COL[k], '#e5e7eb'], borderWidth: 0 }] },
+          options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { display: false } } },
+        });
+      } catch (e) { console.log('gf detail chart error:', e); }
+    });
+  }
+  if (scroll) wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // ─────────────── QURBAN (Periode + Detail) ───────────────
