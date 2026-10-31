@@ -2012,6 +2012,7 @@
         <div class="menu-card" id="menuRiwayat" onclick="openSection('riwayat')" style="display:none;"><div class="ic">🕵️</div><div class="lb">Riwayat</div><div class="sub">Log perubahan</div></div>
         <div class="menu-card" id="menuFoto" onclick="openSection('foto')" style="display:none;"><div class="ic">🗑️</div><div class="lb">Kelola Foto</div><div class="sub">Backup & hapus foto</div></div>
         <div class="menu-card" id="menuAkses" onclick="openSection('akses')" style="display:none;"><div class="ic">🔑</div><div class="lb">Kelola Akses</div><div class="sub">Atur hak user</div></div>
+        <div class="menu-card" id="menuMasukan" onclick="openSection('masukan')" style="display:none;"><div class="ic">💬</div><div class="lb">Masukan</div><div class="sub">Link kotak saran</div></div>
         <div class="menu-card" id="menuRecycle" onclick="openSection('recycle')" style="display:none;"><div class="ic">🗑️</div><div class="lb">Tempat Sampah</div><div class="sub">Pulihkan data terhapus</div></div>
         <div class="menu-card" onclick="doLogout()"><div class="ic">🚪</div><div class="lb">Logout</div><div class="sub">Keluar dari sistem</div></div>
       </div>
@@ -3246,6 +3247,27 @@
     </div>
 
     <!-- ═══ RIWAYAT (AUDIT LOG) ═══ -->
+    <div id="sec-masukan" class="section" style="display:none;">
+      <button class="back" onclick="goBack()">← Menu</button>
+      <div id="mkDenied" style="display:none;padding:14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#b91c1c;font-size:13px;">🔒 Menu ini hanya untuk <b>Admin Master</b> (atau user yang diberi akses oleh Admin Master).</div>
+      <div id="mkBody">
+        <div class="card">
+          <h2>💬 Tambah Menu Masukan</h2>
+          <p class="muted" style="margin-bottom:10px;">Buat form masukan, lalu bagikan <b>linknya</b>. Siapa pun yang punya link bisa mengisi <b>nama</b> (boleh dikosongkan) dan <b>masukan</b> (wajib), tanpa login.</p>
+          <div id="mkErr" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:8px;padding:8px 10px;font-size:12px;margin-bottom:8px;line-height:1.5;"></div>
+          <label>Judul Form</label>
+          <input id="mkJudul" type="text" maxlength="100" placeholder="mis. Masukan untuk Pengajian Bulan Ini">
+          <label>Keterangan (opsional)</label>
+          <textarea id="mkDesk" rows="2" maxlength="300" placeholder="Tampil di atas form untuk pengisi"></textarea>
+          <button onclick="mkBuat()">➕ Buat Menu Masukan</button>
+        </div>
+        <div class="card">
+          <h2>📬 Daftar Menu Masukan</h2>
+          <div id="mkList"><div class="muted">Memuat...</div></div>
+        </div>
+      </div>
+    </div>
+
     <div id="sec-riwayat" class="section" style="display:none;">
       <button class="back" onclick="goBack()">← Menu</button>
       <div class="card">
@@ -5287,6 +5309,159 @@ function qrCetak() {
   w.document.write('<!doctype html><title>QR Absen</title><style>@page{margin:10mm}body{margin:0;text-align:center}img{width:100%;max-width:700px}</style><img src="' + c.toDataURL('image/png') + '" onload="setTimeout(function(){window.print()},300)">');
   w.document.close();
 }
+
+
+// ════════════════ MENU MASUKAN (admin master) + HALAMAN PUBLIK ?masukan=KODE ════════════════
+let _mkRows = [];
+function _mkLink(kode) { return location.href.split('#')[0].split('?')[0] + '?masukan=' + encodeURIComponent(kode); }
+function _mkKode() {
+  const abc = 'abcdefghjkmnpqrstuvwxyz23456789'; let k = '';
+  const a = new Uint32Array(10); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : a.forEach((_, i) => a[i] = Math.floor(Math.random() * 4294967296));
+  a.forEach(n => k += abc[n % abc.length]); return k;
+}
+function _mkShowErr(m) { const e = $('mkErr'); if (!e) return; e.style.display = m ? 'block' : 'none'; e.innerHTML = m || ''; }
+function _mkTgl(iso) { return new Date(iso).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+
+async function loadMasukan() {
+  const ok = window._masukanOk === true;
+  $('mkDenied').style.display = ok ? 'none' : 'block';
+  $('mkBody').style.display = ok ? 'block' : 'none';
+  if (!ok) return;
+  _mkShowErr('');
+  const { data, error } = await db.from('masukan_form').select('*, masukan_isi(count)').order('created_at', { ascending: false });
+  if (error) {
+    $('mkList').innerHTML = '<div class="muted">—</div>';
+    _mkShowErr('Fitur Masukan belum aktif: jalankan file <b>masukan.sql</b> di Supabase → SQL Editor dulu.<br><span style="font-size:11px;">(' + _esc(error.message) + ')</span>');
+    return;
+  }
+  _mkRows = data || [];
+  mkRender();
+}
+function mkRender() {
+  const box = $('mkList');
+  if (!_mkRows.length) { box.innerHTML = '<div class="muted">Belum ada menu masukan. Buat di atas.</div>'; return; }
+  box.innerHTML = _mkRows.map(f => {
+    const n = (f.masukan_isi && f.masukan_isi[0] && f.masukan_isi[0].count) || 0;
+    const link = _mkLink(f.kode);
+    return '<div style="border:1.5px solid #cfe3d8;border-radius:12px;padding:10px 12px;margin-bottom:10px;background:#fff;">' +
+      '<div style="font-weight:800;font-size:14px;">' + _esc(f.judul) + ' ' + (f.aktif ? '<span style="font-size:11px;color:#15803d;">🟢 Dibuka</span>' : '<span style="font-size:11px;color:#b91c1c;">🔒 Ditutup</span>') + '</div>' +
+      (f.deskripsi ? '<div class="muted" style="font-size:12px;margin-top:2px;">' + _esc(f.deskripsi) + '</div>' : '') +
+      '<div style="margin-top:6px;"><a href="' + _esc(link) + '" target="_blank" rel="noopener" style="font-size:11px;word-break:break-all;color:#1a6644;font-weight:700;text-decoration:underline;">' + _esc(link) + '</a></div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">' +
+        '<button class="small secondary" onclick="mkSalin(' + f.id + ')">📋 Salin Link</button>' +
+        '<button class="small secondary" onclick="mkLihat(' + f.id + ')">👁️ Lihat Masukan (' + n + ')</button>' +
+        '<button class="small secondary" onclick="mkToggle(' + f.id + ',' + (!f.aktif) + ')">' + (f.aktif ? '🔒 Tutup' : '🔓 Buka Lagi') + '</button>' +
+        '<button class="small danger" onclick="mkHapusForm(' + f.id + ')">🗑️ Hapus</button>' +
+      '</div>' +
+      '<div id="mkIsi_' + f.id + '" style="margin-top:8px;"></div>' +
+    '</div>';
+  }).join('');
+}
+async function mkBuat() {
+  _mkShowErr('');
+  const judul = $('mkJudul').value.trim(), desk = $('mkDesk').value.trim();
+  if (!judul) { _mkShowErr('Judul form wajib diisi.'); return; }
+  const { error } = await db.from('masukan_form').insert({ kode: _mkKode(), judul, deskripsi: desk || null });
+  if (error) { _mkShowErr('Gagal membuat: ' + _esc(error.message)); return; }
+  $('mkJudul').value = ''; $('mkDesk').value = '';
+  loadMasukan();
+}
+function mkSalin(id) {
+  const f = _mkRows.find(x => x.id === id); if (!f) return;
+  const link = _mkLink(f.kode);
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(() => alert('Link disalin:\n' + link), () => prompt('Salin link ini:', link));
+  else prompt('Salin link ini:', link);
+}
+async function mkToggle(id, aktif) {
+  const { error } = await db.from('masukan_form').update({ aktif }).eq('id', id);
+  if (error) { alert('Gagal: ' + error.message); return; }
+  loadMasukan();
+}
+async function mkHapusForm(id) {
+  const f = _mkRows.find(x => x.id === id); if (!f) return;
+  if (!confirm('Hapus form "' + f.judul + '" beserta SEMUA masukan di dalamnya? Link-nya juga tidak akan berfungsi lagi.')) return;
+  const { error } = await db.from('masukan_form').delete().eq('id', id);
+  if (error) { alert('Gagal: ' + error.message); return; }
+  loadMasukan();
+}
+async function mkLihat(id) {
+  const box = $('mkIsi_' + id); if (!box) return;
+  if (box.dataset.open === '1') { box.dataset.open = ''; box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="muted" style="font-size:12px;">Memuat...</div>';
+  const { data, error } = await db.from('masukan_isi').select('*').eq('form_id', id).order('created_at', { ascending: false });
+  if (error) { box.innerHTML = '<div style="color:#b91c1c;font-size:12px;">' + _esc(error.message) + '</div>'; return; }
+  box.dataset.open = '1';
+  if (!data.length) { box.innerHTML = '<div class="muted" style="font-size:12px;">Belum ada masukan.</div>'; return; }
+  box.innerHTML = data.map(r =>
+    '<div style="background:#f0f7f3;border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:13px;">' +
+      '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">' +
+        '<div style="font-weight:700;font-size:12px;color:#1a6644;">' + (r.nama ? _esc(r.nama) : '<i style="font-weight:400;color:#6b7280;">Tanpa nama</i>') + ' <span class="muted" style="font-weight:400;font-size:11px;">· ' + _mkTgl(r.created_at) + '</span></div>' +
+        '<button class="small danger" style="width:auto;padding:2px 8px;font-size:11px;" onclick="mkHapusIsi(' + r.id + ',' + id + ')">✕</button>' +
+      '</div>' +
+      '<div style="margin-top:4px;white-space:pre-wrap;word-break:break-word;line-height:1.5;">' + _esc(r.isi) + '</div>' +
+    '</div>').join('');
+}
+async function mkHapusIsi(rid, fid) {
+  if (!confirm('Hapus masukan ini?')) return;
+  const { error } = await db.from('masukan_isi').delete().eq('id', rid);
+  if (error) { alert('Gagal: ' + error.message); return; }
+  const box = $('mkIsi_' + fid); if (box) box.dataset.open = '';
+  await loadMasukan(); mkLihat(fid);
+}
+
+// ── Halaman publik: ?masukan=KODE (tanpa login) ──
+(function masukanPublicPage() {
+  const kode = new URLSearchParams(location.search).get('masukan');
+  if (!kode) return;
+  const start = () => {
+    document.documentElement.style.overflow = 'hidden';
+    const ov = document.createElement('div');
+    ov.id = 'masukanPublic';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483000;overflow:auto;background:linear-gradient(160deg,#14573a,#1f7a50);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%;';
+    ov.innerHTML = '<div id="mpWrap" style="max-width:480px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 16px 40px;"></div>';
+    document.body.appendChild(ov);
+    const wrap = ov.querySelector('#mpWrap');
+    const card = h => '<div style="background:#fff;border-radius:16px;padding:18px 16px;box-shadow:0 6px 24px rgba(0,0,0,.2);color:#1f2937;">' + h + '</div>';
+    const msg = (icon, t, sub, extra) => card('<div style="text-align:center;padding:14px 4px;"><div style="font-size:44px;">' + icon + '</div><div style="font-size:17px;font-weight:800;margin-top:6px;">' + _esc(t) + '</div>' + (sub ? '<div style="font-size:13px;color:#6b7280;margin-top:6px;line-height:1.5;">' + _esc(sub) + '</div>' : '') + (extra || '') + '</div>');
+    const head = i => '<div style="text-align:center;color:#fff;margin:8px 0 14px;"><div style="font-size:13px;opacity:.85;letter-spacing:.5px;">KOTAK MASUKAN</div><div style="font-size:22px;font-weight:800;margin-top:2px;">' + _esc(i.judul) + '</div>' +
+      (i.deskripsi ? '<div style="font-size:13px;opacity:.9;margin-top:4px;line-height:1.5;">' + _esc(i.deskripsi) + '</div>' : '') + '</div>';
+    let info = null;
+
+    async function load() {
+      wrap.innerHTML = '<div style="text-align:center;color:#fff;padding:60px 0;font-size:16px;">Memuat...</div>';
+      let r; try { r = await db.rpc('masukan_info', { p_kode: kode }); } catch (e) { r = { error: e }; }
+      if (r.error) { wrap.innerHTML = msg('⚠️', 'Gagal memuat', r.error.message || String(r.error)); return; }
+      if (!r.data || !r.data.ok) { wrap.innerHTML = msg('❓', 'Link tidak valid', r.data && r.data.msg); return; }
+      info = r.data; form();
+    }
+    function form() {
+      if (!info.aktif) { wrap.innerHTML = head(info) + msg('🔒', 'Form sudah ditutup', 'Terima kasih, form masukan ini tidak menerima isian lagi.'); return; }
+      const fld = 'width:100%;box-sizing:border-box;padding:12px;font-size:16px;border:2px solid #cfe3d8;border-radius:10px;margin:6px 0 12px;font-family:inherit;';
+      wrap.innerHTML = head(info) + card(
+        '<label style="font-size:13px;font-weight:700;">Nama <span style="font-weight:400;color:#6b7280;">(boleh dikosongkan)</span></label>' +
+        '<input id="mpNama" type="text" maxlength="80" autocomplete="name" placeholder="Nama kamu" style="' + fld + '">' +
+        '<label style="font-size:13px;font-weight:700;">Masukan <span style="color:#b91c1c;">*</span></label>' +
+        '<textarea id="mpIsi" rows="6" maxlength="2000" placeholder="Tulis masukanmu di sini..." style="' + fld + 'resize:vertical;"></textarea>' +
+        '<button id="mpKirim" style="width:100%;padding:16px;font-size:18px;font-weight:800;border:0;border-radius:12px;background:#1a6644;color:#fff;">📨 Kirim Masukan</button>' +
+        '<div id="mpErr" style="display:none;margin-top:10px;background:#fef2f2;color:#b91c1c;border-radius:8px;padding:9px 10px;font-size:13px;line-height:1.5;"></div>');
+      wrap.querySelector('#mpKirim').onclick = kirim;
+    }
+    async function kirim() {
+      const err = m => { const e = wrap.querySelector('#mpErr'); e.style.display = 'block'; e.textContent = m; };
+      const nama = wrap.querySelector('#mpNama').value.trim(), isi = wrap.querySelector('#mpIsi').value.trim();
+      if (!isi) { err('Masukan wajib diisi.'); return; }
+      const b = wrap.querySelector('#mpKirim'); b.disabled = true; b.style.opacity = '.6'; b.textContent = 'Mengirim...';
+      let r; try { r = await db.rpc('masukan_kirim', { p_kode: kode, p_nama: nama, p_isi: isi }); } catch (e) { r = { error: e }; }
+      b.disabled = false; b.style.opacity = '1'; b.textContent = '📨 Kirim Masukan';
+      if (r.error) { err(r.error.message || 'Gagal mengirim, coba lagi.'); return; }
+      if (!r.data || !r.data.ok) { err((r.data && r.data.msg) || 'Gagal mengirim.'); return; }
+      wrap.innerHTML = head(info) + msg('✅', 'Terima kasih!', 'Masukanmu sudah terkirim.', '<button id="mpLagi" style="margin-top:14px;padding:10px 16px;font-size:14px;border:0;border-radius:10px;background:#e5efe9;color:#1a6644;font-weight:700;">Kirim masukan lagi</button>');
+      wrap.querySelector('#mpLagi').onclick = form;
+    }
+    load();
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
 
 // Segarkan panel QR setiap kali tanggal/sesi/roster absensi dimuat ulang
 (function () {
@@ -9676,6 +9851,9 @@ async function onLoggedIn(user) {
   $('menuFoto').style.display = _can('foto') ? 'block' : 'none';
   if ($('menuRecycle')) $('menuRecycle').style.display = _can('recycle') ? 'block' : 'none';
   $('menuAkses').style.display = (isMasterAdmin || isSuper) ? 'block' : 'none'; // hanya master admin
+  // Menu Masukan: hanya Admin Master, kecuali dibagikan lewat Kelola Akses (centang "Masukan")
+  window._masukanOk = isMasterAdmin || _akses.masukan === true;
+  $('menuMasukan').style.display = window._masukanOk ? 'block' : 'none';
   // Hak EDIT per-menu: master/super = penuh; akses_edit null (akun lama) = penuh
   window._editMap = (isSuper || isMasterAdmin || !prof || !prof.akses_edit) ? null : prof.akses_edit;
   window._curSec = null;
@@ -9734,6 +9912,7 @@ function openSection(name) {
     },
     riwayat: loadRiwayat,
     akses: loadKelolAkses,
+    masukan: loadMasukan,
     recycle: loadRecycle,
     kalender: loadKalender,
     catatan: loadCatatan,
@@ -20060,6 +20239,7 @@ function renderKelolAkses() {
     { key:'riwayat', label:'🕵️ Riwayat' },
     { key:'foto',    label:'🗑️ Kelola Foto' },
     { key:'recycle', label:'♻️ Tempat Sampah' },
+    { key:'masukan', label:'💬 Masukan' },
   ];
   const canEdit = isMasterAdmin; // hanya admin utama yang boleh ubah
 
