@@ -14911,7 +14911,7 @@ const GF_LBL = { hadir: 'Hadir', izin: 'Izin', tidak_hadir: 'Tidak Hadir' };
 
 function gfTgl(t) { const [, m, d] = t.split('-').map(Number); return d + ' ' + BULAN_SG[m - 1]; }
 function gfTglPanjang(t) { return new Date(t + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }); }
-function gfDestroy(k) { if (_gfCharts[k]) { try { _gfCharts[k].destroy(); } catch (e) {} delete _gfCharts[k]; } }
+function gfDestroy(k) { Object.keys(_gfCharts).filter(x => x === k || x.startsWith(k + '_')).forEach(x => { try { _gfCharts[x].destroy(); } catch (e) {} delete _gfCharts[x]; }); }
 
 function gfPop() {
   let mumi = $('rekapPopMumi') ? $('rekapPopMumi').checked : true;
@@ -14995,7 +14995,11 @@ function gfInit() {
     <div class="stat" style="text-align:left;padding:10px;">
       <div style="font-weight:700;font-size:13px;color:#1a6644;margin-bottom:6px;">${judul}</div>
       ${inputs}
-      <div style="position:relative;height:200px;margin-top:8px;"><canvas id="gfChart_${kind}"></canvas></div>
+      ${['hadir', 'izin', 'tidak_hadir'].map(k => `
+        <div style="margin-top:8px;">
+          <div style="font-size:11px;font-weight:800;color:${GF_COL[k]};">● ${GF_LBL[k]}</div>
+          <div style="position:relative;height:110px;"><canvas id="gfChart_${kind}_${k}"></canvas></div>
+        </div>`).join('')}
       <div id="gfInfo_${kind}" class="muted" style="font-size:11px;margin-top:6px;"></div>
       <div id="gfChips_${kind}" style="margin-top:4px;"></div>
     </div>`;
@@ -15029,21 +15033,25 @@ function gfChipsHtml(list, kind) {
 
 function gfDrawBar(kind, labels, counts, onClick) {
   gfDestroy('p_' + kind);
-  const cv = $('gfChart_' + kind);
-  if (!cv || typeof Chart === 'undefined') return;
-  _gfCharts['p_' + kind] = new Chart(cv, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: ['hadir', 'izin', 'tidak_hadir'].map(k => ({ label: GF_LBL[k], data: counts.map(c => c[k]), backgroundColor: GF_COL[k] })),
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      scales: { x: { stacked: true, ticks: { font: { size: 10 } } }, y: { stacked: true, ticks: { precision: 0, font: { size: 10 } } } },
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
-      onClick: (e, els) => { if (els.length && onClick) onClick(els[0].index); },
-      onHover: (e, els) => { if (e.native && e.native.target) e.native.target.style.cursor = (els.length && onClick) ? 'pointer' : 'default'; },
-    },
+  if (typeof Chart === 'undefined') return;
+  // Satu grafik terpisah untuk Hadir, Izin, dan Tidak Hadir (tidak ditumpuk) supaya mudah dibandingkan
+  ['hadir', 'izin', 'tidak_hadir'].forEach(k => {
+    const cv = $('gfChart_' + kind + '_' + k);
+    if (!cv) return;
+    _gfCharts['p_' + kind + '_' + k] = new Chart(cv, {
+      type: 'bar',
+      data: { labels, datasets: [{ label: GF_LBL[k], data: counts.map(c => c[k]), backgroundColor: GF_COL[k] }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { font: { size: 9 }, maxRotation: 60, autoSkip: false } },
+          y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } } },
+        },
+        plugins: { legend: { display: false } },
+        onClick: (e, els) => { if (els.length && onClick) onClick(els[0].index); },
+        onHover: (e, els) => { if (e.native && e.native.target) e.native.target.style.cursor = (els.length && onClick) ? 'pointer' : 'default'; },
+      },
+    });
   });
 }
 
