@@ -5547,10 +5547,19 @@ async function agLinkReset() {
     const wrap = ov.querySelector('#dpWrap');
     const card = h => '<div style="background:#fff;border-radius:16px;padding:18px 16px;box-shadow:0 6px 24px rgba(0,0,0,.2);color:#1f2937;">' + h + '</div>';
     const msg = (icon, t, sub) => card('<div style="text-align:center;padding:14px 4px;"><div style="font-size:44px;">' + icon + '</div><div style="font-size:17px;font-weight:800;margin-top:6px;">' + _esc(t) + '</div>' + (sub ? '<div style="font-size:13px;color:#6b7280;margin-top:6px;line-height:1.5;">' + _esc(sub) + '</div>' : '') + '</div>');
-    const head = '<div style="text-align:center;color:#fff;margin:8px 0 14px;"><div style="font-size:13px;opacity:.85;letter-spacing:.5px;">PENDAFTARAN ANGGOTA BARU</div><div style="font-size:24px;font-weight:800;margin-top:2px;">MUMI</div><div style="font-size:13px;opacity:.9;margin-top:4px;">Isi data dirimu dengan benar ya.</div></div>';
+    const head = '<div style="text-align:center;color:#fff;margin:8px 0 14px;"><div style="font-size:13px;opacity:.85;letter-spacing:.5px;">PENDAFTARAN ANGGOTA BARU</div><div style="font-size:24px;font-weight:800;margin-top:2px;">MUMI</div><div style="font-size:13px;opacity:.9;margin-top:4px;">Semua kolom wajib diisi. Pastikan nomor WhatsApp benar.</div></div>';
     const fld = 'width:100%;box-sizing:border-box;padding:12px;font-size:16px;border:2px solid #cfe3d8;border-radius:10px;margin:5px 0 12px;font-family:inherit;background:#fff;';
     const lbl = (t, req) => '<label style="font-size:13px;font-weight:700;display:block;">' + t + (req ? ' <span style="color:#b91c1c;">*</span>' : '') + '</label>';
     const peranOpts = [['mahasiswa', '🎓 Mahasiswa'], ['karyawan_mahasiswa', '💼 Karyawan Mahasiswa'], ['mubaligh', '🕌 Mubaligh'], ['mubalighot', '🕌 Mubalighot'], ['bukan_mt', '👤 Bukan MT']];
+    // Normalisasi & cek format nomor HP Indonesia (08xx / +62 8xx / 62 8xx). Hasil: 08xxxxxxxxxx atau null bila tidak valid.
+    const normHP = v => {
+      let d = String(v || '').replace(/[^\d+]/g, '');
+      if (d.startsWith('+62')) d = '0' + d.slice(3); else if (d.startsWith('62')) d = '0' + d.slice(2); else if (d.startsWith('8')) d = '0' + d;
+      if (!/^08[1-9]\d{7,10}$/.test(d)) return null;
+      if (/^(\d)\1+$/.test(d.slice(2))) return null;   // 0800000000, 08111111111, dst
+      return d;
+    };
+    const HP_MSG = 'Nomor tidak valid. Tulis nomor HP/WA Indonesia yang benar, mis. 081234567890 (10–13 digit, diawali 08 atau +62).';
     let info = null;
 
     async function load() {
@@ -5565,37 +5574,57 @@ async function agLinkReset() {
       const kats = (info.kategori || []);
       wrap.innerHTML = head + card(
         lbl('Nama Lengkap', true) + '<input id="dpNama" type="text" maxlength="120" autocomplete="name" placeholder="Cth: Ahmad bin Yusuf" style="' + fld + '">' +
-        lbl('Nama Panggilan') + '<input id="dpPanggilan" type="text" maxlength="60" placeholder="Cth: Ahmad" style="' + fld + '">' +
-        lbl('Nomor WhatsApp') + '<input id="dpKontak" type="tel" inputmode="tel" maxlength="30" placeholder="0812xxxx" style="' + fld + '">' +
-        lbl('Tempat Tinggal (Alamat)') + '<textarea id="dpAlamat" rows="2" maxlength="300" placeholder="Cth: Jl. Mawar No. 5, Bekasi" style="' + fld + 'resize:vertical;"></textarea>' +
-        (kats.length ? lbl('Kategori / Status') + '<select id="dpKat" style="' + fld + '"><option value="">— Pilih —</option>' + kats.map(k => '<option value="' + _esc(k.id) + '" data-n="' + _esc(String(k.nama || '').trim().toLowerCase()) + '">' + _esc(k.nama) + '</option>').join('') + '</select>' : '') +
+        lbl('Nama Panggilan', true) + '<input id="dpPanggilan" type="text" maxlength="60" placeholder="Cth: Ahmad" style="' + fld + '">' +
+        lbl('Nomor WhatsApp', true) + '<input id="dpKontak" type="tel" inputmode="tel" maxlength="20" placeholder="0812xxxxxxxx" style="' + fld + '">' +
+        '<div id="dpKontakErr" style="display:none;color:#b91c1c;font-size:12px;margin:-8px 0 10px;line-height:1.4;"></div>' +
+        lbl('Tempat Tinggal (Alamat)', true) + '<textarea id="dpAlamat" rows="2" maxlength="300" placeholder="Cth: Jl. Mawar No. 5, Bekasi" style="' + fld + 'resize:vertical;"></textarea>' +
+        (kats.length ? lbl('Kategori / Status', true) + '<select id="dpKat" style="' + fld + '"><option value="">— Pilih —</option>' + kats.map(k => '<option value="' + _esc(k.id) + '" data-n="' + _esc(String(k.nama || '').trim().toLowerCase()) + '">' + _esc(k.nama) + '</option>').join('') + '</select>' : '') +
         '<div id="dpSekolah" style="display:none;padding:12px;background:#f0f7f3;border-radius:10px;margin-bottom:12px;">' +
-          lbl('Jenjang Sekolah') + '<select id="dpJenjang" style="' + fld + '"><option>SD</option><option>SMP</option><option>SMA/SMK</option></select>' +
-          lbl('Nama Sekolah') + '<input id="dpNamaSekolah" type="text" maxlength="120" placeholder="Cth: SDN 01 Menteng" style="' + fld + 'margin-bottom:0;">' +
+          lbl('Jenjang Sekolah', true) + '<select id="dpJenjang" style="' + fld + '"><option>SD</option><option>SMP</option><option>SMA/SMK</option></select>' +
+          lbl('Nama Sekolah', true) + '<input id="dpNamaSekolah" type="text" maxlength="120" placeholder="Cth: SDN 01 Menteng" style="' + fld + 'margin-bottom:0;">' +
         '</div>' +
-        lbl('Tempat Lahir') + '<input id="dpTempat" type="text" maxlength="80" placeholder="Cth: Jakarta" style="' + fld + '">' +
-        lbl('Tanggal Lahir') + '<input id="dpTgl" type="date" style="' + fld + '">' +
-        lbl('Jenis Kelamin') +
+        lbl('Tempat Lahir', true) + '<input id="dpTempat" type="text" maxlength="80" placeholder="Cth: Jakarta" style="' + fld + '">' +
+        lbl('Tanggal Lahir', true) + '<input id="dpTgl" type="date" max="' + new Date().toISOString().slice(0, 10) + '" style="' + fld + '">' +
+        lbl('Jenis Kelamin', true) +
         '<div style="display:flex;gap:18px;margin:6px 0 14px;font-size:15px;"><label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="dpJK" value="laki-laki" style="width:18px;height:18px;accent-color:#1a6644;"> ♂ Laki-laki</label><label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="dpJK" value="perempuan" style="width:18px;height:18px;accent-color:#1a6644;"> ♀ Perempuan</label></div>' +
-        lbl('Peran / Jabatan MT') +
+        lbl('Peran / Jabatan MT (boleh pilih lebih dari satu)', true) +
         '<div style="display:flex;flex-direction:column;gap:6px;margin:6px 0 16px;">' + peranOpts.map(o => '<label style="display:flex;align-items:center;gap:8px;font-size:14px;padding:8px 10px;background:#f0f7f3;border-radius:8px;"><input type="checkbox" name="dpPeran" value="' + o[0] + '" style="width:17px;height:17px;accent-color:#1a6644;"> ' + o[1] + '</label>').join('') + '</div>' +
         '<button id="dpKirim" style="width:100%;padding:16px;font-size:18px;font-weight:800;border:0;border-radius:12px;background:#1a6644;color:#fff;">✅ Daftar</button>' +
         '<div id="dpErr" style="display:none;margin-top:10px;background:#fef2f2;color:#b91c1c;border-radius:8px;padding:9px 10px;font-size:13px;line-height:1.5;"></div>');
       const kat = wrap.querySelector('#dpKat');
       if (kat) kat.onchange = () => { const o = kat.options[kat.selectedIndex]; wrap.querySelector('#dpSekolah').style.display = (o && o.dataset.n === 'sekolah') ? 'block' : 'none'; };
+      const hp = wrap.querySelector('#dpKontak'), hpErr = wrap.querySelector('#dpKontakErr');
+      const cekHP = () => {
+        const v = hp.value.trim();
+        if (!v) { hpErr.style.display = 'none'; hp.style.borderColor = '#cfe3d8'; return; }
+        const n = normHP(v);
+        if (n) { hp.value = n; hpErr.style.display = 'none'; hp.style.borderColor = '#16a34a'; }
+        else { hpErr.style.display = 'block'; hpErr.textContent = '❌ ' + HP_MSG; hp.style.borderColor = '#dc2626'; }
+      };
+      hp.onblur = cekHP;
+      hp.oninput = () => { hpErr.style.display = 'none'; hp.style.borderColor = '#cfe3d8'; };
       wrap.querySelector('#dpKirim').onclick = kirim;
     }
     async function kirim() {
       const q = id => wrap.querySelector(id);
       const err = m => { const e = q('#dpErr'); e.style.display = 'block'; e.textContent = m; };
-      const nama = q('#dpNama').value.trim();
-      if (!nama) { err('Nama lengkap wajib diisi.'); q('#dpNama').focus(); return; }
       const kat = q('#dpKat'); const sekolah = kat && kat.options[kat.selectedIndex] && kat.options[kat.selectedIndex].dataset.n === 'sekolah';
       const jk = wrap.querySelector('input[name="dpJK"]:checked');
       const peran = [...wrap.querySelectorAll('input[name="dpPeran"]:checked')].map(c => c.value);
+      const need = (sel, label) => { if (!q(sel).value.trim()) { err(label + ' wajib diisi.'); q(sel).focus(); return false; } return true; };
+      if (!need('#dpNama', 'Nama lengkap') || !need('#dpPanggilan', 'Nama panggilan') || !need('#dpKontak', 'Nomor WhatsApp')) return;
+      const hpOk = normHP(q('#dpKontak').value);
+      if (!hpOk) { const he = q('#dpKontakErr'); he.style.display = 'block'; he.textContent = '❌ ' + HP_MSG; q('#dpKontak').style.borderColor = '#dc2626'; err(HP_MSG); q('#dpKontak').focus(); return; }
+      q('#dpKontak').value = hpOk;
+      if (!need('#dpAlamat', 'Tempat tinggal')) return;
+      if (kat && !kat.value) { err('Kategori / status wajib dipilih.'); kat.focus(); return; }
+      if (sekolah && !need('#dpNamaSekolah', 'Nama sekolah')) return;
+      if (!need('#dpTempat', 'Tempat lahir') || !need('#dpTgl', 'Tanggal lahir')) return;
+      if (!jk) { err('Jenis kelamin wajib dipilih.'); return; }
+      if (!peran.length) { err('Peran / jabatan MT wajib dipilih (minimal satu).'); return; }
       const data = {
-        nama, nama_panggilan: q('#dpPanggilan').value.trim(), kontak: q('#dpKontak').value.trim(), alamat: q('#dpAlamat').value.trim(),
-        kategori_id: kat ? kat.value : '', jenis_kelamin: jk ? jk.value : '', peran: peran.length ? JSON.stringify(peran) : '',
+        nama: q('#dpNama').value.trim(), nama_panggilan: q('#dpPanggilan').value.trim(), kontak: hpOk, alamat: q('#dpAlamat').value.trim(),
+        kategori_id: kat ? kat.value : '', jenis_kelamin: jk.value, peran: JSON.stringify(peran),
         tempat_lahir: q('#dpTempat').value.trim(), tanggal_lahir: q('#dpTgl').value,
         jenjang_sekolah: sekolah ? q('#dpJenjang').value : '', nama_sekolah: sekolah ? q('#dpNamaSekolah').value.trim() : '',
       };
