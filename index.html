@@ -2730,6 +2730,10 @@
             <div style="text-align:center;margin-top:12px;">
               <div id="qrStatusLine" style="font-size:12px;font-weight:700;margin-bottom:8px;"></div>
               <div id="qrCanvasBox" style="display:inline-block;background:#fff;padding:10px;border-radius:10px;"></div>
+              <div id="qrLinkBox" style="margin-top:8px;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;">
+                <a id="qrLinkText" href="#" target="_blank" rel="noopener" style="font-size:11px;word-break:break-all;max-width:320px;color:#1a6644;font-weight:700;text-decoration:underline;"></a>
+                <button class="small secondary" onclick="qrCopyLink()">📋 Salin Link</button>
+              </div>
               <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px;">
                 <button class="small secondary" onclick="qrDownload()">⬇️ Unduh Gambar</button>
                 <button class="small secondary" onclick="qrCetak()">🖨️ Cetak</button>
@@ -5153,6 +5157,15 @@ function _qrRender() {
   const sl = $('qrStatusLine'); sl.textContent = st; sl.style.color = col;
   if (typeof QRCode === 'undefined') { box.innerHTML = '<div class="muted" style="font-size:12px;max-width:240px;">Library QR belum termuat. Cek internet lalu buka ulang menu ini.</div>'; return; }
   new QRCode(box, { text: link, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
+  const lt = $('qrLinkText'); if (lt) { lt.href = link; lt.textContent = link; }
+}
+function qrCopyLink() {
+  if (!_qrCur) return;
+  const link = _qrLink(_qrCur.kode);
+  const done = () => alert('Link absen disalin:\n' + link);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(link).then(done, () => prompt('Salin link ini:', link));
+  } else { prompt('Salin link ini:', link); }
 }
 
 // Ganti pilihan: "sesuai jam sesi" ⇄ "jam khusus". Bisa diubah kapan saja.
@@ -5233,7 +5246,7 @@ async function _qrRefreshScanInner(silent) {
 function _qrPoster() {
   const src = $('qrCanvasBox').querySelector('canvas');
   if (!src || !_qrCur) return null;
-  const W = 720, H = 920, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const W = 720, H = 980, c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d');
   x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
   x.fillStyle = '#1a6644'; x.fillRect(0, 0, W, 170);
@@ -5251,6 +5264,11 @@ function _qrPoster() {
   x.fillStyle = '#1f2937'; x.font = '700 30px Arial, sans-serif';
   x.fillText('Scan lalu pilih namamu:', W / 2, 840);
   x.font = '600 28px Arial, sans-serif'; x.fillText('Hadir  atau  Izin', W / 2, 880);
+  const lk = _qrLink(_qrCur.kode); let lf = 22;
+  x.fillStyle = '#1a6644';
+  do { x.font = '600 ' + lf + 'px Arial, sans-serif'; lf -= 1; } while (x.measureText(lk).width > W - 40 && lf > 10);
+  x.fillText('Atau buka link:', W / 2, 922);
+  x.fillText(lk, W / 2, 922 + lf + 8);
   return c;
 }
 function qrDownload() {
